@@ -620,7 +620,7 @@ module SQLite3
               break
             rescue SyntaxError
               raise
-            rescue ScriptError, Exception
+            rescue ScriptError, Exception, NameError
             end
           end
           raise "no driver for sqlite3 found" unless driver
