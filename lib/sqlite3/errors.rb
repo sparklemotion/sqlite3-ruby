@@ -34,7 +34,19 @@ require 'sqlite3/constants'
 
 module SQLite3
 
-  class Exception < ::Exception; end
+  class Exception < ::Exception
+    @code = 0
+
+    # The numeric error code that this exception represents.
+    def self.code
+      @code
+    end
+
+    # A convenience for accessing the error code for this exception.
+    def code
+      self.class.code
+    end
+  end
 
   class SQLException < Exception; end
   class InternalException < Exception; end
@@ -59,6 +71,9 @@ module SQLite3
   class MisuseException < Exception; end
   class UnsupportedException < Exception; end
   class AuthorizationException < Exception; end
+  class FormatException < Exception; end
+  class RangeException < Exception; end
+  class NotADatabaseException < Exception; end
 
   EXCEPTIONS = [
     nil,
@@ -68,14 +83,15 @@ module SQLite3
     NotFoundException, FullException, CantOpenException, ProtocolException,
     EmptyException, SchemaChangedException, TooBigException,
     ConstraintException, MismatchException, MisuseException,
-    UnsupportedException, AuthorizationException
-  ]
+    UnsupportedException, AuthorizationException, FormatException,
+    RangeException, NotADatabaseException
+  ].each_with_index { |e,i| e.instance_variable_set( :@code, i ) if e }
 
   module Error
     def check( result, db=nil, msg=nil )
       unless result == Constants::ErrorCode::OK
         msg = ( msg ? msg + ": " : "" ) + db.errmsg if db
-        raise EXCEPTIONS[result], msg
+        raise ( EXCEPTIONS[result] || SQLite3::Exception ), msg
       end
     end
     module_function :check
