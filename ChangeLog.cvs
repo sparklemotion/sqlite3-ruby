@@ -1,34 +1,3 @@
-2005-02-06 12:19  jamis
-
-	* Fixed problem with /usr/local sqlite includes not being found. Hopefully.
-
-2005-02-05 11:24  jamis
-
-	* The bind parameter array will be flattened before use, so that arrays
-	  may be passed as parameters.
-	* The native bind_text implementation does a to_s on the parameter
-
-2005-01-30 22:14  jamis
-
-	* Added various bsds to the detection routine in dl/api.rb.
-
-2005-01-30 22:12  jamis
-
-	* Fixed deprecation warnings in faq.rb about Object#id.
-
-2005-01-25 14:58  jamis
-
-	* Changed extconf.rb to allow /usr/local sqlite3 installations to be
-	  supported "out-of-the-box".
-
-2005-01-09 08:04  jamis
-
-	* Changed layout to support tagging and branching
-
-2005-01-07 14:32  jamis
-
-	* Move from CVS
-
 2005-01-05 09:40  minam
 
 	* Rakefile, sqlite3-ruby-win32.gemspec, sqlite3-ruby.gemspec: Added
