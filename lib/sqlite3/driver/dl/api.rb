@@ -40,7 +40,7 @@ module SQLite3 ; module Driver; module DL;
     library_name = case RUBY_PLATFORM.downcase
       when /darwin/
         "libsqlite3.dylib"
-      when /linux/
+      when /linux/, /freebsd|netbsd|openbsd|dragonfly/
         "libsqlite3.so"
       when /win32/
         "sqlite3.dll"
