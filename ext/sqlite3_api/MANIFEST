@@ -1,0 +1,4 @@
+extconf.rb
+post-clean.rb
+post-distclean.rb
+sqlite3_api.i
