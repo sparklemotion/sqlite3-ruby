@@ -81,6 +81,7 @@ module SQLite3
     # A convenience method for working with type names. This returns the "base"
     # type name, without any parenthetical data.
     def type_name( type )
+      return "" if type.nil?
       type = $1 if type =~ /^(.*?)\(/
       type.upcase
     end

@@ -889,6 +889,13 @@ module Integration
         assert_equal [ 1, "foo" ], @result.next
       end
 
+      define_method( "test_next_type_translation_with_untyped_column" ) do
+        @db.type_translation = true
+        @db.query( "select count(*) from foo" ) do |result|
+          assert_equal ["3"], result.next
+        end
+      end
+
       define_method( "test_next_results_as_hash" ) do
         @db.results_as_hash = true
         @result.reset( 1 )
