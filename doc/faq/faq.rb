@@ -52,7 +52,7 @@ def process_faq_list_item( faq )
     puts question_text
     process_faq_list answer
   else
-    print "<a href='##{question.id}'>#{question_text}</a>"
+    print "<a href='##{question.object_id}'>#{question_text}</a>"
   end
 
   puts "</li>"
@@ -75,7 +75,7 @@ def process_faq_description( faq, path )
     title = RedCloth.new( path ).to_html.gsub( %r{</?p>}, "" )
     answer = RedCloth.new( answer || "" )
 
-    puts "<a name='#{question.id}'></a>"
+    puts "<a name='#{question.object_id}'></a>"
     puts "<div class='faq-title'>#{title}</div>"
     puts "<div class='faq-answer'>#{add_api_links(answer.to_html)}</div>"
   end
