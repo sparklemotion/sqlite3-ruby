@@ -204,7 +204,7 @@ module SQLite3
     # by the query. Otherwise, any results are accumulated into an array and
     # returned wholesale.
     #
-    # See also #execute2, and #execute_batch for additional ways of
+    # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
     def execute( sql, *bind_vars )
       prepare( sql ) do |stmt|
@@ -225,7 +225,7 @@ module SQLite3
     # Thus, even if the query itself returns no rows, this method will always
     # return at least one row--the names of the columns.
     #
-    # See also #execute, and #execute_batch for additional ways of
+    # See also #execute, #query, and #execute_batch for additional ways of
     # executing statements.
     def execute2( sql, *bind_vars )
       prepare( sql ) do |stmt|
@@ -257,6 +257,30 @@ module SQLite3
         end
       end
       nil
+    end
+
+    # This is a convenience method for creating a statement, binding
+    # paramters to it, and calling execute:
+    #
+    #   result = db.query( "select * from foo where a=?", 5 )
+    #   # is the same as
+    #   result = db.prepare( "select * from foo where a=?" ).execute( 5 )
+    #
+    # You must be sure to call +close+ on the ResultSet instance that is
+    # returned, or you could have problems with locks on the table. If called
+    # with a block, +close+ will be invoked implicitly when the block 
+    # terminates.
+    def query( sql, *bind_vars )
+      result = prepare( sql ).execute( *bind_vars )
+      if block_given?
+        begin
+          yield result
+        ensure
+          result.close
+        end
+      else
+        return result
+      end
     end
 
     # A convenience method for obtaining the first row of a result set, and

@@ -80,6 +80,7 @@ module SQLite3
     # Reset the cursor, so that a result set which has reached end-of-file
     # can be rewound and reiterated.
     def reset( *bind_params )
+      @stmt.must_be_open!
       @driver.reset( @stmt.handle )
       @stmt.bind_params( *bind_params )
       @eof = false
@@ -106,6 +107,8 @@ module SQLite3
     # types are accessible via the +types+ property.
     def next
       return nil if @eof
+
+      @stmt.must_be_open!
 
       unless @first_row
         result = @driver.step( @stmt.handle )
@@ -159,10 +162,24 @@ module SQLite3
       end
     end
 
+    # Closes the statement that spawned this result set.
+    # <em>Use with caution!</em> Closing a result set will automatically
+    # close any other result sets that were spawned from the same statement.
+    def close
+      @stmt.close
+    end
+
+    # Queries whether the underlying statement has been closed or not.
+    def closed?
+      @stmt.closed?
+    end
+
+    # Returns the types of the columns returned by this result set.
     def types
       @stmt.types
     end
 
+    # Returns the names of the columns returned by this result set.
     def columns
       @stmt.columns
     end

@@ -302,6 +302,70 @@ module Integration
         assert_equal %w{1 1 1}, rows
       end
 
+      define_method( "test_query_no_block_no_bind_no_match" ) do
+        result = @db.query( "select * from foo where a > 100" )
+        assert_nil result.next
+        result.close
+      end
+
+      define_method( "test_query_with_block_no_bind_no_match" ) do
+        r = nil
+        @db.query( "select * from foo where a > 100" ) do |result|
+          assert_nil result.next
+          r = result
+        end
+        assert r.closed?
+      end
+
+      define_method( "test_query_no_block_with_bind_no_match" ) do
+        result = @db.query( "select * from foo where a > ?", 100 )
+        assert_nil result.next
+        result.close
+      end
+
+      define_method( "test_query_with_block_with_bind_no_match" ) do
+        r = nil
+        @db.query( "select * from foo where a > ?", 100 ) do |result|
+          assert_nil result.next
+          r = result
+        end
+        assert r.closed?
+      end
+
+      define_method( "test_query_no_block_no_bind_with_match" ) do
+        result = @db.query( "select * from foo where a = 1" )
+        assert_not_nil result.next
+        assert_nil result.next
+        result.close
+      end
+
+      define_method( "test_query_with_block_no_bind_with_match" ) do
+        r = nil
+        @db.query( "select * from foo where a = 1" ) do |result|
+          assert_not_nil result.next
+          assert_nil result.next
+          r = result
+        end
+        assert r.closed?
+      end
+
+      define_method( "test_query_no_block_with_bind_with_match" ) do
+        result = @db.query( "select * from foo where a = ?", 1 )
+        assert_not_nil result.next
+        assert_nil result.next
+        result.close
+      end
+
+      define_method( "test_query_with_block_with_bind_with_match" ) do
+        r = nil
+        @db.query( "select * from foo where a = ?", 1 ) do |result|
+          assert_not_nil result.next
+          assert_nil result.next
+          r = result
+        end
+        assert r.closed?
+      end
+
       define_method( "test_get_first_row_no_bind_no_match" ) do
         result = @db.get_first_row( "select * from foo where a=100" )
         assert_nil result
@@ -741,6 +805,20 @@ module Integration
         end
         assert called
       end
+
+      define_method( "test_close" ) do
+        stmt = @db.prepare( "select * from foo" )
+        assert !stmt.closed?
+        stmt.close
+        assert stmt.closed?
+        assert_raise( SQLite3::Exception ) { stmt.execute }
+        assert_raise( SQLite3::Exception ) { stmt.execute! }
+        assert_raise( SQLite3::Exception ) { stmt.close }
+        assert_raise( SQLite3::Exception ) { stmt.bind_params 5 }
+        assert_raise( SQLite3::Exception ) { stmt.bind_param 1, 5 }
+        assert_raise( SQLite3::Exception ) { stmt.columns }
+        assert_raise( SQLite3::Exception ) { stmt.types }
+      end
     end
     const_set( "TC_Statement_#{driver}", test_case )
 
@@ -836,6 +914,21 @@ module Integration
 
       define_method( "test_columns" ) do
         assert_equal [ "a", "b" ], @result.columns
+      end
+
+      define_method( "test_close" ) do
+        stmt = @db.prepare( "select * from foo" )
+        result = stmt.execute
+        assert !result.closed?
+        result.close
+        assert result.closed?
+        assert stmt.closed?
+        assert_raise( SQLite3::Exception ) { result.reset }
+        assert_raise( SQLite3::Exception ) { result.next }
+        assert_raise( SQLite3::Exception ) { result.each }
+        assert_raise( SQLite3::Exception ) { result.close }
+        assert_raise( SQLite3::Exception ) { result.types }
+        assert_raise( SQLite3::Exception ) { result.columns }
       end
     end
     const_set( "TC_ResultSet_#{driver}", test_case )

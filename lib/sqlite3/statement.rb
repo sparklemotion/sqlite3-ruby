@@ -65,12 +65,22 @@ module SQLite3
     def initialize( db, sql, utf16=false )
       @db = db
       @driver = @db.driver
+      @closed = false
       result, @handle, @remainder = @driver.prepare( @db.handle, sql )
       Error.check( result, @db )
     end
 
+    # Closes the statement by finalizing the underlying statement
+    # handle. The statement must not be used after being closed.
     def close
+      must_be_open!
+      @closed = true
       @driver.finalize( @handle )
+    end
+
+    # Returns true if the underlying statement has been closed.
+    def closed?
+      @closed
     end
 
     # Binds the given variables to the corresponding placeholders in the SQL
@@ -104,6 +114,7 @@ module SQLite3
     #
     # See also #bind_params.
     def bind_param( param, value )
+      must_be_open!
       if Fixnum === param
         case value
           when Integer then
@@ -140,6 +151,7 @@ module SQLite3
     #
     # See also #bind_params, #execute!.
     def execute( *bind_vars )
+      must_be_open!
       @driver.reset( @handle ) if @results
 
       bind_params *bind_vars unless bind_vars.empty?
@@ -199,6 +211,8 @@ module SQLite3
     # that this will actually execute the SQL, which means it can be a
     # (potentially) expensive operation.
     def get_metadata
+      must_be_open!
+
       @columns = []
       @types = []
 
@@ -212,6 +226,14 @@ module SQLite3
       @types.freeze
     end
     private :get_metadata
+
+    # Performs a sanity check to ensure that the statement is not
+    # closed. If it is, an exception is raised.
+    def must_be_open! # :nodoc:
+      if @closed
+        raise SQLite3::Exception, "cannot use a closed statement"
+      end
+    end
 
   end
 
