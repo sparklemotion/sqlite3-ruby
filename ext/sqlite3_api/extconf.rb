@@ -1,6 +1,6 @@
 require 'mkmf'
 
-dir_config( "sqlite3", "/usr/local", "/usr/local" )
+dir_config( "sqlite3", "/usr/local" )
 
 if have_header( "sqlite3.h" ) and have_library( "sqlite3", "sqlite3_open" )
   system "swig -ruby sqlite3_api.i"
