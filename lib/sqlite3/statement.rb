@@ -88,7 +88,7 @@ module SQLite3
     # Statement#bind_params.
     def bind_params( *bind_vars )
       index = 1
-      bind_vars.each do |var|
+      bind_vars.flatten.each do |var|
         if Hash === var
           var.each { |key, val| bind_param key, val }
         else

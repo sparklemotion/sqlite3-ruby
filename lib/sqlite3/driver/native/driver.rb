@@ -92,7 +92,7 @@ module SQLite3 ; module Driver ; module Native
 
     def bind_text( stmt, index, value, utf16=false )
       API.send( ( utf16 ? :sqlite3_bind_text16 : :sqlite3_bind_text ),
-        stmt, index, value )
+        stmt, index, value.to_s )
     end
 
     def column_name( stmt, index, utf16=false )

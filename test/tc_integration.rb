@@ -587,6 +587,12 @@ module Integration
         value = @db.get_first_value( "select multiply(a) from foo" )
         assert_equal "6", value
       end
+
+      define_method( "test_bind_array_parameter" ) do
+        result = @db.get_first_value( "select b from foo where a=? and b=?",
+          [ 1, "foo" ] )
+        assert_equal "foo", result
+      end
     end
     const_set( "TC_Database_#{driver}", test_case )
 
