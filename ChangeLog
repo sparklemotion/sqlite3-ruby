@@ -1,3 +1,7 @@
+2005-02-06 12:19  jamis
+
+	* Fixed problem with /usr/local sqlite includes not being found. Hopefully.
+
 2005-02-05 11:24  jamis
 
 	* The bind parameter array will be flattened before use, so that arrays
