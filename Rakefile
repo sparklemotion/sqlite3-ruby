@@ -53,7 +53,7 @@ task :clean do
   rm_f  "doc/faq/faq.html"
 
   native_files = [ "Makefile", "mkmf.log", "sqlite3_api.so",
-                   "sqlite3_api_wrap.c", "sqlite3_api_wrap.o" ]
+                   "sqlite3_api.bundle", "sqlite3_api_wrap.o" ]
   native_files.each { |f| rm_f "ext/sqlite3_api/#{f}" }
 end
 
