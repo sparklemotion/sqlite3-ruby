@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
    s.summary = "SQLite3/Ruby is a module to allow Ruby scripts to interface with a SQLite3 database."
 
-   s.files = Dir.glob("{doc,ext,lib,test}/**/*").delete_if { |item| item.include?( "CVS" ) }
+   s.files = Dir.glob("{doc,ext,lib,test}/**/*")
    s.files.concat [ "LICENSE", "README", "ChangeLog" ]
 
    s.require_path = 'lib'
@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
    s.test_suite_file = "test/tests.rb"
 
    s.author = "Jamis Buck"
-   s.email = "jgb3@email.byu.edu"
+   s.email = "jamis@37signals.com"
    s.homepage = "http://sqlite-ruby.rubyforge.org/sqlite3"
 
 end
