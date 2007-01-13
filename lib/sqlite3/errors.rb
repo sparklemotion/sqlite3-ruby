@@ -91,7 +91,7 @@ module SQLite3
     def check( result, db=nil, msg=nil )
       unless result == Constants::ErrorCode::OK
         msg = ( msg ? msg + ": " : "" ) + db.errmsg if db
-        raise ( EXCEPTIONS[result] || SQLite3::Exception ), msg
+        raise(( EXCEPTIONS[result] || SQLite3::Exception ), msg)
       end
     end
     module_function :check
