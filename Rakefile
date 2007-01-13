@@ -145,7 +145,7 @@ end
 Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'api'
   rdoc.title    = "SQLite3/Ruby"
-  rdoc.options << '--line-numbers --inline-source --main README'
+  rdoc.options += %w(--line-numbers --inline-source --main README)
   rdoc.rdoc_files.include('lib/**/*.rb')
 
   if can_require( "rdoc/generators/template/html/jamis" )
