@@ -81,6 +81,7 @@ module SQLite3
     # can be rewound and reiterated.
     def reset( *bind_params )
       @stmt.must_be_open!
+      @stmt.reset!(false)
       @driver.reset( @stmt.handle )
       @stmt.bind_params( *bind_params )
       @eof = false
