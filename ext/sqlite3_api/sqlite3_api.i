@@ -25,6 +25,16 @@ int Sqlite3_ruby_busy_handler(void* data,int value) {
   return FIX2INT(result);
 }
 
+static void mark_CallbackData(void* ptr) {
+    CallbackData* cb = (CallbackData*)ptr;
+    if (cb->proc != Qnil)
+        rb_gc_mark(cb->proc);
+    if (cb->proc2 != Qnil)
+        rb_gc_mark(cb->proc2);
+    if (cb->data != Qnil)
+        rb_gc_mark(cb->data);
+}
+
 int Sqlite3_ruby_authorizer(void* data,int type,
   const char* a,const char* b,const char* c,const char* d)
 {
@@ -89,6 +99,8 @@ void Sqlite3_ruby_function_final(sqlite3_context *ctx) {
   rb_gc_unregister_address( rb_context );
 }
 %}
+
+%markfunc CallbackData "mark_CallbackData";
 
 struct CallbackData {
   VALUE proc;

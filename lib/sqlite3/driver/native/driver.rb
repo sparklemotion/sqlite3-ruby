@@ -38,6 +38,9 @@ module SQLite3 ; module Driver ; module Native
 
     def initialize
       @callback_data = Hash.new
+      @authorizer = Hash.new
+      @busy_handler = Hash.new
+      @trace = Hash.new
     end
 
     def complete?( sql, utf16=false )
@@ -49,10 +52,18 @@ module SQLite3 ; module Driver ; module Native
         cb = API::CallbackData.new
         cb.proc = block
         cb.data = data
+        result = API.sqlite3_busy_handler( db, API::Sqlite3_ruby_busy_handler, cb )
+        # Reference the Callback object so that 
+        # it is not deleted by the GC
+        @busy_handler[db] = cb
+      else
+        # Unreference the callback *after* having removed it
+        # from sqlite
+        result = API.sqlite3_busy_handler( db, nil, nil )
+        @busy_handler.delete(db)
       end
 
-      API.sqlite3_busy_handler( db,
-        block ? API::Sqlite3_ruby_busy_handler : nil, cb )
+      result
     end
 
     def set_authorizer( db, data=nil, &block )
@@ -60,10 +71,14 @@ module SQLite3 ; module Driver ; module Native
         cb = API::CallbackData.new
         cb.proc = block
         cb.data = data
+        result = API.sqlite3_set_authorizer( db, API::Sqlite3_ruby_authorizer, cb )
+        @authorizer[db] = cb # see comments in busy_handler
+      else
+        result = API.sqlite3_set_authorizer( db, nil, nil )
+        @authorizer.delete(db) # see comments in busy_handler
       end
 
-      API.sqlite3_set_authorizer( db,
-        block ? API::Sqlite3_ruby_authorizer : nil, cb )
+      result
     end
 
     def trace( db, data=nil, &block )
@@ -71,10 +86,14 @@ module SQLite3 ; module Driver ; module Native
         cb = API::CallbackData.new
         cb.proc = block
         cb.data = data
+        result = API.sqlite3_trace( db, API::Sqlite3_ruby_trace, cb )
+        @trace[db] = cb # see comments in busy_handler
+      else
+        result = API.sqlite3_trace( db, nil, nil )
+        @trace.delete(db) # see comments in busy_handler
       end
 
-      API.sqlite3_trace( db,
-        block ? API::Sqlite3_ruby_trace : nil, cb )
+      result
     end
 
     def open( filename, utf16=false )
@@ -116,9 +135,6 @@ module SQLite3 ; module Driver ; module Native
         cb = API::CallbackData.new
         cb.proc = cb.proc2 = nil
         cb.data = cookie
-        @callback_data[ name ] = cb
-      else
-        @callback_data.delete( name )
       end
 
       if func
@@ -135,7 +151,16 @@ module SQLite3 ; module Driver ; module Native
         final = API::Sqlite3_ruby_function_final
       end
 
-      API.sqlite3_create_function( db, name, args, text, cb, func, step, final )
+      result = API.sqlite3_create_function( db, name, args, text, cb, func, step, final )
+
+      # see comments in busy_handler
+      if cb
+        @callback_data[ name ] = cb
+      else
+        @callback_data.delete( name )
+      end
+
+      return result
     end
 
     def value_text( value, utf16=false )

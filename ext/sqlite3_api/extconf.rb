@@ -4,7 +4,7 @@ SWIG_WRAP = "sqlite3_api_wrap.c"
 
 dir_config( "sqlite3", "/usr/local" )
 
-if have_header( "sqlite3.h" ) and have_library( "sqlite3", "sqlite3_open" )
+if have_header( "sqlite3.h" ) && have_library( "sqlite3", "sqlite3_open" )
   if !File.exists?( SWIG_WRAP ) || with_config( "swig", false )
     puts "creating #{SWIG_WRAP}"
     system "swig -ruby sqlite3_api.i" or raise "could not build wrapper via swig (perhaps swig is not installed?)"
