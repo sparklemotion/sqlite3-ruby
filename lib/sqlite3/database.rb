@@ -436,7 +436,7 @@ module SQLite3
     # begin
       if block
         proxy = AggregateDefinitionProxy.new
-        proxy.instance_eval &block
+        proxy.instance_eval(&block)
         step ||= proxy.step_callback
         finalize ||= proxy.finalize_callback
       end

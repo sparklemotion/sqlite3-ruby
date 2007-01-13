@@ -66,6 +66,7 @@ module SQLite3
       @db = db
       @driver = @db.driver
       @closed = false
+      @results = @columns = nil
       result, @handle, @remainder = @driver.prepare( @db.handle, sql )
       Error.check( result, @db )
     end
@@ -157,7 +158,7 @@ module SQLite3
       must_be_open!
       @driver.reset( @handle ) if @results
 
-      bind_params *bind_vars unless bind_vars.empty?
+      bind_params(*bind_vars) unless bind_vars.empty?
       @results = ResultSet.new( @db, self )
 
       if block_given?
