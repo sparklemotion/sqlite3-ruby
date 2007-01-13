@@ -1,5 +1,5 @@
-$:.unshift "../lib"
-$:.unshift "../ext/sqlite3_api"
+$:.unshift "#{File.dirname(__FILE__)}/../lib"
+$:.unshift "#{File.dirname(__FILE__)}/../ext/sqlite3_api"
 
 require 'test/unit'
 require 'benchmark'
@@ -84,10 +84,10 @@ module Integration
         assert @db.complete?( "select * from foo;" )
       end
 
-#      FIXME: this test is failing with sqlite3 3.2.5
-#      define_method( "test_complete_fail_utf16" ) do
-#        assert !@db.complete?( "select * from foo".to_utf16(false), true )
-#      end
+      define_method( "test_complete_fail_utf16" ) do
+        assert !@db.complete?( "select * from foo".to_utf16(false), true )
+      end
+
       define_method( "test_complete_success_utf16" ) do
         assert @db.complete?( "select * from foo;".to_utf16(true), true )
       end
@@ -819,6 +819,20 @@ module Integration
         assert_raise( SQLite3::Exception ) { stmt.bind_param 1, 5 }
         assert_raise( SQLite3::Exception ) { stmt.columns }
         assert_raise( SQLite3::Exception ) { stmt.types }
+      end
+
+      define_method( "test_committing_tx_with_statement_active" ) do
+        called = false
+        @db.prepare( "select count(*) from foo" ) do |stmt|
+          called = true
+          count = stmt.execute!.first.first.to_i
+          @db.transaction do
+            @db.execute "insert into foo ( b ) values ( 'hello' )"
+          end
+          new_count = stmt.execute!.first.first.to_i
+          assert_equal new_count, count+1
+        end
+        assert called
       end
     end
     const_set( "TC_Statement_#{driver}", test_case )
