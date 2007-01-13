@@ -109,7 +109,7 @@ module SQLite3
       @statement_factory = options[:statement_factory] || Statement
 
       result, @handle = @driver.open( file_name, utf16 )
-      Error.check( result, nil, "could not open database" )
+      Error.check( result, self, "could not open database" )
 
       @closed = false
       @results_as_hash = options.fetch(:results_as_hash,false)
