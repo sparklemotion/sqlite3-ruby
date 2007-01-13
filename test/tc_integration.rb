@@ -709,6 +709,16 @@ module Integration
         assert_equal 1, @stmt.execute!.length
       end
 
+      define_method( "test_bind_params_hash_without_colon" ) do
+        @stmt.bind_params "named" => 2
+        assert_equal 1, @stmt.execute!.length
+      end
+
+      define_method( "test_bind_params_hash_as_symbol" ) do
+        @stmt.bind_params :named => 2
+        assert_equal 1, @stmt.execute!.length
+      end
+
       define_method( "test_bind_params_mixed" ) do
         @stmt.bind_params( 1, ":named" => 2 )
         assert_equal 2, @stmt.execute!.length

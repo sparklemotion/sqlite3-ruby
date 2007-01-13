@@ -129,8 +129,9 @@ module SQLite3
             @driver.bind_text( @handle, param, value )
         end
       else
-        index = @driver.bind_parameter_index(
-          @handle, param.to_s )
+        param = param.to_s
+        param = ":#{param}" unless param[0] == ?:
+        index = @driver.bind_parameter_index( @handle, param )
         raise Exception, "no such bind parameter '#{param}'" if index == 0
         bind_param index, value
       end
