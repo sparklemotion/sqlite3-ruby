@@ -720,7 +720,7 @@ module Integration
       end
 
       define_method( "test_bind_params_hash_as_symbol" ) do
-        @stmt.bind_params named => 2
+        @stmt.bind_params :named => 2
         assert_equal 1, @stmt.execute!.length
       end
 
@@ -735,7 +735,7 @@ module Integration
       end
 
       define_method( "test_bind_param_by_name_bad" ) do
-        assert_raise( SQLite3::Exception ) { @stmt.bind_param( "named", 2 ) }
+        assert_raise( SQLite3::Exception ) { @stmt.bind_param( "@named", 2 ) }
       end
 
       define_method( "test_bind_param_by_name_good" ) do

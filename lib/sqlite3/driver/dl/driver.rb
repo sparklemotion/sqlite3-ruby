@@ -32,6 +32,10 @@
 
 require 'sqlite3/driver/dl/api'
 
+warn "The DL driver for sqlite3-ruby is deprecated and will be removed"
+warn "in a future release. Please update your installation to use the"
+warn "Native driver."
+
 module Kernel
   # Allows arbitrary objects to be passed as a pointer to functions.
   # (Probably not very GC safe, but by encapsulating it like this we
