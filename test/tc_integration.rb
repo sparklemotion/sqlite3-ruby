@@ -77,6 +77,11 @@ module Integration
         File.delete( "test.db" )
       end
 
+      define_method( "test_table_info_with_type_translation_active" ) do
+        @db.type_translation = true
+        assert_nothing_raised { @db.table_info("foo") }
+      end
+
       define_method( "test_complete_fail" ) do
         assert !@db.complete?( "select * from foo" )
       end
@@ -715,7 +720,7 @@ module Integration
       end
 
       define_method( "test_bind_params_hash_as_symbol" ) do
-        @stmt.bind_params :named => 2
+        @stmt.bind_params named => 2
         assert_equal 1, @stmt.execute!.length
       end
 
