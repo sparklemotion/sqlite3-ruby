@@ -30,6 +30,9 @@
 # =============================================================================
 #++
 
+require 'rubygems'
+gem 'flexmock', '< 0.1.0'
+
 require 'flexmock'
 
 class FlexMockWithArgs < FlexMock

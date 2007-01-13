@@ -7,9 +7,8 @@ require 'sqlite3/database'
 
 class String
   def to_utf16(terminate=false)
-    result = ""
-    self.split(//).map { |c| c[0] }.pack("s*")
-    result + (terminate ? "\0\0" : "")
+    self.split(//).map { |c| c[0] }.pack("v*") +
+      (terminate ? "\0\0" : "")
   end
 
   def from_utf16

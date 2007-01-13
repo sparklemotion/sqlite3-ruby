@@ -591,7 +591,7 @@ module SQLite3
         abort = false
         begin
           yield self
-        rescue Exception
+        rescue ::Object
           abort = true
           raise
         ensure
