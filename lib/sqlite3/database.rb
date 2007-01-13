@@ -115,6 +115,7 @@ module SQLite3
       @results_as_hash = options.fetch(:results_as_hash,false)
       @type_translation = options.fetch(:type_translation,false)
       @translator = nil
+      @transaction_active = false
     end
 
     # Return +true+ if the string is a valid (ie, parsable) SQL statement, and
