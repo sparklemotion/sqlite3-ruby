@@ -743,6 +743,17 @@ module Integration
         assert_equal 1, @stmt.execute!.length
       end
 
+      define_method( "test_bind_param_with_various_types" ) do
+        @db.transaction do
+          @db.execute "create table all_types ( a integer primary key, b float, c string, d integer )"
+          @db.execute "insert into all_types ( b, c, d ) values ( 1.4, 'hello', 68719476735 )"
+        end
+
+        assert_equal 1, @db.execute( "select * from all_types where b = ?", 1.4 ).length
+        assert_equal 1, @db.execute( "select * from all_types where c = ?", 'hello').length
+        assert_equal 1, @db.execute( "select * from all_types where d = ?", 68719476735).length
+      end
+
       define_method( "test_execute_no_bind_no_block" ) do
         assert_instance_of SQLite3::ResultSet, @stmt.execute
       end

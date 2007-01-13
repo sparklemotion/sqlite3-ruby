@@ -117,6 +117,8 @@ module SQLite3
       must_be_open!
       if Fixnum === param
         case value
+          when Bignum then
+            @driver.bind_int64( @handle, param, value )
           when Integer then
             @driver.bind_int( @handle, param, value )
           when Numeric then
