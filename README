@@ -37,6 +37,15 @@ FAQ[http://sqlite-ruby.rubyforge.org/sqlite3/faq.html]. It includes examples of
 usage. If you have any questions that you feel should be address in the
 FAQ, please send them to jamis@37signals.com
 
+== Source Code
+
+The source repository is accessible via subversion:
+
+  svn co http://svn.jamisbuck.org/sqlite3-ruby/trunk
+
+Individual releases are tagged in the tags directory:
+
+  svn co http://svn.jamisbuck.org/sqlite3-ruby/tags
 
 == Contact Information
 
