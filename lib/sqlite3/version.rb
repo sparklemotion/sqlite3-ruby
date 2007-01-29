@@ -39,6 +39,7 @@ module SQLite3
     TINY  = 0
 
     STRING = [ MAJOR, MINOR, TINY ].join( "." )
+    #:beta-tag:
 
   end
 
