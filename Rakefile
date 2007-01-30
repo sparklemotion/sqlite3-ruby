@@ -195,5 +195,5 @@ task :beta do
 
   system "rake gem"
 
-  #system "svn revert lib/sqlite3/version.rb"
+  system "svn revert lib/sqlite3/version.rb"
 end
