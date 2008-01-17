@@ -30,7 +30,6 @@
 # =============================================================================
 #++
 
-require 'base64'
 require 'sqlite3/constants'
 require 'sqlite3/errors'
 require 'sqlite3/pragmas'

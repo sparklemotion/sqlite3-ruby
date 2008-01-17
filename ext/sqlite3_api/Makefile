@@ -4,7 +4,7 @@ SHELL = /bin/sh
 #### Start of system configuration section. ####
 
 srcdir = .
-topdir = /opt/local/lib/ruby/1.8/i686-darwin8.5.2
+topdir = /opt/local/lib/ruby/1.8/i686-darwin8.10.1
 hdrdir = $(topdir)
 VPATH = $(srcdir):$(topdir):$(hdrdir)
 prefix = $(DESTDIR)/opt/local
@@ -36,8 +36,10 @@ LIBRUBY_A = lib$(RUBY_SO_NAME)-static.a
 LIBRUBYARG_SHARED = -l$(RUBY_SO_NAME)
 LIBRUBYARG_STATIC = -l$(RUBY_SO_NAME)-static
 
-CFLAGS   =  -fno-common -O -pipe -I/opt/local/include  -fno-common -pipe -fno-common 
-CPPFLAGS = -I. -I$(topdir) -I$(hdrdir) -I$(srcdir) -DHAVE_SQLITE3_H -I/usr/local/include -O -pipe -I/opt/local/include
+RUBY_EXTCONF_H = 
+CFLAGS   =  -fno-common -O2  -fno-common -pipe -fno-common 
+INCFLAGS = -I. -I. -I/opt/local/lib/ruby/1.8/i686-darwin8.10.1 -I.
+CPPFLAGS = -DHAVE_SQLITE3_H -I/usr/local/include -I/opt/local/include
 CXXFLAGS = $(CFLAGS) 
 DLDFLAGS = -L/opt/local/lib  
 LDSHARED = cc -dynamic -bundle -undefined suppress -flat_namespace
@@ -46,9 +48,9 @@ EXEEXT =
 
 RUBY_INSTALL_NAME = ruby
 RUBY_SO_NAME = ruby
-arch = i686-darwin8.5.2
-sitearch = i686-darwin8.5.2
-vendorarch = i686-darwin8.5.2
+arch = i686-darwin8.10.1
+sitearch = i686-darwin8.10.1
+vendorarch = i686-darwin8.10.1
 ruby_version = 1.8
 ruby = /opt/local/bin/ruby
 RUBY = $(ruby)
@@ -63,8 +65,8 @@ COPY = cp
 
 preload = 
 
-libpath = /usr/local/lib $(libdir)
-LIBPATH =  -L"/usr/local/lib" -L"$(libdir)"
+libpath = $(libdir) /usr/local/lib
+LIBPATH =  -L"$(libdir)" -L"/usr/local/lib"
 DEFFILE = 
 
 CLEANFILES = 
@@ -79,6 +81,7 @@ SRCS = sqlite3_api_wrap.c
 OBJS = sqlite3_api_wrap.o
 TARGET = sqlite3_api
 DLLIB = $(TARGET).bundle
+EXTSTATIC = 
 STATIC_LIB = 
 
 RUBYCOMMONDIR = $(sitedir)$(target_prefix)
@@ -96,7 +99,7 @@ clean:
 		@-$(RM) $(CLEANLIBS) $(CLEANOBJS) $(CLEANFILES)
 
 distclean:	clean
-		@-$(RM) Makefile extconf.h conftest.* mkmf.log
+		@-$(RM) Makefile $(RUBY_EXTCONF_H) conftest.* mkmf.log
 		@-$(RM) core ruby$(EXEEXT) *~ $(DISTCLEANFILES)
 
 realclean:	distclean
@@ -120,19 +123,19 @@ site-install-rb: install-rb
 .SUFFIXES: .c .m .cc .cxx .cpp .C .o
 
 .cc.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
+	$(CXX) $(INCFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
 .cxx.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
+	$(CXX) $(INCFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
 .cpp.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
+	$(CXX) $(INCFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
 .C.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
+	$(CXX) $(INCFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
 .c.o:
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
+	$(CC) $(INCFLAGS) $(CPPFLAGS) $(CFLAGS) -c $<
 
 $(DLLIB): $(OBJS)
 	@-$(RM) $@

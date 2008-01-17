@@ -3,7 +3,6 @@
 %{
 #include <sqlite3.h>
 #include "ruby.h"
-#include "intern.h"
 
 #define Init_API Init_sqlite3_api
 
@@ -109,7 +108,7 @@ struct CallbackData {
 };
 
 %typemap(in) const void *str {
-  $1 = (void*)RSTRING($input)->ptr;
+  $1 = (void*)RSTRING_PTR($input);
 }
 
 %typemap(in) (const char *filename, sqlite3**) {
@@ -127,7 +126,7 @@ struct CallbackData {
 }
 
 %typemap(in) (const void *filename, sqlite3**) {
-  $1 = (void*)RSTRING($input)->ptr;
+  $1 = (void*)RSTRING_PTR($input);
   $2 = (sqlite3**)malloc( sizeof( sqlite3* ) );
 }
 
@@ -160,8 +159,8 @@ typedef void VALBLOB;
 }
 
 %typemap(in) (const char * sql,int,sqlite3_stmt**,const char**) (sqlite3_stmt *stmt, char *errmsg) {
-  $1 = RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
   $3 = &stmt2;
   $4 = &errmsg2;
 }
@@ -176,8 +175,8 @@ typedef void VALBLOB;
 }
 
 %typemap(in) (const void* sql,int,sqlite3_stmt**,const void**) (sqlite3_stmt *stmt, void *errmsg) {
-  $1 = RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
   $3 = &stmt2;
   $4 = &errmsg2;
 }
@@ -196,35 +195,35 @@ typedef void VALBLOB;
 }
 
 %typemap(in) (const void *blob,int) {
-  $1 = (void*)RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = (void*)RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
 }
 
 %typemap(in) (const void *blob,int,void(*free)(void*)) {
-  $1 = (void*)RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = (void*)RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
   $3 = SQLITE_TRANSIENT;
 }
 
 %typemap(in) (const char *text,int) {
-  $1 = RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
 }
 
 %typemap(in) (const char *text,int,void(*free)(void*)) {
-  $1 = RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
   $3 = SQLITE_TRANSIENT;
 }
 
 %typemap(in) (const void *utf16,int) {
-  $1 = (void*)RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = (void*)RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
 }
 
 %typemap(in) (const void *utf16,int,void(*free)(void*)) {
-  $1 = (void*)RSTRING($input)->ptr;
-  $2 = RSTRING($input)->len;
+  $1 = (void*)RSTRING_PTR($input);
+  $2 = RSTRING_LEN($input);
   $3 = SQLITE_TRANSIENT;
 }
 
