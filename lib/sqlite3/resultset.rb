@@ -123,7 +123,9 @@ module SQLite3
         @driver.data_count( @stmt.handle ).times do |column|
           type	= @driver.column_type( @stmt.handle, column )
 
-          if type == Constants::ColumnType::NULL
+          if type == Constants::ColumnType::TEXT
+            row << @driver.column_text( @stmt.handle, column )
+          elsif type == Constants::ColumnType::NULL
             row << nil
           elsif type == Constants::ColumnType::BLOB
             row << @driver.column_blob( @stmt.handle, column )
