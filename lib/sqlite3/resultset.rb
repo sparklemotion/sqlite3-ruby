@@ -121,13 +121,14 @@ module SQLite3
       unless @eof
         row = []
         @driver.data_count( @stmt.handle ).times do |column|
-          case @driver.column_type( @stmt.handle, column )
-            when Constants::ColumnType::NULL then
-              row << nil
-            when Constants::ColumnType::BLOB then
-              row << @driver.column_blob( @stmt.handle, column )
-            else
-              row << @driver.column_text( @stmt.handle, column )
+          type	= @driver.column_type( @stmt.handle, column )
+
+          if type == Constants::ColumnType::NULL
+            row << nil
+          elsif type == Constants::ColumnType::BLOB
+            row << @driver.column_blob( @stmt.handle, column )
+          else
+            row << @driver.column_text( @stmt.handle, column )
           end
         end
 
