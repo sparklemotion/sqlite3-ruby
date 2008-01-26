@@ -48,6 +48,7 @@ module SQLite3
     # translators for most SQL data types.
     def initialize
       @translators = Hash.new( proc { |type,value| value } )
+      @type_name_cache = {}
       register_default_translators
     end
 
@@ -81,9 +82,11 @@ module SQLite3
     # A convenience method for working with type names. This returns the "base"
     # type name, without any parenthetical data.
     def type_name( type )
-      return "" if type.nil?
-      type = $1 if type =~ /^(.*?)\(/
-      type.upcase
+      @type_name_cache[type] ||= begin
+        type = "" if type.nil?
+        type = $1 if type =~ /^(.*?)\(/
+        type.upcase
+      end
     end
     private :type_name
 
