@@ -191,7 +191,7 @@ module SQLite3 ; module Driver ; module Native
     end
 
     def self.api_delegate( name )
-      define_method( name ) { |*args| API.send( "sqlite3_#{name}", *args ) }
+      eval "def #{name} (*args) API.sqlite3_#{name}( *args ) ; end"
     end
 
     api_delegate :libversion
