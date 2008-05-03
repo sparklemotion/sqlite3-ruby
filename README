@@ -39,13 +39,9 @@ FAQ, please send them to jamis@37signals.com
 
 == Source Code
 
-The source repository is accessible via subversion:
+The source repository is accessible via git:
 
-  svn co http://svn.jamisbuck.org/sqlite3-ruby/trunk
-
-Individual releases are tagged in the tags directory:
-
-  svn co http://svn.jamisbuck.org/sqlite3-ruby/tags
+  git clone git://github.com/jamis/sqlite3-ruby.git
 
 == Contact Information
 
