@@ -302,19 +302,19 @@ module SQLite3
     # The handler will be invoked with the name of the resource that was
     # busy, and the number of times it has been retried.
     #
-    # See also #busy_timeout.
+    # See also the mutually exclusive #busy_timeout. 
     def busy_handler( data=nil, &block ) # :yields: data, retries
       result = @driver.busy_handler( @handle, data, &block )
       Error.check( result, self )
     end
 
     # Indicates that if a request for a resource terminates because that
-    # resource is busy, SQLite should wait for the indicated number of
-    # milliseconds before trying again. By default, SQLite does not retry
+    # resource is busy, SQLite should sleep and retry for up to the indicated
+    # number of milliseconds. By default, SQLite does not retry
     # busy resources. To restore the default behavior, send 0 as the
     # +ms+ parameter.
     #
-    # See also #busy_handler.
+    # See also the mutually exclusive #busy_handler.
     def busy_timeout( ms )
       result = @driver.busy_timeout( @handle, ms )
       Error.check( result, self )
