@@ -581,7 +581,7 @@ module Integration
       end
 
       define_method( "test_busy_timeout" ) do
-        @db.busy_timeout 300
+        @db.busy_timeout 1000
         busy = Mutex.new
         busy.lock
 
@@ -605,7 +605,7 @@ module Integration
         busy.unlock
         t.join
 
-        assert time.real*1000 >= 300
+        assert time.real*1000 >= 1000
       end
 
       define_method( "test_create_function" ) do
