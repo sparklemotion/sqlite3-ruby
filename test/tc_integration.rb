@@ -537,7 +537,7 @@ module Integration
         @db.busy_handler do |data,count|
           handler_call_count += 1
           busy.unlock
-          1
+          true
         end
 
         assert_nothing_raised do
@@ -567,7 +567,7 @@ module Integration
 
         @db.busy_handler do |data, count|
           handler_call_count += 1
-          0
+          false
         end
 
         assert_raise( SQLite3::BusyException ) do
