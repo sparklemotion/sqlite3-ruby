@@ -27,8 +27,8 @@ module Integration
 
     # == TC_OpenClose =========================================================
 
-    test_case = Class.new( Test::Unit::TestCase ) do 
-      define_method( "test_create_close" ) do 
+    test_case = Class.new( Test::Unit::TestCase ) do
+      define_method( "test_create_close" ) do
         begin
           db = SQLite3::Database.new( "test-create.db",
             :driver => driver )
@@ -39,7 +39,7 @@ module Integration
         end
       end
 
-      define_method( "test_open_close" ) do 
+      define_method( "test_open_close" ) do
         begin
           File.open( "test-open.db", "w" ) { |f| }
           assert File.exist?( "test-open.db" )
@@ -51,7 +51,7 @@ module Integration
         end
       end
 
-      define_method( "test_bad_open" ) do 
+      define_method( "test_bad_open" ) do
         assert_raise( SQLite3::CantOpenException ) do
           SQLite3::Database.new( ".", :driver => driver )
         end
@@ -61,7 +61,7 @@ module Integration
 
     # == TC_Database ==========================================================
 
-    test_case = Class.new( Test::Unit::TestCase ) do 
+    test_case = Class.new( Test::Unit::TestCase ) do
       define_method( "setup" ) do
         @db = SQLite3::Database.new( "test.db", :driver=>driver )
         @db.transaction do
@@ -244,7 +244,7 @@ module Integration
           assert [ "a", "b" ], row unless called == 0
           called += 1
         end
-        assert_equal 1, called 
+        assert_equal 1, called
       end
 
       define_method( "test_execute2_no_block_with_bind_no_match" ) do
@@ -519,83 +519,93 @@ module Integration
       end
 
       define_method( "test_busy_handler_outwait" ) do
-        begin
-          db2 = SQLite3::Database.open( "test.db", :driver=>driver )
-          handler_call_count = 0
-          db2.busy_handler do |data,count|
-            handler_call_count += 1
-            sleep 0.5
-            1
-          end
+        busy = Mutex.new
+        busy.lock
+        handler_call_count = 0
 
-          t = Thread.new do
-            @db.transaction( :exclusive ) do
-              sleep 0.3
+        t = Thread.new do
+          begin
+            db2 = SQLite3::Database.open( "test.db", :driver=>driver )
+            db2.transaction( :exclusive ) do
+              busy.lock
             end
+          ensure
+            db2.close if db2
           end
-
-          assert_nothing_raised do
-            db2.execute "insert into foo (b) values ( 'from 2' )"
-          end
-
-          assert_equal 1, handler_call_count
-
-          t.join
-        ensure
-          db2.close if db2
         end
+
+        @db.busy_handler do |data,count|
+          handler_call_count += 1
+          busy.unlock
+          1
+        end
+
+        assert_nothing_raised do
+          @db.execute "insert into foo (b) values ( 'from 2' )"
+        end
+
+        t.join
+
+        assert_equal 1, handler_call_count
       end
 
       define_method( "test_busy_handler_impatient" ) do
-        begin
-          db2 = SQLite3::Database.open( "test.db", :driver=>driver )
-          handler_call_count = 0
-          db2.busy_handler do |data,count|
-            handler_call_count += 1
-            sleep 0.1
-            0
-          end
+        busy = Mutex.new
+        busy.lock
+        handler_call_count = 0
 
-          t = Thread.new do
-            @db.transaction( :exclusive ) do
-              sleep 0.2
+        t = Thread.new do
+          begin
+            db2 = SQLite3::Database.open( "test.db", :driver=>driver )
+            db2.transaction( :exclusive ) do
+              busy.lock
             end
+          ensure
+            db2.close if db2
           end
-
-          assert_raise( SQLite3::BusyException ) do
-            db2.execute "insert into foo (b) values ( 'from 2' )"
-          end
-
-          assert_equal 1, handler_call_count
-
-          t.join
-        ensure
-          db2.close if db2
         end
+
+        @db.busy_handler do |data, count|
+          handler_call_count += 1
+          0
+        end
+
+        assert_raise( SQLite3::BusyException ) do
+          @db.execute "insert into foo (b) values ( 'from 2' )"
+        end
+
+        busy.unlock
+        t.join
+
+        assert_equal 1, handler_call_count
       end
 
       define_method( "test_busy_timeout" ) do
-        begin
-          db2 = SQLite3::Database.open( "test.db", :driver=>driver )
-          db2.busy_timeout 300
+        @db.busy_timeout 300
+        busy = Mutex.new
+        busy.lock
 
-          t = Thread.new do
-            @db.transaction( :exclusive ) do
-              sleep 0.1
+        t = Thread.new do
+          begin
+            db2 = SQLite3::Database.open( "test.db", :driver=>driver )
+            db2.transaction( :exclusive ) do
+              busy.lock
             end
+          ensure
+            db2.close if db2
           end
-
-          time = Benchmark.measure do
-            assert_raise( SQLite3::BusyException ) do
-              db2.execute "insert into foo (b) values ( 'from 2' )"
-            end
-          end
-          assert time.real*1000 >= 300
-
-          t.join
-        ensure
-          db2.close if db2
         end
+
+        time = Benchmark.measure do
+          assert_raise( SQLite3::BusyException ) do
+            @db.execute "insert into foo (b) values ( 'from 2' )"
+          end
+        end
+
+        busy.unlock
+        t.join
+
+        assert time.real*1000 >= 300
       end
 
       define_method( "test_create_function" ) do
@@ -679,7 +689,7 @@ module Integration
 
     # == TC_Statement =========================================================
 
-    test_case = Class.new( Test::Unit::TestCase ) do 
+    test_case = Class.new( Test::Unit::TestCase ) do
       define_method( "setup" ) do
         @db = SQLite3::Database.new( "test.db", :driver=>driver )
         @db.transaction do
@@ -876,7 +886,7 @@ module Integration
 
     # == TC_ResultSet =========================================================
 
-    test_case = Class.new( Test::Unit::TestCase ) do 
+    test_case = Class.new( Test::Unit::TestCase ) do
       define_method( "setup" ) do
         @db = SQLite3::Database.new( "test.db", :driver=>driver )
         @db.transaction do
