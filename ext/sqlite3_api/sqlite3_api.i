@@ -236,7 +236,7 @@ typedef void VALBLOB;
 }
 
 %typemap(in) sqlite_int64 {
-  $1 = rb_big2ll( $input );
+  $1 = rb_num2ll( $input );
 }
 
 %typemap(in) (sqlite3_context*,int data_size) {

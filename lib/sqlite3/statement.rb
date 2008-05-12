@@ -90,7 +90,11 @@ module SQLite3
           when Bignum then
             @driver.bind_int64( @handle, param, value )
           when Integer then
-            @driver.bind_int( @handle, param, value )
+            if value >= (2 ** 31)
+              @driver.bind_int64( @handle, param, value )
+            else
+              @driver.bind_int( @handle, param, value )
+            end
           when Numeric then
             @driver.bind_double( @handle, param, value.to_f )
           when Blob then

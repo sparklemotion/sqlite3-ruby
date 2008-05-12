@@ -1762,7 +1762,7 @@ _wrap_sqlite3_bind_int64(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_sqlite3_stmt, 0);
     arg2 = NUM2INT(argv[1]);
     {
-        arg3 = rb_big2ll( argv[2] );
+        arg3 = rb_num2ll( argv[2] );
     }
     result = (int)sqlite3_bind_int64(arg1,arg2,arg3);
     
@@ -2614,7 +2614,7 @@ _wrap_sqlite3_result_int64(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_sqlite3_context, 0);
     {
-        arg2 = rb_big2ll( argv[1] );
+        arg2 = rb_num2ll( argv[1] );
     }
     sqlite3_result_int64(arg1,arg2);
     
