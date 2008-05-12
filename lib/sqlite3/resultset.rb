@@ -33,6 +33,9 @@ module SQLite3
     # to the first row of the result set.
     def commence
       result = @driver.step( @stmt.handle )
+      if result == Constants::ErrorCode::ERROR
+        @driver.reset( @stmt.handle )
+      end
       check result
       @first_row = true
     end
