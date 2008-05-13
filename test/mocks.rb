@@ -1,70 +1,45 @@
 require 'rubygems'
-gem 'flexmock', '< 0.1.0'
+gem 'mocha'
 
-require 'flexmock'
+require 'mocha'
 
-class FlexMockWithArgs < FlexMock
-  attr_reader :mock_args
-  attr_reader :mock_blocks
-
+class Driver < Mocha::Mock
   def initialize
     super
-    @mock_args = Hash.new { |h,k| h[k] = [] }
-    @mock_blocks = Hash.new { |h,k| h[k] = [] }
-  end
-
-  def method_missing( sym, *args, &block )
-    @mock_args[sym] << args
-    @mock_blocks[sym] << block
-    super
+    stubs( :open ).returns([0, 'cookie'])
+    stubs( :close ).returns(0)
+    stubs( :complete? ).returns(0)
+    stubs( :errmsg ).returns('')
+    stubs( :errcode ).returns(0)
+    stubs( :trace ).returns(nil)
+    stubs( :set_authorizer ).returns(0)
+    stubs( :prepare ).returns([0, 'stmt', 'remainder'])
+    stubs( :finalize ).returns(0)
+    stubs( :changes ).returns(14)
+    stubs( :total_changes ).returns(28)
+    stubs( :interrupt ).returns(0)
   end
 end
 
-class Driver < FlexMockWithArgs
-  def self.instance
-    @@instance
-  end
-
+class MockResultSet < Mocha::Mock
   def initialize
     super
-    @@instance = self
-    mock_handle( :open ) { [0,"cookie"] }
-    mock_handle( :close ) { 0 }
-    mock_handle( :complete? ) { 0 }
-    mock_handle( :errmsg ) { "" }
-    mock_handle( :errcode ) { 0 }
-    mock_handle( :trace ) { nil }
-    mock_handle( :set_authorizer ) { 0 }
-    mock_handle( :prepare ) { [0,"stmt", "remainder"] }
-    mock_handle( :finalize ) { 0 }
-    mock_handle( :changes ) { 14 }
-    mock_handle( :total_changes ) { 28 }
-    mock_handle( :interrupt ) { 0 }
+    stubs( :each ).yields(['foo'])
+    stubs( :columns ).returns(['name'])
   end
 end
 
-class Statement < FlexMockWithArgs
-  def self.instance
-    @@instance
-  end
-
+class Statement < Mocha::Mock
   attr_reader :handle
   attr_reader :sql
   attr_reader :last_result
 
   def initialize( handle, sql )
     super()
-    @@instance = self
     @handle = handle
     @sql = sql
-    mock_handle( :close ) { 0 }
-    mock_handle( :remainder ) { "" }
-    mock_handle( :execute ) do
-      @last_result = FlexMockWithArgs.new
-      @last_result.mock_handle( :each ) { @last_result.mock_blocks[:each].last.call ["foo"] }
-      @last_result.mock_handle( :inject ) { |a,| @last_result.mock_blocks[:inject].last.call a, ["foo"] }
-      @last_result.mock_handle( :columns ) { ["name"] }
-      @last_result
-    end
+    stubs( :close ).returns(0)
+    stubs( :remainder ).returns('')
+    stubs( :execute ).returns(MockResultSet.new)
   end
 end

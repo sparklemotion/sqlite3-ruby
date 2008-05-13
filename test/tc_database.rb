@@ -7,19 +7,22 @@ require 'mocks'
 
 class TC_Database_Init < Test::Unit::TestCase
   def test_new
-    db = SQLite3::Database.new( "foo.db", :driver => Driver )
-    assert_equal 1, Driver.instance.mock_count(:open)
+    # any_instance fails here...
+    driver = Driver.new
+    driver.expects(:open).once.with('foo.db', false).returns([0, 'cookie'])
+    Driver.stubs(:new).returns(driver)
+    db = SQLite3::Database.new( 'foo.db', :driver => Driver )
     assert !db.closed?
-    assert_equal [["foo.db",false]], Driver.instance.mock_args[:open]
     assert !db.results_as_hash
     assert !db.type_translation
   end
 
   def test_open
+    driver = Driver.new
+    driver.expects(:open).once.with('foo.db', false).returns([0, 'cookie'])
+    Driver.stubs(:new).returns(driver)
     db = SQLite3::Database.open( "foo.db", :driver => Driver )
-    assert_equal 1, Driver.instance.mock_count(:open)
     assert !db.closed?
-    assert_equal [["foo.db",false]], Driver.instance.mock_args[:open]
     assert !db.results_as_hash
     assert !db.type_translation
   end
@@ -57,18 +60,18 @@ class TC_Database < Test::Unit::TestCase
   end
 
   def test_complete
+    Driver.any_instance.expects(:complete?)
     @db.complete? "foo"
-    assert_equal 1, Driver.instance.mock_count( :complete? )
   end
 
   def test_errmsg
+    Driver.any_instance.expects(:errmsg)
     @db.errmsg
-    assert_equal 1, Driver.instance.mock_count( :errmsg )
   end
 
   def test_errcode
+    Driver.any_instance.expects(:errcode)
     @db.errcode
-    assert_equal 1, Driver.instance.mock_count( :errcode )
   end
 
   def test_translator
@@ -77,84 +80,95 @@ class TC_Database < Test::Unit::TestCase
   end
 
   def test_close
+    Driver.any_instance.expects(:close).returns(0)
     @db.close
-    assert_equal 1, Driver.instance.mock_count( :close )
     assert @db.closed?
+    Driver.any_instance.expects(:close).never
     @db.close
-    assert_equal 1, Driver.instance.mock_count( :close )
   end
 
   def test_trace
+    Driver.any_instance.expects(:trace).with('cookie', 15)
     @db.trace( 15 ) { "foo" }
-    driver = Driver.instance
-    assert_equal 1, driver.mock_count( :trace )
-    assert_equal [[ "cookie", 15 ]], driver.mock_args[:trace]
-    assert_equal 1, driver.mock_blocks[:trace].length
+    # assert_equal 1, driver.mock_blocks[:trace].length
   end
 
   def test_authorizer
+    Driver.any_instance.expects(:set_authorizer).with('cookie', 15).returns(0)
     @db.authorizer( 15 ) { "foo" }
-    driver = Driver.instance
-    assert_equal 1, driver.mock_count( :set_authorizer )
-    assert_equal [[ "cookie", 15 ]], driver.mock_args[:set_authorizer]
-    assert_equal 1, driver.mock_blocks[:set_authorizer].length
+    # assert_equal 1, driver.mock_blocks[:set_authorizer].length
   end
 
   def test_prepare_no_block
+    Statement.any_instance.expects(:close).never
     assert_nothing_raised { @db.prepare( "foo" ) }
-    assert_equal 0, Statement.instance.mock_count( :close )
   end
 
   def test_prepare_with_block
     called = false
+    # any_instance fails here...
+    statement = Statement.new('cookie', 'foo')
+    statement.expects(:close).once
+    Statement.stubs(:new).returns(statement)
     @db.prepare( "foo" ) { |stmt| called = true }
     assert called
-    assert_equal 1, Statement.instance.mock_count( :close )
   end
 
   def test_execute_no_block
+    # any_instance fails here...
+    statement = Statement.new('cookie', 'foo')
+    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
+    Statement.stubs(:new).returns(statement)
+    MockResultSet.any_instance.stubs(:inject).returns([['foo']])
     result = @db.execute( "foo", "bar", "baz" )
-    stmt = Statement.instance
     assert_equal [["foo"]], result
-    assert_equal [["bar", "baz"]], stmt.mock_args[:execute]
   end
 
   def test_execute_with_block
     called = false
+    # any_instance fails here...
+    statement = Statement.new('cookie', 'foo')
+    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
+    Statement.stubs(:new).returns(statement)
     @db.execute( "foo", "bar", "baz" ) do |row|
       called = true
       assert_equal ["foo"], row
     end
 
-    stmt = Statement.instance
     assert called
-    assert_equal [["bar", "baz"]], stmt.mock_args[:execute]
   end
 
   def test_execute2_no_block
+    # any_instance fails here...
+    statement = Statement.new('cookie', 'foo')
+    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
+    Statement.stubs(:new).returns(statement)
+    MockResultSet.any_instance.stubs(:inject).returns([['name'], ['foo']])
     result = @db.execute2( "foo", "bar", "baz" )
-    stmt = Statement.instance
     assert_equal [["name"],["foo"]], result
-    assert_equal [["bar", "baz"]], stmt.mock_args[:execute]
   end
 
   def test_execute2_with_block
     called = false
     parts = [ ["name"],["foo"] ]
+    # any_instance fails here...
+    statement = Statement.new('cookie', 'foo')
+    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
+    Statement.stubs(:new).returns(statement)
     @db.execute2( "foo", "bar", "baz" ) do |row|
       called = true
       assert_equal parts.shift, row
     end
 
-    stmt = Statement.instance
     assert called
-    assert_equal [["bar", "baz"]], stmt.mock_args[:execute]
   end
 
   def test_execute_batch
+    # any_instance fails here...
+    statement = Statement.new('cookie', 'foo')
+    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
+    Statement.stubs(:new).returns(statement)
     @db.execute_batch( "foo", "bar", "baz" )
-    stmt = Statement.instance
-    assert_equal [["bar", "baz"]], stmt.mock_args[:execute]
   end
 
   def test_get_first_row
@@ -168,17 +182,17 @@ class TC_Database < Test::Unit::TestCase
   end
 
   def test_changes
+    Driver.any_instance.expects(:changes).returns(14)
     assert_equal 14, @db.changes
-    assert_equal 1, Driver.instance.mock_count(:changes)
   end
 
   def test_total_changes
+    Driver.any_instance.expects(:total_changes).returns(28)
     assert_equal 28, @db.total_changes
-    assert_equal 1, Driver.instance.mock_count(:total_changes)
   end
 
   def test_interrupt
+    Driver.any_instance.expects(:interrupt)
     @db.interrupt
-    assert_equal 1, Driver.instance.mock_count(:interrupt)
   end
 end
