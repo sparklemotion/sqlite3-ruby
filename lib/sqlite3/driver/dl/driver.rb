@@ -231,6 +231,7 @@ module SQLite3 ; module Driver ; module DL
     api_delegate :aggregate_count
     api_delegate :bind_double
     api_delegate :bind_int
+    api_delegate :bind_int64
     api_delegate :bind_null
     api_delegate :bind_parameter_index
     api_delegate :bind_parameter_name
