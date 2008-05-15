@@ -61,7 +61,7 @@ def add_api_links( text )
     disp_obj = obj = $1
 
     case obj
-      when "Pragmas": disp_obj = "Database"
+      when "Pragmas"; disp_obj = "Database"
     end
 
     method = $3
