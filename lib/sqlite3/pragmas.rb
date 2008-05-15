@@ -258,7 +258,7 @@ module SQLite3
       # unquotes those values.
       def tweak_default(hash)
         case hash["dflt_value"]
-        when /^null$/i then
+        when /^null$/i
           hash["dflt_value"] = nil
         when /^'(.*)'$/
           hash["dflt_value"] = $1.gsub(/''/, "'")
