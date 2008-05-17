@@ -64,7 +64,7 @@ module SQLite3
       [ "time",
         "timestamp" ].each { |type| add_translator( type ) { |t, v| Time.parse( v ) } }
 
-      add_translator( "date" ) { |t,v| time = Time.parse(v); Date.new(time.year, time.month, time.day) }
+      add_translator( "date" ) { |t,v| Date.parse(v) }
       add_translator( "datetime" ) { |t,v| DateTime.parse(v) }
 
       [ "decimal",
