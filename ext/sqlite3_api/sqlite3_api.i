@@ -2,12 +2,7 @@
 %include "typemaps.i"
 %{
 #include <sqlite3.h>
-#include "version.h"
-#if RUBY_VERSION_CODE < 190
 #include "ruby.h"
-#else
-#include "ruby/intern.h"
-#endif
 
 #define Init_API Init_sqlite3_api
 
