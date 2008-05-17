@@ -960,7 +960,7 @@ module Integration
 
       define_method( "test_type_translation_with_null_column" ) do
         @db.type_translation = true
-        @db.execute "create table bar ( a integer, b datetime, c string )"
+        @db.execute "create table bar ( a integer, b time, c string )"
         @db.execute "insert into bar (a, b, c) values (NULL, '1974-07-25 14:39:00', 'hello')"
         @db.execute "insert into bar (a, b, c) values (1, NULL, 'hello')"
         @db.execute "insert into bar (a, b, c) values (2, '1974-07-25 14:39:00', NULL)"
@@ -968,6 +968,19 @@ module Integration
           assert_equal [nil, Time.local(1974, 7, 25, 14, 39, 0), 'hello'], result.next
           assert_equal [1, nil, 'hello'], result.next
           assert_equal [2, Time.local(1974, 7, 25, 14, 39, 0), nil], result.next
+        end
+      end
+
+      define_method( "test_date_and_time_translation" ) do
+        @db.type_translation = true
+        @db.execute "create table bar ( a date, b datetime, c time, d timestamp )"
+        @db.execute "insert into bar (a, b, c, d) values ('1999-01-08', '1997-12-17 07:37:16', '07:37:16', '2004-10-19 10:23:54')"
+        @db.query( "select * from bar" ) do |result|
+          result = result.next
+          assert result[0].is_a?(Date)
+          assert result[1].is_a?(DateTime)
+          assert result[2].is_a?(Time)
+          assert result[3].is_a?(Time)
         end
       end
 

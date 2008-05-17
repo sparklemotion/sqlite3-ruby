@@ -61,9 +61,11 @@ module SQLite3
     # Register the default translators for the current Translator instance.
     # This includes translators for most major SQL data types.
     def register_default_translators
-      [ "date",
-        "datetime",
-        "time" ].each { |type| add_translator( type ) { |t,v| Time.parse( v ) } }
+      [ "time",
+        "timestamp" ].each { |type| add_translator( type ) { |t, v| Time.parse( v ) } }
+
+      add_translator( "date" ) { |t,v| time = Time.parse(v); Date.new(time.year, time.month, time.day) }
+      add_translator( "datetime" ) { |t,v| DateTime.parse(v) }
 
       [ "decimal",
         "float",
@@ -91,7 +93,6 @@ module SQLite3
         end
       end
 
-      add_translator( "timestamp" ) { |type, value| Time.at( value.to_i ) }
       add_translator( "tinyint" ) do |type, value|
         if type =~ /\(\s*1\s*\)/
           value.to_i == 1
