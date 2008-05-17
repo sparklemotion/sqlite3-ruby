@@ -147,6 +147,9 @@ module SQLite3
 
     # Returns a Statement object representing the given SQL. This does not
     # execute the statement; it merely prepares the statement for execution.
+    #
+    # The Statement can then be executed using Statement#execute.
+    #
     def prepare( sql )
       stmt = @statement_factory.new( self, sql )
       if block_given?
