@@ -94,6 +94,17 @@ module Integration
         end
       end
 
+      define_method( "test_table_info_without_defaults_for_version_3_3_8_and_higher" ) do
+        @db.transaction do
+          @db.execute "create table no_defaults_test ( a integer default 1, b integer )"
+          data = @db.table_info( "no_defaults_test" )
+          assert_equal({"name" => "a", "type" => "integer", "dflt_value" => "1", "notnull" => "0", "cid" => "0", "pk" => "0"},
+            data[0])
+          assert_equal({"name" => "b", "type" => "integer", "dflt_value" => nil, "notnull" => "0", "cid" => "1", "pk" => "0"},
+            data[1])
+        end
+      end
+
       define_method( "test_complete_fail" ) do
         assert !@db.complete?( "select * from foo" )
       end
