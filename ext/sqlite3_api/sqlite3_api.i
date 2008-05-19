@@ -13,8 +13,8 @@ struct CallbackData {
 };
 
 typedef struct CallbackData CallbackData;
-typedef void BLOB;
-typedef void VALBLOB;
+typedef void RUBY_BLOB;
+typedef void RUBY_VALBLOB;
 
 int Sqlite3_ruby_busy_handler(void* data,int value) {
   VALUE result;
@@ -139,14 +139,14 @@ struct CallbackData {
   $result = ary;
 }
 
-typedef void BLOB;
-%typemap(out) const BLOB * {
+typedef void RUBY_BLOB;
+%typemap(out) const RUBY_BLOB * {
   $result = $1 ?
     rb_str_new( (char*)$1, sqlite3_column_bytes( arg1, arg2 ) ) : Qnil;
 }
 
-typedef void VALBLOB;
-%typemap(out) const VALBLOB * {
+typedef void RUBY_VALBLOB;
+%typemap(out) const RUBY_VALBLOB * {
   $result = $1 ? rb_str_new( (char*)$1, sqlite3_value_bytes( arg1 ) ) : Qnil;
 }
 
@@ -304,7 +304,7 @@ int sqlite3_step(sqlite3_stmt*);
 
 int sqlite3_data_count(sqlite3_stmt*);
 
-const BLOB *sqlite3_column_blob(sqlite3_stmt*,int);
+const RUBY_BLOB *sqlite3_column_blob(sqlite3_stmt*,int);
 int sqlite3_column_bytes(sqlite3_stmt*,int);
 int sqlite3_column_bytes16(sqlite3_stmt*,int);
 double sqlite3_column_double(sqlite3_stmt*,int);
@@ -323,7 +323,7 @@ int sqlite3_create_function16(sqlite3*,const void*str,int,int,void*,void(*func)(
 
 int sqlite3_aggregate_count(sqlite3_context*);
 
-const VALBLOB *sqlite3_value_blob(sqlite3_value*);
+const RUBY_VALBLOB *sqlite3_value_blob(sqlite3_value*);
 int sqlite3_value_bytes(sqlite3_value*);
 int sqlite3_value_bytes16(sqlite3_value*);
 double sqlite3_value_double(sqlite3_value*);
