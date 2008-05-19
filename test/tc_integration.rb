@@ -4,6 +4,7 @@ $:.unshift "#{File.dirname(__FILE__)}/../ext/sqlite3_api"
 require 'test/unit'
 require 'benchmark'
 require 'sqlite3/database'
+require 'thread'
 
 class String
   def to_utf16(terminate=false)
