@@ -2,7 +2,7 @@ require 'sqlite3/constants'
 
 module SQLite3
 
-  class Exception < ::Exception
+  class Exception < ::StandardError
     @code = 0
 
     # The numeric error code that this exception represents.
