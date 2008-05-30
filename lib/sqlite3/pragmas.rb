@@ -262,6 +262,8 @@ module SQLite3
           hash["dflt_value"] = nil
         when /^'(.*)'$/
           hash["dflt_value"] = $1.gsub(/''/, "'")
+        when /^"(.*)"$/
+          hash["dflt_value"] = $1.gsub(/""/, '"')
         end
       end
   end
