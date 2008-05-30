@@ -1,0 +1,33 @@
+=== *unreleased*
+
+* Make the table_info method adjust the returned default value for the rows
+  so that the sqlite3 change in 3.3.8 and greater can be handled
+  transparently [Jamis Buck <jamis@37signals.com>]
+
+* Ruby 1.9 compatibility tweaks [Roman Le Negrate <roman2k@free.fr>]
+
+* Various performance enhancements [thanks Erik Veenstra]
+
+* Correct busy_handler documentation [Rob Holland <rob@inversepath.com>]
+
+* Use int_bind64 on Fixnum values larger than a 32bit C int can take. [Rob Holland <rob@inversepath.com>]
+
+* Work around a quirk in SQLite's error reporting by calling sqlite3_reset
+  to produce a more informative error code upon a failure from
+  sqlite3_step. [Rob Holland <rob@inversepath.com>]
+
+* Various documentation, test, and style tweaks [Rob Holland <rob@inversepath.com>]
+
+* Be more granular with time/data translation [Rob Holland <rob@inversepath.com>]
+
+* Use Date directly for parsing rather than going via Time [Rob Holland <rob@inversepath.com>]
+
+* Check for the rt library and fdatasync so we link against that when
+  needed [Rob Holland <rob@inversepath.com>]
+
+* Rename data structures to avoid collision on win32. based on patch
+  by: Luis Lavena [Rob Holland <rob@inversepath.com>]
+
+* Add test for defaults [Daniel Rodríguez Troitiño]
+
+* Correctly unquote double-quoted pragma defaults [Łukasz Dargiewicz <lukasz.dargiewicz@gmail.com>]
