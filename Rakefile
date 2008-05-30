@@ -23,7 +23,7 @@ PACKAGE_FILES = FileList.new do |fl|
   [ "api", "doc" ].each do |dir|
     fl.include "#{dir}/**/*"
   end
-  fl.include "ChangeLog", "README", "LICENSE", "#{PACKAGE_NAME}.gemspec", "setup.rb"
+  fl.include "CHANGELOG.rdoc", "README.rdoc", "LICENSE", "#{PACKAGE_NAME}.gemspec", "setup.rb"
   fl.include SOURCE_FILES
 end
 
@@ -40,13 +40,6 @@ end
 
 desc "Default task"
 task :default => [ :test ]
-
-desc "Build the ChangeLog"
-task :changelog do
-  output = `ruby util/svn2cl.rb`
-  cvs = File.read( "ChangeLog.cvs" )
-  File.open( "ChangeLog", "w" ) { |f| f.write output + cvs }
-end
 
 desc "Clean generated files"
 task :clean do
@@ -94,10 +87,10 @@ bz2_file = "#{package_name}.tar.bz2"
 zip_file = "#{package_name}.zip"
 gem_file = "#{package_name}.gem"
 
-task :gzip => SOURCE_FILES + [ :changelog, :faq, :rdoc, "#{package_dir}/#{gz_file}" ]
-task :bzip => SOURCE_FILES + [ :changelog, :faq, :rdoc, "#{package_dir}/#{bz2_file}" ]
-task :zip  => SOURCE_FILES + [ :changelog, :faq, :rdoc, "#{package_dir}/#{zip_file}" ]
-task :gem  => SOURCE_FILES + [ :changelog, :faq, "#{package_dir}/#{gem_file}" ]
+task :gzip => SOURCE_FILES + [ :faq, :rdoc, "#{package_dir}/#{gz_file}" ]
+task :bzip => SOURCE_FILES + [ :faq, :rdoc, "#{package_dir}/#{bz2_file}" ]
+task :zip  => SOURCE_FILES + [ :faq, :rdoc, "#{package_dir}/#{zip_file}" ]
+task :gem  => SOURCE_FILES + [ :faq, "#{package_dir}/#{gem_file}" ]
 
 task :package => [ :gzip, :bzip, :zip, :gem ]
 
@@ -148,7 +141,7 @@ end
 Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'api'
   rdoc.title    = "SQLite3/Ruby"
-  rdoc.options += %w(--line-numbers --inline-source --main README)
+  rdoc.options += %w(--line-numbers --inline-source --main README.rdoc)
   rdoc.rdoc_files.include('lib/**/*.rb')
 
   if can_require( "rdoc/generators/template/html/jamis" )

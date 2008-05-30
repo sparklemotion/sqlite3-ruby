@@ -10,14 +10,13 @@ Gem::Specification.new do |s|
    s.summary = "SQLite3/Ruby is a module to allow Ruby scripts to interface with a SQLite database."
 
    s.files = Dir.glob("{doc,ext,lib,test}/**/*")
-   s.files.concat [ "LICENSE", "README", "ChangeLog" ]
+   s.files.concat [ "LICENSE", "README.rdoc", "CHANGELOG.rdoc" ]
 
    s.require_path = 'lib'
-   s.autorequire = 'sqlite3'
 
    s.has_rdoc = true
-   s.extra_rdoc_files = [ "README" ]
-   s.rdoc_options = [ "--main", "README" ]
+   s.extra_rdoc_files = [ "README.rdoc" ]
+   s.rdoc_options = [ "--main", "README.rdoc" ]
 
    s.test_suite_file = "test/tests.rb"
 
