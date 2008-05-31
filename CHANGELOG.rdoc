@@ -1,4 +1,4 @@
-=== *unreleased*
+=== 1.2.2 / 31 May 2008
 
 * Make the table_info method adjust the returned default value for the rows
   so that the sqlite3 change in 3.3.8 and greater can be handled
