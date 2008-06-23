@@ -4,6 +4,14 @@
 #include <sqlite3.h>
 #include "ruby.h"
 
+#ifndef RSTRING_PTR
+#define RSTRING_PTR(s) (RSTRING(s)->ptr)
+#endif
+ 
+#ifndef RSTRING_LEN
+#define RSTRING_LEN(s) (RSTRING(s)->len)
+#endif
+
 #define Init_API Init_sqlite3_api
 
 struct CallbackData {

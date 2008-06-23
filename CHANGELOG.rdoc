@@ -1,3 +1,8 @@
+=== unreleased
+
+* Fix linking against Ruby 1.8.5 [Rob Holland <rob@inversepath.com>]
+
+
 === 1.2.2 / 31 May 2008
 
 * Make the table_info method adjust the returned default value for the rows
