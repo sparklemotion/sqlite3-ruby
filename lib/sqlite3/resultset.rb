@@ -121,7 +121,7 @@ module SQLite3
         end
 
         if @db.results_as_hash
-          new_row = HashWithTypes[ *( @stmt.columns.zip( row ).flatten ) ]
+          new_row = HashWithTypes[ *( @stmt.columns.zip( row ).to_a.flatten ) ]
           row.each_with_index { |value,idx| new_row[idx] = value }
           row = new_row
         else
