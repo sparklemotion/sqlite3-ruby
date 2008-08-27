@@ -1,5 +1,7 @@
 === unreleased
 
+* Avoid using Object#extend for greater speedups [Erik Veenstra]
+
 * Ruby 1.9 compatibility tweaks for Array#zip [jimmy88@gmail.com]
 
 * Fix linking against Ruby 1.8.5 [Rob Holland <rob@inversepath.com>]

@@ -10,14 +10,23 @@ module SQLite3
   class ResultSet
     include Enumerable
 
-    # A trivial module for adding a +types+ accessor to an object.
-    module TypesContainer
+    # The class of which we return an object in case we want an Array as
+    # result. (ArrayFields is installed.)
+    class ArrayWithTypes < Array
       attr_accessor :types
     end
 
-    # A trivial module for adding a +fields+ accessor to an object.
-    module FieldsContainer
+    # The class of which we return an object in case we want an Array as
+    # result. (ArrayFields is not installed.)
+    class ArrayWithTypesAndFields < Array
+      attr_accessor :types
       attr_accessor :fields
+    end
+
+    # The class of which we return an object in case we want a Hash as
+    # result.
+    class HashWithTypes < Hash
+      attr_accessor :types
     end
 
     # Create a new ResultSet attached to the given database, using the
@@ -112,15 +121,18 @@ module SQLite3
         end
 
         if @db.results_as_hash
-          new_row = Hash[ *( @stmt.columns.zip( row ).to_a.flatten ) ]
+          new_row = HashWithTypes[ *( @stmt.columns.zip( row ).flatten ) ]
           row.each_with_index { |value,idx| new_row[idx] = value }
           row = new_row
         else
-          row.extend FieldsContainer unless row.respond_to?(:fields)
+          if row.respond_to?(:fields)
+            row = ArrayWithTypes.new(row)
+          else
+            row = ArrayWithTypesAndFields.new(row)
+          end
           row.fields = @stmt.columns
         end
 
-        row.extend TypesContainer
         row.types = @stmt.types
 
         return row
