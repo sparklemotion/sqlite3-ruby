@@ -1,4 +1,6 @@
-=== unreleased
+=== 1.2.3 / 26 Aug 2008
+
+* Fix incorrect permissions on database.rb and translator.rb [Various]
 
 * Avoid using Object#extend for greater speedups [Erik Veenstra]
 
