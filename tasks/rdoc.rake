@@ -15,3 +15,13 @@ DOC = Rake::RDocTask.new(:rdoc) do |rd|
     nil
   end
 end
+
+# Generate FAQ
+desc "Generate the FAQ document"
+task :faq => ['doc/faq/faq.html']
+
+file 'doc/faq/faq.html' => ['doc/faq/faq.rb', 'doc/faq/faq.yml'] do
+  cd 'doc/faq' do
+    ruby "faq.rb > faq.html"
+  end
+end
