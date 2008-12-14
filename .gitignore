@@ -2,3 +2,4 @@ api
 pkg
 doc/faq/faq.html
 *.swp
+tmp
