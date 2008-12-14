@@ -45,8 +45,8 @@ GEM_SPEC = Gem::Specification.new do |s|
 end
 
 gem_package = Rake::GemPackageTask.new(GEM_SPEC) do |pkg|
-  pkg.need_tar_gz = true
-  pkg.need_tar_bz2 = true
+  pkg.need_tar_gz = false
+  pkg.need_tar_bz2 = false
   pkg.need_zip = false
 end
 
