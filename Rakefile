@@ -1,5 +1,13 @@
 require 'rubygems'
 require 'rake'
+
+# load rakefile extensions (tasks)
+Dir['tasks/*.rake'].each { |f| import f }
+
+__END__
+
+require 'rubygems'
+require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 require 'rake/contrib/sshpublisher'
