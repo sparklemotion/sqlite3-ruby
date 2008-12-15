@@ -46,26 +46,11 @@ def can_require( file )
   end
 end
 
-desc "Run benchmarks vs. sqlite-ruby"
-task :benchmark do
-  ruby "test/bm.rb"
-end
-
-desc "Run benchmarks dl vs. native"
-task :benchmark2 do
-  ruby "test/native-vs-dl.rb"
-end
-
 desc "Generate the FAQ document"
 task :faq => "doc/faq/faq.html"
 
 file "doc/faq/faq.html" => [ "doc/faq/faq.rb", "doc/faq/faq.yml" ] do
   cd( "doc/faq" ) { ruby "faq.rb > faq.html" }
-end
-
-Rake::TestTask.new do |t|
-  t.test_files = [ "test/tests.rb" ]
-  t.verbose = true
 end
 
 desc "Build all packages"
