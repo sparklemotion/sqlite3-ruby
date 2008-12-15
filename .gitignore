@@ -1,5 +1,8 @@
 api
 pkg
 doc/faq/faq.html
+*.so
+*.bundle
 *.swp
 tmp
+vendor
