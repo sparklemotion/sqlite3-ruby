@@ -46,21 +46,6 @@ def can_require( file )
   end
 end
 
-desc "Default task"
-task :default => [ :test ]
-
-desc "Clean generated files"
-task :clean do
-  rm_rf "ChangeLog"
-  rm_rf "pkg"
-  rm_rf "api"
-  rm_f  "doc/faq/faq.html"
-
-  native_files = [ "Makefile", "mkmf.log", "sqlite3_api.so",
-                   "sqlite3_api.bundle", "sqlite3_api_wrap.o" ]
-  native_files.each { |f| rm_f "ext/sqlite3_api/#{f}" }
-end
-
 desc "Run benchmarks vs. sqlite-ruby"
 task :benchmark do
   ruby "test/bm.rb"
