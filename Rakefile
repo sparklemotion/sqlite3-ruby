@@ -46,13 +46,6 @@ def can_require( file )
   end
 end
 
-desc "Generate the FAQ document"
-task :faq => "doc/faq/faq.html"
-
-file "doc/faq/faq.html" => [ "doc/faq/faq.rb", "doc/faq/faq.yml" ] do
-  cd( "doc/faq" ) { ruby "faq.rb > faq.html" }
-end
-
 desc "Publish the API documentation"
 task :pubrdoc => [ :rdoc ] do
   Rake::SshDirPublisher.new(
