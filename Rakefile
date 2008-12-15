@@ -184,17 +184,3 @@ task :build do
     system 'make'
   end
 end
-
-desc "Package a beta release"
-task :beta do
-  require 'yaml'
-  system 'svn up'
-  rev = YAML.load(`svn info`)["Revision"]
-  version = File.read("lib/sqlite3/version.rb")
-  version.gsub!(/#:beta-tag:/, %(STRING << ".#{rev}"))
-  File.open("lib/sqlite3/version.rb", "w") { |f| f.write(version) }
-
-  system "rake gem"
-
-  system "svn revert lib/sqlite3/version.rb"
-end
