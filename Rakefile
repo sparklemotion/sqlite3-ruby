@@ -146,17 +146,6 @@ file "#{package_dir}/#{gem_file}" => package_dir do
   mv gem_file, "#{package_dir}/#{gem_file}"
 end
 
-Rake::RDocTask.new do |rdoc|
-  rdoc.rdoc_dir = 'api'
-  rdoc.title    = "SQLite3/Ruby"
-  rdoc.options += %w(--line-numbers --inline-source --main README.rdoc)
-  rdoc.rdoc_files.include('lib/**/*.rb')
-
-  if can_require( "rdoc/generators/template/html/jamis" )
-    rdoc.template = "jamis"
-  end
-end
-
 desc "Publish the API documentation"
 task :pubrdoc => [ :rdoc ] do
   Rake::SshDirPublisher.new(
