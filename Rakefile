@@ -176,11 +176,3 @@ end
 
 desc "Publish the documentation"
 task :pubdoc => [:pubrdoc, :pubfaq]
-
-desc "Build the Native extension"
-task :build do
-  cd 'ext/sqlite3_api' do
-    ruby 'extconf.rb'
-    system 'make'
-  end
-end
