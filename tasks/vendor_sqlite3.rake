@@ -1,7 +1,20 @@
+require 'rake/clean'
+require 'rake/extensioncompiler'
+
 # download sqlite3 library and headers
 
 # only on Windows or cross platform compilation
-dlltool = RUBY_PLATFORM =~ /mingw/ ? 'dlltool' : '/usr/i586-mingw32msvc/bin/dlltool'
+dlltool = case RUBY_PLATFORM
+  when /mingw/
+    dir = File.dirname(Rake::ExtensionCompiler.mingw_gcc_executable)
+    File.join(dir, 'dlltool.exe')
+  when /linux|darwin/
+    dir = File.dirname(Rake::ExtensionCompiler.mingw_gcc_executable)
+    File.join(dir, "#{Rake::ExtensionCompiler.mingw_host}-dlltool")
+  else
+    fail "Unsupported platform for cross-compilation (please, contribute some patches)."
+end
+
 version = '3_6_6_2'
 
 # required folder structure for --with-sqlite3-dir (include + lib)
@@ -61,7 +74,7 @@ end
 
 # clean and clobber actions
 # All the uncompressed files must be removed at clean
-CLEAN.include('vendor/sqlite3')
+ CLEAN.include('vendor/sqlite3')
 
 # clobber vendored packages
 CLOBBER.include('vendor')
@@ -70,10 +83,8 @@ CLOBBER.include('vendor')
 task 'vendor:sqlite3' => ["vendor/sqlite3/lib/sqlite3.lib", "vendor/sqlite3/include/sqlite3.h"]
 
 # hook into cross compilation vendored sqlite3 dependency
-if Rake::Task.task_defined?('cross') then
-  Rake::Task['cross'].prerequisites.unshift 'vendor:sqlite3'
-end
-
-if RUBY_PLATFORM =~ /mingw/ then
+if RUBY_PLATFORM =~ /mingw|mswin/ then
   Rake::Task['compile'].prerequisites.unshift 'vendor:sqlite3'
+else
+  Rake::Task['cross'].prerequisites.unshift 'vendor:sqlite3'
 end
