@@ -10,7 +10,7 @@ module SQLite3 ; module Driver; module DL;
         "libsqlite3.dylib"
       when /linux/, /freebsd|netbsd|openbsd|dragonfly/, /solaris/
         "libsqlite3.so"
-      when /win32/
+      when /mswin|mingw/
         "sqlite3.dll"
       else
         abort <<-EOF
