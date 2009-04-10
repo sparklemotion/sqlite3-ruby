@@ -4,15 +4,25 @@ require 'rake/extensioncompiler'
 # download sqlite3 library and headers
 
 # only on Windows or cross platform compilation
-dlltool = case RUBY_PLATFORM
-  when /mingw/
+def dlltool(dllname, deffile, libfile)
+  # define if we are using GCC or not
+  if Rake::ExtensionCompiler.mingw_gcc_executable then
     dir = File.dirname(Rake::ExtensionCompiler.mingw_gcc_executable)
-    File.join(dir, 'dlltool.exe')
-  when /linux|darwin/
-    dir = File.dirname(Rake::ExtensionCompiler.mingw_gcc_executable)
-    File.join(dir, "#{Rake::ExtensionCompiler.mingw_host}-dlltool")
+    tool = case RUBY_PLATFORM
+      when /mingw/
+        File.join(dir, 'dlltool.exe')
+      when /linux|darwin/
+        File.join(dir, "#{Rake::ExtensionCompiler.mingw_host}-dlltool")
+    end
+    return "#{tool} --dllname #{dllname} --def #{deffile} --output-lib #{libfile}"
   else
-    fail "Unsupported platform for cross-compilation (please, contribute some patches)."
+    if RUBY_PLATFORM =~ /mswin/ then
+      tool = 'lib.exe'
+    else
+      fail "Unsupported platform for cross-compilation (please, contribute some patches)."
+    end
+    return "#{tool} /DEF:#{deffile} /OUT:#{libfile}"
+  end
 end
 
 version = '3_6_6_2'
@@ -67,8 +77,12 @@ end
 
 # generate import library from definition and dll file
 file "vendor/sqlite3/lib/sqlite3.lib" => ["vendor/sqlite3/lib/sqlite3.dll"] do |t|
+  libfile = t.name
+  dllname = libfile.ext('dll')
+  deffile = libfile.ext('def')
+
   when_writing "creating #{t.name}" do
-    sh [dlltool, '--dllname vendor/sqlite3/lib/sqlite3.dll', '--def vendor/sqlite3/lib/sqlite3.def --output-lib', t.name].join(' ')
+    sh dlltool(dllname, deffile, libfile)
   end
 end
 
