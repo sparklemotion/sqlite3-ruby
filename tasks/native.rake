@@ -12,7 +12,7 @@ Rake::ExtensionTask.new('sqlite3_api', GEM_SPEC) do |ext|
   end
 
   ext.cross_compile = true
-  ext.cross_platform = 'i386-mswin32'
+  ext.cross_platform = ['i386-mswin32', 'i386-mingw32']
   ext.cross_config_options << "--with-sqlite3-dir=#{sqlite3_lib}"
 end
 
