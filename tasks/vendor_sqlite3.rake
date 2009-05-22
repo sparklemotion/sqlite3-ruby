@@ -25,7 +25,7 @@ def dlltool(dllname, deffile, libfile)
   end
 end
 
-version = '3_6_13'
+version = '3_6_14_1'
 
 # required folder structure for --with-sqlite3-dir (include + lib)
 directory "vendor/sqlite3/lib"
