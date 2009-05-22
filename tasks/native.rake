@@ -9,11 +9,11 @@ Rake::ExtensionTask.new('sqlite3_api', GEM_SPEC) do |ext|
   # automatically add build options to avoid need of manual input
   if RUBY_PLATFORM =~ /mswin|mingw/ then
     ext.config_options << "--with-sqlite3-dir=#{sqlite3_lib}"
+  else
+    ext.cross_compile = true
+    ext.cross_platform = ['i386-mswin32', 'i386-mingw32']
+    ext.cross_config_options << "--with-sqlite3-dir=#{sqlite3_lib}"
   end
-
-  ext.cross_compile = true
-  ext.cross_platform = ['i386-mswin32', 'i386-mingw32']
-  ext.cross_config_options << "--with-sqlite3-dir=#{sqlite3_lib}"
 end
 
 # C wrapper depends on swig file to be generated
