@@ -1,4 +1,12 @@
-require 'sqlite3_api'
+# support multiple ruby version (fat binaries under windows)
+begin
+  require 'sqlite3_api'
+rescue LoadError
+  if RUBY_PLATFORM =~ /mingw|mswin/ then
+    ruby_ver = RUBY_VERSION.match(/(\d+.\d+)/)[1]
+    require "#{ruby_ver}/sqlite3_api"
+  end
+end
 
 module SQLite3 ; module Driver ; module Native
 
