@@ -1,11 +1,16 @@
 = SQLite3/Ruby Interface
 
+* http://sqlite3-ruby.rubyforge.org
+* http://rubyforge.org/projects/sqlite3-ruby
+* http://github.com/jamis/sqlite3-ruby
+
+== DESCRIPTION
+
 This module allows Ruby programs to interface with the SQLite3
 database engine (http://www.sqlite.org).  You must have the
 SQLite engine installed in order to build this module.
 
 Note that this module is NOT compatible with SQLite 2.x.
-
 
 == Compilation and Installation
 

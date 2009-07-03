@@ -1,7 +1,8 @@
 === (unreleased)
 
 * Check for illegal nil before executing SQL [Erik Veenstra]
-
+* Switch to Hoe for gem task management and packaging.
+* Advertise rake-compiler as development dependency.
 
 === 1.2.4 / 27 Aug 2008
 

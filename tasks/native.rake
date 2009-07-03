@@ -2,7 +2,7 @@
 require 'rake/extensiontask'
 
 # build sqlite3_api C extension
-Rake::ExtensionTask.new('sqlite3_api', GEM_SPEC) do |ext|
+Rake::ExtensionTask.new('sqlite3_api', HOE.spec) do |ext|
   # reference to the sqlite3 library
   sqlite3_lib = File.expand_path(File.join(File.dirname(__FILE__), '..', 'vendor', 'sqlite3'))
 
@@ -24,3 +24,6 @@ file 'ext/sqlite3_api/sqlite3_api_wrap.c' => ['ext/sqlite3_api/sqlite3_api.i'] d
     fail "could not build wrapper via swig (perhaps swig is not installed?)"
   end
 end
+
+# ensure things are compiled prior testing
+task :test => [:compile]
