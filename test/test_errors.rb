@@ -1,8 +1,4 @@
-$:.unshift "../lib"
-
-require 'sqlite3/errors'
-require 'test/unit'
-require 'mocha'
+require File.join(File.dirname(__FILE__), 'helper')
 
 class TC_Errors < Test::Unit::TestCase
   (1..26).each do |code|

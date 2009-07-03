@@ -1,6 +1,12 @@
-require 'rubygems'
-gem 'mocha'
+# add lib folder to the path
+$:.unshift File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
 
+require 'sqlite3'
+
+require 'rubygems'
+require 'test/unit'
+
+# define mocks to be used
 require 'mocha'
 
 class Driver < Mocha::Mock

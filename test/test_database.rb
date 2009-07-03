@@ -1,9 +1,4 @@
-$:.unshift "../lib"
-
-require 'sqlite3/database'
-require 'test/unit'
-
-require 'mocks'
+require File.join(File.dirname(__FILE__), 'helper')
 
 class TC_Database_Init < Test::Unit::TestCase
   def test_new

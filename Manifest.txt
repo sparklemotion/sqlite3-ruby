@@ -30,9 +30,8 @@ tasks/native.rake
 tasks/vendor_sqlite3.rake
 test/bm.rb
 test/driver/dl/tc_driver.rb
-test/mocks.rb
+test/helper.rb
 test/native-vs-dl.rb
-test/tc_database.rb
-test/tc_errors.rb
-test/tc_integration.rb
-test/tests.rb
+test/test_database.rb
+test/test_errors.rb
+test/test_integration.rb

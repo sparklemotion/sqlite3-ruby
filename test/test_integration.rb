@@ -1,9 +1,5 @@
-$:.unshift "#{File.dirname(__FILE__)}/../lib"
-$:.unshift "#{File.dirname(__FILE__)}/../ext/sqlite3_api"
+require File.join(File.dirname(__FILE__), 'helper')
 
-require 'test/unit'
-require 'benchmark'
-require 'sqlite3/database'
 require 'thread'
 
 class String
