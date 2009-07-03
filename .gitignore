@@ -4,5 +4,6 @@ doc/faq/faq.html
 *.so
 *.bundle
 *.swp
+test/test.db
 tmp
 vendor
