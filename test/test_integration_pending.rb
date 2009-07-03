@@ -1,6 +1,7 @@
 require File.join(File.dirname(__FILE__), 'helper')
 
 require 'thread'
+require 'benchmark'
 
 class TC_Integration_Pending < Test::Unit::TestCase
   def setup
