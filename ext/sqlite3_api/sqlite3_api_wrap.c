@@ -1861,6 +1861,10 @@ struct timeval rb_time_timeval(VALUE);
 #define RSTRING_LEN(s) (RSTRING(s)->len)
 #endif
 
+#ifndef STR2CSTR
+#define STR2CSTR StringValueCStr
+#endif
+
 #define Init_API Init_sqlite3_api
 
 struct CallbackData {
