@@ -1,7 +1,5 @@
 require File.join(File.dirname(__FILE__), 'helper')
 
-require 'thread'
-
 class TC_Database_Integration < Test::Unit::TestCase
   def setup
     @db = SQLite3::Database.new( "test.db" )
@@ -463,97 +461,6 @@ class TC_Database_Integration < Test::Unit::TestCase
     assert_raise( SQLite3::SQLException ) do
       @db.execute "select abort(a) from foo"
     end
-  end
-
-  # FIXME: these test are faulty on newest version of Ruby
-  def pending_test_busy_handler_outwait
-    busy = Mutex.new
-    busy.lock
-    handler_call_count = 0
-
-    t = Thread.new(busy) do |locker|
-      begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.transaction( :exclusive ) do
-          locker.lock
-        end
-      ensure
-        db2.close if db2
-      end
-    end
-
-    @db.busy_handler do |data,count|
-      handler_call_count += 1
-      busy.unlock
-      true
-    end
-
-    assert_nothing_raised do
-      @db.execute "insert into foo (b) values ( 'from 2' )"
-    end
-
-    t.join
-
-    assert_equal 1, handler_call_count
-  end
-
-  def pending_test_busy_handler_impatient
-    busy = Mutex.new
-    busy.lock
-    handler_call_count = 0
-
-    t = Thread.new do
-      begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.transaction( :exclusive ) do
-          busy.lock
-        end
-      ensure
-        db2.close if db2
-      end
-    end
-
-    @db.busy_handler do |data, count|
-      handler_call_count += 1
-      false
-    end
-
-    assert_raise( SQLite3::BusyException ) do
-      @db.execute "insert into foo (b) values ( 'from 2' )"
-    end
-
-    busy.unlock
-    t.join
-
-    assert_equal 1, handler_call_count
-  end
-
-  def pending_test_busy_timeout
-    @db.busy_timeout 1000
-    busy = Mutex.new
-    busy.lock
-
-    t = Thread.new do
-      begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.transaction( :exclusive ) do
-          busy.lock
-        end
-      ensure
-        db2.close if db2
-      end
-    end
-
-    time = Benchmark.measure do
-      assert_raise( SQLite3::BusyException ) do
-        @db.execute "insert into foo (b) values ( 'from 2' )"
-      end
-    end
-
-    busy.unlock
-    t.join
-
-    assert time.real*1000 >= 1000
   end
 
   def test_create_function
