@@ -35,3 +35,6 @@ test/native-vs-dl.rb
 test/test_database.rb
 test/test_errors.rb
 test/test_integration.rb
+test/test_integration_open_close.rb
+test/test_integration_resultset.rb
+test/test_integration_statement.rb

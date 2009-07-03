@@ -2,50 +2,6 @@ require File.join(File.dirname(__FILE__), 'helper')
 
 require 'thread'
 
-class String
-  def to_utf16(terminate=false)
-    self.split(//).map { |c| c[0] }.pack("v*") +
-      (terminate ? "\0\0" : "")
-  end
-
-  def from_utf16
-    result = ""
-    length.times do |i|
-      result << self[i,1] if i % 2 == 0 && self[i] != 0
-    end
-    result
-  end
-end
-
-class TC_OpenClose < Test::Unit::TestCase
-  def test_create_close
-    begin
-      db = SQLite3::Database.new( "test-create.db" )
-      assert File.exist?( "test-create.db" )
-      assert_nothing_raised { db.close }
-    ensure
-      File.delete( "test-create.db" ) rescue nil
-    end
-  end
-
-  def test_open_close
-    begin
-      File.open( "test-open.db", "w" ) { |f| }
-      assert File.exist?( "test-open.db" )
-      db = SQLite3::Database.new( "test-open.db" )
-      assert_nothing_raised { db.close }
-    ensure
-      File.delete( "test-open.db" ) rescue nil
-    end
-  end
-
-  def test_bad_open
-    assert_raise( SQLite3::CantOpenException ) do
-      SQLite3::Database.new( "." )
-    end
-  end
-end
-
 class TC_Database_Integration < Test::Unit::TestCase
   def setup
     @db = SQLite3::Database.new( "test.db" )
@@ -473,563 +429,207 @@ class TC_Database_Integration < Test::Unit::TestCase
     @db.commit
     assert_equal 7, @db.get_first_value("select count(*) from foo").to_i
   end
-end
 
-=begin
-
-    # == TC_Database ==========================================================
-
-    test_case = Class.new( Test::Unit::TestCase ) do
-
-      define_method( "test_transaction_rollback_in_block
-        assert_raise( SQLite3::SQLException ) do
-          @db.transaction do
-            @db.rollback
-          end
-        end
-      end
-
-      define_method( "test_transaction_commit_in_block
-        assert_raise( SQLite3::SQLException ) do
-          @db.transaction do
-            @db.commit
-          end
-        end
-      end
-
-      define_method( "test_transaction_active
-        assert !@db.transaction_active?
-        @db.transaction
-        assert @db.transaction_active?
-        @db.commit
-        assert !@db.transaction_active?
-      end
-
-      define_method( "no_tests_at |file,line,method|
-        warn "[(#{self.class}):#{file}:#{line}] no tests for #{method}"
-      end
-
-      define_method( "test_interrupt
-        @db.create_function( "abort", 1 ) do |func,x|
-          @db.interrupt
-          func.result = x
-        end
-
-        assert_raise( SQLite3::SQLException ) do
-          @db.execute "select abort(a) from foo"
-        end
-      end
-
-      define_method( "test_busy_handler_outwait
-        busy = Mutex.new
-        busy.lock
-        handler_call_count = 0
-
-        t = Thread.new do
-          begin
-            db2 = SQLite3::Database.open( "test.db", :driver=>driver )
-            db2.transaction( :exclusive ) do
-              busy.lock
-            end
-          ensure
-            db2.close if db2
-          end
-        end
-
-        @db.busy_handler do |data,count|
-          handler_call_count += 1
-          busy.unlock
-          true
-        end
-
-        assert_nothing_raised do
-          @db.execute "insert into foo (b) values ( 'from 2' )"
-        end
-
-        t.join
-
-        assert_equal 1, handler_call_count
-      end
-
-      define_method( "test_busy_handler_impatient
-        busy = Mutex.new
-        busy.lock
-        handler_call_count = 0
-
-        t = Thread.new do
-          begin
-            db2 = SQLite3::Database.open( "test.db", :driver=>driver )
-            db2.transaction( :exclusive ) do
-              busy.lock
-            end
-          ensure
-            db2.close if db2
-          end
-        end
-
-        @db.busy_handler do |data, count|
-          handler_call_count += 1
-          false
-        end
-
-        assert_raise( SQLite3::BusyException ) do
-          @db.execute "insert into foo (b) values ( 'from 2' )"
-        end
-
-        busy.unlock
-        t.join
-
-        assert_equal 1, handler_call_count
-      end
-
-      define_method( "test_busy_timeout
-        @db.busy_timeout 1000
-        busy = Mutex.new
-        busy.lock
-
-        t = Thread.new do
-          begin
-            db2 = SQLite3::Database.open( "test.db", :driver=>driver )
-            db2.transaction( :exclusive ) do
-              busy.lock
-            end
-          ensure
-            db2.close if db2
-          end
-        end
-
-        time = Benchmark.measure do
-          assert_raise( SQLite3::BusyException ) do
-            @db.execute "insert into foo (b) values ( 'from 2' )"
-          end
-        end
-
-        busy.unlock
-        t.join
-
-        assert time.real*1000 >= 1000
-      end
-
-      define_method( "test_create_function
-        @db.create_function( "munge", 1 ) do |func,x|
-          func.result = ">>>#{x}<<<"
-        end
-
-        value = @db.get_first_value( "select munge(b) from foo where a=1" )
-        assert_match( />>>.*<<</, value )
-      end
-
-      define_method( "test_create_aggregate_without_block
-        step = proc do |ctx,a|
-          ctx[:sum] ||= 0
-          ctx[:sum] += a.to_i
-        end
-
-        final = proc { |ctx| ctx.result = ctx[:sum] }
-
-        @db.create_aggregate( "accumulate", 1, step, final )
-
-        value = @db.get_first_value( "select accumulate(a) from foo" )
-        assert_equal "6", value
-      end
-
-      define_method( "test_create_aggregate_with_block
-        @db.create_aggregate( "accumulate", 1 ) do
-          step do |ctx,a|
-            ctx[:sum] ||= 0
-            ctx[:sum] += a.to_i
-          end
-
-          finalize { |ctx| ctx.result = ctx[:sum] }
-        end
-
-        value = @db.get_first_value( "select accumulate(a) from foo" )
-        assert_equal "6", value
-      end
-
-      define_method( "test_create_aggregate_with_no_data
-        @db.create_aggregate( "accumulate", 1 ) do
-          step do |ctx,a|
-            ctx[:sum] ||= 0
-            ctx[:sum] += a.to_i
-          end
-
-          finalize { |ctx| ctx.result = ctx[:sum] || 0 }
-        end
-
-        value = @db.get_first_value(
-          "select accumulate(a) from foo where a = 100" )
-        assert_equal "0", value
-      end
-
-      define_method( "test_create_aggregate_handler
-        handler = Class.new do
-          class << self
-            define_method( "arity" ) { 1 }
-            define_method( "text_rep" ) { SQLite3::Constants::TextRep::ANY }
-            define_method( "name" ) { "multiply" }
-          end
-          define_method( "step |ctx,a|
-            ctx[:buffer] ||= 1
-            ctx[:buffer] *= a.to_i
-          end
-          define_method( "finalize" ) { |ctx| ctx.result = ctx[:buffer] }
-        end
-
-        @db.create_aggregate_handler( handler )
-        value = @db.get_first_value( "select multiply(a) from foo" )
-        assert_equal "6", value
-      end
-
-      define_method( "test_bind_array_parameter
-        result = @db.get_first_value( "select b from foo where a=? and b=?",
-          [ 1, "foo" ] )
-        assert_equal "foo", result
+  def test_transaction_rollback_in_block
+    assert_raise( SQLite3::SQLException ) do
+      @db.transaction do
+        @db.rollback
       end
     end
-    const_set( "TC_Database_#{driver}", test_case )
-
-    # == TC_Statement =========================================================
-
-    test_case = Class.new( Test::Unit::TestCase ) do
-      define_method( "setup
-        @db = SQLite3::Database.new( "test.db", :driver=>driver )
-        @db.transaction do
-          @db.execute "create table foo ( a integer primary key, b text )"
-          @db.execute "insert into foo ( b ) values ( 'foo' )"
-          @db.execute "insert into foo ( b ) values ( 'bar' )"
-          @db.execute "insert into foo ( b ) values ( 'baz' )"
-        end
-        @stmt = @db.prepare( "select * from foo where a in ( ?, :named )" )
-      end
-
-      define_method( "teardown
-        @stmt.close
-        @db.close
-        File.delete( "test.db" )
-      end
-
-      define_method( "test_remainder_empty
-        assert_equal "", @stmt.remainder
-      end
-
-      define_method( "test_remainder_nonempty
-        called = false
-        @db.prepare( "select * from foo;\n blah |stmt|
-          called = true
-          assert_equal "\n blah", stmt.remainder
-        end
-        assert called
-      end
-
-      define_method( "test_bind_params_empty
-        assert_nothing_raised { @stmt.bind_params }
-        assert @stmt.execute!.empty?
-      end
-
-      define_method( "test_bind_params_array
-        @stmt.bind_params 1, 2
-        assert_equal 2, @stmt.execute!.length
-      end
-
-      define_method( "test_bind_params_hash
-        @stmt.bind_params ":named" => 2
-        assert_equal 1, @stmt.execute!.length
-      end
-
-      define_method( "test_bind_params_hash_without_colon
-        @stmt.bind_params "named" => 2
-        assert_equal 1, @stmt.execute!.length
-      end
-
-      define_method( "test_bind_params_hash_as_symbol
-        @stmt.bind_params :named => 2
-        assert_equal 1, @stmt.execute!.length
-      end
-
-      define_method( "test_bind_params_mixed
-        @stmt.bind_params( 1, ":named" => 2 )
-        assert_equal 2, @stmt.execute!.length
-      end
-
-      define_method( "test_bind_param_by_index
-        @stmt.bind_params( 1, 2 )
-        assert_equal 2, @stmt.execute!.length
-      end
-
-      define_method( "test_bind_param_by_name_bad
-        assert_raise( SQLite3::Exception ) { @stmt.bind_param( "@named", 2 ) }
-      end
-
-      define_method( "test_bind_param_by_name_good
-        @stmt.bind_param( ":named", 2 )
-        assert_equal 1, @stmt.execute!.length
-      end
-
-      define_method( "test_bind_param_with_various_types
-        @db.transaction do
-          @db.execute "create table all_types ( a integer primary key, b float, c string, d integer )"
-          @db.execute "insert into all_types ( b, c, d ) values ( 1.4, 'hello', 68719476735 )"
-        end
-
-        assert_equal 1, @db.execute( "select * from all_types where b = ?", 1.4 ).length
-        assert_equal 1, @db.execute( "select * from all_types where c = ?", 'hello').length
-        assert_equal 1, @db.execute( "select * from all_types where d = ?", 68719476735).length
-      end
-
-      define_method( "test_execute_no_bind_no_block
-        assert_instance_of SQLite3::ResultSet, @stmt.execute
-      end
-
-      define_method( "test_execute_with_bind_no_block
-        assert_instance_of SQLite3::ResultSet, @stmt.execute( 1, 2 )
-      end
-
-      define_method( "test_execute_no_bind_with_block
-        called = false
-        @stmt.execute { |row| called = true }
-        assert called
-      end
-
-      define_method( "test_execute_with_bind_with_block
-        called = 0
-        @stmt.execute( 1, 2 ) { |row| called += 1 }
-        assert_equal 1, called
-      end
-
-      define_method( "test_reexecute
-        r = @stmt.execute( 1, 2 )
-        assert_equal 2, r.to_a.length
-        assert_nothing_raised { r = @stmt.execute( 1, 2 ) }
-        assert_equal 2, r.to_a.length
-      end
-
-      define_method( "test_execute_bang_no_bind_no_block
-        assert @stmt.execute!.empty?
-      end
-
-      define_method( "test_execute_bang_with_bind_no_block
-        assert_equal 2, @stmt.execute!( 1, 2 ).length
-      end
-
-      define_method( "test_execute_bang_no_bind_with_block
-        called = 0
-        @stmt.execute! { |row| called += 1 }
-        assert_equal 0, called
-      end
-
-      define_method( "test_execute_bang_with_bind_with_block
-        called = 0
-        @stmt.execute!( 1, 2 ) { |row| called += 1 }
-        assert_equal 2, called
-      end
-
-      define_method( "test_columns
-        c1 = @stmt.columns
-        c2 = @stmt.columns
-        assert_same c1, c2
-        assert_equal 2, c1.length
-      end
-
-      define_method( "test_columns_computed
-        called = false
-        @db.prepare( "select count(*) from foo |stmt|
-          called = true
-          assert_equal [ "count(*)" ], stmt.columns
-        end
-        assert called
-      end
-
-      define_method( "test_types
-        t1 = @stmt.types
-        t2 = @stmt.types
-        assert_same t1, t2
-        assert_equal 2, t1.length
-      end
-
-      define_method( "test_types_computed
-        called = false
-        @db.prepare( "select count(*) from foo |stmt|
-          called = true
-          assert_equal [ nil ], stmt.types
-        end
-        assert called
-      end
-
-      define_method( "test_close
-        stmt = @db.prepare( "select * from foo" )
-        assert !stmt.closed?
-        stmt.close
-        assert stmt.closed?
-        assert_raise( SQLite3::Exception ) { stmt.execute }
-        assert_raise( SQLite3::Exception ) { stmt.execute! }
-        assert_raise( SQLite3::Exception ) { stmt.close }
-        assert_raise( SQLite3::Exception ) { stmt.bind_params 5 }
-        assert_raise( SQLite3::Exception ) { stmt.bind_param 1, 5 }
-        assert_raise( SQLite3::Exception ) { stmt.columns }
-        assert_raise( SQLite3::Exception ) { stmt.types }
-      end
-
-      define_method( "test_committing_tx_with_statement_active
-        called = false
-        @db.prepare( "select count(*) from foo |stmt|
-          called = true
-          count = stmt.execute!.first.first.to_i
-          @db.transaction do
-            @db.execute "insert into foo ( b ) values ( 'hello' )"
-          end
-          new_count = stmt.execute!.first.first.to_i
-          assert_equal new_count, count+1
-        end
-        assert called
-      end
-    end
-    const_set( "TC_Statement_#{driver}", test_case )
-
-    # == TC_ResultSet =========================================================
-
-    test_case = Class.new( Test::Unit::TestCase ) do
-      define_method( "setup
-        @db = SQLite3::Database.new( "test.db", :driver=>driver )
-        @db.transaction do
-          @db.execute "create table foo ( a integer primary key, b text )"
-          @db.execute "insert into foo ( b ) values ( 'foo' )"
-          @db.execute "insert into foo ( b ) values ( 'bar' )"
-          @db.execute "insert into foo ( b ) values ( 'baz' )"
-        end
-        @stmt = @db.prepare( "select * from foo where a in ( ?, ? )" )
-        @result = @stmt.execute
-      end
-
-      define_method( "teardown
-        @stmt.close
-        @db.close
-        File.delete( "test.db" )
-      end
-
-      define_method( "test_reset_unused
-        assert_nothing_raised { @result.reset }
-        assert @result.to_a.empty?
-      end
-
-      define_method( "test_reset_used
-        @result.to_a
-        assert_nothing_raised { @result.reset }
-        assert @result.to_a.empty?
-      end
-
-      define_method( "test_reset_with_bind
-        @result.to_a
-        assert_nothing_raised { @result.reset( 1, 2 ) }
-        assert_equal 2, @result.to_a.length
-      end
-
-      define_method( "test_eof_inner
-        @result.reset( 1 )
-        assert !@result.eof?
-      end
-
-      define_method( "test_eof_edge
-        @result.reset( 1 )
-        @result.next # to first row
-        @result.next # to end of result set
-        assert @result.eof?
-      end
-
-      define_method( "test_next_eof
-        @result.reset( 1 )
-        assert_not_nil @result.next
-        assert_nil @result.next
-      end
-
-      define_method( "test_next_no_type_translation_no_hash
-        @result.reset( 1 )
-        assert_equal [ "1", "foo" ], @result.next
-      end
-
-      define_method( "test_next_type_translation
-        @db.type_translation = true
-        @result.reset( 1 )
-        assert_equal [ 1, "foo" ], @result.next
-      end
-
-      define_method( "test_next_type_translation_with_untyped_column
-        @db.type_translation = true
-        @db.query( "select count(*) from foo |result|
-          assert_equal ["3"], result.next
-        end
-      end
-
-      define_method( "test_type_translation_with_null_column
-        @db.type_translation = true
-        @db.execute "create table bar ( a integer, b time, c string )"
-        @db.execute "insert into bar (a, b, c) values (NULL, '1974-07-25 14:39:00', 'hello')"
-        @db.execute "insert into bar (a, b, c) values (1, NULL, 'hello')"
-        @db.execute "insert into bar (a, b, c) values (2, '1974-07-25 14:39:00', NULL)"
-        @db.query( "select * from bar |result|
-          assert_equal [nil, Time.local(1974, 7, 25, 14, 39, 0), 'hello'], result.next
-          assert_equal [1, nil, 'hello'], result.next
-          assert_equal [2, Time.local(1974, 7, 25, 14, 39, 0), nil], result.next
-        end
-      end
-
-      define_method( "test_date_and_time_translation
-        @db.type_translation = true
-        @db.execute "create table bar ( a date, b datetime, c time, d timestamp )"
-        @db.execute "insert into bar (a, b, c, d) values ('1999-01-08', '1997-12-17 07:37:16', '07:37:16', '2004-10-19 10:23:54')"
-        @db.query( "select * from bar |result|
-          result = result.next
-          assert result[0].is_a?(Date)
-          assert result[1].is_a?(DateTime)
-          assert result[2].is_a?(Time)
-          assert result[3].is_a?(Time)
-        end
-      end
-
-      define_method( "test_next_results_as_hash
-        @db.results_as_hash = true
-        @result.reset( 1 )
-        assert_equal( { "a" => "1", "b" => "foo", 0 => "1", 1 => "foo" },
-          @result.next )
-      end
-
-      define_method( "test_each
-        called = 0
-        @result.reset( 1, 2 )
-        @result.each { |row| called += 1 }
-        assert_equal 2, called
-      end
-
-      define_method( "test_enumerable
-        @result.reset( 1, 2 )
-        assert_equal 2, @result.to_a.length
-      end
-
-      define_method( "test_types
-        assert_equal [ "integer", "text" ], @result.types
-      end
-
-      define_method( "test_columns
-        assert_equal [ "a", "b" ], @result.columns
-      end
-
-      define_method( "test_close
-        stmt = @db.prepare( "select * from foo" )
-        result = stmt.execute
-        assert !result.closed?
-        result.close
-        assert result.closed?
-        assert stmt.closed?
-        assert_raise( SQLite3::Exception ) { result.reset }
-        assert_raise( SQLite3::Exception ) { result.next }
-        assert_raise( SQLite3::Exception ) { result.each }
-        assert_raise( SQLite3::Exception ) { result.close }
-        assert_raise( SQLite3::Exception ) { result.types }
-        assert_raise( SQLite3::Exception ) { result.columns }
-      end
-    end
-    const_set( "TC_ResultSet_#{driver}", test_case )
   end
 
+  def test_transaction_commit_in_block
+    assert_raise( SQLite3::SQLException ) do
+      @db.transaction do
+        @db.commit
+      end
+    end
+  end
+
+  def test_transaction_active
+    assert !@db.transaction_active?
+    @db.transaction
+    assert @db.transaction_active?
+    @db.commit
+    assert !@db.transaction_active?
+  end
+
+  def test_interrupt
+    @db.create_function( "abort", 1 ) do |func,x|
+      @db.interrupt
+      func.result = x
+    end
+
+    assert_raise( SQLite3::SQLException ) do
+      @db.execute "select abort(a) from foo"
+    end
+  end
+
+  # FIXME: these test are faulty on newest version of Ruby
+  def pending_test_busy_handler_outwait
+    busy = Mutex.new
+    busy.lock
+    handler_call_count = 0
+
+    t = Thread.new(busy) do |locker|
+      begin
+        db2 = SQLite3::Database.open( "test.db" )
+        db2.transaction( :exclusive ) do
+          locker.lock
+        end
+      ensure
+        db2.close if db2
+      end
+    end
+
+    @db.busy_handler do |data,count|
+      handler_call_count += 1
+      busy.unlock
+      true
+    end
+
+    assert_nothing_raised do
+      @db.execute "insert into foo (b) values ( 'from 2' )"
+    end
+
+    t.join
+
+    assert_equal 1, handler_call_count
+  end
+
+  def pending_test_busy_handler_impatient
+    busy = Mutex.new
+    busy.lock
+    handler_call_count = 0
+
+    t = Thread.new do
+      begin
+        db2 = SQLite3::Database.open( "test.db" )
+        db2.transaction( :exclusive ) do
+          busy.lock
+        end
+      ensure
+        db2.close if db2
+      end
+    end
+
+    @db.busy_handler do |data, count|
+      handler_call_count += 1
+      false
+    end
+
+    assert_raise( SQLite3::BusyException ) do
+      @db.execute "insert into foo (b) values ( 'from 2' )"
+    end
+
+    busy.unlock
+    t.join
+
+    assert_equal 1, handler_call_count
+  end
+
+  def pending_test_busy_timeout
+    @db.busy_timeout 1000
+    busy = Mutex.new
+    busy.lock
+
+    t = Thread.new do
+      begin
+        db2 = SQLite3::Database.open( "test.db" )
+        db2.transaction( :exclusive ) do
+          busy.lock
+        end
+      ensure
+        db2.close if db2
+      end
+    end
+
+    time = Benchmark.measure do
+      assert_raise( SQLite3::BusyException ) do
+        @db.execute "insert into foo (b) values ( 'from 2' )"
+      end
+    end
+
+    busy.unlock
+    t.join
+
+    assert time.real*1000 >= 1000
+  end
+
+  def test_create_function
+    @db.create_function( "munge", 1 ) do |func,x|
+      func.result = ">>>#{x}<<<"
+    end
+
+    value = @db.get_first_value( "select munge(b) from foo where a=1" )
+    assert_match( />>>.*<<</, value )
+  end
+
+  def test_create_aggregate_without_block
+    step = proc do |ctx,a|
+      ctx[:sum] ||= 0
+      ctx[:sum] += a.to_i
+    end
+
+    final = proc { |ctx| ctx.result = ctx[:sum] }
+
+    @db.create_aggregate( "accumulate", 1, step, final )
+
+    value = @db.get_first_value( "select accumulate(a) from foo" )
+    assert_equal "6", value
+  end
+
+  def test_create_aggregate_with_block
+    @db.create_aggregate( "accumulate", 1 ) do
+      step do |ctx,a|
+        ctx[:sum] ||= 0
+        ctx[:sum] += a.to_i
+      end
+
+      finalize { |ctx| ctx.result = ctx[:sum] }
+    end
+
+    value = @db.get_first_value( "select accumulate(a) from foo" )
+    assert_equal "6", value
+  end
+
+  def test_create_aggregate_with_no_data
+    @db.create_aggregate( "accumulate", 1 ) do
+      step do |ctx,a|
+        ctx[:sum] ||= 0
+        ctx[:sum] += a.to_i
+      end
+
+      finalize { |ctx| ctx.result = ctx[:sum] || 0 }
+    end
+
+    value = @db.get_first_value(
+      "select accumulate(a) from foo where a = 100" )
+    assert_equal "0", value
+  end
+
+  def test_create_aggregate_handler
+    handler = Class.new do
+      class << self
+        def arity; 1; end
+        def text_rep; SQLite3::Constants::TextRep::ANY; end
+        def name; "multiply"; end
+      end
+      def step(ctx, a)
+        ctx[:buffer] ||= 1
+        ctx[:buffer] *= a.to_i
+      end
+      def finalize(ctx); ctx.result = ctx[:buffer]; end
+    end
+
+    @db.create_aggregate_handler( handler )
+    value = @db.get_first_value( "select multiply(a) from foo" )
+    assert_equal "6", value
+  end
+
+  def test_bind_array_parameter
+    result = @db.get_first_value( "select b from foo where a=? and b=?",
+      [ 1, "foo" ] )
+    assert_equal "foo", result
+  end
 end
-=end
