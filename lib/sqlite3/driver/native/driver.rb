@@ -3,8 +3,8 @@ begin
   require 'sqlite3_api'
 rescue LoadError
   if RUBY_PLATFORM =~ /mingw|mswin/ then
-    ruby_ver = RUBY_VERSION.match(/(\d+.\d+)/)[1]
-    require "#{ruby_ver}/sqlite3_api"
+    RUBY_VERSION =~ /(\d+.\d+)/
+    require "#{$1}/sqlite3_api"
   end
 end
 
