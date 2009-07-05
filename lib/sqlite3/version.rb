@@ -5,11 +5,12 @@ module SQLite3
     MAJOR = 1
     MINOR = 2
     TINY  = 4
+    BUILD = 1
 
-    STRING = [ MAJOR, MINOR, TINY ].join( "." )
+    STRING = [ MAJOR, MINOR, TINY, BUILD ].join( "." )
     #:beta-tag:
 
-    VERSION = '1.2.4'
+    VERSION = '1.2.4.1'
   end
 
 end

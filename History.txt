@@ -1,8 +1,11 @@
-=== (unreleased)
+=== 1.2.4.1 / 5 Jul 2009
 
 * Check for illegal nil before executing SQL [Erik Veenstra]
 * Switch to Hoe for gem task management and packaging.
 * Advertise rake-compiler as development dependency.
+* Build gem binaries for Windows.
+* Improved Ruby 1.9 support compatibility.
+
 
 === 1.2.4 / 27 Aug 2008
 
