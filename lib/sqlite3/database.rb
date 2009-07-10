@@ -12,13 +12,11 @@ module SQLite3
   #
   #   require 'sqlite3'
   #
-  #   db = SQLite3::Database.new( "data.db" )
-  #
-  #   db.execute( "select * from table" ) do |row|
-  #     p row
+  #   SQLite3::Database.new( "data.db" ) do |db|
+  #     db.execute( "select * from table" ) do |row|
+  #       p row
+  #     end
   #   end
-  #
-  #   db.close
   #
   # It wraps the lower-level methods provides by the selected driver, and
   # includes the Pragmas module for access to various pragma convenience
@@ -69,7 +67,7 @@ module SQLite3
     #
     # By default, the new database will return result rows as arrays
     # (#results_as_hash) and has type translation disabled (#type_translation=).
-    def initialize( file_name, options={} )
+    def initialize( file_name, options={} ) # :yields: db
       utf16 = options.fetch(:utf16, false)
       load_driver( options[:driver] )
 
@@ -83,6 +81,14 @@ module SQLite3
       @type_translation = options.fetch(:type_translation,false)
       @translator = nil
       @transaction_active = false
+      
+      if block_given?
+        begin
+          yield self
+        ensure
+          self.close
+        end
+      end
     end
 
     # Return +true+ if the string is a valid (ie, parsable) SQL statement, and
