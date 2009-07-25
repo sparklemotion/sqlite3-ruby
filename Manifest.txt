@@ -7,7 +7,6 @@ Rakefile
 ext/sqlite3_api/extconf.rb
 ext/sqlite3_api/sqlite3_api.i
 ext/sqlite3_api/sqlite3_api_wrap.c
-ext/sqlite3_api/win32/build.bat
 faq/faq.rb
 faq/faq.yml
 lib/sqlite3.rb
