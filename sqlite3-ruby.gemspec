@@ -1,7 +1,7 @@
 --- !ruby/object:Gem::Specification 
 name: sqlite3-ruby
 version: !ruby/object:Gem::Version 
-  version: 1.2.4.1
+  version: 1.2.5
 platform: ruby
 authors: 
 - Jamis Buck
@@ -9,7 +9,7 @@ autorequire:
 bindir: bin
 cert_chain: []
 
-date: 2009-07-05 00:00:00 -03:00
+date: 2009-07-25 00:00:00 -03:00
 default_executable: 
 dependencies: 
 - !ruby/object:Gem::Dependency 
@@ -68,7 +68,6 @@ files:
 - ext/sqlite3_api/extconf.rb
 - ext/sqlite3_api/sqlite3_api.i
 - ext/sqlite3_api/sqlite3_api_wrap.c
-- ext/sqlite3_api/win32/build.bat
 - faq/faq.rb
 - faq/faq.yml
 - lib/sqlite3.rb
@@ -128,7 +127,7 @@ required_rubygems_version: !ruby/object:Gem::Requirement
 requirements: []
 
 rubyforge_project: sqlite-ruby
-rubygems_version: 1.3.4
+rubygems_version: 1.3.5
 signing_key: 
 specification_version: 3
 summary: This module allows Ruby programs to interface with the SQLite3 database engine (http://www.sqlite.org)

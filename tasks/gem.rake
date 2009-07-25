@@ -23,7 +23,7 @@ HOE = Hoe.spec 'sqlite3-ruby' do
   clean_globs.push('**/test.db')
 end
 
-file "#{HOE.spec.name}.gemspec" => ['Rakefile', 'tasks/gem.rake'] do |t|
+file "#{HOE.spec.name}.gemspec" => ['Rakefile', 'tasks/gem.rake', 'lib/sqlite3/version.rb'] do |t|
   puts "Generating #{t.name}"
   File.open(t.name, 'w') { |f| f.puts HOE.spec.to_yaml }
 end
