@@ -105,6 +105,23 @@ class TC_ResultSet < Test::Unit::TestCase
       @result.next )
   end
 
+  def test_tainted_results_as_hash
+    @db.results_as_hash = true
+    @result.reset( 1 )
+    row = @result.next
+    row.each do |_, v|
+      assert_equal true, v.tainted?
+    end
+  end
+
+  def test_tainted_row_values
+    @result.reset( 1 )
+    row = @result.next
+    row.each do |v|
+      assert_equal true, v.tainted?
+    end
+  end
+
   def test_each
     called = 0
     @result.reset( 1, 2 )

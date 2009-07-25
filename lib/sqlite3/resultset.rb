@@ -122,7 +122,10 @@ module SQLite3
 
         if @db.results_as_hash
           new_row = HashWithTypes[ *( @stmt.columns.zip( row ).to_a.flatten ) ]
-          row.each_with_index { |value,idx| new_row[idx] = value }
+          row.each_with_index { |value,idx|
+            value.taint
+            new_row[idx] = value
+          }
           row = new_row
         else
           if row.respond_to?(:fields)
@@ -131,6 +134,7 @@ module SQLite3
             row = ArrayWithTypesAndFields.new(row)
           end
           row.fields = @stmt.columns
+          row.each { |column| column.taint }
         end
 
         row.types = @stmt.types
