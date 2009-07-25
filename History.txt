@@ -6,6 +6,7 @@
 * Build gem binaries for Windows.
 * Improved Ruby 1.9 support compatibility.
 * Taint returned values. Patch #20325.
+* Database.open and Database.new now take an optional block [Gerrit Kaiser]
 
 
 === 1.2.4.1 (internal) / 5 Jul 2009
