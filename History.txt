@@ -8,7 +8,7 @@
 * Taint returned values. Patch #20325.
 
 
-=== 1.2.4.1 / 5 Jul 2009
+=== 1.2.4.1 (internal) / 5 Jul 2009
 
 * Check for illegal nil before executing SQL [Erik Veenstra]
 * Switch to Hoe for gem task management and packaging.
