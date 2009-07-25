@@ -194,8 +194,8 @@ module SQLite3
     # that this may execute the statement in order to obtain the metadata; this
     # makes it a (potentially) expensive operation.
     def types
-      get_metadata unless @types
-      return @types
+      get_metadata unless defined?(@types)
+      @types
     end
 
     # A convenience method for obtaining the metadata about the query. Note
