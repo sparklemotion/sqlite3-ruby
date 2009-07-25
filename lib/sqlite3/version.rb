@@ -4,13 +4,13 @@ module SQLite3
 
     MAJOR = 1
     MINOR = 2
-    TINY  = 4
-    BUILD = 1
+    TINY  = 5
+    BUILD = nil
 
-    STRING = [ MAJOR, MINOR, TINY, BUILD ].join( "." )
+    STRING = [ MAJOR, MINOR, TINY, BUILD ].compact.join( "." )
     #:beta-tag:
 
-    VERSION = '1.2.4.1'
+    VERSION = '1.2.5'
   end
 
 end

@@ -1,4 +1,4 @@
-=== 1.2.5 / ?? Jul 2009
+=== 1.2.5 / 25 Jul 2009
 
 * Check for illegal nil before executing SQL [Erik Veenstra]
 * Switch to Hoe for gem task management and packaging.
