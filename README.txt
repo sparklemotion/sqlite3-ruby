@@ -2,7 +2,7 @@
 
 * http://sqlite3-ruby.rubyforge.org
 * http://rubyforge.org/projects/sqlite3-ruby
-* http://github.com/jamis/sqlite3-ruby
+* http://github.com/luislavena/sqlite3-ruby
 
 == DESCRIPTION
 
