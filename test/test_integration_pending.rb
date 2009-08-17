@@ -97,6 +97,7 @@ class TC_Integration_Pending < Test::Unit::TestCase
       end
     end
 
+    sleep 1
     time = Benchmark.measure do
       assert_raise( SQLite3::BusyException ) do
         @db.execute "insert into foo (b) values ( 'from 2' )"
