@@ -2,6 +2,7 @@ require File.join(File.dirname(__FILE__), 'helper')
 
 class TC_Database_Integration < Test::Unit::TestCase
   def setup
+    File.delete( "test.db" ) rescue nil
     @db = SQLite3::Database.new( "test.db" )
     @db.transaction do
       @db.execute "create table foo ( a integer primary key, b text )"
