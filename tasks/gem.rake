@@ -13,8 +13,8 @@ HOE = Hoe.spec 'sqlite3-ruby' do
 
   spec_extras[:extensions] = ["ext/sqlite3_api/extconf.rb"]
 
-  extra_dev_deps << 'mocha'
-  extra_dev_deps << ['rake-compiler', "~> 0.5.0"]
+  extra_dev_deps << ['mocha', "~> 0.9.8"]
+  extra_dev_deps << ['rake-compiler', "~> 0.6.0"]
 
   spec_extras['rdoc_options'] = proc do |rdoc_options|
     rdoc_options << "--main=README.txt"
