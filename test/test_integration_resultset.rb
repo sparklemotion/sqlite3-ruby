@@ -98,6 +98,19 @@ class TC_ResultSet < Test::Unit::TestCase
     end
   end
 
+  def test_real_translation
+    @db.type_translation = true
+    @db.execute('create table foo_real(a real)')
+    @db.execute('insert into foo_real values (42)' )
+    @db.query('select a, sum(a), typeof(a), typeof(sum(a)) from foo_real') do |result|
+      result = result.next
+      assert result[0].is_a?(Float)
+      assert result[1].is_a?(Float)
+      assert result[2].is_a?(String)
+      assert result[3].is_a?(String)
+    end
+  end
+
   def test_next_results_as_hash
     @db.results_as_hash = true
     @result.reset( 1 )
