@@ -1,11 +1,12 @@
 === In Git
 
-* Corrected gem dependencies (runtime and development)
-* Fixed threaded tests [Alexey Borzenkov]
-* Removed GitHub gemspec
-* Fixed "No definition for" warnings from RDoc
-* Generate zip and tgz files for releases
-* Added Luis Lavena as gem Author (maintainer)
+* Bugfixes
+  * Corrected gem dependencies (runtime and development)
+  * Fixed threaded tests [Alexey Borzenkov]
+  * Removed GitHub gemspec
+  * Fixed "No definition for" warnings from RDoc
+  * Generate zip and tgz files for releases
+  * Added Luis Lavena as gem Author (maintainer)
 
 === 1.2.5 / 25 Jul 2009
 
