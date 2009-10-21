@@ -3,7 +3,7 @@
 * Corrected gem dependencies (runtime and development)
 * Fixed threaded tests [Alexey Borzenkov]
 * Removed GitHub gemspec
-
+* Fixed "No definition for" warnings from RDoc
 
 === 1.2.5 / 25 Jul 2009
 
