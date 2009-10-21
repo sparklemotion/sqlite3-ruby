@@ -7,6 +7,7 @@
   * Fixed "No definition for" warnings from RDoc
   * Generate zip and tgz files for releases
   * Added Luis Lavena as gem Author (maintainer)
+  * Prevent mkmf interfere with Mighty Snow Leopard
 
 === 1.2.5 / 25 Jul 2009
 
