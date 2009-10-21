@@ -1,3 +1,10 @@
+=== In Git
+
+* Corrected gem dependencies (runtime and development)
+* Fixed threaded tests [Alexey Borzenkov]
+* Removed GitHub gemspec
+
+
 === 1.2.5 / 25 Jul 2009
 
 * Check for illegal nil before executing SQL [Erik Veenstra]
