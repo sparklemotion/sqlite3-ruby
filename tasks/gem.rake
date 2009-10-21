@@ -3,13 +3,14 @@ require 'hoe'
 
 HOE = Hoe.spec 'sqlite3-ruby' do
   self.rubyforge_name = 'sqlite-ruby'
-  self.author         = ['Jamis Buck']
-  self.email          = %w[jamis@37signals.com]
-  self.readme_file    = 'README.txt'
-  self.need_tar       = false
-  self.need_zip       = false
+  self.need_tar       = true
+  self.need_zip       = true
+
+  developer           'Jamis Buck', 'jamis@37signals.com'
+  developer           'Luis Lavena', 'luislavena@gmail.com'
 
   spec_extras[:required_ruby_version] = Gem::Requirement.new('> 1.8.5')
+  spec_extras[:required_rubygems_version] = '1.3.5'
 
   spec_extras[:extensions] = ["ext/sqlite3_api/extconf.rb"]
 
