@@ -2,4 +2,4 @@ require 'rubygems'
 require 'rake'
 
 # load rakefile extensions (tasks)
-Dir['tasks/*.rake'].each { |f| import f }
+Dir['tasks/*.rake'].sort.each { |f| import f }
