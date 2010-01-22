@@ -154,9 +154,11 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
   int status;
   int index;
 
-  if(T_STRING == TYPE(key))
+  if(T_STRING == TYPE(key)) {
+    if(RSTRING_PTR(key)[0] != ':') key = rb_str_plus(rb_str_new2(":"), key);
+
     index = sqlite3_bind_parameter_index(ctx->st, StringValuePtr(key));
-  else
+  } else
     index = (int)NUM2INT(key);
 
   switch(TYPE(value)) {
