@@ -40,6 +40,14 @@ module SQLite3
       end
     end
 
+    def test_bind_param_string
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      stmt.bind_param(1, "hello")
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal ['hello'], result
+    end
+
     def test_each
       r = nil
       @stmt.each do |row|

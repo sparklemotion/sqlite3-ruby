@@ -145,6 +145,33 @@ static VALUE each(VALUE self)
   return self;
 }
 
+static VALUE bind_param(VALUE self, VALUE key, VALUE value)
+{
+  sqlite3StmtRubyPtr ctx;
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
+  int status;
+
+  switch(TYPE(value)) {
+    case T_STRING:
+      status = sqlite3_bind_text(
+          ctx->st,
+          NUM2INT(key),
+          StringValuePtr(value),
+          RSTRING_LEN(value),
+          SQLITE_TRANSIENT
+      );
+      break;
+    default:
+      rb_raise(rb_eRuntimeError, "can't prepare %s", rb_class2name(value));
+      break;
+  }
+
+  if(SQLITE_OK != status)
+    rb_raise(rb_eRuntimeError, "bind params"); // FIXME this should come from the DB
+  return self;
+}
+
 void init_sqlite3_statement()
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
@@ -154,4 +181,5 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Statement, "each", each, 0);
+  rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
 }
