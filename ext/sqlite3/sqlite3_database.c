@@ -22,14 +22,26 @@ static VALUE allocate(VALUE klass)
  * By default, the new database will return result rows as arrays
  * (#results_as_hash) and has type translation disabled (#type_translation=).
  */
-static VALUE initialize(VALUE self, VALUE file)
+static VALUE initialize(int argc, VALUE *argv, VALUE self)
 {
   sqlite3RubyPtr ctx;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
-  if(SQLITE_OK != sqlite3_open(StringValuePtr(file), &ctx->db)) {
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+  VALUE file;
+  VALUE opts;
+
+  rb_scan_args(argc, argv, "11", &file, &opts);
+  if(NIL_P(opts)) opts = rb_hash_new();
+
+  int status;
+  if(Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("utf16")))) {
+    status = sqlite3_open16(StringValuePtr(file), &ctx->db);
+  } else {
+    status = sqlite3_open(StringValuePtr(file), &ctx->db);
   }
+
+  if(SQLITE_OK != status)
+    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
 
   if(rb_block_given_p()) {
     rb_yield(self);
@@ -43,7 +55,7 @@ void init_sqlite3_database()
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Database, allocate);
-  rb_define_method(cSqlite3Database, "initialize", initialize, 1);
+  rb_define_method(cSqlite3Database, "initialize", initialize, -1);
 
   //rb_define_singleton_method(cSqlite3Database, "open", open_connection, 1);
   //rb_define_private_method(cDeeBee, "encoding_str", encoding_str, 0);

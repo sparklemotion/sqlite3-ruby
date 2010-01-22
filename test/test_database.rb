@@ -1,4 +1,5 @@
 require 'helper'
+require 'iconv'
 
 module SQLite3
   class TestDatabase < Test::Unit::TestCase
@@ -16,7 +17,8 @@ module SQLite3
     end
 
     def test_new_with_options
-      db = SQLite3::Database.new(':memory:', :utf16 => true)
+      db = SQLite3::Database.new(Iconv.conv('UTF-16', 'UTF-8', ':memory:'),
+                                 :utf16 => true)
       assert db
     end
   end
