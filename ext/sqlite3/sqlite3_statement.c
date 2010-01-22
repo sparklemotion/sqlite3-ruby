@@ -90,6 +90,61 @@ static VALUE closed_p(VALUE self)
   return Qfalse;
 }
 
+static VALUE each(VALUE self)
+{
+  sqlite3StmtRubyPtr ctx;
+  sqlite3_stmt *stmt;
+
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+
+  REQUIRE_OPEN_STMT(ctx);
+
+  stmt = ctx->st;
+
+  int value = sqlite3_step(stmt);
+  while(value != SQLITE_DONE) {
+    switch(value) {
+      case SQLITE_ROW:
+        {
+          int length = sqlite3_column_count(stmt);
+          VALUE list = rb_ary_new2(length);
+
+          int i;
+          for(i = 0; i < length; i++) {
+            switch(sqlite3_column_type(stmt, i)) {
+              case SQLITE_INTEGER:
+                rb_ary_push(list, INT2NUM(sqlite3_column_int(stmt, i)));
+                break;
+              case SQLITE_FLOAT:
+                rb_ary_push(list, rb_float_new(sqlite3_column_double(stmt, i)));
+                break;
+              case SQLITE_TEXT:
+                {
+                  VALUE str = rb_str_new2(sqlite3_column_text(stmt, i));
+                  rb_ary_push(list, str);
+                }
+                break;
+              case SQLITE_BLOB:
+                rb_ary_push(list, rb_str_new2(sqlite3_column_blob(stmt, i)));
+                break;
+              case SQLITE_NULL:
+                rb_ary_push(list, Qnil);
+                break;
+              default:
+                rb_raise(rb_eRuntimeError, "oh no!"); // FIXME
+            }
+          }
+          rb_yield(list);
+        }
+        break;
+      default:
+        rb_raise(rb_eRuntimeError, "oh no!"); // FIXME
+    }
+    value = sqlite3_step(stmt);
+  }
+  return self;
+}
+
 void init_sqlite3_statement()
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
@@ -98,4 +153,5 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "initialize", initialize, 2);
   rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
+  rb_define_method(cSqlite3Statement, "each", each, 0);
 }

@@ -39,5 +39,13 @@ module SQLite3
         @stmt.close
       end
     end
+
+    def test_each
+      r = nil
+      @stmt.each do |row|
+        r = row
+      end
+      assert_equal(['foo'], r)
+    end
   end
 end
