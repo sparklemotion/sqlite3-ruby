@@ -80,6 +80,14 @@ module SQLite3
       assert_equal [2.2], result
     end
 
+    def test_named_bind
+      stmt = SQLite3::Statement.new(@db, "select :foo")
+      stmt.bind_param(':foo', 'hello')
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal ['hello'], result
+    end
+
     def test_each
       r = nil
       @stmt.each do |row|

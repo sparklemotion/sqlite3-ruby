@@ -150,29 +150,36 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
   sqlite3StmtRubyPtr ctx;
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
+
   int status;
+  int index;
+
+  if(T_STRING == TYPE(key))
+    index = sqlite3_bind_parameter_index(ctx->st, StringValuePtr(key));
+  else
+    index = (int)NUM2INT(key);
 
   switch(TYPE(value)) {
     case T_STRING:
       status = sqlite3_bind_text(
           ctx->st,
-          (int)NUM2INT(key),
+          index,
           (const char *)StringValuePtr(value),
           (int)RSTRING_LEN(value),
           SQLITE_TRANSIENT
       );
       break;
     case T_FLOAT:
-      status = sqlite3_bind_double(ctx->st,(int)NUM2INT(key),NUM2DBL(value));
+      status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
       break;
     case T_FIXNUM:
       {
         long v = NUM2LONG(value);
-        status = sqlite3_bind_int64(ctx->st,(int)NUM2INT(key),v);
+        status = sqlite3_bind_int64(ctx->st, index, v);
       }
       break;
     case T_NIL:
-      status = sqlite3_bind_null(ctx->st, (int)NUM2INT(key));
+      status = sqlite3_bind_null(ctx->st, index);
       break;
     default:
       rb_raise(rb_eRuntimeError, "can't prepare %s",
