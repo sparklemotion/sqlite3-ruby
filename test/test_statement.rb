@@ -110,5 +110,13 @@ module SQLite3
       end
       assert_equal(['foo'], r)
     end
+
+    def test_reset!
+      r = []
+      @stmt.each { |row| r << row }
+      @stmt.reset!
+      @stmt.each { |row| r << row }
+      assert_equal [['foo'], ['foo']], r
+    end
   end
 end

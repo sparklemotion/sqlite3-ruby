@@ -69,7 +69,6 @@ module SQLite3
     #
     # See also #bind_params, #execute!.
     def execute( *bind_vars )
-      must_be_open!
       reset! if active?
 
       bind_params(*bind_vars) unless bind_vars.empty?
@@ -107,13 +106,6 @@ module SQLite3
         end
       end
       rows
-    end
-
-    # Resets the statement. This is typically done internally, though it might
-    # occassionally be necessary to manually reset the statement.
-    def reset!(clear_result=true)
-      @driver.reset(@handle)
-      @results = nil if clear_result
     end
 
     # Returns true if the statement is currently active, meaning it has an

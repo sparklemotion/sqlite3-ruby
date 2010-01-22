@@ -205,6 +205,24 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
   return self;
 }
 
+/* call-seq: stmt.reset!
+ *
+ * Resets the statement. This is typically done internally, though it might
+ * occassionally be necessary to manually reset the statement.
+ */
+static VALUE reset_bang(VALUE self)
+{
+  sqlite3StmtRubyPtr ctx;
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
+
+  int status = sqlite3_reset(ctx->st);
+  if(SQLITE_OK != status)
+    rb_raise(rb_eRuntimeError, "bind params"); // FIXME this should come from the DB
+
+  return self;
+}
+
 void init_sqlite3_statement()
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
@@ -215,4 +233,5 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Statement, "each", each, 0);
   rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
+  rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
 }
