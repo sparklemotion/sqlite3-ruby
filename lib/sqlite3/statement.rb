@@ -23,19 +23,6 @@ module SQLite3
     # this will be the empty string.
     attr_reader :remainder
 
-    # Closes the statement by finalizing the underlying statement
-    # handle. The statement must not be used after being closed.
-    def close
-      must_be_open!
-      @closed = true
-      @driver.finalize( @handle )
-    end
-
-    # Returns true if the underlying statement has been closed.
-    def closed?
-      @closed
-    end
-
     # Binds the given variables to the corresponding placeholders in the SQL
     # text.
     #

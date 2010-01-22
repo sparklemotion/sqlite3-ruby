@@ -3,12 +3,12 @@ require 'helper'
 module SQLite3
   class TestStatement < Test::Unit::TestCase
     def setup
-      @db = SQLite3::Database.new(':memory:')
+      @db   = SQLite3::Database.new(':memory:')
+      @stmt = SQLite3::Statement.new(@db, "select 'foo'")
     end
 
     def test_new
-      stmt = SQLite3::Statement.new(@db, 'select "foo"')
-      assert stmt
+      assert @stmt
     end
 
     def test_new_closed_handle
@@ -25,8 +25,19 @@ module SQLite3
     end
 
     def test_empty_remainder
-      stmt = SQLite3::Statement.new(@db, "select 'foo'")
-      assert_equal '', stmt.remainder
+      assert_equal '', @stmt.remainder
+    end
+
+    def test_close
+      @stmt.close
+      assert @stmt.closed?
+    end
+
+    def test_double_close
+      @stmt.close
+      assert_raises(SQLite3::Exception) do
+        @stmt.close
+      end
     end
   end
 end

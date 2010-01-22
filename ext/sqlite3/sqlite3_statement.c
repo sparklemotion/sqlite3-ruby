@@ -1,5 +1,9 @@
 #include <sqlite3_statement.h>
 
+#define REQUIRE_OPEN_STMT(_ctxt) \
+  if(!_ctxt->st) \
+    rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed statement");
+
 VALUE cSqlite3Statement;
 
 static void deallocate(void * ctx)
@@ -51,10 +55,47 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   return self;
 }
 
+/* call-seq: stmt.close
+ *
+ * Closes the statement by finalizing the underlying statement
+ * handle. The statement must not be used after being closed.
+ */
+static VALUE sqlite3_rb_close(VALUE self)
+{
+  sqlite3StmtRubyPtr ctx;
+
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+
+  REQUIRE_OPEN_STMT(ctx);
+
+  if(SQLITE_OK != sqlite3_finalize(ctx->st))
+    rb_raise(rb_eRuntimeError, "uh oh!"); // FIXME this should come from the DB
+
+  ctx->st = NULL;
+
+  return self;
+}
+
+/* call-seq: stmt.closed?
+ *
+ * Returns true if the statement has been closed.
+ */
+static VALUE closed_p(VALUE self)
+{
+  sqlite3StmtRubyPtr ctx;
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+
+  if(!ctx->st) return Qtrue;
+
+  return Qfalse;
+}
+
 void init_sqlite3_statement()
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Statement, allocate);
   rb_define_method(cSqlite3Statement, "initialize", initialize, 2);
+  rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);
+  rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
 }

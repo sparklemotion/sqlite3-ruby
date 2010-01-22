@@ -77,7 +77,7 @@ static VALUE closed_p(VALUE self)
   sqlite3RubyPtr ctx;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
-  if(NULL == ctx->db) return Qtrue;
+  if(!ctx->db) return Qtrue;
 
   return Qfalse;
 }
