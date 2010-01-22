@@ -27,5 +27,14 @@ module SQLite3
       db.close
       assert db.closed?
     end
+
+    def test_block_closes_self
+      thing = nil
+      SQLite3::Database.new(':memory:') do |db|
+        thing = db
+        assert !thing.closed?
+      end
+      assert thing.closed?
+    end
   end
 end

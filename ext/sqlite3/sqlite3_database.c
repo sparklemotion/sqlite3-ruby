@@ -45,6 +45,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 
   if(rb_block_given_p()) {
     rb_yield(self);
+    rb_funcall(self, rb_intern("close"), 0);
   }
 
   return self;
