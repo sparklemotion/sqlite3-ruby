@@ -72,6 +72,14 @@ module SQLite3
       assert_equal [2 ** 31], result
     end
 
+    def test_bind_double
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      stmt.bind_param(1, 2.2)
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal [2.2], result
+    end
+
     def test_each
       r = nil
       @stmt.each do |row|

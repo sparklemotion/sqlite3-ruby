@@ -162,6 +162,9 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
           SQLITE_TRANSIENT
       );
       break;
+    case T_FLOAT:
+      status = sqlite3_bind_double(ctx->st,(int)NUM2INT(key),NUM2DBL(value));
+      break;
     case T_FIXNUM:
       {
         long v = NUM2LONG(value);
