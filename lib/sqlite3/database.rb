@@ -113,16 +113,14 @@ module SQLite3
     #
     # The Statement can then be executed using Statement#execute.
     #
-    def prepare( sql )
-      stmt = @statement_factory.new( self, sql )
-      if block_given?
-        begin
-          yield stmt
-        ensure
-          stmt.close
-        end
-      else
-        return stmt
+    def prepare sql
+      stmt = SQLite3::Statement.new( self, sql )
+      return stmt unless block_given?
+
+      begin
+        yield stmt
+      ensure
+        stmt.close
       end
     end
 

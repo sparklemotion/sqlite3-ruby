@@ -26,20 +26,6 @@ module SQLite3
     # The underlying opaque handle used to access the SQLite @driver.
     attr_reader :handle
 
-    # Create a new statement attached to the given Database instance, and which
-    # encapsulates the given SQL text. If the text contains more than one
-    # statement (i.e., separated by semicolons), then the #remainder property
-    # will be set to the trailing text.
-    def initialize( db, sql, utf16=false )
-      raise ArgumentError, "nil argument passed as sql text" unless sql
-      @db = db
-      @driver = @db.driver
-      @closed = false
-      @results = @columns = nil
-      result, @handle, @remainder = @driver.prepare( @db.handle, sql )
-      Error.check( result, @db )
-    end
-
     # Closes the statement by finalizing the underlying statement
     # handle. The statement must not be used after being closed.
     def close

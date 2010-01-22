@@ -36,5 +36,11 @@ module SQLite3
       end
       assert thing.closed?
     end
+
+    def test_prepare
+      db = SQLite3::Database.new(':memory:')
+      stmt = db.prepare('select "hello world"')
+      assert_instance_of(SQLite3::Statement, stmt)
+    end
   end
 end

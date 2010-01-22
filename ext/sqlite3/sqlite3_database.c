@@ -90,6 +90,4 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "initialize", initialize, -1);
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
-
-  //rb_define_private_method(cDeeBee, "encoding_str", encoding_str, 0);
 }

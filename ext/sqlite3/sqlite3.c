@@ -15,6 +15,7 @@ void Init_sqlite3()
   sqlite3_initialize();
 
   init_sqlite3_database();
+  init_sqlite3_statement();
 
   rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
 }
