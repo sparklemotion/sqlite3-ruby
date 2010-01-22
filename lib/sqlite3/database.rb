@@ -62,35 +62,6 @@ module SQLite3
     # database.
     attr_accessor :type_translation
 
-    # Create a new Database object that opens the given file. If utf16
-    # is +true+, the filename is interpreted as a UTF-16 encoded string.
-    #
-    # By default, the new database will return result rows as arrays
-    # (#results_as_hash) and has type translation disabled (#type_translation=).
-    def initialize( file_name, options={} ) # :yields: db
-      utf16 = options.fetch(:utf16, false)
-      load_driver( options[:driver] )
-
-      @statement_factory = options[:statement_factory] || Statement
-
-      result, @handle = @driver.open( file_name, utf16 )
-      Error.check( result, self, "could not open database" )
-
-      @closed = false
-      @results_as_hash = options.fetch(:results_as_hash,false)
-      @type_translation = options.fetch(:type_translation,false)
-      @translator = nil
-      @transaction_active = false
-      
-      if block_given?
-        begin
-          yield self
-        ensure
-          self.close
-        end
-      end
-    end
-
     # Return +true+ if the string is a valid (ie, parsable) SQL statement, and
     # +false+ otherwise. If +utf16+ is +true+, then the string is a UTF-16
     # character string.
