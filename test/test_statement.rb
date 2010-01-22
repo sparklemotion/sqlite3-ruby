@@ -48,6 +48,30 @@ module SQLite3
       assert_equal ['hello'], result
     end
 
+    def test_bind_param_int
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      stmt.bind_param(1, 10)
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal [10], result
+    end
+
+    def test_bind_nil
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      stmt.bind_param(1, nil)
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal [nil], result
+    end
+
+    def test_bind_64
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      stmt.bind_param(1, 2 ** 31)
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal [2 ** 31], result
+    end
+
     def test_each
       r = nil
       @stmt.each do |row|

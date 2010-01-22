@@ -113,7 +113,7 @@ static VALUE each(VALUE self)
           for(i = 0; i < length; i++) {
             switch(sqlite3_column_type(stmt, i)) {
               case SQLITE_INTEGER:
-                rb_ary_push(list, INT2NUM(sqlite3_column_int(stmt, i)));
+                rb_ary_push(list, LONG2NUM(sqlite3_column_int64(stmt, i)));
                 break;
               case SQLITE_FLOAT:
                 rb_ary_push(list, rb_float_new(sqlite3_column_double(stmt, i)));
@@ -156,14 +156,24 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
     case T_STRING:
       status = sqlite3_bind_text(
           ctx->st,
-          NUM2INT(key),
-          StringValuePtr(value),
-          RSTRING_LEN(value),
+          (int)NUM2INT(key),
+          (const char *)StringValuePtr(value),
+          (int)RSTRING_LEN(value),
           SQLITE_TRANSIENT
       );
       break;
+    case T_FIXNUM:
+      {
+        long v = NUM2LONG(value);
+        status = sqlite3_bind_int64(ctx->st,(int)NUM2INT(key),v);
+      }
+      break;
+    case T_NIL:
+      status = sqlite3_bind_null(ctx->st, (int)NUM2INT(key));
+      break;
     default:
-      rb_raise(rb_eRuntimeError, "can't prepare %s", rb_class2name(value));
+      rb_raise(rb_eRuntimeError, "can't prepare %s",
+          rb_class2name(CLASS_OF(value)));
       break;
   }
 
