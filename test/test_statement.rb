@@ -96,6 +96,13 @@ module SQLite3
       assert_equal ['hello'], result
     end
 
+    def test_named_bind_not_found
+      stmt = SQLite3::Statement.new(@db, "select :foo")
+      assert_raises(SQLite3::Exception) do
+        stmt.bind_param('bar', 'hello')
+      end
+    end
+
     def test_each
       r = nil
       @stmt.each do |row|

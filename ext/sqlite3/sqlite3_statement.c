@@ -145,6 +145,14 @@ static VALUE each(VALUE self)
   return self;
 }
 
+/* call-seq: stmt.bind_param(key, value)
+ *
+ * Binds value to the named (or positional) placeholder. If +param+ is a
+ * Fixnum, it is treated as an index for a positional placeholder.
+ * Otherwise it is used as the name of the placeholder to bind to.
+ *
+ * See also #bind_params.
+ */
 static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 {
   sqlite3StmtRubyPtr ctx;
@@ -160,6 +168,9 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
     index = sqlite3_bind_parameter_index(ctx->st, StringValuePtr(key));
   } else
     index = (int)NUM2INT(key);
+
+  if(index == 0)
+    rb_raise(rb_path2class("SQLite3::Exception"), "no such bind parameter");
 
   switch(TYPE(value)) {
     case T_STRING:

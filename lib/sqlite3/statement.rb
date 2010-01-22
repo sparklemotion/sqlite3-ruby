@@ -53,36 +53,6 @@ module SQLite3
     # Otherwise it is used as the name of the placeholder to bind to.
     #
     # See also #bind_params.
-    #def bind_param( param, value )
-    #  must_be_open!
-    #  reset! if active?
-    #  if Fixnum === param
-    #    case value
-    #      when Bignum then
-    #        @driver.bind_int64( @handle, param, value )
-    #      when Integer then
-    #        if value >= (2 ** 31)
-    #          @driver.bind_int64( @handle, param, value )
-    #        else
-    #          @driver.bind_int( @handle, param, value )
-    #        end
-    #      when Numeric then
-    #        @driver.bind_double( @handle, param, value.to_f )
-    #      when Blob then
-    #        @driver.bind_blob( @handle, param, value )
-    #      when nil then
-    #        @driver.bind_null( @handle, param )
-    #      else
-    #        @driver.bind_text( @handle, param, value )
-    #    end
-    #  else
-    #    param = param.to_s
-    #    param = ":#{param}" unless param[0] == ?:
-    #    index = @driver.bind_parameter_index( @handle, param )
-    #    raise Exception, "no such bind parameter '#{param}'" if index == 0
-    #    bind_param index, value
-    #  end
-    #end
 
     # Execute the statement. This creates a new ResultSet object for the
     # statement's virtual machine. If a block was given, the new ResultSet will
