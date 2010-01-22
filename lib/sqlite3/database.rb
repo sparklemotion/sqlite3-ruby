@@ -91,20 +91,6 @@ module SQLite3
       @translator ||= Translator.new
     end
 
-    # Closes this database.
-    def close
-      unless @closed
-        result = @driver.close( @handle )
-        Error.check( result, self )
-      end
-      @closed = true
-    end
-
-    # Returns +true+ if this database instance has been closed (see #close).
-    def closed?
-      @closed
-    end
-
     # Installs (or removes) a block that will be invoked for every SQL
     # statement executed. The block receives a two parameters: the +data+
     # argument, and the SQL statement executed. If the block is +nil+,

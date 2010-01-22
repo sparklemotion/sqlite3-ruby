@@ -21,5 +21,11 @@ module SQLite3
                                  :utf16 => true)
       assert db
     end
+
+    def test_close
+      db = SQLite3::Database.new(':memory:')
+      db.close
+      assert db.closed?
+    end
   end
 end

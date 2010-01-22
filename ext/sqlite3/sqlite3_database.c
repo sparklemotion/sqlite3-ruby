@@ -50,13 +50,45 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   return self;
 }
 
+/* call-seq: db.close
+ *
+ * Closes this database.
+ */
+static VALUE sqlite3_rb_close(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+
+  if(SQLITE_OK != sqlite3_close(ctx->db))
+    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+
+  ctx->db = NULL;
+
+  return self;
+}
+
+/* call-seq: db.closed?
+ *
+ * Returns +true+ if this database instance has been closed (see #close).
+ */
+static VALUE closed_p(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+
+  if(NULL == ctx->db) return Qtrue;
+
+  return Qfalse;
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Database, allocate);
   rb_define_method(cSqlite3Database, "initialize", initialize, -1);
+  rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
+  rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
 
-  //rb_define_singleton_method(cSqlite3Database, "open", open_connection, 1);
   //rb_define_private_method(cDeeBee, "encoding_str", encoding_str, 0);
 }
