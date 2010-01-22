@@ -23,9 +23,6 @@ module SQLite3
     # this will be the empty string.
     attr_reader :remainder
 
-    # The underlying opaque handle used to access the SQLite @driver.
-    attr_reader :handle
-
     # Closes the statement by finalizing the underlying statement
     # handle. The statement must not be used after being closed.
     def close

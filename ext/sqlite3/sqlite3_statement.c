@@ -32,18 +32,21 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   if(!db_ctx->db)
     rb_raise(rb_eArgError, "prepare called on a closed database");
 
+  char *tail = NULL;
+
   int status = sqlite3_prepare_v2(
       db_ctx->db,
       StringValuePtr(sql),
       RSTRING_LEN(sql),
       &ctx->st,
-      NULL
+      &tail
   );
 
   if(SQLITE_OK != status)
     rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(db_ctx->db));
 
   rb_iv_set(self, "@connection", db);
+  rb_iv_set(self, "@remainder", rb_str_new2(tail));
 
   return self;
 }
