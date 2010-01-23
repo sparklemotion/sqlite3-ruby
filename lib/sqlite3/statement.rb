@@ -70,11 +70,8 @@ module SQLite3
       bind_params(*bind_vars) unless bind_vars.empty?
       @results = ResultSet.new(@connection, self)
 
-      if block_given?
-        yield @results
-      else
-        return @results
-      end
+      yield @results if block_given?
+      @results
     end
 
     # Execute the statement. If no block was given, this returns an array of
