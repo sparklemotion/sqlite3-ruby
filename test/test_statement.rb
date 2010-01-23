@@ -124,6 +124,11 @@ module SQLite3
       assert_equal ['foo'], r
     end
 
+    def test_tainted
+      r = @stmt.step
+      assert r.first.tainted?
+    end
+
     def test_step_twice
       assert_not_nil @stmt.step
       assert !@stmt.done?
