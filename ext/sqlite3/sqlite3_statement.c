@@ -102,6 +102,8 @@ static VALUE step(VALUE self)
 
   REQUIRE_OPEN_STMT(ctx);
 
+  if(ctx->done_p) return Qnil;
+
   stmt = ctx->st;
 
   int value = sqlite3_step(stmt);
@@ -165,6 +167,8 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 
   int status;
   int index;
+
+  if(T_SYMBOL == TYPE(key)) key = rb_funcall(key, rb_intern("to_s"), 0);
 
   if(T_STRING == TYPE(key)) {
     if(RSTRING_PTR(key)[0] != ':') key = rb_str_plus(rb_str_new2(":"), key);
@@ -271,6 +275,22 @@ static VALUE column_name(VALUE self, VALUE index)
   return Qnil;
 }
 
+/* call-seq: stmt.column_decltype(index)
+ *
+ * Get the column type at +index+.  0 based.
+ */
+static VALUE column_decltype(VALUE self, VALUE index)
+{
+  sqlite3StmtRubyPtr ctx;
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
+
+  const char * name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
+
+  if(name) return rb_str_new2(name);
+  return Qnil;
+}
+
 void init_sqlite3_statement()
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
@@ -285,4 +305,5 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "done?", done_p, 0);
   rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
   rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
+  rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
 }

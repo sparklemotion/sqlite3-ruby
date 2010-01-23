@@ -63,61 +63,34 @@ module SQLite3
     # For hashes, the column names are the keys of the hash, and the column
     # types are accessible via the +types+ property.
     def next
-      return nil if @eof
+      val = @stmt.step
+      return nil if @stmt.done?
 
-      @stmt.must_be_open!
-
-      unless @first_row
-        result = @driver.step( @stmt.handle )
-        check result
+      if @db.type_translation
+        row = @stmt.types.zip( row ).map do |type, value|
+          @db.translator.translate( type, value )
+        end
       end
 
-      @first_row = false
-
-      unless @eof
-        row = []
-        @driver.data_count( @stmt.handle ).times do |column|
-          type	= @driver.column_type( @stmt.handle, column )
-
-          if type == Constants::ColumnType::TEXT
-            row << @driver.column_text( @stmt.handle, column )
-          elsif type == Constants::ColumnType::NULL
-            row << nil
-          elsif type == Constants::ColumnType::BLOB
-            row << @driver.column_blob( @stmt.handle, column )
-          else
-            row << @driver.column_text( @stmt.handle, column )
-          end
-        end
-
-        if @db.type_translation
-          row = @stmt.types.zip( row ).map do |type, value|
-            @db.translator.translate( type, value )
-          end
-        end
-
-        if @db.results_as_hash
-          new_row = HashWithTypes[ *( @stmt.columns.zip( row ).to_a.flatten ) ]
-          row.each_with_index { |value,idx|
-            value.taint
-            new_row[idx] = value
-          }
-          row = new_row
+      if @db.results_as_hash
+        new_row = HashWithTypes[ *( @stmt.columns.zip( row ).to_a.flatten ) ]
+        row.each_with_index { |value,idx|
+          value.taint
+          new_row[idx] = value
+        }
+        row = new_row
+      else
+        if row.respond_to?(:fields)
+          row = ArrayWithTypes.new(val)
         else
-          if row.respond_to?(:fields)
-            row = ArrayWithTypes.new(row)
-          else
-            row = ArrayWithTypesAndFields.new(row)
-          end
-          row.fields = @stmt.columns
-          row.each { |column| column.taint }
+          row = ArrayWithTypesAndFields.new(val)
         end
-
-        row.types = @stmt.types
-
-        return row
+        row.fields = @stmt.columns
       end
 
+      row.types = @stmt.types
+
+      return row
       nil
     end
 

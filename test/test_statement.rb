@@ -96,6 +96,14 @@ module SQLite3
       assert_equal ['hello'], result
     end
 
+    def test_named_bind_symbol
+      stmt = SQLite3::Statement.new(@db, "select :foo")
+      stmt.bind_param(:foo, 'hello')
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal ['hello'], result
+    end
+
     def test_named_bind_not_found
       stmt = SQLite3::Statement.new(@db, "select :foo")
       assert_raises(SQLite3::Exception) do
@@ -137,6 +145,11 @@ module SQLite3
 
       @stmt.reset!
       assert !@stmt.done?
+    end
+
+    def test_step_never_moves_past_done
+      10.times { @stmt.step }
+      @stmt.done?
     end
 
     def test_column_count

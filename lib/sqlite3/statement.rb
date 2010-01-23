@@ -69,10 +69,11 @@ module SQLite3
     #
     # See also #bind_params, #execute!.
     def execute( *bind_vars )
+      must_be_open!
       reset! if active?
 
       bind_params(*bind_vars) unless bind_vars.empty?
-      @results = ResultSet.new( @db, self )
+      @results = ResultSet.new(@connection, self)
 
       if block_given?
         yield @results
@@ -134,6 +135,7 @@ module SQLite3
     # that this may execute the statement in order to obtain the metadata; this
     # makes it a (potentially) expensive operation.
     def types
+      must_be_open!
       get_metadata unless defined?(@types)
       @types
     end
@@ -142,15 +144,12 @@ module SQLite3
     # that this will actually execute the SQL, which means it can be a
     # (potentially) expensive operation.
     def get_metadata
-      must_be_open!
-
       @columns = []
       @types = []
 
-      column_count = @driver.column_count( @handle )
       column_count.times do |column|
-        @columns << @driver.column_name( @handle, column )
-        @types << @driver.column_decltype( @handle, column )
+        @columns << column_name(column)
+        @types << column_decltype(column)
       end
 
       @columns.freeze
@@ -161,11 +160,9 @@ module SQLite3
     # Performs a sanity check to ensure that the statement is not
     # closed. If it is, an exception is raised.
     def must_be_open! # :nodoc:
-      if @closed
+      if closed?
         raise SQLite3::Exception, "cannot use a closed statement"
       end
     end
-
   end
-
 end
