@@ -138,5 +138,9 @@ module SQLite3
       @stmt.reset!
       assert !@stmt.done?
     end
+
+    def test_column_count
+      assert_equal 1, @stmt.column_count
+    end
   end
 end

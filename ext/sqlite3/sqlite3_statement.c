@@ -242,6 +242,19 @@ static VALUE done_p(VALUE self)
   return Qfalse;
 }
 
+/* call-seq: stmt.column_count
+ *
+ * Returns the number of columns to be returned for this statement
+ */
+static VALUE column_count(VALUE self)
+{
+  sqlite3StmtRubyPtr ctx;
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
+
+  return INT2NUM((long)sqlite3_column_count(ctx->st));
+}
+
 void init_sqlite3_statement()
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
@@ -254,4 +267,5 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
   rb_define_method(cSqlite3Statement, "step", step, 0);
   rb_define_method(cSqlite3Statement, "done?", done_p, 0);
+  rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
 }
