@@ -50,7 +50,7 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   );
 
   if(SQLITE_OK != status)
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(db_ctx->db));
+    rb_raise(rb_path2class("SQLite3::SQLException"), "%s", sqlite3_errmsg(db_ctx->db));
 
   rb_iv_set(self, "@connection", db);
   rb_iv_set(self, "@remainder", rb_str_new2(tail));

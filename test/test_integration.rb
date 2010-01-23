@@ -2,8 +2,7 @@ require File.join(File.dirname(__FILE__), 'helper')
 
 class TC_Database_Integration < Test::Unit::TestCase
   def setup
-    File.delete( "test.db" ) rescue nil
-    @db = SQLite3::Database.new( "test.db" )
+    @db = SQLite3::Database.new(":memory:")
     @db.transaction do
       @db.execute "create table foo ( a integer primary key, b text )"
       @db.execute "insert into foo ( b ) values ( 'foo' )"
@@ -14,7 +13,6 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def teardown
     @db.close
-    File.delete( "test.db" )
   end
 
   def test_table_info_with_type_translation_active
