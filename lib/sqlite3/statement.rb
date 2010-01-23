@@ -48,12 +48,6 @@ module SQLite3
       end
     end
 
-    # Binds value to the named (or positional) placeholder. If +param+ is a
-    # Fixnum, it is treated as an index for a positional placeholder.
-    # Otherwise it is used as the name of the placeholder to bind to.
-    #
-    # See also #bind_params.
-
     # Execute the statement. This creates a new ResultSet object for the
     # statement's virtual machine. If a block was given, the new ResultSet will
     # be yielded to it; otherwise, the ResultSet will be returned.
