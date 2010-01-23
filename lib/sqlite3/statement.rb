@@ -122,6 +122,14 @@ module SQLite3
       return @columns
     end
 
+    def each
+      loop do
+        val = step
+        break self if done?
+        yield val
+      end
+    end
+
     # Return an array of the data types for each column in this statement. Note
     # that this may execute the statement in order to obtain the metadata; this
     # makes it a (potentially) expensive operation.

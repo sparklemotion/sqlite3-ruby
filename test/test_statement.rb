@@ -118,5 +118,20 @@ module SQLite3
       @stmt.each { |row| r << row }
       assert_equal [['foo'], ['foo']], r
     end
+
+    def test_step
+      r = @stmt.step
+      assert_equal ['foo'], r
+    end
+
+    def test_step_twice
+      assert_not_nil @stmt.step
+      assert !@stmt.done?
+      assert_nil @stmt.step
+      assert @stmt.done?
+
+      @stmt.reset!
+      assert !@stmt.done?
+    end
   end
 end

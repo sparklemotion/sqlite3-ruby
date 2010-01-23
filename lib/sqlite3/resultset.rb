@@ -31,41 +31,17 @@ module SQLite3
 
     # Create a new ResultSet attached to the given database, using the
     # given sql text.
-    def initialize( db, stmt )
-      @db = db
-      @driver = @db.driver
+    def initialize db, stmt
+      @db   = db
       @stmt = stmt
-      commence
     end
-
-    # A convenience method for compiling the virtual machine and stepping
-    # to the first row of the result set.
-    def commence
-      result = @driver.step( @stmt.handle )
-      if result == Constants::ErrorCode::ERROR
-        @driver.reset( @stmt.handle )
-      end
-      check result
-      @first_row = true
-    end
-    private :commence
-
-    def check( result )
-      @eof = ( result == Constants::ErrorCode::DONE )
-      found = ( result == Constants::ErrorCode::ROW )
-      Error.check( result, @db ) unless @eof || found
-    end
-    private :check
 
     # Reset the cursor, so that a result set which has reached end-of-file
     # can be rewound and reiterated.
     def reset( *bind_params )
-      @stmt.must_be_open!
-      @stmt.reset!(false)
-      @driver.reset( @stmt.handle )
+      @stmt.reset!
       @stmt.bind_params( *bind_params )
       @eof = false
-      commence
     end
 
     # Query whether the cursor has reached the end of the result set or not.
@@ -147,10 +123,8 @@ module SQLite3
 
     # Required by the Enumerable mixin. Provides an internal iterator over the
     # rows of the result set.
-    def each
-      while row=self.next
-        yield row
-      end
+    def each &block
+      @stmt.each(&block)
     end
 
     # Closes the statement that spawned this result set.
