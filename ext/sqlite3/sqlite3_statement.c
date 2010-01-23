@@ -168,14 +168,16 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
   int status;
   int index;
 
-  if(T_SYMBOL == TYPE(key)) key = rb_funcall(key, rb_intern("to_s"), 0);
-
-  if(T_STRING == TYPE(key)) {
-    if(RSTRING_PTR(key)[0] != ':') key = rb_str_plus(rb_str_new2(":"), key);
-
-    index = sqlite3_bind_parameter_index(ctx->st, StringValuePtr(key));
-  } else
-    index = (int)NUM2INT(key);
+  switch(TYPE(key)) {
+    case T_SYMBOL:
+      key = rb_funcall(key, rb_intern("to_s"), 0);
+    case T_STRING:
+      if(RSTRING_PTR(key)[0] != ':') key = rb_str_plus(rb_str_new2(":"), key);
+      index = sqlite3_bind_parameter_index(ctx->st, StringValuePtr(key));
+      break;
+    default:
+      index = (int)NUM2INT(key);
+  }
 
   if(index == 0)
     rb_raise(rb_path2class("SQLite3::Exception"), "no such bind parameter");
