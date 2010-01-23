@@ -142,5 +142,10 @@ module SQLite3
     def test_column_count
       assert_equal 1, @stmt.column_count
     end
+
+    def test_column_name
+      assert_equal "'foo'", @stmt.column_name(0)
+      assert_equal nil, @stmt.column_name(10)
+    end
   end
 end
