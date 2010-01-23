@@ -17,6 +17,7 @@ module SQLite3
   # (if ever) be instantiated directly by a client, and is most often obtained
   # via the Database#prepare method.
   class Statement
+    include Enumerable
 
     # This is any text that followed the first valid SQL statement in the text
     # with which the statement was initialized. If there was no trailing text,
@@ -90,17 +91,9 @@ module SQLite3
     #   end
     #
     # See also #bind_params, #execute.
-    def execute!( *bind_vars )
-      result = execute( *bind_vars )
-      rows = [] unless block_given?
-      while row = result.next
-        if block_given?
-          yield row
-        else
-          rows << row
-        end
-      end
-      rows
+    def execute! *bind_vars, &block
+      execute(*bind_vars)
+      block_given? ? each(&block) : to_a
     end
 
     # Returns true if the statement is currently active, meaning it has an
