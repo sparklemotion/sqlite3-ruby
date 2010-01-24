@@ -184,7 +184,9 @@ module SQLite3
       sql = sql.strip
       until sql.empty? do
         prepare( sql ) do |stmt|
-          stmt.execute( *bind_vars )
+          # FIXME: this should probably use sqlite3's api for batch execution
+          # This implementation requires stepping over the results.
+          stmt.execute( *bind_vars ).each { |x| }
           sql = stmt.remainder.strip
         end
       end

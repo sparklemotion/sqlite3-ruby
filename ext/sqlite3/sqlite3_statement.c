@@ -72,7 +72,7 @@ static VALUE sqlite3_rb_close(VALUE self)
   REQUIRE_OPEN_STMT(ctx);
 
   if(SQLITE_OK != sqlite3_finalize(ctx->st))
-    rb_raise(rb_eRuntimeError, "uh oh!"); // FIXME this should come from the DB
+    rb_raise(rb_path2class("SQLite3::SQLException"), "uh oh!"); // FIXME this should come from the DB
 
   ctx->st = NULL;
 
