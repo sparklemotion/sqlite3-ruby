@@ -63,10 +63,9 @@ module SQLite3
     end
 
     def test_trace_requires_opendb
-      db = SQLite3::Database.new(':memory:')
-      db.close
+      @db.close
       assert_raise(SQLite3::Exception) do
-        db.trace { |x| }
+        @db.trace { |x| }
       end
     end
 
@@ -91,6 +90,13 @@ module SQLite3
     def test_trace_takes_nil
       @db.trace(nil)
       @db.execute "select 'foo'"
+    end
+
+    def test_last_insert_row_id_closed
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.last_insert_row_id
+      end
     end
   end
 end

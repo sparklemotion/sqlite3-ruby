@@ -228,12 +228,6 @@ module SQLite3
       nil
     end
 
-    # Obtains the unique row ID of the last row to be inserted by this Database
-    # instance.
-    def last_insert_row_id
-      @driver.last_insert_rowid( @handle )
-    end
-
     # Returns the number of changes made to this database instance by the last
     # operation performed. Note that a "delete from table" without a where
     # clause will not affect this value.

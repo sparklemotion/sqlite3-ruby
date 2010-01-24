@@ -136,6 +136,20 @@ static VALUE trace(int argc, VALUE *argv, VALUE self)
   return self;
 }
 
+/* call-seq: last_insert_row_id
+ *
+ * Obtains the unique row ID of the last row to be inserted by this Database
+ * instance.
+ */
+static VALUE last_insert_row_id(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  return LONG2NUM(sqlite3_last_insert_rowid(ctx->db));
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -146,4 +160,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);
   rb_define_method(cSqlite3Database, "trace", trace, -1);
+  rb_define_method(cSqlite3Database, "last_insert_row_id", last_insert_row_id, 0);
 }
