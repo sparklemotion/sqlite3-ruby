@@ -1,0 +1,7 @@
+* SQLite3::ResultSet used to query the database for the first row, regardless
+  of whether the user asked for it or not.  I have removed that so that rows
+  will not be returned until the user asks for them.  This is a subtle but
+  sometimes important change in behavior.
+
+  83882d2208ed189361617d5ab8532a325aaf729d
+  
