@@ -249,12 +249,6 @@ module SQLite3
       @driver.changes( @handle )
     end
 
-    # Returns the total number of changes made to this database instance
-    # since it was opened.
-    def total_changes
-      @driver.total_changes( @handle )
-    end
-
     # Interrupts the currently executing operation, causing it to abort.
     def interrupt
       @driver.interrupt( @handle )

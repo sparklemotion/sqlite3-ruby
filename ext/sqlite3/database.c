@@ -1,5 +1,9 @@
 #include <sqlite3_ruby.h>
 
+#define REQUIRE_OPEN_DB(_ctxt) \
+  if(!_ctxt->db) \
+    rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
+
 VALUE cSqlite3Database;
 
 static void deallocate(void * ctx)
@@ -82,6 +86,20 @@ static VALUE closed_p(VALUE self)
   return Qfalse;
 }
 
+/* call-seq: total_changes
+ *
+ * Returns the total number of changes made to this database instance
+ * since it was opened.
+ */
+static VALUE total_changes(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  return INT2NUM((long)sqlite3_total_changes(ctx->db));
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -90,4 +108,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "initialize", initialize, -1);
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
+  rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);
 }

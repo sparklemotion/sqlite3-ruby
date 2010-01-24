@@ -42,5 +42,20 @@ module SQLite3
       stmt = db.prepare('select "hello world"')
       assert_instance_of(SQLite3::Statement, stmt)
     end
+
+    def test_total_changes
+      db = SQLite3::Database.new(':memory:')
+      db.execute("create table foo ( a integer primary key, b text )")
+      db.execute("insert into foo (b) values ('hello')")
+      assert_equal 1, db.total_changes
+    end
+
+    def test_total_changes_closed
+      db = SQLite3::Database.new(':memory:')
+      db.close
+      assert_raise(SQLite3::Exception) do
+        db.total_changes
+      end
+    end
   end
 end
