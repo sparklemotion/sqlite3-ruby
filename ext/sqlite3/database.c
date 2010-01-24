@@ -1,4 +1,4 @@
-#include <sqlite3_database.h>
+#include <sqlite3_ruby.h>
 
 VALUE cSqlite3Database;
 

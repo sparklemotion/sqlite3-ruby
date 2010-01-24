@@ -1,4 +1,4 @@
-#include <sqlite3_statement.h>
+#include <sqlite3_ruby.h>
 
 #define REQUIRE_OPEN_STMT(_ctxt) \
   if(!_ctxt->st) \

@@ -6,6 +6,7 @@
 
 extern VALUE mSqlite3;
 
-#include <sqlite3_database.h>
+#include <database.h>
+#include <statement.h>
 
 #endif
