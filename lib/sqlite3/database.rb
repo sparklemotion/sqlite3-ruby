@@ -91,14 +91,6 @@ module SQLite3
       @translator ||= Translator.new
     end
 
-    # Installs (or removes) a block that will be invoked for every SQL
-    # statement executed. The block receives a two parameters: the +data+
-    # argument, and the SQL statement executed. If the block is +nil+,
-    # any existing tracer will be uninstalled.
-    def trace( data=nil, &block )
-      @driver.trace( @handle, data, &block )
-    end
-
     # Installs (or removes) a block that will be invoked for every access
     # to the database. If the block returns 0 (or +nil+), the statement
     # is allowed to proceed. Returning 1 causes an authorization error to

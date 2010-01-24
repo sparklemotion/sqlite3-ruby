@@ -3,6 +3,10 @@ require 'iconv'
 
 module SQLite3
   class TestDatabase < Test::Unit::TestCase
+    def setup
+      @db = SQLite3::Database.new(':memory:')
+    end
+
     def test_new
       db = SQLite3::Database.new(':memory:')
       assert db
@@ -56,6 +60,37 @@ module SQLite3
       assert_raise(SQLite3::Exception) do
         db.total_changes
       end
+    end
+
+    def test_trace_requires_opendb
+      db = SQLite3::Database.new(':memory:')
+      db.close
+      assert_raise(SQLite3::Exception) do
+        db.trace { |x| }
+      end
+    end
+
+    def test_trace_with_block
+      result = nil
+      @db.trace { |sql| result = sql }
+      @db.execute "select 'foo'"
+      assert_equal "select 'foo'", result
+    end
+
+    def test_trace_with_object
+      obj = Class.new {
+        attr_accessor :result
+        def call sql; @result = sql end
+      }.new
+
+      @db.trace(obj)
+      @db.execute "select 'foo'"
+      assert_equal "select 'foo'", obj.result
+    end
+
+    def test_trace_takes_nil
+      @db.trace(nil)
+      @db.execute "select 'foo'"
     end
   end
 end

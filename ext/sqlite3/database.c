@@ -47,6 +47,8 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   if(SQLITE_OK != status)
     rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
 
+  rb_iv_set(self, "@tracefunc", Qnil);
+
   if(rb_block_given_p()) {
     rb_yield(self);
     rb_funcall(self, rb_intern("close"), 0);
@@ -100,6 +102,40 @@ static VALUE total_changes(VALUE self)
   return INT2NUM((long)sqlite3_total_changes(ctx->db));
 }
 
+static void tracefunc(void * data, const char *sql)
+{
+  VALUE self = (VALUE)data;
+  VALUE thing = rb_iv_get(self, "@tracefunc");
+  rb_funcall(thing, rb_intern("call"), 1, rb_str_new2(sql));
+}
+
+/* call-seq:
+ *    trace { |sql| ... }
+ *    trace(Class.new { def call sql; end }.new)
+ *
+ * Installs (or removes) a block that will be invoked for every SQL
+ * statement executed. The block receives one parameter: the SQL statement
+ * executed. If the block is +nil+, any existing tracer will be uninstalled.
+ */
+static VALUE trace(int argc, VALUE *argv, VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  VALUE block;
+
+  rb_scan_args(argc, argv, "01", &block);
+
+  if(NIL_P(block) && rb_block_given_p()) block = rb_block_proc();
+
+  rb_iv_set(self, "@tracefunc", block);
+
+  sqlite3_trace(ctx->db, NIL_P(block) ? NULL : tracefunc, (void *)self);
+
+  return self;
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -109,4 +145,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);
+  rb_define_method(cSqlite3Database, "trace", trace, -1);
 }

@@ -71,9 +71,9 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def test_trace
     result = nil
-    @db.trace( "data" ) { |data,sql| result = [ data, sql ]; 0 }
+    @db.trace { |sql| result = sql }
     @db.execute "select * from foo"
-    assert_equal ["data","select * from foo"], result
+    assert_equal "select * from foo", result
   end
 
   def test_authorizer_okay
