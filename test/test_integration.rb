@@ -24,9 +24,9 @@ class TC_Database_Integration < Test::Unit::TestCase
     @db.transaction do
       @db.execute "create table defaults_test ( a string default NULL, b string default 'Hello' )"
       data = @db.table_info( "defaults_test" )
-      assert_equal({"name" => "a", "type" => "string", "dflt_value" => nil, "notnull" => "0", "cid" => "0", "pk" => "0"},
+      assert_equal({"name" => "a", "type" => "string", "dflt_value" => nil, "notnull" => 0, "cid" => 0, "pk" => 0},
         data[0])
-      assert_equal({"name" => "b", "type" => "string", "dflt_value" => "Hello", "notnull" => "0", "cid" => "1", "pk" => "0"},
+      assert_equal({"name" => "b", "type" => "string", "dflt_value" => "Hello", "notnull" => 0, "cid" => 1, "pk" => 0},
         data[1])
     end
   end
@@ -35,9 +35,9 @@ class TC_Database_Integration < Test::Unit::TestCase
     @db.transaction do
       @db.execute "create table no_defaults_test ( a integer default 1, b integer )"
       data = @db.table_info( "no_defaults_test" )
-      assert_equal({"name" => "a", "type" => "integer", "dflt_value" => "1", "notnull" => "0", "cid" => "0", "pk" => "0"},
+      assert_equal({"name" => "a", "type" => "integer", "dflt_value" => "1", "notnull" => 0, "cid" => 0, "pk" => 0},
         data[0])
-      assert_equal({"name" => "b", "type" => "integer", "dflt_value" => nil, "notnull" => "0", "cid" => "1", "pk" => "0"},
+      assert_equal({"name" => "b", "type" => "integer", "dflt_value" => nil, "notnull" => 0, "cid" => 1, "pk" => 0},
         data[1])
     end
   end
@@ -338,7 +338,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def test_get_first_row_no_bind_with_match
     result = @db.get_first_row( "select * from foo where a=1" )
-    assert_equal [ "1", "foo" ], result
+    assert_equal [ 1, "foo" ], result
   end
 
   def test_get_first_row_with_bind_no_match
@@ -348,7 +348,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def test_get_first_row_with_bind_with_match
     result = @db.get_first_row( "select * from foo where a=?", 1 )
-    assert_equal [ "1", "foo" ], result
+    assert_equal [ 1, "foo" ], result
   end
 
   def test_get_first_value_no_bind_no_match
