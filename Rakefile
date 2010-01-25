@@ -23,7 +23,7 @@ HOE = Hoe.spec 'sqlite3-ruby' do
   clean_globs.push('**/test.db')
 end
 
-Rake::ExtensionTask.new 'sqlite3', HOE.spec do |ext|
+Rake::ExtensionTask.new 'sqlite3_native', HOE.spec do |ext|
   ext.lib_dir = File.join(*['lib', 'sqlite3', ENV['FAT_DIR']].compact)
   ext.ext_dir = 'ext/sqlite3'
 end

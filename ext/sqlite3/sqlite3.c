@@ -7,7 +7,7 @@ static VALUE libversion(VALUE klass)
   return INT2NUM(sqlite3_libversion_number());
 }
 
-void Init_sqlite3()
+void Init_sqlite3_native()
 {
   mSqlite3         = rb_define_module("SQLite3");
 
