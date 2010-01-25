@@ -88,9 +88,7 @@ module SQLite3
       end
 
       row.types = @stmt.types
-
-      return row
-      nil
+      row
     end
 
     # Required by the Enumerable mixin. Provides an internal iterator over the
