@@ -21,7 +21,7 @@ module SQLite3
     end
 
     def test_new_with_options
-      db = SQLite3::Database.new(Iconv.conv('UTF-16', 'UTF-8', ':memory:'),
+      db = SQLite3::Database.new(Iconv.conv('UTF-16LE', 'UTF-8', ':memory:'),
                                  :utf16 => true)
       assert db
     end
@@ -216,6 +216,13 @@ module SQLite3
 
       @db.authorizer = nil
       @db.prepare("select 'fooooo'")
+    end
+
+    def test_close_with_open_statements
+      stmt = @db.prepare("select 'foo'")
+      assert_raises(SQLite3::BusyException) do
+        @db.close
+      end
     end
   end
 end

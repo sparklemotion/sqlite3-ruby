@@ -9,6 +9,15 @@ VALUE cSqlite3Database;
 static void deallocate(void * ctx)
 {
   sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
+  sqlite3 * db     = c->db;
+  sqlite3_stmt * stmt;
+
+  if(db) {
+    while((stmt = sqlite3_next_stmt(db, NULL)) != NULL) {
+      sqlite3_finalize(stmt);
+    }
+    sqlite3_close(db);
+  }
   xfree(c);
 }
 
@@ -67,7 +76,8 @@ static VALUE sqlite3_rb_close(VALUE self)
   sqlite3RubyPtr ctx;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
-  CHECK(ctx->db, sqlite3_close(ctx->db));
+  sqlite3 * db = ctx->db;
+  CHECK(db, sqlite3_close(ctx->db));
 
   ctx->db = NULL;
 
