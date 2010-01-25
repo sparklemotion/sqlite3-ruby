@@ -279,14 +279,14 @@ static void rb_sqlite3_final(sqlite3_context * ctx)
   set_sqlite3_func_result(ctx, result);
 }
 
-/* call-seq: define_aggregate(name, aggregator)
+/* call-seq: define_aggregator(name, aggregator)
  *
  * Define an aggregate function named +name+ using the object +aggregator+.
  * +aggregator+ must respond to +step+ and +finalize+.  +step+ will be called
  * with row information and +finalize+ must return the return value for the
  * aggregator function.
  */
-static VALUE define_aggregate(VALUE self, VALUE name, VALUE aggregator)
+static VALUE define_aggregator(VALUE self, VALUE name, VALUE aggregator)
 {
   sqlite3RubyPtr ctx;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
@@ -366,7 +366,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "trace", trace, -1);
   rb_define_method(cSqlite3Database, "last_insert_row_id", last_insert_row_id, 0);
   rb_define_method(cSqlite3Database, "define_function", define_function, 1);
-  rb_define_method(cSqlite3Database, "define_aggregate", define_aggregate, 2);
+  rb_define_method(cSqlite3Database, "define_aggregator", define_aggregator, 2);
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
   rb_define_method(cSqlite3Database, "errcode", errcode, 0);

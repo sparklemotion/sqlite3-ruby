@@ -172,7 +172,7 @@ module SQLite3
         end
       }.new
 
-      @db.define_aggregate("accumulate", acc)
+      @db.define_aggregator("accumulate", acc)
       value = @db.get_first_value( "select accumulate(a) from foo" )
       assert_equal 6, value
     end

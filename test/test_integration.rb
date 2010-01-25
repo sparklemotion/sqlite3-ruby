@@ -532,7 +532,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
     @db.create_aggregate_handler( handler )
     value = @db.get_first_value( "select multiply(a) from foo" )
-    assert_equal "6", value
+    assert_equal 6, value
   end
 
   def test_bind_array_parameter

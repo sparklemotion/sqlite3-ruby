@@ -412,47 +412,22 @@ module SQLite3
     #   db.create_aggregate_handler( LengthsAggregateHandler )
     #   puts db.get_first_value( "select lengths(name) from A" )
     def create_aggregate_handler( handler )
-      arity = -1
-      text_rep = Constants::TextRep::ANY
+      proxy = Class.new do
+        def initialize handler
+          @handler  = handler
+          @fp       = FunctionProxy.new
+        end
 
-      arity = handler.arity if handler.respond_to?(:arity)
-      text_rep = handler.text_rep if handler.respond_to?(:text_rep)
-      name = handler.name
+        def step *args
+          @handler.step(@fp, *args)
+        end
 
-      step = proc do |func,*args|
-        ctx = @driver.aggregate_context( func )
-        unless ctx[ :__error ]
-          ctx[ :handler ] ||= handler.new
-          begin
-            ctx[ :handler ].step( FunctionProxy.new( @driver, func, ctx ),
-              *args.map{|v| Value.new(self,v)} )
-          rescue Exception, StandardError => e
-            ctx[ :__error ] = e
-          end
+        def finalize
+          @handler.finalize @fp
+          @fp.result
         end
       end
-
-      finalize = proc do |func|
-        ctx = @driver.aggregate_context( func )
-        unless ctx[ :__error ]
-          ctx[ :handler ] ||= handler.new
-          begin
-            ctx[ :handler ].finalize( FunctionProxy.new( @driver, func, ctx ) )
-          rescue Exception => e
-            ctx[ :__error ] = e
-          end
-        end
-
-        if ctx[ :__error ]
-          e = ctx[ :__error ]
-          @driver.sqlite3_result_error( func, "#{e.message} (#{e.class})", -1 )
-        end
-      end
-
-      result = @driver.create_function( @handle, name, arity, text_rep, nil,
-        nil, step, finalize )
-      Error.check( result, self )
-
+      define_aggregator(handler.name, proxy.new(handler.new))
       self
     end
 
@@ -559,7 +534,8 @@ module SQLite3
       # it is non-nil, it must quack like a Hash. If it is nil, then none of
       # the context functions will be available.
       def initialize
-        @result = nil
+        @result   = nil
+        @context  = {}
       end
 
       # Set the result of the function to the given error message.
@@ -572,33 +548,20 @@ module SQLite3
       # that the aggregate has processed so far. This will include the current
       # row, and so will always return at least 1.
       def count
-        ensure_aggregate!
         @driver.aggregate_count( @func )
       end
 
       # Returns the value with the given key from the context. This is only
       # available to aggregate functions.
       def []( key )
-        ensure_aggregate!
         @context[ key ]
       end
 
       # Sets the value with the given key in the context. This is only
       # available to aggregate functions.
       def []=( key, value )
-        ensure_aggregate!
         @context[ key ] = value
       end
-
-      # A function for performing a sanity check, to ensure that the function
-      # being invoked is an aggregate function. This is implied by the
-      # existence of the context variable.
-      def ensure_aggregate!
-        unless @context
-          raise MisuseException, "function is not an aggregate"
-        end
-      end
-      private :ensure_aggregate!
     end
 
     # A proxy used for defining the callbacks to an aggregate function.
