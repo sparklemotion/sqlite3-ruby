@@ -322,67 +322,40 @@ module SQLite3
     # aggregate functions.
     def create_aggregate( name, arity, step=nil, finalize=nil,
       text_rep=Constants::TextRep::ANY, &block )
-    # begin
-      if block
-        factory = Class.new do
-          def self.step &block
-            define_method(:step, &block)
-          end
 
-          def self.finalize &block
-            define_method(:finalize, &block)
-          end
+      factory = Class.new do
+        def self.step &block
+          define_method(:step, &block)
         end
+
+        def self.finalize &block
+          define_method(:finalize, &block)
+        end
+      end
+
+      if block_given?
         factory.instance_eval(&block)
-        proxy = factory.new
-        proxy.extend(Module.new {
-          attr_accessor :ctx
-
-          def step *args
-            super(@ctx, *args)
-          end
-
-          def finalize
-            super(@ctx)
-          end
-        })
-        proxy.ctx = FunctionProxy.new
-        return define_aggregator(name, proxy)
-      end
-
-      step_callback = proc do |func,*args|
-        ctx = @driver.aggregate_context( func )
-        unless ctx[:__error]
-          begin
-            step.call( FunctionProxy.new( @driver, func, ctx ),
-              *args.map{|v| Value.new(self,v)} )
-          rescue Exception => e
-            ctx[:__error] = e
-          end
+      else
+        factory.class_eval do
+          define_method(:step, step)
+          define_method(:finalize, finalize)
         end
       end
 
-      finalize_callback = proc do |func|
-        ctx = @driver.aggregate_context( func )
-        unless ctx[:__error]
-          begin
-            finalize.call( FunctionProxy.new( @driver, func, ctx ) )
-          rescue Exception => e
-            @driver.result_error( func,
-              "#{e.message} (#{e.class})", -1 )
-          end
-        else
-          e = ctx[:__error]
-          @driver.result_error( func,
-            "#{e.message} (#{e.class})", -1 )
+      proxy = factory.new
+      proxy.extend(Module.new {
+        attr_accessor :ctx
+
+        def step *args
+          super(@ctx, *args)
         end
-      end
 
-      result = @driver.create_function( @handle, name, arity, text_rep, nil,
-        nil, step_callback, finalize_callback )
-      Error.check( result, self )
-
-      self
+        def finalize
+          super(@ctx)
+        end
+      })
+      proxy.ctx = FunctionProxy.new
+      define_aggregator(name, proxy)
     end
 
     # This is another approach to creating an aggregate function (see

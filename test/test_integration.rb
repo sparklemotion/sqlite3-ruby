@@ -484,7 +484,7 @@ class TC_Database_Integration < Test::Unit::TestCase
     @db.create_aggregate( "accumulate", 1, step, final )
 
     value = @db.get_first_value( "select accumulate(a) from foo" )
-    assert_equal "6", value
+    assert_equal 6, value
   end
 
   def test_create_aggregate_with_block
@@ -513,7 +513,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
     value = @db.get_first_value(
       "select accumulate(a) from foo where a = 100" )
-    assert_equal "0", value
+    assert_equal 0, value
   end
 
   def test_create_aggregate_handler
