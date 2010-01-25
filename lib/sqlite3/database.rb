@@ -69,12 +69,6 @@ module SQLite3
       @driver.complete?( string, utf16 )
     end
 
-    # Return a string describing the last error to have occurred with this
-    # database.
-    def errmsg( utf16=false )
-      @driver.errmsg( @handle, utf16 )
-    end
-
     # Return an integer representing the last error to have occurred with this
     # database.
     def errcode

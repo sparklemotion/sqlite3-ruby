@@ -16,3 +16,7 @@
   all values were automatically yielded as strings.  This will only be a
   problem for people who were accessing information about the database that
   wasn't previously passed through the pure ruby conversion code.
+
+* SQLite3::Database#errmsg no longer takes a parameter to return error
+  messages as UTF-16.  Do people even use that?  I opt for staying UTF-8 when
+  possible.  See test_integration.rb test_errmsg_utf16
