@@ -49,17 +49,7 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
       &tail
   );
 
-  switch(status) {
-    case SQLITE_OK:
-      break;
-    case SQLITE_AUTH:
-      rb_raise(
-          rb_path2class("SQLite3::AuthorizationException"), "%s",
-          sqlite3_errmsg(db_ctx->db));
-      break;
-    default:
-      rb_raise(rb_path2class("SQLite3::SQLException"), "%s", sqlite3_errmsg(db_ctx->db));
-  }
+  CHECK(db_ctx->db, status);
 
   rb_iv_set(self, "@connection", db);
   rb_iv_set(self, "@remainder", rb_str_new2(tail));
@@ -82,8 +72,8 @@ static VALUE sqlite3_rb_close(VALUE self)
 
   REQUIRE_OPEN_STMT(ctx);
 
-  if(SQLITE_OK != sqlite3_finalize(ctx->st))
-    rb_raise(rb_path2class("SQLite3::SQLException"), "uh oh!"); // FIXME this should come from the DB
+  sqlite3 * db = sqlite3_db_handle(ctx->st);
+  CHECK(db, sqlite3_finalize(ctx->st));
 
   ctx->st = NULL;
 
@@ -146,7 +136,7 @@ static VALUE step(VALUE self)
               rb_ary_push(list, Qnil);
               break;
             default:
-              rb_raise(rb_eRuntimeError, "bad type"); // FIXME
+              rb_raise(rb_eRuntimeError, "bad type");
           }
         }
       }
@@ -156,7 +146,7 @@ static VALUE step(VALUE self)
       return Qnil;
       break;
     default:
-      rb_raise(rb_eRuntimeError, "oh no! %d", value); // FIXME
+      CHECK(sqlite3_db_handle(ctx->st), value);
   }
 
   return list;
@@ -221,10 +211,8 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       break;
   }
 
-  if(SQLITE_OK != status) {
-    sqlite3 * db = sqlite3_db_handle(ctx->st);
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(db));
-  }
+  CHECK(sqlite3_db_handle(ctx->st), status);
+
   return self;
 }
 
@@ -240,8 +228,7 @@ static VALUE reset_bang(VALUE self)
   REQUIRE_OPEN_STMT(ctx);
 
   int status = sqlite3_reset(ctx->st);
-  if(SQLITE_OK != status)
-    rb_raise(rb_eRuntimeError, "bind params"); // FIXME this should come from the DB
+  CHECK(sqlite3_db_handle(ctx->st), status);
 
   ctx->done_p = 0;
 

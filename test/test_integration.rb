@@ -461,7 +461,7 @@ class TC_Database_Integration < Test::Unit::TestCase
       func.result = x
     end
 
-    assert_raise( SQLite3::SQLException ) do
+    assert_raise( SQLite3::InterruptException ) do
       @db.execute "select abort(a) from foo"
     end
   end

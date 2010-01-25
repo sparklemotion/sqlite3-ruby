@@ -44,16 +44,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
     status = sqlite3_open(StringValuePtr(file), &ctx->db);
   }
 
-  switch(status) {
-    case SQLITE_OK:
-      break;
-    case SQLITE_CANTOPEN:
-      rb_raise(rb_path2class("SQLite3::CantOpenException"),
-          "%s", sqlite3_errmsg(ctx->db), status);
-      break;
-    default:
-      rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db), status);
-  }
+  CHECK(ctx->db, status)
 
   rb_iv_set(self, "@tracefunc", Qnil);
   rb_iv_set(self, "@authorizer", Qnil);
@@ -75,8 +66,7 @@ static VALUE sqlite3_rb_close(VALUE self)
   sqlite3RubyPtr ctx;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
-  if(SQLITE_OK != sqlite3_close(ctx->db))
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+  CHECK(ctx->db, sqlite3_close(ctx->db));
 
   ctx->db = NULL;
 
@@ -253,8 +243,7 @@ static VALUE define_function(VALUE self, VALUE name)
     NULL
   );
 
-  if(SQLITE_OK != status)
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+  CHECK(ctx->db, status);
 
   return self;
 }
@@ -314,8 +303,7 @@ static VALUE define_aggregator(VALUE self, VALUE name, VALUE aggregator)
     rb_sqlite3_final
   );
 
-  if(SQLITE_OK != status)
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+  CHECK(ctx->db, status);
 
   return self;
 }
@@ -435,8 +423,7 @@ static VALUE set_authorizer(VALUE self, VALUE authorizer)
       ctx->db, NIL_P(authorizer) ? NULL : rb_sqlite3_auth, (void *)self
   );
 
-  if(SQLITE_OK != status)
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+  CHECK(ctx->db, status);
 
   rb_iv_set(self, "@authorizer", authorizer);
 

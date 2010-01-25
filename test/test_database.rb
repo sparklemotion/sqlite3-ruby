@@ -201,7 +201,7 @@ module SQLite3
       @db.authorizer = Class.new {
         def call action, a, b, c, d; false end
       }.new
-      assert_raises(SQLite3::SQLException) do
+      assert_raises(SQLite3::AuthorizationException) do
         @db.prepare("select 'fooooo'")
       end
     end
@@ -210,7 +210,7 @@ module SQLite3
       @db.authorizer = Class.new {
         def call action, a, b, c, d; false end
       }.new
-      assert_raises(SQLite3::SQLException) do
+      assert_raises(SQLite3::AuthorizationException) do
         @db.prepare("select 'fooooo'")
       end
 

@@ -8,5 +8,6 @@ extern VALUE mSqlite3;
 
 #include <database.h>
 #include <statement.h>
+#include <exception.h>
 
 #endif
