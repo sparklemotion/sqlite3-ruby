@@ -153,5 +153,28 @@ module SQLite3
         @db.interrupt
       end
     end
+
+    def test_define_aggregate
+      @db.execute "create table foo ( a integer primary key, b text )"
+      @db.execute "insert into foo ( b ) values ( 'foo' )"
+      @db.execute "insert into foo ( b ) values ( 'bar' )"
+      @db.execute "insert into foo ( b ) values ( 'baz' )"
+
+      acc = Class.new {
+        attr_reader :sum
+        alias :finalize :sum
+        def initialize
+          @sum = 0
+        end
+
+        def step a
+          @sum += a
+        end
+      }.new
+
+      @db.define_aggregate("accumulate", acc)
+      value = @db.get_first_value( "select accumulate(a) from foo" )
+      assert_equal 6, value
+    end
   end
 end

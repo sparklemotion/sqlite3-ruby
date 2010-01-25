@@ -19,6 +19,8 @@ end
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'
 asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
 
+# Functions defined in 1.9 but not 1.8
 have_func('rb_proc_arity')
+have_func('rb_obj_method_arity')
 
 create_makefile('sqlite3')

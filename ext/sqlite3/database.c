@@ -150,35 +150,31 @@ static VALUE last_insert_row_id(VALUE self)
   return LONG2NUM(sqlite3_last_insert_rowid(ctx->db));
 }
 
-static void sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **argv)
+static VALUE sqlite3val2rb(sqlite3_value * val)
 {
-  VALUE callable = (VALUE)sqlite3_user_data(ctx);
-  VALUE * params = xcalloc(argc, sizeof(VALUE *));
-  int i;
-  for(i = 0; i < argc; i++) {
-    switch(sqlite3_value_type(argv[i])) {
-      case SQLITE_INTEGER:
-        params[i] = LONG2NUM(sqlite3_value_int64(argv[i]));
-        break;
-      case SQLITE_FLOAT:
-        params[i] = rb_float_new(sqlite3_value_double(argv[i]));
-        break;
-      case SQLITE_TEXT:
-        params[i] = rb_tainted_str_new2((const char *)sqlite3_value_text(argv[i]));
-        break;
-      case SQLITE_BLOB:
-        params[i] = rb_tainted_str_new2((const char *)sqlite3_value_blob(argv[i]));
-        break;
-      case SQLITE_NULL:
-        params[i] = Qnil;
-        break;
-      default:
-        rb_raise(rb_eRuntimeError, "bad type"); // FIXME
-    }
+  switch(sqlite3_value_type(val)) {
+    case SQLITE_INTEGER:
+      return LONG2NUM(sqlite3_value_int64(val));
+      break;
+    case SQLITE_FLOAT:
+      return rb_float_new(sqlite3_value_double(val));
+      break;
+    case SQLITE_TEXT:
+      return rb_tainted_str_new2((const char *)sqlite3_value_text(val));
+      break;
+    case SQLITE_BLOB:
+      return rb_tainted_str_new2((const char *)sqlite3_value_blob(val));
+      break;
+    case SQLITE_NULL:
+      return Qnil;
+      break;
+    default:
+      rb_raise(rb_eRuntimeError, "bad type"); // FIXME
   }
-  xfree(params);
+}
 
-  VALUE result = rb_funcall2(callable, rb_intern("call"), argc, params);
+static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
+{
   switch(TYPE(result)) {
     case T_NIL:
       sqlite3_result_null(ctx);
@@ -203,6 +199,20 @@ static void sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **argv)
   }
 }
 
+static void rb_sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **argv)
+{
+  VALUE callable = (VALUE)sqlite3_user_data(ctx);
+  VALUE * params = xcalloc(argc, sizeof(VALUE *));
+  int i;
+  for(i = 0; i < argc; i++) {
+    params[i] = sqlite3val2rb(argv[i]);
+  }
+  xfree(params);
+
+  VALUE result = rb_funcall2(callable, rb_intern("call"), argc, params);
+  set_sqlite3_func_result(ctx, result);
+}
+
 #ifndef HAVE_RB_PROC_ARITY
 int rb_proc_arity(VALUE self)
 {
@@ -210,6 +220,11 @@ int rb_proc_arity(VALUE self)
 }
 #endif
 
+/* call-seq: define_function(name) { |args,...| }
+ *
+ * Define a function named +name+ with +args+.  The arity of the block
+ * will be used as the arity for the function defined.
+ */
 static VALUE define_function(VALUE self, VALUE name)
 {
   sqlite3RubyPtr ctx;
@@ -218,16 +233,82 @@ static VALUE define_function(VALUE self, VALUE name)
 
   VALUE block = rb_block_proc();
 
-  sqlite3_create_function(
+  int status = sqlite3_create_function(
     ctx->db,
     StringValuePtr(name),
     rb_proc_arity(block),
     SQLITE_UTF8,
     (void *)block,
-    sqlite3_func,
+    rb_sqlite3_func,
     NULL,
     NULL
   );
+
+  if(SQLITE_OK != status)
+    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+
+  return self;
+}
+
+#ifndef HAVE_RB_OBJ_METHOD_ARITY
+int rb_obj_method_arity(VALUE obj, ID id)
+{
+  VALUE method = rb_funcall(obj, rb_intern("method"), 1, ID2SYM(id));
+  VALUE arity  = rb_funcall(method, rb_intern("arity"), 0);
+
+  return (int)NUM2INT(arity);
+}
+#endif
+
+static void rb_sqlite3_step(sqlite3_context * ctx, int argc, sqlite3_value **argv)
+{
+  VALUE callable = (VALUE)sqlite3_user_data(ctx);
+  VALUE * params = xcalloc(argc, sizeof(VALUE *));
+  int i;
+  for(i = 0; i < argc; i++) {
+    params[i] = sqlite3val2rb(argv[i]);
+  }
+  xfree(params);
+  rb_funcall2(callable, rb_intern("step"), argc, params);
+}
+
+static void rb_sqlite3_final(sqlite3_context * ctx)
+{
+  VALUE callable = (VALUE)sqlite3_user_data(ctx);
+  VALUE result = rb_funcall(callable, rb_intern("finalize"), 0);
+  set_sqlite3_func_result(ctx, result);
+}
+
+/* call-seq: define_aggregate(name, aggregator)
+ *
+ * Define an aggregate function named +name+ using the object +aggregator+.
+ * +aggregator+ must respond to +step+ and +finalize+.  +step+ will be called
+ * with row information and +finalize+ must return the return value for the
+ * aggregator function.
+ */
+static VALUE define_aggregate(VALUE self, VALUE name, VALUE aggregator)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  int arity = rb_obj_method_arity(aggregator, rb_intern("step"));
+
+  int status = sqlite3_create_function(
+    ctx->db,
+    StringValuePtr(name),
+    arity,
+    SQLITE_UTF8,
+    (void *)aggregator,
+    NULL,
+    rb_sqlite3_step,
+    rb_sqlite3_final
+  );
+
+  if(SQLITE_OK != status)
+    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+
+  return self;
 }
 
 /* call-seq: interrupt
@@ -285,6 +366,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "trace", trace, -1);
   rb_define_method(cSqlite3Database, "last_insert_row_id", last_insert_row_id, 0);
   rb_define_method(cSqlite3Database, "define_function", define_function, 1);
+  rb_define_method(cSqlite3Database, "define_aggregate", define_aggregate, 2);
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
   rb_define_method(cSqlite3Database, "errcode", errcode, 0);
