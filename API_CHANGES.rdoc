@@ -20,3 +20,8 @@
 * SQLite3::Database#errmsg no longer takes a parameter to return error
   messages as UTF-16.  Do people even use that?  I opt for staying UTF-8 when
   possible.  See test_integration.rb test_errmsg_utf16
+
+* SQLite3::Database#authorize same changes as trace
+
+* test/test_tc_database.rb was removed because we no longer use the Driver
+  design pattern.
