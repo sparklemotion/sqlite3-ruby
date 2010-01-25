@@ -411,6 +411,11 @@ static int rb_sqlite3_auth(
  *
  * Set the authorizer for this database.  +auth+ must respond to +call+, and
  * +call+ must take 5 arguments.
+ *
+ * Installs (or removes) a block that will be invoked for every access
+ * to the database. If the block returns 0 (or +true+), the statement
+ * is allowed to proceed. Returning 1 or false causes an authorization error to
+ * occur, and returning 2 or nil causes the access to be silently denied.
  */
 static VALUE set_authorizer(VALUE self, VALUE authorizer)
 {

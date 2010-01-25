@@ -81,20 +81,20 @@ class TC_Database_Integration < Test::Unit::TestCase
   end
 
   def test_authorizer_okay
-    @db.authorizer( "data" ) { |data,type,a,b,c,d| 0 }
+    @db.authorizer { |type,a,b,c,d| 0 }
     rows = @db.execute "select * from foo"
     assert_equal 3, rows.length
   end
 
   def test_authorizer_error
-    @db.authorizer( "data" ) { |data,type,a,b,c,d| 1 }
+    @db.authorizer { |type,a,b,c,d| 1 }
     assert_raise( SQLite3::AuthorizationException ) do
       @db.execute "select * from foo"
     end
   end
 
   def test_authorizer_silent
-    @db.authorizer( "data" ) { |data,type,a,b,c,d| 2 }
+    @db.authorizer { |type,a,b,c,d| 2 }
     rows = @db.execute "select * from foo"
     assert rows.empty?
   end

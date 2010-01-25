@@ -49,8 +49,17 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
       &tail
   );
 
-  if(SQLITE_OK != status)
-    rb_raise(rb_path2class("SQLite3::SQLException"), "%s", sqlite3_errmsg(db_ctx->db));
+  switch(status) {
+    case SQLITE_OK:
+      break;
+    case SQLITE_AUTH:
+      rb_raise(
+          rb_path2class("SQLite3::AuthorizationException"), "%s",
+          sqlite3_errmsg(db_ctx->db));
+      break;
+    default:
+      rb_raise(rb_path2class("SQLite3::SQLException"), "%s", sqlite3_errmsg(db_ctx->db));
+  }
 
   rb_iv_set(self, "@connection", db);
   rb_iv_set(self, "@remainder", rb_str_new2(tail));

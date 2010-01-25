@@ -70,9 +70,8 @@ module SQLite3
     # to the database. If the block returns 0 (or +nil+), the statement
     # is allowed to proceed. Returning 1 causes an authorization error to
     # occur, and returning 2 causes the access to be silently denied.
-    def authorizer( data=nil, &block )
-      result = @driver.set_authorizer( @handle, data, &block )
-      Error.check( result, self )
+    def authorizer &block
+      self.authorizer = block
     end
 
     # Returns a Statement object representing the given SQL. This does not
