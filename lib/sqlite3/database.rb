@@ -324,10 +324,30 @@ module SQLite3
       text_rep=Constants::TextRep::ANY, &block )
     # begin
       if block
-        proxy = AggregateDefinitionProxy.new
-        proxy.instance_eval(&block)
-        step ||= proxy.step_callback
-        finalize ||= proxy.finalize_callback
+        factory = Class.new do
+          def self.step &block
+            define_method(:step, &block)
+          end
+
+          def self.finalize &block
+            define_method(:finalize, &block)
+          end
+        end
+        factory.instance_eval(&block)
+        proxy = factory.new
+        proxy.extend(Module.new {
+          attr_accessor :ctx
+
+          def step *args
+            super(@ctx, *args)
+          end
+
+          def finalize
+            super(@ctx)
+          end
+        })
+        proxy.ctx = FunctionProxy.new
+        return define_aggregator(name, proxy)
       end
 
       step_callback = proc do |func,*args|

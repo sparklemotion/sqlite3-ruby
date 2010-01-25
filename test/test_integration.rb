@@ -498,7 +498,7 @@ class TC_Database_Integration < Test::Unit::TestCase
     end
 
     value = @db.get_first_value( "select accumulate(a) from foo" )
-    assert_equal "6", value
+    assert_equal 6, value
   end
 
   def test_create_aggregate_with_no_data
