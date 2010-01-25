@@ -63,6 +63,8 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 
   rb_iv_set(self, "@connection", db);
   rb_iv_set(self, "@remainder", rb_str_new2(tail));
+  rb_iv_set(self, "@columns", Qnil);
+  rb_iv_set(self, "@types", Qnil);
 
   return self;
 }

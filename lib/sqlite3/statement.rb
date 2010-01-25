@@ -65,7 +65,7 @@ module SQLite3
     # See also #bind_params, #execute!.
     def execute( *bind_vars )
       must_be_open!
-      reset! if active?
+      reset! if active? || done?
 
       bind_params(*bind_vars) unless bind_vars.empty?
       @results = ResultSet.new(@connection, self)
@@ -96,7 +96,7 @@ module SQLite3
     # Returns true if the statement is currently active, meaning it has an
     # open result set.
     def active?
-      not @results.nil?
+      !done?
     end
 
     # Return an array of the column names for this statement. Note that this
@@ -120,7 +120,7 @@ module SQLite3
     # makes it a (potentially) expensive operation.
     def types
       must_be_open!
-      get_metadata unless defined?(@types)
+      get_metadata unless @types
       @types
     end
 
