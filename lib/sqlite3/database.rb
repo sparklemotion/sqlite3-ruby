@@ -484,33 +484,6 @@ module SQLite3
       @transaction_active
     end
 
-    # Loads the corresponding driver, or if it is nil, attempts to locate a
-    # suitable driver.
-    def load_driver( driver )
-      case driver
-        when Class
-          # do nothing--use what was given
-        when Symbol, String
-          require "sqlite3/driver/#{driver.to_s.downcase}/driver"
-          driver = SQLite3::Driver.const_get( driver )::Driver
-        else
-          [ "Native", "DL" ].each do |d|
-            begin
-              require "sqlite3/driver/#{d.downcase}/driver"
-              driver = SQLite3::Driver.const_get( d )::Driver
-              break
-            rescue SyntaxError
-              raise
-            rescue ScriptError, Exception, NameError
-            end
-          end
-          raise "no driver for sqlite3 found" unless driver
-      end
-
-      @driver = driver.new
-    end
-    private :load_driver
-
     # A helper class for dealing with custom functions (see #create_function,
     # #create_aggregate, and #create_aggregate_handler). It encapsulates the
     # opaque function object that represents the current invocation. It also
