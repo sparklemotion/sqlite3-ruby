@@ -48,6 +48,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 
   rb_iv_set(self, "@tracefunc", Qnil);
   rb_iv_set(self, "@authorizer", Qnil);
+  rb_iv_set(self, "@busy_handler", Qnil);
 
   if(rb_block_given_p()) {
     rb_yield(self);
@@ -131,6 +132,53 @@ static VALUE trace(int argc, VALUE *argv, VALUE self)
   rb_iv_set(self, "@tracefunc", block);
 
   sqlite3_trace(ctx->db, NIL_P(block) ? NULL : tracefunc, (void *)self);
+
+  return self;
+}
+
+static int rb_sqlite3_busy_handler(void * ctx, int count)
+{
+  VALUE self = (VALUE)(ctx);
+  VALUE handle = rb_iv_get(self, "@busy_handler");
+  VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM((long)count));
+
+  if(Qfalse == result) return 0;
+
+  return 1;
+}
+
+/* call-seq:
+ *    busy_handler { |count| ... }
+ *    busy_handler(Class.new { def call count; end }.new)
+ *
+ * Register a busy handler with this database instance. When a requested
+ * resource is busy, this handler will be invoked. If the handler returns
+ * +false+, the operation will be aborted; otherwise, the resource will
+ * be requested again.
+ *
+ * The handler will be invoked with the name of the resource that was
+ * busy, and the number of times it has been retried.
+ *
+ * See also the mutually exclusive #busy_timeout.
+ */
+static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  VALUE block;
+
+  rb_scan_args(argc, argv, "01", &block);
+
+  if(NIL_P(block) && rb_block_given_p()) block = rb_block_proc();
+
+  rb_iv_set(self, "@busy_handler", block);
+
+  int status = sqlite3_trace(
+      ctx->db, NIL_P(block) ? NULL : rb_sqlite3_busy_handler, (void *)self);
+
+  CHECK(ctx->db, status);
 
   return self;
 }
@@ -430,6 +478,27 @@ static VALUE set_authorizer(VALUE self, VALUE authorizer)
   return self;
 }
 
+/* call-seq: db.busy_timeout = ms
+ *
+ * Indicates that if a request for a resource terminates because that
+ * resource is busy, SQLite should sleep and retry for up to the indicated
+ * number of milliseconds. By default, SQLite does not retry
+ * busy resources. To restore the default behavior, send 0 as the
+ * +ms+ parameter.
+ *
+ * See also the mutually exclusive #busy_handler.
+ */
+static VALUE set_busy_timeout(VALUE self, VALUE timeout)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  CHECK(ctx->db, sqlite3_busy_timeout(ctx->db, (int)NUM2INT(timeout)));
+
+  return self;
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -449,4 +518,6 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "complete?", complete_p, 1);
   rb_define_method(cSqlite3Database, "changes", changes, 0);
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
+  rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
+  rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
 }

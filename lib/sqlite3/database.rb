@@ -205,31 +205,7 @@ module SQLite3
       nil
     end
 
-    # Register a busy handler with this database instance. When a requested
-    # resource is busy, this handler will be invoked. If the handler returns
-    # +false+, the operation will be aborted; otherwise, the resource will
-    # be requested again.
-    #
-    # The handler will be invoked with the name of the resource that was
-    # busy, and the number of times it has been retried.
-    #
-    # See also the mutually exclusive #busy_timeout. 
-    def busy_handler( data=nil, &block ) # :yields: data, retries
-      result = @driver.busy_handler( @handle, data, &block )
-      Error.check( result, self )
-    end
-
-    # Indicates that if a request for a resource terminates because that
-    # resource is busy, SQLite should sleep and retry for up to the indicated
-    # number of milliseconds. By default, SQLite does not retry
-    # busy resources. To restore the default behavior, send 0 as the
-    # +ms+ parameter.
-    #
-    # See also the mutually exclusive #busy_handler.
-    def busy_timeout( ms )
-      result = @driver.busy_timeout( @handle, ms )
-      Error.check( result, self )
-    end
+    alias :busy_timeout :busy_timeout=
 
     # Creates a new function for use in SQL statements. It will be added as
     # +name+, with the given +arity+. (For variable arity functions, use
