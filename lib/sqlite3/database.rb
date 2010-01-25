@@ -235,11 +235,6 @@ module SQLite3
       @driver.changes( @handle )
     end
 
-    # Interrupts the currently executing operation, causing it to abort.
-    def interrupt
-      @driver.interrupt( @handle )
-    end
-
     # Register a busy handler with this database instance. When a requested
     # resource is busy, this handler will be invoked. If the handler returns
     # +false+, the operation will be aborted; otherwise, the resource will

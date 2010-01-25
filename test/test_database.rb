@@ -146,5 +146,12 @@ module SQLite3
         @db.define_function('foo') {  }
       end
     end
+
+    def test_inerrupt_closed
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.interrupt
+      end
+    end
   end
 end
