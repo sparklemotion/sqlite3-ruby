@@ -259,6 +259,20 @@ static VALUE errmsg(VALUE self)
   return rb_str_new2(sqlite3_errmsg(ctx->db));
 }
 
+/* call-seq: errcode
+ *
+ * Return an integer representing the last error to have occurred with this
+ * database.
+ */
+static VALUE errcode(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  return INT2NUM((long)sqlite3_errcode(ctx->db));
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -273,4 +287,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "define_function", define_function, 1);
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
+  rb_define_method(cSqlite3Database, "errcode", errcode, 0);
 }

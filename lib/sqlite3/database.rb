@@ -69,12 +69,6 @@ module SQLite3
       @driver.complete?( string, utf16 )
     end
 
-    # Return an integer representing the last error to have occurred with this
-    # database.
-    def errcode
-      @driver.errcode( @handle )
-    end
-
     # Return the type translator employed by this database instance. Each
     # database instance has its own type translator; this allows for different
     # type handlers to be installed in each instance without affecting other
