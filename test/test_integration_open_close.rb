@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), 'helper')
+require 'helper'
 
 class TC_OpenClose < Test::Unit::TestCase
   def test_create_close

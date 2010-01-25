@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), 'helper')
+require 'helper'
 
 class TC_ResultSet < Test::Unit::TestCase
   def setup
