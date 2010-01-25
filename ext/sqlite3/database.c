@@ -48,6 +48,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
     rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
 
   rb_iv_set(self, "@tracefunc", Qnil);
+  rb_iv_set(self, "@authorizer", Qnil);
 
   if(rb_block_given_p()) {
     rb_yield(self);
@@ -382,6 +383,53 @@ static VALUE changes(VALUE self)
   return INT2NUM(sqlite3_changes(ctx->db));
 }
 
+static int rb_sqlite3_auth(
+    void *ctx,
+    int _action,
+    const char * _a,
+    const char * _b,
+    const char * _c,
+    const char * _d)
+{
+  VALUE self   = (VALUE)ctx;
+  VALUE action = INT2NUM(_action);
+  VALUE a      = _a ? rb_str_new2(_a) : Qnil;
+  VALUE b      = _b ? rb_str_new2(_b) : Qnil;
+  VALUE c      = _c ? rb_str_new2(_c) : Qnil;
+  VALUE d      = _d ? rb_str_new2(_d) : Qnil;
+  VALUE callback = rb_iv_get(self, "@authorizer");
+  VALUE result = rb_funcall(callback, rb_intern("call"), 5, action, a, b, c, d);
+
+  if(T_FIXNUM == TYPE(result)) return (int)NUM2INT(result);
+  if(Qtrue == result) return SQLITE_OK;
+  if(Qfalse == result) return SQLITE_DENY;
+
+  return SQLITE_IGNORE;
+}
+
+/* call-seq: set_authorizer = auth
+ *
+ * Set the authorizer for this database.  +auth+ must respond to +call+, and
+ * +call+ must take 5 arguments.
+ */
+static VALUE set_authorizer(VALUE self, VALUE authorizer)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  int status = sqlite3_set_authorizer(
+      ctx->db, NIL_P(authorizer) ? NULL : rb_sqlite3_auth, (void *)self
+  );
+
+  if(SQLITE_OK != status)
+    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+
+  rb_iv_set(self, "@authorizer", authorizer);
+
+  return self;
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -400,4 +448,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "errcode", errcode, 0);
   rb_define_method(cSqlite3Database, "complete?", complete_p, 1);
   rb_define_method(cSqlite3Database, "changes", changes, 0);
+  rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
 }

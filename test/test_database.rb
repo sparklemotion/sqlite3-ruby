@@ -176,5 +176,46 @@ module SQLite3
       value = @db.get_first_value( "select accumulate(a) from foo" )
       assert_equal 6, value
     end
+
+    def test_authorizer_ok
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; true end
+      }.new
+      @db.prepare("select 'fooooo'")
+
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; 0 end
+      }.new
+      @db.prepare("select 'fooooo'")
+    end
+
+    def test_authorizer_ignore
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; nil end
+      }.new
+      stmt = @db.prepare("select 'fooooo'")
+      assert_equal nil, stmt.step
+    end
+
+    def test_authorizer_fail
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; false end
+      }.new
+      assert_raises(SQLite3::SQLException) do
+        @db.prepare("select 'fooooo'")
+      end
+    end
+
+    def test_remove_auth
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; false end
+      }.new
+      assert_raises(SQLite3::SQLException) do
+        @db.prepare("select 'fooooo'")
+      end
+
+      @db.authorizer = nil
+      @db.prepare("select 'fooooo'")
+    end
   end
 end
