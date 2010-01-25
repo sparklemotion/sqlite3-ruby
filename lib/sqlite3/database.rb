@@ -48,12 +48,6 @@ module SQLite3
 
     end
 
-    # The low-level opaque database handle that this object wraps.
-    attr_reader :handle
-
-    # A reference to the underlying SQLite3 driver used by this database.
-    attr_reader :driver
-
     # A boolean that indicates whether rows in result sets should be returned
     # as hashes or not. By default, rows are returned as arrays.
     attr_accessor :results_as_hash
@@ -61,13 +55,6 @@ module SQLite3
     # A boolean indicating whether or not type translation is enabled for this
     # database.
     attr_accessor :type_translation
-
-    # Return +true+ if the string is a valid (ie, parsable) SQL statement, and
-    # +false+ otherwise. If +utf16+ is +true+, then the string is a UTF-16
-    # character string.
-    def complete?( string, utf16=false )
-      @driver.complete?( string, utf16 )
-    end
 
     # Return the type translator employed by this database instance. Each
     # database instance has its own type translator; this allows for different

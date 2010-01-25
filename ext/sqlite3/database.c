@@ -354,6 +354,19 @@ static VALUE errcode(VALUE self)
   return INT2NUM((long)sqlite3_errcode(ctx->db));
 }
 
+/* call-seq: complete?(sql)
+ *
+ * Return +true+ if the string is a valid (ie, parsable) SQL statement, and
+ * +false+ otherwise.
+ */
+static VALUE complete_p(VALUE self, VALUE sql)
+{
+  if(sqlite3_complete(StringValuePtr(sql)))
+    return Qtrue;
+
+  return Qfalse;
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -370,4 +383,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
   rb_define_method(cSqlite3Database, "errcode", errcode, 0);
+  rb_define_method(cSqlite3Database, "complete?", complete_p, 1);
 }
