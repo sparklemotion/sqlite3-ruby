@@ -289,22 +289,12 @@ module SQLite3
     #   end
     #
     #   puts db.get_first_value( "select maim(name) from table" )
-    def create_function( name, arity, text_rep=Constants::TextRep::ANY, &block) # :yields: func, *args
-    # begin
-      callback = proc do |func,*args|
-        begin
-          block.call( FunctionProxy.new( @driver, func ),
-            *args.map{|v| Value.new(self,v)} )
-        rescue StandardError, Exception => e
-          @driver.result_error( func,
-            "#{e.message} (#{e.class})", -1 )
-        end
+    def create_function name, arity, text_rep=Constants::TextRep::ANY, &block
+      define_function(name) do |*args|
+        fp = FunctionProxy.new
+        block.call(fp, *args)
+        fp.result
       end
-
-      result = @driver.create_function( @handle, name, arity, text_rep, nil,
-        callback, nil, nil )
-      Error.check( result, self )
-
       self
     end
 
@@ -576,26 +566,14 @@ module SQLite3
     # This class will almost _always_ be instantiated indirectly, by working
     # with the create methods mentioned above.
     class FunctionProxy
+      attr_accessor :result
 
       # Create a new FunctionProxy that encapsulates the given +func+ object.
       # If context is non-nil, the functions context will be set to that. If
       # it is non-nil, it must quack like a Hash. If it is nil, then none of
       # the context functions will be available.
-      def initialize( driver, func, context=nil )
-        @driver = driver
-        @func = func
-        @context = context
-      end
-
-      # Calls #set_result to set the result of this function.
-      def result=( result )
-        set_result( result )
-      end
-
-      # Set the result of the function to the given value. The function will
-      # then return this value.
-      def set_result( result, utf16=false )
-        @driver.result_text( @func, result, utf16 )
+      def initialize
+        @result = nil
       end
 
       # Set the result of the function to the given error message.
@@ -635,7 +613,6 @@ module SQLite3
         end
       end
       private :ensure_aggregate!
-
     end
 
     # A proxy used for defining the callbacks to an aggregate function.
