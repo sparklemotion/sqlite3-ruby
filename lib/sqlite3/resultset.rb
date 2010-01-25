@@ -46,7 +46,7 @@ module SQLite3
 
     # Query whether the cursor has reached the end of the result set or not.
     def eof?
-      @eof
+      @stmt.done?
     end
 
     # Obtain the next row from the cursor. If there are no more rows to be
@@ -63,27 +63,26 @@ module SQLite3
     # For hashes, the column names are the keys of the hash, and the column
     # types are accessible via the +types+ property.
     def next
-      val = @stmt.step
+      row = @stmt.step
       return nil if @stmt.done?
 
       if @db.type_translation
-        row = @stmt.types.zip( row ).map do |type, value|
+        row = @stmt.types.zip(row).map do |type, value|
           @db.translator.translate( type, value )
         end
       end
 
       if @db.results_as_hash
-        new_row = HashWithTypes[ *( @stmt.columns.zip( row ).to_a.flatten ) ]
+        new_row = HashWithTypes[*@stmt.columns.zip(row).flatten]
         row.each_with_index { |value,idx|
-          value.taint
           new_row[idx] = value
         }
         row = new_row
       else
         if row.respond_to?(:fields)
-          row = ArrayWithTypes.new(val)
+          row = ArrayWithTypes.new(row)
         else
-          row = ArrayWithTypesAndFields.new(val)
+          row = ArrayWithTypesAndFields.new(row)
         end
         row.fields = @stmt.columns
       end
