@@ -210,8 +210,10 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       break;
   }
 
-  if(SQLITE_OK != status)
-    rb_raise(rb_eRuntimeError, "bind params"); // FIXME this should come from the DB
+  if(SQLITE_OK != status) {
+    sqlite3 * db = sqlite3_db_handle(ctx->st);
+    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(db));
+  }
   return self;
 }
 
@@ -293,6 +295,15 @@ static VALUE column_decltype(VALUE self, VALUE index)
   return Qnil;
 }
 
+static VALUE bind_parameter_count(VALUE self)
+{
+  sqlite3StmtRubyPtr ctx;
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
+
+  return INT2NUM((long)sqlite3_bind_parameter_count(ctx->st));
+}
+
 void init_sqlite3_statement()
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
@@ -308,4 +319,5 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
   rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
   rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
+  rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
 }

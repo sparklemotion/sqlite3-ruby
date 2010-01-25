@@ -264,7 +264,7 @@ class TC_Database_Integration < Test::Unit::TestCase
       insert into bar values ( 'seven', 8, ? );
     SQL
     rows = @db.execute( "select * from bar" ).map { |a,b,c| c }
-    assert_equal %w{1 1 1}, rows
+    assert_equal [1, 1, 1], rows
   end
 
   def test_query_no_block_no_bind_no_match

@@ -178,7 +178,10 @@ module SQLite3
         prepare( sql ) do |stmt|
           # FIXME: this should probably use sqlite3's api for batch execution
           # This implementation requires stepping over the results.
-          stmt.execute( *bind_vars ).each { |x| }
+          if bind_vars.length == stmt.bind_parameter_count
+            stmt.bind_params(bind_vars)
+          end
+          stmt.step
           sql = stmt.remainder.strip
         end
       end

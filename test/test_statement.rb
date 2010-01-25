@@ -160,5 +160,10 @@ module SQLite3
       assert_equal "'foo'", @stmt.column_name(0)
       assert_equal nil, @stmt.column_name(10)
     end
+
+    def test_bind_parameter_count
+      stmt = SQLite3::Statement.new(@db, "select ?, ?, ?")
+      assert_equal 3, stmt.bind_parameter_count
+    end
   end
 end
