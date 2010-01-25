@@ -1,9 +1,9 @@
 API_CHANGES.rdoc
+CHANGELOG.rdoc
 ChangeLog.cvs
-History.txt
 LICENSE
 Manifest.txt
-README.txt
+README.rdoc
 Rakefile
 ext/sqlite3/database.c
 ext/sqlite3/database.h
