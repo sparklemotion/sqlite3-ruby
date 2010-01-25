@@ -150,6 +150,63 @@ static VALUE last_insert_row_id(VALUE self)
   return LONG2NUM(sqlite3_last_insert_rowid(ctx->db));
 }
 
+static void sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **argv)
+{
+  VALUE callable = (VALUE)sqlite3_user_data(ctx);
+  VALUE * params = xcalloc(argc, sizeof(VALUE *));
+  int i;
+  for(i = 0; i < argc; i++) {
+    switch(sqlite3_value_type(argv[i])) {
+      case SQLITE_INTEGER:
+        params[i] = LONG2NUM(sqlite3_value_int64(argv[i]));
+        break;
+      case SQLITE_FLOAT:
+        params[i] = rb_float_new(sqlite3_value_double(argv[i]));
+        break;
+      case SQLITE_TEXT:
+        params[i] = rb_tainted_str_new2((const char *)sqlite3_value_text(argv[i]));
+        break;
+      case SQLITE_BLOB:
+        params[i] = rb_tainted_str_new2((const char *)sqlite3_value_blob(argv[i]));
+        break;
+      case SQLITE_NULL:
+        params[i] = Qnil;
+        break;
+      default:
+        rb_raise(rb_eRuntimeError, "bad type"); // FIXME
+    }
+  }
+  rb_funcall2(callable, rb_intern("call"), argc, params);
+  xfree(params);
+}
+
+#ifndef HAVE_RB_PROC_ARITY
+int rb_proc_arity(VALUE self)
+{
+  return (int)NUM2INT(rb_funcall(self, rb_intern("arity"), 0));
+}
+#endif
+
+static VALUE define_function(VALUE self, VALUE name)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  VALUE block = rb_block_proc();
+
+  sqlite3_create_function(
+    ctx->db,
+    StringValuePtr(name),
+    rb_proc_arity(block),
+    SQLITE_UTF8,
+    (void *)block,
+    sqlite3_func,
+    NULL,
+    NULL
+  );
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -161,4 +218,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);
   rb_define_method(cSqlite3Database, "trace", trace, -1);
   rb_define_method(cSqlite3Database, "last_insert_row_id", last_insert_row_id, 0);
+  rb_define_method(cSqlite3Database, "define_function", define_function, 1);
 }

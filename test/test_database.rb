@@ -98,5 +98,44 @@ module SQLite3
         @db.last_insert_row_id
       end
     end
+
+    def test_define_function
+      called_with = nil
+      @db.define_function("hello") do |value|
+        called_with = value
+      end
+      @db.execute("select hello(10)")
+      assert_equal 10, called_with
+    end
+
+    def test_call_func_arg_type
+      called_with = nil
+      @db.define_function("hello") do |b, c, d|
+        called_with = [b, c, d]
+      end
+      @db.execute("select hello(2.2, 'foo', NULL)")
+      assert_equal [2.2, 'foo', nil], called_with
+    end
+
+    def test_define_varargs
+      called_with = nil
+      @db.define_function("hello") do |*args|
+        called_with = args
+      end
+      @db.execute("select hello(2.2, 'foo', NULL)")
+      assert_equal [2.2, 'foo', nil], called_with
+    end
+
+    #def test_function_return
+    #  @db.define_function("hello") { |a| "hello" }
+    #  @db.execute("select hello('world')").first
+    #end
+
+    def test_define_function_closed
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.define_function('foo') {  }
+      end
+    end
   end
 end
