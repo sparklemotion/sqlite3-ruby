@@ -176,8 +176,31 @@ static void sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **argv)
         rb_raise(rb_eRuntimeError, "bad type"); // FIXME
     }
   }
-  rb_funcall2(callable, rb_intern("call"), argc, params);
   xfree(params);
+
+  VALUE result = rb_funcall2(callable, rb_intern("call"), argc, params);
+  switch(TYPE(result)) {
+    case T_NIL:
+      sqlite3_result_null(ctx);
+      break;
+    case T_FIXNUM:
+      sqlite3_result_int64(ctx, NUM2LONG(result));
+      break;
+    case T_FLOAT:
+      sqlite3_result_double(ctx, NUM2DBL(result));
+      break;
+    case T_STRING:
+      sqlite3_result_text(
+          ctx,
+          StringValuePtr(result),
+          RSTRING_LEN(result),
+          SQLITE_TRANSIENT
+      );
+      break;
+    default:
+      rb_raise(rb_eRuntimeError, "can't return %s",
+          rb_class2name(CLASS_OF(result)));
+  }
 }
 
 #ifndef HAVE_RB_PROC_ARITY

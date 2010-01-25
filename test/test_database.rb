@@ -112,6 +112,7 @@ module SQLite3
       called_with = nil
       @db.define_function("hello") do |b, c, d|
         called_with = [b, c, d]
+        nil
       end
       @db.execute("select hello(2.2, 'foo', NULL)")
       assert_equal [2.2, 'foo', nil], called_with
@@ -121,15 +122,23 @@ module SQLite3
       called_with = nil
       @db.define_function("hello") do |*args|
         called_with = args
+        nil
       end
       @db.execute("select hello(2.2, 'foo', NULL)")
       assert_equal [2.2, 'foo', nil], called_with
     end
 
-    #def test_function_return
-    #  @db.define_function("hello") { |a| "hello" }
-    #  @db.execute("select hello('world')").first
-    #end
+    def test_function_return
+      @db.define_function("hello") { |a| 10 }
+      assert_equal [10], @db.execute("select hello('world')").first
+    end
+
+    def test_function_return_types
+      [10, 2.2, nil, "foo"].each do |thing|
+        @db.define_function("hello") { |a| thing }
+        assert_equal [thing], @db.execute("select hello('world')").first
+      end
+    end
 
     def test_define_function_closed
       @db.close

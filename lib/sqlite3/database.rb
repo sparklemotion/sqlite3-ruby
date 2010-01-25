@@ -289,8 +289,7 @@ module SQLite3
     #   end
     #
     #   puts db.get_first_value( "select maim(name) from table" )
-    def create_function( name, arity, text_rep=Constants::TextRep::ANY,
-      &block ) # :yields: func, *args
+    def create_function( name, arity, text_rep=Constants::TextRep::ANY, &block) # :yields: func, *args
     # begin
       callback = proc do |func,*args|
         begin
