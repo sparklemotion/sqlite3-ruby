@@ -206,13 +206,6 @@ module SQLite3
       nil
     end
 
-    # Returns the number of changes made to this database instance by the last
-    # operation performed. Note that a "delete from table" without a where
-    # clause will not affect this value.
-    def changes
-      @driver.changes( @handle )
-    end
-
     # Register a busy handler with this database instance. When a requested
     # resource is busy, this handler will be invoked. If the handler returns
     # +false+, the operation will be aborted; otherwise, the resource will

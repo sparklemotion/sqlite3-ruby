@@ -367,6 +367,21 @@ static VALUE complete_p(VALUE self, VALUE sql)
   return Qfalse;
 }
 
+/* call-seq: changes
+ *
+ * Returns the number of changes made to this database instance by the last
+ * operation performed. Note that a "delete from table" without a where
+ * clause will not affect this value.
+ */
+static VALUE changes(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  return INT2NUM(sqlite3_changes(ctx->db));
+}
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -384,4 +399,5 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
   rb_define_method(cSqlite3Database, "errcode", errcode, 0);
   rb_define_method(cSqlite3Database, "complete?", complete_p, 1);
+  rb_define_method(cSqlite3Database, "changes", changes, 0);
 }
