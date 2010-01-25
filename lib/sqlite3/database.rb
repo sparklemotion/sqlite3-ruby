@@ -556,21 +556,5 @@ module SQLite3
         @context[ key ] = value
       end
     end
-
-    # A proxy used for defining the callbacks to an aggregate function.
-    class AggregateDefinitionProxy # :nodoc:
-      attr_reader :step_callback, :finalize_callback
-
-      def step( &block )
-        @step_callback = block
-      end
-
-      def finalize( &block )
-        @finalize_callback = block
-      end
-    end
-
   end
-
 end
-
