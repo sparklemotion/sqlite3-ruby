@@ -44,8 +44,16 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
     status = sqlite3_open(StringValuePtr(file), &ctx->db);
   }
 
-  if(SQLITE_OK != status)
-    rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db));
+  switch(status) {
+    case SQLITE_OK:
+      break;
+    case SQLITE_CANTOPEN:
+      rb_raise(rb_path2class("SQLite3::CantOpenException"),
+          "%s", sqlite3_errmsg(ctx->db), status);
+      break;
+    default:
+      rb_raise(rb_eRuntimeError, "%s", sqlite3_errmsg(ctx->db), status);
+  }
 
   rb_iv_set(self, "@tracefunc", Qnil);
   rb_iv_set(self, "@authorizer", Qnil);
