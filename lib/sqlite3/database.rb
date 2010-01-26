@@ -106,11 +106,17 @@ module SQLite3
     # executing statements.
     def execute sql, *bind_vars, &block
       prepare( sql ) do |stmt|
-        result = stmt.execute( *bind_vars )
+        stmt.bind_params( *bind_vars )
         if block_given?
-          result.each(&block)
+          stmt.each do |row|
+            yield row
+          end
         else
-          result.to_a
+          if @results_as_hash
+            stmt.map { |row| Hash[*stmt.columns.zip(row).flatten] }
+          else
+            stmt.to_a
+          end
         end
       end
     end

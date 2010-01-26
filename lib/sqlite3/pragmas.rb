@@ -213,17 +213,19 @@ module SQLite3
       get_query_pragma "index_list", table, &block
     end
 
-    def table_info( table, &block ) # :yields: row
-      columns, *rows = execute2("PRAGMA table_info(#{table})")
+    ###
+    # Returns information about +table+.  Yields each row of table information
+    # if a block is provided.
+    def table_info table
+      stmt    = prepare "PRAGMA table_info(#{table})"
+      columns = stmt.columns
 
-      needs_tweak_default = version_compare(SQLite3.libversion.to_s, "3.3.7") > 0
+      needs_tweak_default =
+        version_compare(SQLite3.libversion.to_s, "3.3.7") > 0
 
       result = [] unless block_given?
-      rows.each do |row|
-        new_row = {}
-        columns.each_with_index do |name, index|
-          new_row[name] = row[index]
-        end
+      stmt.each do |row|
+        new_row = Hash[*columns.zip(row).flatten]
 
         tweak_default(new_row) if needs_tweak_default
 
@@ -233,6 +235,7 @@ module SQLite3
           result << new_row
         end
       end
+      stmt.close
 
       result
     end

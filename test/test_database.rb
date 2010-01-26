@@ -62,6 +62,37 @@ module SQLite3
       assert_equal [{"a"=>1, "b"=>"hello"}], rows
     end
 
+    def test_execute_yields_array
+      db = SQLite3::Database.new(':memory:', :results_as_hash => true)
+      db.execute("create table foo ( a integer primary key, b text )")
+      db.execute("insert into foo (b) values ('hello')")
+      db.execute("select * from foo") do |row|
+        assert_equal([1, "hello"], row)
+      end
+    end
+
+    def test_table_info
+      db = SQLite3::Database.new(':memory:', :results_as_hash => true)
+      db.execute("create table foo ( a integer primary key, b text )")
+      info = [{
+        "name"       => "a",
+        "pk"         => 1,
+        "notnull"    => 0,
+        "type"       => "integer",
+        "dflt_value" => nil,
+        "cid"        => 0
+      },
+      {
+        "name"       => "b",
+        "pk"         => 0,
+        "notnull"    => 0,
+        "type"       => "text",
+        "dflt_value" => nil,
+        "cid"        => 1
+      }]
+      assert_equal info, db.table_info('foo')
+    end
+
     def test_total_changes_closed
       db = SQLite3::Database.new(':memory:')
       db.close
