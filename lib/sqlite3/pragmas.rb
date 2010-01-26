@@ -227,6 +227,12 @@ module SQLite3
       stmt.each do |row|
         new_row = Hash[*columns.zip(row).flatten]
 
+        # FIXME: This should be removed but is required for older versions
+        # of rails
+        if(Object.const_defined?(:ActiveRecord))
+          new_row['notnull'] = new_row['notnull'].to_s
+        end
+
         tweak_default(new_row) if needs_tweak_default
 
         if block_given?

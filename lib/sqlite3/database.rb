@@ -105,6 +105,10 @@ module SQLite3
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
     def execute sql, *bind_vars, &block
+      # FIXME: This is a terrible hack and should be removed but is required
+      # for older versions of rails
+      hack = Object.const_defined?(:ActiveRecord) && sql =~ /^PRAGMA index_list/
+
       prepare( sql ) do |stmt|
         stmt.bind_params( *bind_vars )
         if block_given?
@@ -112,6 +116,7 @@ module SQLite3
             if @results_as_hash
               h = Hash[*stmt.columns.zip(row).flatten]
               row.each_with_index { |r, i| h[i] = r }
+
               yield h
             else
               yield row
@@ -122,6 +127,10 @@ module SQLite3
             stmt.map { |row|
               h = Hash[*stmt.columns.zip(row).flatten]
               row.each_with_index { |r, i| h[i] = r }
+
+              # FIXME UGH TERRIBLE HACK!
+              h['unique'] = h['unique'].to_s if hack
+
               h
             }
           else
