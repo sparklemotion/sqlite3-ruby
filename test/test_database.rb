@@ -59,15 +59,15 @@ module SQLite3
       db.execute("create table foo ( a integer primary key, b text )")
       db.execute("insert into foo (b) values ('hello')")
       rows = db.execute("select * from foo")
-      assert_equal [{"a"=>1, "b"=>"hello"}], rows
+      assert_equal [{0=>1, "a"=>1, "b"=>"hello", 1=>"hello"}], rows
     end
 
-    def test_execute_yields_array
+    def test_execute_yields_hash
       db = SQLite3::Database.new(':memory:', :results_as_hash => true)
       db.execute("create table foo ( a integer primary key, b text )")
       db.execute("insert into foo (b) values ('hello')")
       db.execute("select * from foo") do |row|
-        assert_equal([1, "hello"], row)
+        assert_equal({0=>1, "a"=>1, "b"=>"hello", 1=>"hello"}, row)
       end
     end
 

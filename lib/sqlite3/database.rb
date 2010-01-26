@@ -109,11 +109,21 @@ module SQLite3
         stmt.bind_params( *bind_vars )
         if block_given?
           stmt.each do |row|
-            yield row
+            if @results_as_hash
+              h = Hash[*stmt.columns.zip(row).flatten]
+              row.each_with_index { |r, i| h[i] = r }
+              yield h
+            else
+              yield row
+            end
           end
         else
           if @results_as_hash
-            stmt.map { |row| Hash[*stmt.columns.zip(row).flatten] }
+            stmt.map { |row|
+              h = Hash[*stmt.columns.zip(row).flatten]
+              row.each_with_index { |r, i| h[i] = r }
+              h
+            }
           else
             stmt.to_a
           end
