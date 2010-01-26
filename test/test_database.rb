@@ -54,6 +54,14 @@ module SQLite3
       assert_equal 1, db.total_changes
     end
 
+    def test_execute_returns_list_of_hash
+      db = SQLite3::Database.new(':memory:', :results_as_hash => true)
+      db.execute("create table foo ( a integer primary key, b text )")
+      db.execute("insert into foo (b) values ('hello')")
+      rows = db.execute("select * from foo")
+      assert_equal [{"a"=>1, "b"=>"hello"}], rows
+    end
+
     def test_total_changes_closed
       db = SQLite3::Database.new(':memory:')
       db.close

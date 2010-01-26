@@ -10,7 +10,7 @@ module SQLite3
     STRING = [ MAJOR, MINOR, TINY, BUILD ].compact.join( "." )
     #:beta-tag:
 
-    VERSION = '1.2.5'
+    VERSION = '1.2.6'
   end
 
 end

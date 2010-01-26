@@ -58,6 +58,8 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   rb_iv_set(self, "@tracefunc", Qnil);
   rb_iv_set(self, "@authorizer", Qnil);
   rb_iv_set(self, "@busy_handler", Qnil);
+  rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, ID2SYM(rb_intern("results_as_hash"))));
+  rb_iv_set(self, "@type_translation", rb_hash_aref(opts, ID2SYM(rb_intern("type_translation"))));
 
   if(rb_block_given_p()) {
     rb_yield(self);

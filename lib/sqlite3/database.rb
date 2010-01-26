@@ -104,13 +104,13 @@ module SQLite3
     #
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
-    def execute( sql, *bind_vars )
+    def execute sql, *bind_vars, &block
       prepare( sql ) do |stmt|
         result = stmt.execute( *bind_vars )
         if block_given?
-          result.each { |row| yield row }
+          result.each(&block)
         else
-          result.inject( [] ) { |arr,row| arr << row; arr }
+          result.to_a
         end
       end
     end
@@ -129,10 +129,10 @@ module SQLite3
       prepare( sql ) do |stmt|
         result = stmt.execute( *bind_vars )
         if block_given?
-          yield result.columns
+          yield stmt.columns
           result.each { |row| yield row }
         else
-          return result.inject( [ result.columns ] ) { |arr,row|
+          return result.inject( [ stmt.columns ] ) { |arr,row|
             arr << row; arr }
         end
       end

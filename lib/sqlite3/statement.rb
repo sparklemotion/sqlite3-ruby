@@ -111,7 +111,9 @@ module SQLite3
       loop do
         val = step
         break self if done?
-        yield val
+        yield(@connection.results_as_hash ?
+          Hash[*columns.zip(val).flatten] :
+          val)
       end
     end
 
