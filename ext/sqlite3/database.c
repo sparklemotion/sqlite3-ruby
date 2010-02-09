@@ -57,6 +57,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 
   rb_iv_set(self, "@tracefunc", Qnil);
   rb_iv_set(self, "@authorizer", Qnil);
+  rb_iv_set(self, "@encoding", Qnil);
   rb_iv_set(self, "@busy_handler", Qnil);
   rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, ID2SYM(rb_intern("results_as_hash"))));
   rb_iv_set(self, "@type_translation", rb_hash_aref(opts, ID2SYM(rb_intern("type_translation"))));
@@ -511,6 +512,38 @@ static VALUE set_busy_timeout(VALUE self, VALUE timeout)
   return self;
 }
 
+#ifdef HAVE_RUBY_ENCODING_H
+static int enc_cb(void * _self, int columns, char **data, char **names)
+{
+  VALUE self = (VALUE)_self;
+
+  int index = rb_enc_find_index(data[0]);
+  rb_encoding * e = rb_enc_from_index(index);
+  rb_iv_set(self, "@encoding", rb_enc_from_encoding(e));
+
+  return 0;
+}
+
+/* call-seq: db.encoding
+ *
+ * Fetch the encoding set on this database
+ */
+static VALUE db_encoding(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  VALUE enc = rb_iv_get(self, "@encoding");
+
+  if(NIL_P(enc)) {
+    sqlite3_exec(ctx->db, "PRAGMA encoding", enc_cb, (void *)self, NULL);
+  }
+
+  return rb_iv_get(self, "@encoding");
+}
+#endif
+
 void init_sqlite3_database()
 {
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
@@ -532,4 +565,9 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+
+#ifdef HAVE_RUBY_ENCODING_H
+  rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
+#endif
+
 }

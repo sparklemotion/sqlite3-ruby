@@ -105,6 +105,12 @@ static VALUE step(VALUE self)
 
   if(ctx->done_p) return Qnil;
 
+#ifdef HAVE_RUBY_ENCODING_H
+  VALUE db       = rb_iv_get(self, "@connection");
+  VALUE encoding = rb_funcall(db, rb_intern("encoding"), 0);
+  int enc_index  = rb_enc_to_index(rb_to_encoding(encoding));
+#endif
+
   stmt = ctx->st;
 
   int value = sqlite3_step(stmt);
@@ -129,14 +135,23 @@ static VALUE step(VALUE self)
                     sqlite3_column_text(stmt, i),
                     sqlite3_column_bytes(stmt, i)
                 );
+#ifdef HAVE_RUBY_ENCODING_H
+                rb_enc_associate_index(str, enc_index);
+#endif
                 rb_ary_push(list, str);
               }
               break;
             case SQLITE_BLOB:
-              rb_ary_push(list, rb_tainted_str_new(
+              {
+                VALUE str = rb_tainted_str_new(
                     sqlite3_column_blob(stmt, i),
                     sqlite3_column_bytes(stmt, i)
-              ));
+                );
+#ifdef HAVE_RUBY_ENCODING_H
+                rb_enc_associate_index(str, enc_index);
+                rb_ary_push(list, str);
+#endif
+              }
               break;
             case SQLITE_NULL:
               rb_ary_push(list, Qnil);
@@ -175,6 +190,12 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
   int status;
   int index;
 
+#ifdef HAVE_RUBY_ENCODING_H
+  VALUE db          = rb_iv_get(self, "@connection");
+  VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
+  rb_encoding * enc = rb_to_encoding(encoding);
+#endif
+
   switch(TYPE(key)) {
     case T_SYMBOL:
       key = rb_funcall(key, rb_intern("to_s"), 0);
@@ -191,6 +212,11 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 
   switch(TYPE(value)) {
     case T_STRING:
+
+#ifdef HAVE_RUBY_ENCODING_H
+      value = rb_str_export_to_enc(value, enc);
+#endif
+
       status = sqlite3_bind_text(
           ctx->st,
           index,
