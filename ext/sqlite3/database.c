@@ -23,7 +23,7 @@ static void deallocate(void * ctx)
 
 static VALUE allocate(VALUE klass)
 {
-  sqlite3RubyPtr ctx = xcalloc(1, sizeof(sqlite3Ruby));
+  sqlite3RubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3Ruby));
   return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
 }
 
@@ -261,7 +261,7 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
 static void rb_sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **argv)
 {
   VALUE callable = (VALUE)sqlite3_user_data(ctx);
-  VALUE * params = xcalloc(argc, sizeof(VALUE *));
+  VALUE * params = xcalloc((size_t)argc, sizeof(VALUE *));
   int i;
   for(i = 0; i < argc; i++) {
     params[i] = sqlite3val2rb(argv[i]);
@@ -308,20 +308,18 @@ static VALUE define_function(VALUE self, VALUE name)
   return self;
 }
 
-#ifndef HAVE_RB_OBJ_METHOD_ARITY
-int rb_obj_method_arity(VALUE obj, ID id)
+static int sqlite3_obj_method_arity(VALUE obj, ID id)
 {
   VALUE method = rb_funcall(obj, rb_intern("method"), 1, ID2SYM(id));
   VALUE arity  = rb_funcall(method, rb_intern("arity"), 0);
 
   return (int)NUM2INT(arity);
 }
-#endif
 
 static void rb_sqlite3_step(sqlite3_context * ctx, int argc, sqlite3_value **argv)
 {
   VALUE callable = (VALUE)sqlite3_user_data(ctx);
-  VALUE * params = xcalloc(argc, sizeof(VALUE *));
+  VALUE * params = xcalloc((size_t)argc, sizeof(VALUE *));
   int i;
   for(i = 0; i < argc; i++) {
     params[i] = sqlite3val2rb(argv[i]);
@@ -350,7 +348,7 @@ static VALUE define_aggregator(VALUE self, VALUE name, VALUE aggregator)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  int arity = rb_obj_method_arity(aggregator, rb_intern("step"));
+  int arity = sqlite3_obj_method_arity(aggregator, rb_intern("step"));
 
   int status = sqlite3_create_function(
     ctx->db,
@@ -362,6 +360,8 @@ static VALUE define_aggregator(VALUE self, VALUE name, VALUE aggregator)
     rb_sqlite3_step,
     rb_sqlite3_final
   );
+
+  rb_iv_set(self, "@agregator", aggregator);
 
   CHECK(ctx->db, status);
 

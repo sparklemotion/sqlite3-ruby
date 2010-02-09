@@ -64,7 +64,6 @@ module SQLite3
     #
     # See also #bind_params, #execute!.
     def execute( *bind_vars )
-      must_be_open!
       reset! if active? || done?
 
       bind_params(*bind_vars) unless bind_vars.empty?

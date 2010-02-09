@@ -125,12 +125,18 @@ static VALUE step(VALUE self)
               break;
             case SQLITE_TEXT:
               {
-                VALUE str = rb_tainted_str_new2(sqlite3_column_text(stmt, i));
+                VALUE str = rb_tainted_str_new(
+                    sqlite3_column_text(stmt, i),
+                    sqlite3_column_bytes(stmt, i)
+                );
                 rb_ary_push(list, str);
               }
               break;
             case SQLITE_BLOB:
-              rb_ary_push(list, rb_tainted_str_new2(sqlite3_column_blob(stmt, i)));
+              rb_ary_push(list, rb_tainted_str_new(
+                    sqlite3_column_blob(stmt, i),
+                    sqlite3_column_bytes(stmt, i)
+              ));
               break;
             case SQLITE_NULL:
               rb_ary_push(list, Qnil);
