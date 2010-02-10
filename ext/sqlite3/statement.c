@@ -149,8 +149,8 @@ static VALUE step(VALUE self)
                 );
 #ifdef HAVE_RUBY_ENCODING_H
                 rb_enc_associate_index(str, enc_index);
-                rb_ary_push(list, str);
 #endif
+                rb_ary_push(list, str);
               }
               break;
             case SQLITE_NULL:
@@ -217,13 +217,23 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       value = rb_str_export_to_enc(value, enc);
 #endif
 
-      status = sqlite3_bind_text(
-          ctx->st,
-          index,
-          (const char *)StringValuePtr(value),
-          (int)RSTRING_LEN(value),
-          SQLITE_TRANSIENT
-      );
+      if(CLASS_OF(value) == cSqlite3Blob) {
+        status = sqlite3_bind_blob(
+            ctx->st,
+            index,
+            (const char *)StringValuePtr(value),
+            (int)RSTRING_LEN(value),
+            SQLITE_TRANSIENT
+            );
+      } else {
+        status = sqlite3_bind_text(
+            ctx->st,
+            index,
+            (const char *)StringValuePtr(value),
+            (int)RSTRING_LEN(value),
+            SQLITE_TRANSIENT
+            );
+      }
       break;
     case T_FLOAT:
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));

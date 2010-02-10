@@ -8,11 +8,6 @@ class String
 end
 
 module SQLite3
-
-  # A class for differentiating between strings and blobs, when binding them
-  # into statements.
-  class Blob < String; end
-
   # A statement represents a prepared-but-unexecuted SQL query. It will rarely
   # (if ever) be instantiated directly by a client, and is most often obtained
   # via the Database#prepare method.

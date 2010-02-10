@@ -10,6 +10,7 @@
 #include <sqlite3.h>
 
 extern VALUE mSqlite3;
+extern VALUE cSqlite3Blob;
 
 #include <database.h>
 #include <statement.h>
