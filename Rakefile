@@ -14,10 +14,9 @@ HOE = Hoe.spec 'sqlite3-ruby' do
   self.extra_rdoc_files  = FileList['*.rdoc']
 
   spec_extras[:required_ruby_version]     = Gem::Requirement.new('> 1.8.5')
-  spec_extras[:required_rubygems_version] = '1.3.5'
+  spec_extras[:required_rubygems_version] = '>= 1.3.5'
   spec_extras[:extensions]                = ["ext/sqlite3/extconf.rb"]
 
-  extra_dev_deps << ['mocha', "~> 0.9.8"]
   extra_dev_deps << ['rake-compiler', "~> 0.6.0"]
 
   clean_globs.push('**/test.db')
