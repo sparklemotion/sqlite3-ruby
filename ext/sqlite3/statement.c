@@ -108,7 +108,9 @@ static VALUE step(VALUE self)
 #ifdef HAVE_RUBY_ENCODING_H
   VALUE db       = rb_iv_get(self, "@connection");
   VALUE encoding = rb_funcall(db, rb_intern("encoding"), 0);
-  int enc_index  = rb_enc_to_index(rb_to_encoding(encoding));
+  rb_encoding * enc = NIL_P(encoding) ? rb_utf8_encoding() :
+                                        rb_to_encoding(encoding);
+  int enc_index = rb_enc_to_index(enc);
 #endif
 
   stmt = ctx->st;
