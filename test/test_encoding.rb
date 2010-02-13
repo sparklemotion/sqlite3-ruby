@@ -11,6 +11,14 @@ module SQLite3
       @db.execute(@create);
     end
 
+    def test_statement_utf8
+      str = "猫舌"
+      @db.execute("insert into ex(data) values ('#{str}')")
+      row = @db.execute("select data from ex")
+      assert_equal @db.encoding, row.first.first.encoding
+      assert_equal str, row.first.first
+    end
+
     def test_encoding
       assert_equal Encoding.find("UTF-8"), @db.encoding
     end
