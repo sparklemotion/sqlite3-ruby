@@ -42,8 +42,9 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 
   VALUE file;
   VALUE opts;
+  VALUE zvfs;
 
-  rb_scan_args(argc, argv, "11", &file, &opts);
+  rb_scan_args(argc, argv, "12", &file, &opts, &zvfs);
   if(NIL_P(opts)) opts = rb_hash_new();
 
   int status;
@@ -57,7 +58,12 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
     if(Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("utf16")))) {
       status = sqlite3_open16(StringValuePtr(file), &ctx->db);
     } else {
-      status = sqlite3_open(StringValuePtr(file), &ctx->db);
+      status = sqlite3_open_v2(
+          StringValuePtr(file),
+          &ctx->db,
+          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+          NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
+      );
     }
 
 #ifdef HAVE_RUBY_ENCODING_H
