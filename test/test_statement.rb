@@ -7,8 +7,14 @@ module SQLite3
       @stmt = SQLite3::Statement.new(@db, "select 'foo'")
     end
 
+    def test_database_name
+      @db.execute('create table foo(text BLOB)')
+      @db.execute('insert into foo(text) values (?)',SQLite3::Blob.new('hello'))
+      stmt = @db.prepare('select text from foo')
+      assert_equal 'main', stmt.database_name(0)
+    end
+
     def test_prepare_blob
-      @db   = SQLite3::Database.new(':memory:')
       @db.execute('create table foo(text BLOB)')
       stmt = @db.prepare('insert into foo(text) values (?)')
       stmt.bind_param(1, SQLite3::Blob.new('hello'))
@@ -17,7 +23,6 @@ module SQLite3
     end
 
     def test_select_blob
-      @db   = SQLite3::Database.new(':memory:')
       @db.execute('create table foo(text BLOB)')
       @db.execute('insert into foo(text) values (?)',SQLite3::Blob.new('hello'))
       assert_equal 'hello', @db.execute('select * from foo').first.first

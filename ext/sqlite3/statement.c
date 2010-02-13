@@ -348,6 +348,10 @@ static VALUE column_decltype(VALUE self, VALUE index)
   return Qnil;
 }
 
+/* call-seq: stmt.bind_parameter_count
+ *
+ * Return the number of bind parameters
+ */
 static VALUE bind_parameter_count(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
@@ -355,6 +359,20 @@ static VALUE bind_parameter_count(VALUE self)
   REQUIRE_OPEN_STMT(ctx);
 
   return INT2NUM((long)sqlite3_bind_parameter_count(ctx->st));
+}
+
+/* call-seq: stmt.database_name(column_index)
+ *
+ * Return the database name for the column at +column_index+
+ */
+static VALUE database_name(VALUE self, VALUE index)
+{
+  sqlite3StmtRubyPtr ctx;
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
+
+  return SQLITE3_UTF8_STR_NEW2(
+      sqlite3_column_database_name(ctx->st, NUM2INT(index)));
 }
 
 void init_sqlite3_statement()
@@ -373,4 +391,5 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
   rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
   rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+  rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
 }
