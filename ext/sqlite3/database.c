@@ -48,15 +48,21 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 
   int status;
 
+#ifdef HAVE_RUBY_ENCODING_H
   if(UTF16_LE_P(file)) {
     status = sqlite3_open16(StringValuePtr(file), &ctx->db);
   } else {
+#endif
+
     if(Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("utf16")))) {
       status = sqlite3_open16(StringValuePtr(file), &ctx->db);
     } else {
       status = sqlite3_open(StringValuePtr(file), &ctx->db);
     }
+
+#ifdef HAVE_RUBY_ENCODING_H
   }
+#endif
 
   CHECK(ctx->db, status)
 
