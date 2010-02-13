@@ -5,6 +5,9 @@
 
 #ifdef HAVE_RUBY_ENCODING_H
 #include <ruby/encoding.h>
+
+#define UTF8_P(_obj) (rb_enc_to_index(rb_enc_get(_obj)) == rb_enc_to_index(rb_utf8_encoding()))
+
 #endif
 
 #include <sqlite3.h>

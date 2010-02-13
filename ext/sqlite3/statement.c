@@ -41,6 +41,13 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 
   char *tail = NULL;
 
+  if(!UTF8_P(sql)) {
+    VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
+    rb_encoding * enc = NIL_P(encoding) ? rb_utf8_encoding() :
+                                          rb_to_encoding(encoding);
+    sql               = rb_str_export_to_enc(sql, enc);
+  }
+
   int status = sqlite3_prepare_v2(
       db_ctx->db,
       StringValuePtr(sql),
@@ -106,11 +113,11 @@ static VALUE step(VALUE self)
   if(ctx->done_p) return Qnil;
 
 #ifdef HAVE_RUBY_ENCODING_H
-  VALUE db       = rb_iv_get(self, "@connection");
-  VALUE encoding = rb_funcall(db, rb_intern("encoding"), 0);
+  VALUE db          = rb_iv_get(self, "@connection");
+  VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
   rb_encoding * enc = NIL_P(encoding) ? rb_utf8_encoding() :
                                         rb_to_encoding(encoding);
-  int enc_index = rb_enc_to_index(enc);
+  int enc_index     = rb_enc_to_index(enc);
 #endif
 
   stmt = ctx->st;
