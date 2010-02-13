@@ -223,7 +223,9 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
     case T_STRING:
 
 #ifdef HAVE_RUBY_ENCODING_H
-      value = rb_str_export_to_enc(value, enc);
+      if(!UTF8_P(value)) {
+        value = rb_str_export_to_enc(value, enc);
+      }
 #endif
 
       if(CLASS_OF(value) == cSqlite3Blob) {
