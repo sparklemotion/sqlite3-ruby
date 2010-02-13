@@ -11,6 +11,18 @@ module SQLite3
       @db.execute(@create);
     end
 
+    #def test_db_with_eucjp
+    #  #db = SQLite3::Database.new(':memory:'.encode('EUC-JP'))
+    #  db = SQLite3::Database.new(':memory:')
+    #  assert_equal(Encoding.find('UTF-8'), db.encoding)
+    #  p db.execute('select * from sqlite_master')
+    #end
+
+    def test_db_with_utf16
+      db = SQLite3::Database.new(':memory:'.encode('UTF-16LE'))
+      assert_equal(Encoding.find('UTF-16LE'), db.encoding)
+    end
+
     def test_statement_eucjp
       str = "猫舌"
       @db.execute("insert into ex(data) values ('#{str}')".encode('EUC-JP'))

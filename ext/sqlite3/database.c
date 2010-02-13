@@ -47,10 +47,15 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   if(NIL_P(opts)) opts = rb_hash_new();
 
   int status;
-  if(Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("utf16")))) {
+
+  if(UTF16_LE_P(file)) {
     status = sqlite3_open16(StringValuePtr(file), &ctx->db);
   } else {
-    status = sqlite3_open(StringValuePtr(file), &ctx->db);
+    if(Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("utf16")))) {
+      status = sqlite3_open16(StringValuePtr(file), &ctx->db);
+    } else {
+      status = sqlite3_open(StringValuePtr(file), &ctx->db);
+    }
   }
 
   CHECK(ctx->db, status)

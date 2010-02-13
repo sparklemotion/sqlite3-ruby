@@ -7,6 +7,7 @@
 #include <ruby/encoding.h>
 
 #define UTF8_P(_obj) (rb_enc_to_index(rb_enc_get(_obj)) == rb_enc_to_index(rb_utf8_encoding()))
+#define UTF16_LE_P(_obj) (rb_enc_to_index(rb_enc_get(_obj)) == rb_enc_find_index("UTF-16LE"))
 
 #endif
 
