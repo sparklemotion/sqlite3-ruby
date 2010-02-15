@@ -58,6 +58,13 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
     if(Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("utf16")))) {
       status = sqlite3_open16(StringValuePtr(file), &ctx->db);
     } else {
+
+#ifdef HAVE_RUBY_ENCODING_H
+      if(!UTF8_P(file)) {
+        file = rb_str_export_to_enc(file, rb_utf8_encoding());
+      }
+#endif
+
       status = sqlite3_open_v2(
           StringValuePtr(file),
           &ctx->db,

@@ -23,12 +23,10 @@ module SQLite3
       assert_equal str, string.force_encoding('UTF-8')
     end
 
-    #def test_db_with_eucjp
-    #  #db = SQLite3::Database.new(':memory:'.encode('EUC-JP'))
-    #  db = SQLite3::Database.new(':memory:')
-    #  assert_equal(Encoding.find('UTF-8'), db.encoding)
-    #  p db.execute('select * from sqlite_master')
-    #end
+    def test_db_with_eucjp
+      db = SQLite3::Database.new(':memory:'.encode('EUC-JP'))
+      assert_equal(Encoding.find('UTF-8'), db.encoding)
+    end
 
     def test_db_with_utf16
       db = SQLite3::Database.new(':memory:'.encode('UTF-16LE'))
