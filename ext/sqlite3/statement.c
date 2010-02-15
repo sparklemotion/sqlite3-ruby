@@ -158,9 +158,6 @@ static VALUE step(VALUE self)
                     sqlite3_column_blob(stmt, i),
                     sqlite3_column_bytes(stmt, i)
                 );
-#ifdef HAVE_RUBY_ENCODING_H
-                rb_enc_associate_index(str, enc_index);
-#endif
                 rb_ary_push(list, str);
               }
               break;
