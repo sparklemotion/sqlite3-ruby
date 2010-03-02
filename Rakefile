@@ -27,4 +27,6 @@ Rake::ExtensionTask.new 'sqlite3_native', HOE.spec do |ext|
   ext.ext_dir = 'ext/sqlite3'
 end
 
+task :test => :compile
+
 # vim: syntax=ruby
