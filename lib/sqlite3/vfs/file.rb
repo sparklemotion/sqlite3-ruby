@@ -1,4 +1,5 @@
 require 'stringio'
+require 'thread'
 
 module SQLite3
   class VFS
@@ -8,10 +9,19 @@ module SQLite3
         @flags = flags
         @locks = Hash.new(0)
         @store = StringIO.new
+        @mutex = Mutex.new
       end
 
       def close
         @store.close
+      end
+
+      def reserved_lock?
+        @mutex.synchronize do
+          [LOCK_RESERVED, LOCK_PENDING, LOCK_EXCLUSIVE].any? do |type|
+            @locks[type] > 0
+          end
+        end
       end
 
       ###
@@ -28,6 +38,12 @@ module SQLite3
         @store.write data
       end
 
+      ###
+      # Truncate the data store to +bytes+
+      def truncate bytes
+        @store.truncate bytes
+      end
+
       def sync flags
         @store.fsync
       end
@@ -37,11 +53,15 @@ module SQLite3
       end
 
       def unlock mode
-        @locks[mode] -= 1
+        @mutex.synchronize do
+          @locks[mode] -= 1
+        end
       end
 
       def lock mode
-        @locks[mode] += 1
+        @mutex.synchronize do
+          @locks[mode] += 1
+        end
       end
 
       def sector_size

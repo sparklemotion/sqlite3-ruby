@@ -65,7 +65,11 @@ static int rbFile_write(
 
 static int rbFile_truncate(sqlite3_file * ctx, sqlite3_int64 offset)
 {
-  printf("truncate\n");
+  rubyFilePtr rfile = (rubyFilePtr)ctx;
+  VALUE file = rfile->file;
+  rb_funcall(file, rb_intern("truncate"), 1, LONG2NUM(offset));
+
+  return SQLITE_OK;
 }
 
 static int rbFile_sync(sqlite3_file * ctx, int flags)
@@ -108,12 +112,21 @@ static int rbFile_unlock(sqlite3_file * ctx, int mode)
 
 static int rbFile_check_reserved_lock(sqlite3_file * ctx, int *pResOut)
 {
-  printf("check\n");
+  rubyFilePtr rfile = (rubyFilePtr)ctx;
+  VALUE file = rfile->file;
+  VALUE locked_p = rb_funcall(file, rb_intern("reserved_lock?"), 0);
+
+  if(Qtrue == locked_p)
+    *pResOut = 1;
+  else
+    *pResOut = 0;
+
+  return SQLITE_OK;
 }
 
 static int rbFile_file_control(sqlite3_file * ctx, int op, void *pArg)
 {
-  printf("file control\n");
+  rb_raise(rb_eRuntimeError, "file control is unsupported");
 }
 
 static int rbFile_sector_size(sqlite3_file * ctx)
