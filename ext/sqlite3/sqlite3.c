@@ -10,7 +10,7 @@ static VALUE libversion(VALUE UNUSED(klass))
 
 /* call-seq: SQLite3.vfs_register(name, obj)
  *
- * Register a new Virtual Filesystem named +name+ attached to object +obj+
+ * Register a new Virtual Filesystem attached to object +obj+
  */
 static VALUE vfs_register(VALUE mod, VALUE obj)
 {

@@ -8,3 +8,5 @@ end
 
 require 'sqlite3/database'
 require 'sqlite3/version'
+require 'sqlite3/vfs'
+require 'sqlite3/vfs/file'
