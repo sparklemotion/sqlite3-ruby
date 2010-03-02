@@ -30,11 +30,6 @@ If you have sqlite3 installed in a non-standard location, you can specify the lo
   gem install sqlite3-ruby -- --with-sqlite3-include=/opt/local/include \
      --with-sqlite3-lib=/opt/local/lib
 
-Also, the gem ships with the C source-code pre-built, so (as of version 1.1.1)
-you no longer need to have SWIG installed. However, if you have SWIG installed
-and you want to generate the C file yourself, you can specify the
-<code>--with-swig</code> option.
-
 == Usage
 
 For help figuring out the SQLite3/Ruby interface, check out the

@@ -100,5 +100,7 @@ task 'vendor:sqlite3' => ["vendor/sqlite3/lib/sqlite3.lib", "vendor/sqlite3/incl
 if RUBY_PLATFORM =~ /mingw|mswin/ then
   Rake::Task['compile'].prerequisites.unshift 'vendor:sqlite3'
 else
-  Rake::Task['cross'].prerequisites.unshift 'vendor:sqlite3'
+  if Rake::Task.task_defined?(:cross)
+    Rake::Task['cross'].prerequisites.unshift 'vendor:sqlite3'
+  end
 end

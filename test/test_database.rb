@@ -1,217 +1,267 @@
-require File.join(File.dirname(__FILE__), 'helper')
+require 'helper'
+require 'iconv'
 
-class TC_Database_Init < Test::Unit::TestCase
-  def test_new
-    # any_instance fails here...
-    driver = Driver.new
-    driver.expects(:open).once.with('foo.db', false).returns([0, 'cookie'])
-    Driver.stubs(:new).returns(driver)
-    db = SQLite3::Database.new( 'foo.db', :driver => Driver )
-    assert !db.closed?
-    assert !db.results_as_hash
-    assert !db.type_translation
-  end
-  
-  def test_new_with_block
-    driver = Driver.new
-    driver.expects(:open).once.with('foo.db', false).returns([0, 'cookie'])
-    Driver.stubs(:new).returns(driver)
-    returned_db = SQLite3::Database.new( "foo.db", :driver => Driver ) do |db|
-      assert !db.closed?
-      assert !db.results_as_hash
-      assert !db.type_translation
-    end
-    assert returned_db.closed?
-  end
-
-  def test_open
-    driver = Driver.new
-    driver.expects(:open).once.with('foo.db', false).returns([0, 'cookie'])
-    Driver.stubs(:new).returns(driver)
-    db = SQLite3::Database.open( "foo.db", :driver => Driver )
-    assert !db.closed?
-    assert !db.results_as_hash
-    assert !db.type_translation
-  end
-  
-  def test_open_with_block
-    driver = Driver.new
-    driver.expects(:open).once.with('foo.db', false).returns([0, 'cookie'])
-    Driver.stubs(:new).returns(driver)
-    returned_db = SQLite3::Database.open( "foo.db", :driver => Driver ) do |db|
-      assert !db.closed?
-      assert !db.results_as_hash
-      assert !db.type_translation
-    end
-    assert returned_db.closed?
-  end
-  
-  def test_with_type_translation
-    db = SQLite3::Database.open( "foo.db", :driver => Driver,
-      :type_translation => true )
-    assert db.type_translation
-  end
-  
-  def test_with_results_as_hash
-    db = SQLite3::Database.open( "foo.db", :driver => Driver,
-      :results_as_hash => true )
-    assert db.results_as_hash
-  end
-  
-  def test_with_type_translation_and_results_as_hash
-    db = SQLite3::Database.open( "foo.db", :driver => Driver,
-      :results_as_hash => true,
-      :type_translation => true )
-    assert db.results_as_hash
-    assert db.type_translation
-  end
-end
-
-class TC_Database < Test::Unit::TestCase
-  def setup
-    @db = SQLite3::Database.open( "foo.db",
-      :driver => Driver, :statement_factory => Statement )
-  end
-
-  def test_quote
-    assert_equal "''one''two''three''", SQLite3::Database.quote(
-      "'one'two'three'" )
-  end
-
-  def test_complete
-    Driver.any_instance.expects(:complete?)
-    @db.complete? "foo"
-  end
-
-  def test_errmsg
-    Driver.any_instance.expects(:errmsg)
-    @db.errmsg
-  end
-
-  def test_errcode
-    Driver.any_instance.expects(:errcode)
-    @db.errcode
-  end
-
-  def test_translator
-    translator = @db.translator
-    assert_instance_of SQLite3::Translator, translator
-  end
-
-  def test_close
-    Driver.any_instance.expects(:close).returns(0)
-    @db.close
-    assert @db.closed?
-    Driver.any_instance.expects(:close).never
-    @db.close
-  end
-
-  def test_trace
-    Driver.any_instance.expects(:trace).with('cookie', 15)
-    @db.trace( 15 ) { "foo" }
-    # assert_equal 1, driver.mock_blocks[:trace].length
-  end
-
-  def test_authorizer
-    Driver.any_instance.expects(:set_authorizer).with('cookie', 15).returns(0)
-    @db.authorizer( 15 ) { "foo" }
-    # assert_equal 1, driver.mock_blocks[:set_authorizer].length
-  end
-
-  def test_prepare_no_block
-    Statement.any_instance.expects(:close).never
-    assert_nothing_raised { @db.prepare( "foo" ) }
-  end
-
-  def test_prepare_with_block
-    called = false
-    # any_instance fails here...
-    statement = Statement.new('cookie', 'foo')
-    statement.expects(:close).once
-    Statement.stubs(:new).returns(statement)
-    @db.prepare( "foo" ) { |stmt| called = true }
-    assert called
-  end
-
-  def test_execute_no_block
-    # any_instance fails here...
-    statement = Statement.new('cookie', 'foo')
-    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
-    Statement.stubs(:new).returns(statement)
-    MockResultSet.any_instance.stubs(:inject).returns([['foo']])
-    result = @db.execute( "foo", "bar", "baz" )
-    assert_equal [["foo"]], result
-  end
-
-  def test_execute_with_block
-    called = false
-    # any_instance fails here...
-    statement = Statement.new('cookie', 'foo')
-    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
-    Statement.stubs(:new).returns(statement)
-    @db.execute( "foo", "bar", "baz" ) do |row|
-      called = true
-      assert_equal ["foo"], row
+module SQLite3
+  class TestDatabase < Test::Unit::TestCase
+    def setup
+      @db = SQLite3::Database.new(':memory:')
     end
 
-    assert called
-  end
-
-  def test_execute2_no_block
-    # any_instance fails here...
-    statement = Statement.new('cookie', 'foo')
-    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
-    Statement.stubs(:new).returns(statement)
-    MockResultSet.any_instance.stubs(:inject).returns([['name'], ['foo']])
-    result = @db.execute2( "foo", "bar", "baz" )
-    assert_equal [["name"],["foo"]], result
-  end
-
-  def test_execute2_with_block
-    called = false
-    parts = [ ["name"],["foo"] ]
-    # any_instance fails here...
-    statement = Statement.new('cookie', 'foo')
-    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
-    Statement.stubs(:new).returns(statement)
-    @db.execute2( "foo", "bar", "baz" ) do |row|
-      called = true
-      assert_equal parts.shift, row
+    def test_new
+      db = SQLite3::Database.new(':memory:')
+      assert db
     end
 
-    assert called
-  end
+    def test_new_yields_self
+      thing = nil
+      SQLite3::Database.new(':memory:') do |db|
+        thing = db
+      end
+      assert_instance_of(SQLite3::Database, thing)
+    end
 
-  def test_execute_batch
-    # any_instance fails here...
-    statement = Statement.new('cookie', 'foo')
-    statement.expects(:execute).with('bar', 'baz').returns(MockResultSet.new)
-    Statement.stubs(:new).returns(statement)
-    @db.execute_batch( "foo", "bar", "baz" )
-  end
+    def test_new_with_options
+      db = SQLite3::Database.new(Iconv.conv('UTF-16LE', 'UTF-8', ':memory:'),
+                                 :utf16 => true)
+      assert db
+    end
 
-  def test_get_first_row
-    result = @db.get_first_row( "foo", "bar", "baz" )
-    assert_equal ["foo"], result
-  end
+    def test_close
+      db = SQLite3::Database.new(':memory:')
+      db.close
+      assert db.closed?
+    end
 
-  def test_get_first_value
-    result = @db.get_first_value( "foo", "bar", "baz" )
-    assert_equal "foo", result
-  end
+    def test_block_closes_self
+      thing = nil
+      SQLite3::Database.new(':memory:') do |db|
+        thing = db
+        assert !thing.closed?
+      end
+      assert thing.closed?
+    end
 
-  def test_changes
-    Driver.any_instance.expects(:changes).returns(14)
-    assert_equal 14, @db.changes
-  end
+    def test_prepare
+      db = SQLite3::Database.new(':memory:')
+      stmt = db.prepare('select "hello world"')
+      assert_instance_of(SQLite3::Statement, stmt)
+    end
 
-  def test_total_changes
-    Driver.any_instance.expects(:total_changes).returns(28)
-    assert_equal 28, @db.total_changes
-  end
+    def test_total_changes
+      db = SQLite3::Database.new(':memory:')
+      db.execute("create table foo ( a integer primary key, b text )")
+      db.execute("insert into foo (b) values ('hello')")
+      assert_equal 1, db.total_changes
+    end
 
-  def test_interrupt
-    Driver.any_instance.expects(:interrupt)
-    @db.interrupt
+    def test_execute_returns_list_of_hash
+      db = SQLite3::Database.new(':memory:', :results_as_hash => true)
+      db.execute("create table foo ( a integer primary key, b text )")
+      db.execute("insert into foo (b) values ('hello')")
+      rows = db.execute("select * from foo")
+      assert_equal [{0=>1, "a"=>1, "b"=>"hello", 1=>"hello"}], rows
+    end
+
+    def test_execute_yields_hash
+      db = SQLite3::Database.new(':memory:', :results_as_hash => true)
+      db.execute("create table foo ( a integer primary key, b text )")
+      db.execute("insert into foo (b) values ('hello')")
+      db.execute("select * from foo") do |row|
+        assert_equal({0=>1, "a"=>1, "b"=>"hello", 1=>"hello"}, row)
+      end
+    end
+
+    def test_table_info
+      db = SQLite3::Database.new(':memory:', :results_as_hash => true)
+      db.execute("create table foo ( a integer primary key, b text )")
+      info = [{
+        "name"       => "a",
+        "pk"         => 1,
+        "notnull"    => 0,
+        "type"       => "integer",
+        "dflt_value" => nil,
+        "cid"        => 0
+      },
+      {
+        "name"       => "b",
+        "pk"         => 0,
+        "notnull"    => 0,
+        "type"       => "text",
+        "dflt_value" => nil,
+        "cid"        => 1
+      }]
+      assert_equal info, db.table_info('foo')
+    end
+
+    def test_total_changes_closed
+      db = SQLite3::Database.new(':memory:')
+      db.close
+      assert_raise(SQLite3::Exception) do
+        db.total_changes
+      end
+    end
+
+    def test_trace_requires_opendb
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.trace { |x| }
+      end
+    end
+
+    def test_trace_with_block
+      result = nil
+      @db.trace { |sql| result = sql }
+      @db.execute "select 'foo'"
+      assert_equal "select 'foo'", result
+    end
+
+    def test_trace_with_object
+      obj = Class.new {
+        attr_accessor :result
+        def call sql; @result = sql end
+      }.new
+
+      @db.trace(obj)
+      @db.execute "select 'foo'"
+      assert_equal "select 'foo'", obj.result
+    end
+
+    def test_trace_takes_nil
+      @db.trace(nil)
+      @db.execute "select 'foo'"
+    end
+
+    def test_last_insert_row_id_closed
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.last_insert_row_id
+      end
+    end
+
+    def test_define_function
+      called_with = nil
+      @db.define_function("hello") do |value|
+        called_with = value
+      end
+      @db.execute("select hello(10)")
+      assert_equal 10, called_with
+    end
+
+    def test_call_func_arg_type
+      called_with = nil
+      @db.define_function("hello") do |b, c, d|
+        called_with = [b, c, d]
+        nil
+      end
+      @db.execute("select hello(2.2, 'foo', NULL)")
+      assert_equal [2.2, 'foo', nil], called_with
+    end
+
+    def test_define_varargs
+      called_with = nil
+      @db.define_function("hello") do |*args|
+        called_with = args
+        nil
+      end
+      @db.execute("select hello(2.2, 'foo', NULL)")
+      assert_equal [2.2, 'foo', nil], called_with
+    end
+
+    def test_function_return
+      @db.define_function("hello") { |a| 10 }
+      assert_equal [10], @db.execute("select hello('world')").first
+    end
+
+    def test_function_return_types
+      [10, 2.2, nil, "foo"].each do |thing|
+        @db.define_function("hello") { |a| thing }
+        assert_equal [thing], @db.execute("select hello('world')").first
+      end
+    end
+
+    def test_define_function_closed
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.define_function('foo') {  }
+      end
+    end
+
+    def test_inerrupt_closed
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.interrupt
+      end
+    end
+
+    def test_define_aggregate
+      @db.execute "create table foo ( a integer primary key, b text )"
+      @db.execute "insert into foo ( b ) values ( 'foo' )"
+      @db.execute "insert into foo ( b ) values ( 'bar' )"
+      @db.execute "insert into foo ( b ) values ( 'baz' )"
+
+      acc = Class.new {
+        attr_reader :sum
+        alias :finalize :sum
+        def initialize
+          @sum = 0
+        end
+
+        def step a
+          @sum += a
+        end
+      }.new
+
+      @db.define_aggregator("accumulate", acc)
+      value = @db.get_first_value( "select accumulate(a) from foo" )
+      assert_equal 6, value
+    end
+
+    def test_authorizer_ok
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; true end
+      }.new
+      @db.prepare("select 'fooooo'")
+
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; 0 end
+      }.new
+      @db.prepare("select 'fooooo'")
+    end
+
+    def test_authorizer_ignore
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; nil end
+      }.new
+      stmt = @db.prepare("select 'fooooo'")
+      assert_equal nil, stmt.step
+    end
+
+    def test_authorizer_fail
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; false end
+      }.new
+      assert_raises(SQLite3::AuthorizationException) do
+        @db.prepare("select 'fooooo'")
+      end
+    end
+
+    def test_remove_auth
+      @db.authorizer = Class.new {
+        def call action, a, b, c, d; false end
+      }.new
+      assert_raises(SQLite3::AuthorizationException) do
+        @db.prepare("select 'fooooo'")
+      end
+
+      @db.authorizer = nil
+      @db.prepare("select 'fooooo'")
+    end
+
+    def test_close_with_open_statements
+      stmt = @db.prepare("select 'foo'")
+      assert_raises(SQLite3::BusyException) do
+        @db.close
+      end
+    end
   end
 end

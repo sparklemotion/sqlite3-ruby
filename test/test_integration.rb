@@ -1,9 +1,8 @@
-require File.join(File.dirname(__FILE__), 'helper')
+require 'helper'
 
 class TC_Database_Integration < Test::Unit::TestCase
   def setup
-    File.delete( "test.db" ) rescue nil
-    @db = SQLite3::Database.new( "test.db" )
+    @db = SQLite3::Database.new(":memory:")
     @db.transaction do
       @db.execute "create table foo ( a integer primary key, b text )"
       @db.execute "insert into foo ( b ) values ( 'foo' )"
@@ -14,7 +13,6 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def teardown
     @db.close
-    File.delete( "test.db" )
   end
 
   def test_table_info_with_type_translation_active
@@ -26,9 +24,9 @@ class TC_Database_Integration < Test::Unit::TestCase
     @db.transaction do
       @db.execute "create table defaults_test ( a string default NULL, b string default 'Hello' )"
       data = @db.table_info( "defaults_test" )
-      assert_equal({"name" => "a", "type" => "string", "dflt_value" => nil, "notnull" => "0", "cid" => "0", "pk" => "0"},
+      assert_equal({"name" => "a", "type" => "string", "dflt_value" => nil, "notnull" => 0, "cid" => 0, "pk" => 0},
         data[0])
-      assert_equal({"name" => "b", "type" => "string", "dflt_value" => "Hello", "notnull" => "0", "cid" => "1", "pk" => "0"},
+      assert_equal({"name" => "b", "type" => "string", "dflt_value" => "Hello", "notnull" => 0, "cid" => 1, "pk" => 0},
         data[1])
     end
   end
@@ -37,9 +35,9 @@ class TC_Database_Integration < Test::Unit::TestCase
     @db.transaction do
       @db.execute "create table no_defaults_test ( a integer default 1, b integer )"
       data = @db.table_info( "no_defaults_test" )
-      assert_equal({"name" => "a", "type" => "integer", "dflt_value" => "1", "notnull" => "0", "cid" => "0", "pk" => "0"},
+      assert_equal({"name" => "a", "type" => "integer", "dflt_value" => "1", "notnull" => 0, "cid" => 0, "pk" => 0},
         data[0])
-      assert_equal({"name" => "b", "type" => "integer", "dflt_value" => nil, "notnull" => "0", "cid" => "1", "pk" => "0"},
+      assert_equal({"name" => "b", "type" => "integer", "dflt_value" => nil, "notnull" => 0, "cid" => 1, "pk" => 0},
         data[1])
     end
   end
@@ -51,21 +49,25 @@ class TC_Database_Integration < Test::Unit::TestCase
     assert @db.complete?( "select * from foo;" )
   end
 
-  def test_complete_fail_utf16
-    assert !@db.complete?( "select * from foo".to_utf16(false), true )
-  end
+  # FIXME: do people really need UTF16 sql statements?
+  #def test_complete_fail_utf16
+  #  assert !@db.complete?( "select * from foo".to_utf16(false), true )
+  #end
 
-  def test_complete_success_utf16
-    assert @db.complete?( "select * from foo;".to_utf16(true), true )
-  end
+  # FIXME: do people really need UTF16 sql statements?
+  #def test_complete_success_utf16
+  #  assert @db.complete?( "select * from foo;".to_utf16(true), true )
+  #end
 
   def test_errmsg
     assert_equal "not an error", @db.errmsg
   end
 
-  def test_errmsg_utf16
-    assert_equal "not an error".to_utf16, @db.errmsg(true)
-  end
+  # FIXME: do people really need UTF16 error messages?
+  #def test_errmsg_utf16
+  #  msg = Iconv.conv('UTF-16', 'UTF-8', 'not an error')
+  #  assert_equal msg, @db.errmsg(true)
+  #end
 
   def test_errcode
     assert_equal 0, @db.errcode
@@ -73,26 +75,26 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def test_trace
     result = nil
-    @db.trace( "data" ) { |data,sql| result = [ data, sql ]; 0 }
+    @db.trace { |sql| result = sql }
     @db.execute "select * from foo"
-    assert_equal ["data","select * from foo"], result
+    assert_equal "select * from foo", result
   end
 
   def test_authorizer_okay
-    @db.authorizer( "data" ) { |data,type,a,b,c,d| 0 }
+    @db.authorizer { |type,a,b,c,d| 0 }
     rows = @db.execute "select * from foo"
     assert_equal 3, rows.length
   end
 
   def test_authorizer_error
-    @db.authorizer( "data" ) { |data,type,a,b,c,d| 1 }
+    @db.authorizer { |type,a,b,c,d| 1 }
     assert_raise( SQLite3::AuthorizationException ) do
       @db.execute "select * from foo"
     end
   end
 
   def test_authorizer_silent
-    @db.authorizer( "data" ) { |data,type,a,b,c,d| 2 }
+    @db.authorizer { |type,a,b,c,d| 2 }
     rows = @db.execute "select * from foo"
     assert rows.empty?
   end
@@ -266,7 +268,7 @@ class TC_Database_Integration < Test::Unit::TestCase
       insert into bar values ( 'seven', 8, ? );
     SQL
     rows = @db.execute( "select * from bar" ).map { |a,b,c| c }
-    assert_equal %w{1 1 1}, rows
+    assert_equal [1, 1, 1], rows
   end
 
   def test_query_no_block_no_bind_no_match
@@ -340,7 +342,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def test_get_first_row_no_bind_with_match
     result = @db.get_first_row( "select * from foo where a=1" )
-    assert_equal [ "1", "foo" ], result
+    assert_equal [ 1, "foo" ], result
   end
 
   def test_get_first_row_with_bind_no_match
@@ -350,7 +352,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
   def test_get_first_row_with_bind_with_match
     result = @db.get_first_row( "select * from foo where a=?", 1 )
-    assert_equal [ "1", "foo" ], result
+    assert_equal [ 1, "foo" ], result
   end
 
   def test_get_first_value_no_bind_no_match
@@ -459,7 +461,7 @@ class TC_Database_Integration < Test::Unit::TestCase
       func.result = x
     end
 
-    assert_raise( SQLite3::SQLException ) do
+    assert_raise( SQLite3::InterruptException ) do
       @db.execute "select abort(a) from foo"
     end
   end
@@ -484,7 +486,7 @@ class TC_Database_Integration < Test::Unit::TestCase
     @db.create_aggregate( "accumulate", 1, step, final )
 
     value = @db.get_first_value( "select accumulate(a) from foo" )
-    assert_equal "6", value
+    assert_equal 6, value
   end
 
   def test_create_aggregate_with_block
@@ -498,7 +500,7 @@ class TC_Database_Integration < Test::Unit::TestCase
     end
 
     value = @db.get_first_value( "select accumulate(a) from foo" )
-    assert_equal "6", value
+    assert_equal 6, value
   end
 
   def test_create_aggregate_with_no_data
@@ -513,7 +515,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
     value = @db.get_first_value(
       "select accumulate(a) from foo where a = 100" )
-    assert_equal "0", value
+    assert_equal 0, value
   end
 
   def test_create_aggregate_handler
@@ -532,7 +534,7 @@ class TC_Database_Integration < Test::Unit::TestCase
 
     @db.create_aggregate_handler( handler )
     value = @db.get_first_value( "select multiply(a) from foo" )
-    assert_equal "6", value
+    assert_equal 6, value
   end
 
   def test_bind_array_parameter

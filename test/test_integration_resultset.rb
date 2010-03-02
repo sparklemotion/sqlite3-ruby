@@ -1,8 +1,8 @@
-require File.join(File.dirname(__FILE__), 'helper')
+require 'helper'
 
 class TC_ResultSet < Test::Unit::TestCase
   def setup
-    @db = SQLite3::Database.new( "test.db" )
+    @db = SQLite3::Database.new(":memory:")
     @db.transaction do
       @db.execute "create table foo ( a integer primary key, b text )"
       @db.execute "insert into foo ( b ) values ( 'foo' )"
@@ -16,7 +16,6 @@ class TC_ResultSet < Test::Unit::TestCase
   def teardown
     @stmt.close
     @db.close
-    File.delete( "test.db" )
   end
 
   def test_reset_unused
@@ -56,7 +55,7 @@ class TC_ResultSet < Test::Unit::TestCase
 
   def test_next_no_type_translation_no_hash
     @result.reset( 1 )
-    assert_equal [ "1", "foo" ], @result.next
+    assert_equal [ 1, "foo" ], @result.next
   end
 
   def test_next_type_translation
@@ -68,7 +67,7 @@ class TC_ResultSet < Test::Unit::TestCase
   def test_next_type_translation_with_untyped_column
     @db.type_translation = true
     @db.query( "select count(*) from foo" ) do |result|
-      assert_equal ["3"], result.next
+      assert_equal [3], result.next
     end
   end
 
@@ -114,7 +113,7 @@ class TC_ResultSet < Test::Unit::TestCase
   def test_next_results_as_hash
     @db.results_as_hash = true
     @result.reset( 1 )
-    assert_equal( { "a" => "1", "b" => "foo", 0 => "1", 1 => "foo" },
+    assert_equal( { "a" => 1, "b" => "foo", 0 => 1, 1 => "foo" },
       @result.next )
   end
 
@@ -123,7 +122,7 @@ class TC_ResultSet < Test::Unit::TestCase
     @result.reset( 1 )
     row = @result.next
     row.each do |_, v|
-      assert_equal true, v.tainted?
+      assert(v.tainted?) if String === v
     end
   end
 
@@ -131,7 +130,7 @@ class TC_ResultSet < Test::Unit::TestCase
     @result.reset( 1 )
     row = @result.next
     row.each do |v|
-      assert_equal true, v.tainted?
+      assert(v.tainted?) if String === v
     end
   end
 

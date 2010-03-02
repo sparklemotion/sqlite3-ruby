@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'helper')
 
 class TC_Statement < Test::Unit::TestCase
   def setup
-    @db = SQLite3::Database.new( "test.db" )
+    @db = SQLite3::Database.new(":memory:")
     @db.transaction do
       @db.execute "create table foo ( a integer primary key, b text )"
       @db.execute "insert into foo ( b ) values ( 'foo' )"
@@ -15,7 +15,6 @@ class TC_Statement < Test::Unit::TestCase
   def teardown
     @stmt.close
     @db.close
-    File.delete( "test.db" )
   end
 
   def test_remainder_empty
