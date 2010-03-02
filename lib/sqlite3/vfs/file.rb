@@ -8,12 +8,13 @@ module SQLite3
         @name  = name
         @flags = flags
         @locks = Hash.new(0)
-        @store = StringIO.new
         @mutex = Mutex.new
       end
 
+      ###
+      # Close the file
       def close
-        @store.close
+        raise NotImplementedError
       end
 
       def reserved_lock?
@@ -27,29 +28,31 @@ module SQLite3
       ###
       # Read +amount+ from +offset+
       def read amount, offset
-        @store.seek offset
-        @store.read amount
+        raise NotImplementedError
       end
 
       ###
       # Write +data+ at +offset+
       def write data, offset
-        @store.seek offset
-        @store.write data
+        raise NotImplementedError
       end
 
       ###
       # Truncate the data store to +bytes+
       def truncate bytes
-        @store.truncate bytes
+        raise NotImplementedError
       end
 
+      ###
+      # Sync the IO
       def sync flags
-        @store.fsync
+        raise NotImplementedError
       end
 
+      ###
+      # Returns the file size for the underlying IO
       def file_size
-        @store.size
+        raise NotImplementedError
       end
 
       def unlock mode
