@@ -291,9 +291,10 @@ static void rb_sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **arg
   for(i = 0; i < argc; i++) {
     params[i] = sqlite3val2rb(argv[i]);
   }
-  xfree(params);
 
   VALUE result = rb_funcall2(callable, rb_intern("call"), argc, params);
+  xfree(params);
+
   set_sqlite3_func_result(ctx, result);
 }
 
@@ -349,8 +350,8 @@ static void rb_sqlite3_step(sqlite3_context * ctx, int argc, sqlite3_value **arg
   for(i = 0; i < argc; i++) {
     params[i] = sqlite3val2rb(argv[i]);
   }
-  xfree(params);
   rb_funcall2(callable, rb_intern("step"), argc, params);
+  xfree(params);
 }
 
 static void rb_sqlite3_final(sqlite3_context * ctx)
