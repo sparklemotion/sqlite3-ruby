@@ -72,7 +72,7 @@ module SQLite3
       end
 
       def characteristics
-        IOCAP_ATOMIC
+        0
       end
     end
   end

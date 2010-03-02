@@ -4,7 +4,7 @@ module SQLite3
   class TestVFS < Test::Unit::TestCase
     class MyVFS < SQLite3::VFS
       def open name, flags
-        SQLite3::VFS::File.new name, flags
+        SQLite3::VFS::StringIO.new name, flags
       end
     end
 

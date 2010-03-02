@@ -38,10 +38,10 @@ static int rbFile_read(
 
   if(got == amt)
     return SQLITE_OK;
-  else {
+  else
     memset(&((char*)dst)[got], 0, amt - got);
-    return SQLITE_IOERR_SHORT_READ;
-  }
+
+  return SQLITE_IOERR_SHORT_READ;
 }
 
 static int rbFile_write(
@@ -231,4 +231,7 @@ void init_sqlite3_vfs(void)
       INT2NUM((long)SQLITE_SYNC_FULL));
   rb_define_const(cSqlite3Vfs, "SYNC_DATAONLY",
       INT2NUM((long)SQLITE_SYNC_DATAONLY));
+
+  rb_define_const(cSqlite3Vfs, "OPEN_MAIN_DB",
+      INT2NUM((long)SQLITE_OPEN_MAIN_DB));
 }
