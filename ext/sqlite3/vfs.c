@@ -50,7 +50,17 @@ static int rbFile_write(
     int amt,
     sqlite3_int64 offset)
 {
-  printf("write\n");
+  rubyFilePtr rfile = (rubyFilePtr)ctx;
+  VALUE file = rfile->file;
+  VALUE wrote = rb_funcall(
+      file, rb_intern("write"), 2, rb_str_new(data, amt), LONG2NUM(offset));
+
+  int sent = (int)NUM2INT(wrote);
+
+  if(sent == amt) return SQLITE_OK;
+  if(sent < 0) return SQLITE_IOERR_WRITE;
+
+  return SQLITE_FULL;
 }
 
 static int rbFile_truncate(sqlite3_file * ctx, sqlite3_int64 offset)
@@ -60,17 +70,31 @@ static int rbFile_truncate(sqlite3_file * ctx, sqlite3_int64 offset)
 
 static int rbFile_sync(sqlite3_file * ctx, int flags)
 {
-  printf("sync\n");
+  rubyFilePtr rfile = (rubyFilePtr)ctx;
+  VALUE file = rfile->file;
+  rb_funcall(file, rb_intern("sync"), 1, INT2NUM((long)flags));
+
+  return SQLITE_OK;
 }
 
 static int rbFile_file_size(sqlite3_file * ctx, sqlite3_int64 *pSize)
 {
-  printf("file_size\n");
+  rubyFilePtr rfile = (rubyFilePtr)ctx;
+  VALUE file = rfile->file;
+  VALUE size = rb_funcall(file, rb_intern("file_size"), 0);
+
+  *pSize = NUM2LONG(size);
+
+  return SQLITE_OK;
 }
 
 static int rbFile_lock(sqlite3_file * ctx, int mode)
 {
-  printf("lock\n");
+  rubyFilePtr rfile = (rubyFilePtr)ctx;
+  VALUE file = rfile->file;
+  rb_funcall(file, rb_intern("lock"), 1, INT2NUM((long)mode));
+
+  return SQLITE_OK;
 }
 
 static int rbFile_unlock(sqlite3_file * ctx, int mode)
@@ -139,6 +163,8 @@ static int vfs_open(
   VALUE file = rb_funcall(self, rb_intern("open"), 2, filename,
       INT2NUM((long)flags));
 
+  rb_iv_set(self, "@file", file);
+
   rubyFilePtr rfile = (rubyFilePtr)vfs_file;
 
   rfile->pMethods = &rbmethods;
@@ -173,5 +199,23 @@ void init_sqlite3_vfs(void)
 {
   cSqlite3Vfs = rb_define_class_under(mSqlite3, "VFS", rb_cObject);
   rb_define_alloc_func(cSqlite3Vfs, allocate);
-  rb_define_const(cSqlite3Vfs, "IOCAP_ATOMIC", SQLITE_IOCAP_ATOMIC);
+  rb_define_const(cSqlite3Vfs, "IOCAP_ATOMIC",
+      INT2NUM((long)SQLITE_IOCAP_ATOMIC));
+
+  rb_define_const(cSqlite3Vfs, "LOCK_NONE", INT2NUM((long)SQLITE_LOCK_NONE));
+  rb_define_const(cSqlite3Vfs, "LOCK_SHARED",
+      INT2NUM((long)SQLITE_LOCK_SHARED));
+  rb_define_const(cSqlite3Vfs, "LOCK_RESERVED",
+      INT2NUM((long)SQLITE_LOCK_RESERVED));
+  rb_define_const(cSqlite3Vfs, "LOCK_PENDING",
+      INT2NUM((long)SQLITE_LOCK_PENDING));
+  rb_define_const(cSqlite3Vfs, "LOCK_EXCLUSIVE",
+      INT2NUM((long)SQLITE_LOCK_EXCLUSIVE));
+
+  rb_define_const(cSqlite3Vfs, "SYNC_NORMAL",
+      INT2NUM((long)SQLITE_SYNC_NORMAL));
+  rb_define_const(cSqlite3Vfs, "SYNC_FULL",
+      INT2NUM((long)SQLITE_SYNC_FULL));
+  rb_define_const(cSqlite3Vfs, "SYNC_DATAONLY",
+      INT2NUM((long)SQLITE_SYNC_DATAONLY));
 }

@@ -15,8 +15,8 @@ module SQLite3
     end
 
     def test_my_vfs_create_table
-      #db = SQLite3::Database.new('foo', nil, 'SQLite3::TestVFS::MyVFS')
-      #db.execute('create table ex(id int, data string)')
+      db = SQLite3::Database.new('foo', nil, 'SQLite3::TestVFS::MyVFS')
+      db.execute('create table ex(id int, data string)')
     end
   end
 end
