@@ -16,6 +16,7 @@ Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
     ext.lib_dir = "lib/sqlite3/#{$1}"
     ext.config_options << "--with-sqlite3-dir=#{sqlite3_lib}"
   else
+    ext.lib_dir = "lib/sqlite3"
     ext.cross_compile = true
     ext.cross_platform = ['i386-mswin32', 'i386-mingw32']
     ext.cross_config_options << "--with-sqlite3-dir=#{sqlite3_lib}"
