@@ -23,4 +23,4 @@ asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
 have_func('rb_proc_arity')
 have_func('rb_obj_method_arity')
 
-create_makefile('sqlite3_native')
+create_makefile('sqlite3/sqlite3_native')
