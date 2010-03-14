@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'hoe'
 
 Hoe.plugin :debugging, :doofus, :git

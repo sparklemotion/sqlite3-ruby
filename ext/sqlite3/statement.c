@@ -245,6 +245,7 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
             );
       }
       break;
+    case T_BIGNUM:
     case T_FLOAT:
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
       break;

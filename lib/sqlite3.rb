@@ -3,7 +3,7 @@ begin
   RUBY_VERSION =~ /(\d+.\d+)/
   require "sqlite3/#{$1}/sqlite3_native"
 rescue LoadError
-  require 'sqlite3_native'
+  require 'sqlite3/sqlite3_native'
 end
 
 require 'sqlite3/database'
