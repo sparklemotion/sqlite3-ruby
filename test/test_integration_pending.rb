@@ -65,6 +65,7 @@ class TC_Integration_Pending < Test::Unit::TestCase
         db2.close if db2
       end
     end
+    sleep 1
 
     @db.busy_handler do |count|
       handler_call_count += 1
