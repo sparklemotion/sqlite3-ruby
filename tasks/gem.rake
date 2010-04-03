@@ -21,7 +21,7 @@ HOE = Hoe.spec 'sqlite3-ruby' do
   spec_extras[:required_rubygems_version] = '>= 1.3.5'
   spec_extras[:extensions]                = ["ext/sqlite3/extconf.rb"]
 
-  extra_dev_deps << ['rake-compiler', "~> 0.6.0"]
+  extra_dev_deps << ['rake-compiler', "~> 0.7.0"]
 
   clean_globs.push('**/test.db')
 end
