@@ -1,5 +1,10 @@
-require 'rubygems'
-require 'hoe'
+begin
+  require 'hoe'
+rescue LoadError
+  # try with rubygems?
+  require 'rubygems'
+  require 'hoe'
+end
 
 Hoe.plugin :debugging, :doofus, :git
 
