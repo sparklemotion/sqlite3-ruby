@@ -26,4 +26,6 @@ HOE = Hoe.spec 'sqlite3-ruby' do
   clean_globs.push('**/test.db')
 end
 
+Hoe.add_include_dirs '.'
+
 # vim: syntax=ruby
