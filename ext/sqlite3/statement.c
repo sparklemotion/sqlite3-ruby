@@ -14,7 +14,7 @@ static void deallocate(void * ctx)
 
 static VALUE allocate(VALUE klass)
 {
-  sqlite3StmtRubyPtr ctx = xcalloc(1, sizeof(sqlite3StmtRuby));
+  sqlite3StmtRubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3StmtRuby));
   ctx->st     = NULL;
   ctx->done_p = 0;
 
@@ -39,7 +39,7 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   if(!db_ctx->db)
     rb_raise(rb_eArgError, "prepare called on a closed database");
 
-  char *tail = NULL;
+  const char *tail = NULL;
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(!UTF8_P(sql)) {
@@ -52,8 +52,8 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 
   int status = sqlite3_prepare_v2(
       db_ctx->db,
-      StringValuePtr(sql),
-      RSTRING_LEN(sql),
+      (const char *)StringValuePtr(sql),
+      (int)RSTRING_LEN(sql),
       &ctx->st,
       &tail
   );
@@ -126,7 +126,7 @@ static VALUE step(VALUE self)
 
   int value = sqlite3_step(stmt);
   int length = sqlite3_column_count(stmt);
-  VALUE list = rb_ary_new2(length);
+  VALUE list = rb_ary_new2((long)length);
 
   switch(value) {
     case SQLITE_ROW:
@@ -143,8 +143,8 @@ static VALUE step(VALUE self)
             case SQLITE_TEXT:
               {
                 VALUE str = rb_tainted_str_new(
-                    sqlite3_column_text(stmt, i),
-                    sqlite3_column_bytes(stmt, i)
+                    (const char *)sqlite3_column_text(stmt, i),
+                    (long)sqlite3_column_bytes(stmt, i)
                 );
 #ifdef HAVE_RUBY_ENCODING_H
                 rb_enc_associate_index(str, enc_index);
@@ -155,8 +155,8 @@ static VALUE step(VALUE self)
             case SQLITE_BLOB:
               {
                 VALUE str = rb_tainted_str_new(
-                    sqlite3_column_blob(stmt, i),
-                    sqlite3_column_bytes(stmt, i)
+                    (const char *)sqlite3_column_blob(stmt, i),
+                    (long)sqlite3_column_bytes(stmt, i)
                 );
                 rb_ary_push(list, str);
               }

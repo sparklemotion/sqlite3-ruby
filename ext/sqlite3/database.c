@@ -212,7 +212,7 @@ static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
 
   rb_iv_set(self, "@busy_handler", block);
 
-  int status = sqlite3_trace(
+  int status = sqlite3_busy_handler(
       ctx->db, NIL_P(block) ? NULL : rb_sqlite3_busy_handler, (void *)self);
 
   CHECK(ctx->db, status);
@@ -272,8 +272,8 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
     case T_STRING:
       sqlite3_result_text(
           ctx,
-          StringValuePtr(result),
-          RSTRING_LEN(result),
+          (const char *)StringValuePtr(result),
+          (int)RSTRING_LEN(result),
           SQLITE_TRANSIENT
       );
       break;
@@ -442,7 +442,7 @@ static VALUE errcode(VALUE self)
  * Return +true+ if the string is a valid (ie, parsable) SQL statement, and
  * +false+ otherwise.
  */
-static VALUE complete_p(VALUE self, VALUE sql)
+static VALUE complete_p(VALUE UNUSED(self), VALUE sql)
 {
   if(sqlite3_complete(StringValuePtr(sql)))
     return Qtrue;
@@ -538,7 +538,7 @@ static VALUE set_busy_timeout(VALUE self, VALUE timeout)
 }
 
 #ifdef HAVE_RUBY_ENCODING_H
-static int enc_cb(void * _self, int columns, char **data, char **names)
+static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(names))
 {
   VALUE self = (VALUE)_self;
 

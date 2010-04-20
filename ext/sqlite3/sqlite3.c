@@ -3,7 +3,7 @@
 VALUE mSqlite3;
 VALUE cSqlite3Blob;
 
-static VALUE libversion(VALUE klass)
+static VALUE libversion(VALUE UNUSED(klass))
 {
   return INT2NUM(sqlite3_libversion_number());
 }
