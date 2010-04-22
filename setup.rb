@@ -481,7 +481,7 @@ module FileOperations
   end
 
   def extdir?(dir)
-    File.exist?(dir + '/MANIFEST')
+    File.exist?(dir + '/MANIFEST') or File.exist?("#{dir}/extconf.rb")
   end
 
   def all_files_in(dirname)
