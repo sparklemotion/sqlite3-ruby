@@ -89,7 +89,7 @@ end
 
 # clean and clobber actions
 # All the uncompressed files must be removed at clean
- CLEAN.include('vendor/sqlite3')
+CLEAN.include('vendor/sqlite3')
 
 # clobber vendored packages
 CLOBBER.include('vendor')
