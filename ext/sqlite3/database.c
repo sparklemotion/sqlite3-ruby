@@ -5,6 +5,7 @@
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
 
 VALUE cSqlite3Database;
+static VALUE sym_utf16, sym_results_as_hash, sym_type_translation;
 
 static void deallocate(void * ctx)
 {
@@ -38,16 +39,15 @@ static VALUE allocate(VALUE klass)
 static VALUE initialize(int argc, VALUE *argv, VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
-
   VALUE file;
   VALUE opts;
   VALUE zvfs;
+  int status;
+
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
 
   rb_scan_args(argc, argv, "12", &file, &opts, &zvfs);
   if(NIL_P(opts)) opts = rb_hash_new();
-
-  int status;
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(UTF16_LE_P(file)) {
@@ -55,7 +55,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   } else {
 #endif
 
-    if(Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("utf16")))) {
+    if(Qtrue == rb_hash_aref(opts, sym_utf16)) {
       status = sqlite3_open16(StringValuePtr(file), &ctx->db);
     } else {
 
@@ -83,8 +83,8 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   rb_iv_set(self, "@authorizer", Qnil);
   rb_iv_set(self, "@encoding", Qnil);
   rb_iv_set(self, "@busy_handler", Qnil);
-  rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, ID2SYM(rb_intern("results_as_hash"))));
-  rb_iv_set(self, "@type_translation", rb_hash_aref(opts, ID2SYM(rb_intern("type_translation"))));
+  rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, sym_results_as_hash));
+  rb_iv_set(self, "@type_translation", rb_hash_aref(opts, sym_type_translation));
 
   if(rb_block_given_p()) {
     rb_yield(self);
@@ -101,9 +101,10 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 static VALUE sqlite3_rb_close(VALUE self)
 {
   sqlite3RubyPtr ctx;
+  sqlite3 * db;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
-  sqlite3 * db = ctx->db;
+  db = ctx->db;
   CHECK(db, sqlite3_close(ctx->db));
 
   ctx->db = NULL;
@@ -157,10 +158,10 @@ static void tracefunc(void * data, const char *sql)
 static VALUE trace(int argc, VALUE *argv, VALUE self)
 {
   sqlite3RubyPtr ctx;
+  VALUE block;
+
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
-
-  VALUE block;
 
   rb_scan_args(argc, argv, "01", &block);
 
@@ -201,10 +202,11 @@ static int rb_sqlite3_busy_handler(void * ctx, int count)
 static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
 {
   sqlite3RubyPtr ctx;
+  VALUE block;
+  int status;
+
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
-
-  VALUE block;
 
   rb_scan_args(argc, argv, "01", &block);
 
@@ -212,7 +214,7 @@ static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
 
   rb_iv_set(self, "@busy_handler", block);
 
-  int status = sqlite3_busy_handler(
+  status = sqlite3_busy_handler(
       ctx->db, NIL_P(block) ? NULL : rb_sqlite3_busy_handler, (void *)self);
 
   CHECK(ctx->db, status);
@@ -253,7 +255,7 @@ static VALUE sqlite3val2rb(sqlite3_value * val)
       return Qnil;
       break;
     default:
-      rb_raise(rb_eRuntimeError, "bad type"); // FIXME
+      rb_raise(rb_eRuntimeError, "bad type"); /* FIXME */
   }
 }
 
@@ -287,12 +289,13 @@ static void rb_sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **arg
 {
   VALUE callable = (VALUE)sqlite3_user_data(ctx);
   VALUE * params = xcalloc((size_t)argc, sizeof(VALUE *));
+  VALUE result;
   int i;
   for(i = 0; i < argc; i++) {
     params[i] = sqlite3val2rb(argv[i]);
   }
 
-  VALUE result = rb_funcall2(callable, rb_intern("call"), argc, params);
+  result = rb_funcall2(callable, rb_intern("call"), argc, params);
   xfree(params);
 
   set_sqlite3_func_result(ctx, result);
@@ -313,12 +316,15 @@ int rb_proc_arity(VALUE self)
 static VALUE define_function(VALUE self, VALUE name)
 {
   sqlite3RubyPtr ctx;
+  VALUE block;
+  int status;
+
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  VALUE block = rb_block_proc();
+  block = rb_block_proc();
 
-  int status = sqlite3_create_function(
+  status = sqlite3_create_function(
     ctx->db,
     StringValuePtr(name),
     rb_proc_arity(block),
@@ -371,12 +377,14 @@ static void rb_sqlite3_final(sqlite3_context * ctx)
 static VALUE define_aggregator(VALUE self, VALUE name, VALUE aggregator)
 {
   sqlite3RubyPtr ctx;
+  int arity, status;
+
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  int arity = sqlite3_obj_method_arity(aggregator, rb_intern("step"));
+  arity = sqlite3_obj_method_arity(aggregator, rb_intern("step"));
 
-  int status = sqlite3_create_function(
+  status = sqlite3_create_function(
     ctx->db,
     StringValuePtr(name),
     arity,
@@ -502,10 +510,12 @@ static int rb_sqlite3_auth(
 static VALUE set_authorizer(VALUE self, VALUE authorizer)
 {
   sqlite3RubyPtr ctx;
+  int status;
+
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  int status = sqlite3_set_authorizer(
+  status = sqlite3_set_authorizer(
       ctx->db, NIL_P(authorizer) ? NULL : rb_sqlite3_auth, (void *)self
   );
 
@@ -556,10 +566,12 @@ static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(
 static VALUE db_encoding(VALUE self)
 {
   sqlite3RubyPtr ctx;
+  VALUE enc;
+
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  VALUE enc = rb_iv_get(self, "@encoding");
+  enc = rb_iv_get(self, "@encoding");
 
   if(NIL_P(enc)) {
     sqlite3_exec(ctx->db, "PRAGMA encoding", enc_cb, (void *)self, NULL);
@@ -571,6 +583,7 @@ static VALUE db_encoding(VALUE self)
 
 void init_sqlite3_database()
 {
+  ID id_utf16, id_results_as_hash, id_type_translation;
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Database, allocate);
@@ -595,4 +608,10 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
 #endif
 
+  id_utf16 = rb_intern("utf16");
+  sym_utf16 = ID2SYM(id_utf16);
+  id_results_as_hash = rb_intern("results_as_hash");
+  sym_results_as_hash = ID2SYM(id_results_as_hash);
+  id_type_translation = rb_intern("type_translation");
+  sym_type_translation = ID2SYM(id_type_translation);
 }
