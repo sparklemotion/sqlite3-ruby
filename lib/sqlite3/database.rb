@@ -35,7 +35,7 @@ module SQLite3
   class Database
     include Pragmas
 
-    class <<self
+    class << self
 
       alias :open :new
 
