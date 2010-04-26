@@ -7,3 +7,8 @@ doc/faq/faq.html
 test/test.db
 tmp
 vendor
+*.log
+*.o
+.config
+InstalledFiles
+Makefile

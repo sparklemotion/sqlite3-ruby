@@ -32,14 +32,14 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 {
   sqlite3RubyPtr db_ctx;
   sqlite3StmtRubyPtr ctx;
+  const char *tail = NULL;
+  int status;
 
   Data_Get_Struct(db, sqlite3Ruby, db_ctx);
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
   if(!db_ctx->db)
     rb_raise(rb_eArgError, "prepare called on a closed database");
-
-  const char *tail = NULL;
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(!UTF8_P(sql)) {
@@ -50,7 +50,7 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   }
 #endif
 
-  int status = sqlite3_prepare_v2(
+  status = sqlite3_prepare_v2(
       db_ctx->db,
       (const char *)StringValuePtr(sql),
       (int)RSTRING_LEN(sql),
@@ -76,12 +76,13 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 static VALUE sqlite3_rb_close(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
+  sqlite3 * db;
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
   REQUIRE_OPEN_STMT(ctx);
 
-  sqlite3 * db = sqlite3_db_handle(ctx->st);
+  db = sqlite3_db_handle(ctx->st);
   CHECK(db, sqlite3_finalize(ctx->st));
 
   ctx->st = NULL;
@@ -107,6 +108,8 @@ static VALUE step(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
   sqlite3_stmt *stmt;
+  int value, length, enc_index;
+  VALUE list;
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
@@ -115,18 +118,18 @@ static VALUE step(VALUE self)
   if(ctx->done_p) return Qnil;
 
 #ifdef HAVE_RUBY_ENCODING_H
-  VALUE db          = rb_iv_get(self, "@connection");
-  VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-  rb_encoding * enc = NIL_P(encoding) ? rb_utf8_encoding() :
-                                        rb_to_encoding(encoding);
-  int enc_index     = rb_enc_to_index(enc);
+  {
+      VALUE db          = rb_iv_get(self, "@connection");
+      VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
+      enc_index = NIL_P(encoding) ? rb_utf8_encindex() : rb_to_encoding_index(encoding);
+  }
 #endif
 
   stmt = ctx->st;
 
-  int value = sqlite3_step(stmt);
-  int length = sqlite3_column_count(stmt);
-  VALUE list = rb_ary_new2((long)length);
+  value = sqlite3_step(stmt);
+  length = sqlite3_column_count(stmt);
+  list = rb_ary_new2((long)length);
 
   switch(value) {
     case SQLITE_ROW:
@@ -192,17 +195,11 @@ static VALUE step(VALUE self)
 static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 {
   sqlite3StmtRubyPtr ctx;
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
-  REQUIRE_OPEN_STMT(ctx);
-
   int status;
   int index;
 
-#ifdef HAVE_RUBY_ENCODING_H
-  VALUE db          = rb_iv_get(self, "@connection");
-  VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-  rb_encoding * enc = rb_to_encoding(encoding);
-#endif
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
 
   switch(TYPE(key)) {
     case T_SYMBOL:
@@ -223,7 +220,10 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 
 #ifdef HAVE_RUBY_ENCODING_H
       if(!UTF8_P(value)) {
-        value = rb_str_export_to_enc(value, enc);
+          VALUE db          = rb_iv_get(self, "@connection");
+          VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
+          rb_encoding * enc = rb_to_encoding(encoding);
+          value = rb_str_export_to_enc(value, enc);
       }
 #endif
 
@@ -277,10 +277,12 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 static VALUE reset_bang(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
+  int status;
+
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
-  int status = sqlite3_reset(ctx->st);
+  status = sqlite3_reset(ctx->st);
   CHECK(sqlite3_db_handle(ctx->st), status);
 
   ctx->done_p = 0;
@@ -321,10 +323,12 @@ static VALUE column_count(VALUE self)
 static VALUE column_name(VALUE self, VALUE index)
 {
   sqlite3StmtRubyPtr ctx;
+  const char * name;
+
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
-  const char * name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
+  name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
 
   if(name) return rb_str_new2(name);
   return Qnil;
@@ -337,10 +341,12 @@ static VALUE column_name(VALUE self, VALUE index)
 static VALUE column_decltype(VALUE self, VALUE index)
 {
   sqlite3StmtRubyPtr ctx;
+  const char * name;
+
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
-  const char * name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
+  name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
 
   if(name) return rb_str_new2(name);
   return Qnil;

@@ -481,7 +481,7 @@ module FileOperations
   end
 
   def extdir?(dir)
-    File.exist?(dir + '/MANIFEST')
+    File.exist?(dir + '/MANIFEST') or File.exist?("#{dir}/extconf.rb")
   end
 
   def all_files_in(dirname)
@@ -1149,7 +1149,7 @@ class Installer
   def install_dir_ext(rel)
     return unless extdir?(curr_srcdir())
     install_files ruby_extentions('.'),
-                  "#{config('so-dir')}/#{File.dirname(rel)}",
+                  "#{config('so-dir')}/#{rel}",
                   0555
   end
 
