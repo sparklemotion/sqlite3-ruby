@@ -1149,7 +1149,7 @@ class Installer
   def install_dir_ext(rel)
     return unless extdir?(curr_srcdir())
     install_files ruby_extentions('.'),
-                  "#{config('so-dir')}/#{File.dirname(rel)}",
+                  "#{config('so-dir')}/#{rel}",
                   0555
   end
 
