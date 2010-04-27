@@ -82,7 +82,7 @@ module SQLite3
     #   end
     #
     # See also #bind_params, #execute.
-    def execute! *bind_vars, &block
+    def execute!( *bind_vars, &block )
       execute(*bind_vars)
       block_given? ? each(&block) : to_a
     end
