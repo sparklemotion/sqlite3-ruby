@@ -217,7 +217,11 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 
   switch(TYPE(value)) {
     case T_STRING:
-      if(CLASS_OF(value) == cSqlite3Blob) {
+      if(CLASS_OF(value) == cSqlite3Blob
+#ifdef HAVE_RUBY_ENCODING_H
+              || rb_enc_get_index(value) == rb_ascii8bit_encindex()
+#endif
+        ) {
         status = sqlite3_bind_blob(
             ctx->st,
             index,
