@@ -108,8 +108,11 @@ static VALUE step(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
   sqlite3_stmt *stmt;
-  int value, length, enc_index;
+  int value, length;
   VALUE list;
+#ifdef HAVE_RUBY_ENCODING_H
+  int enc_index;
+#endif
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
@@ -138,7 +141,7 @@ static VALUE step(VALUE self)
         for(i = 0; i < length; i++) {
           switch(sqlite3_column_type(stmt, i)) {
             case SQLITE_INTEGER:
-              rb_ary_push(list, LONG2NUM(sqlite3_column_int64(stmt, i)));
+              rb_ary_push(list, LL2NUM(sqlite3_column_int64(stmt, i)));
               break;
             case SQLITE_FLOAT:
               rb_ary_push(list, rb_float_new(sqlite3_column_double(stmt, i)));
@@ -249,14 +252,17 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       }
       break;
     case T_BIGNUM:
+#if SIZEOF_LONG < 8
+      if (RBIGNUM_LEN(result) * SIZEOF_BDIGITS <= 8) {
+          sqlite3_result_int64(ctx, NUM2LL(result));
+          break;
+      }
+#endif
     case T_FLOAT:
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
       break;
     case T_FIXNUM:
-      {
-        long v = NUM2LONG(value);
-        status = sqlite3_bind_int64(ctx->st, index, v);
-      }
+      status = sqlite3_bind_int64(ctx->st, index, FIX2LONG(value));
       break;
     case T_NIL:
       status = sqlite3_bind_null(ctx->st, index);

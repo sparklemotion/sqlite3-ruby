@@ -241,14 +241,14 @@ static VALUE last_insert_row_id(VALUE self)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  return LONG2NUM(sqlite3_last_insert_rowid(ctx->db));
+  return LL2NUM(sqlite3_last_insert_rowid(ctx->db));
 }
 
 static VALUE sqlite3val2rb(sqlite3_value * val)
 {
   switch(sqlite3_value_type(val)) {
     case SQLITE_INTEGER:
-      return LONG2NUM(sqlite3_value_int64(val));
+      return LL2NUM(sqlite3_value_int64(val));
       break;
     case SQLITE_FLOAT:
       return rb_float_new(sqlite3_value_double(val));
@@ -274,8 +274,15 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
       sqlite3_result_null(ctx);
       break;
     case T_FIXNUM:
-      sqlite3_result_int64(ctx, NUM2LONG(result));
+      sqlite3_result_int64(ctx, FIX2LONG(result));
       break;
+    case T_BIGNUM:
+#if SIZEOF_LONG < 8
+      if (RBIGNUM_LEN(result) * SIZEOF_BDIGITS <= 8) {
+          sqlite3_result_int64(ctx, NUM2LL(result));
+          break;
+      }
+#endif
     case T_FLOAT:
       sqlite3_result_double(ctx, NUM2DBL(result));
       break;
