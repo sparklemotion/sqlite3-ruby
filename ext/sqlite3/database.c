@@ -28,6 +28,14 @@ static VALUE allocate(VALUE klass)
   return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
 }
 
+static char *
+utf16_string_value_ptr(VALUE str)
+{
+  StringValue(str);
+  rb_str_buf_cat(str, "\x00", 1L);
+  return RSTRING_PTR(str);
+}
+
 /* call-seq: SQLite3::Database.new(file, options = {})
  *
  * Create a new Database object that opens the given file. If utf16
@@ -51,12 +59,12 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(UTF16_LE_P(file)) {
-    status = sqlite3_open16(StringValuePtr(file), &ctx->db);
+    status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
   } else {
 #endif
 
     if(Qtrue == rb_hash_aref(opts, sym_utf16)) {
-      status = sqlite3_open16(StringValuePtr(file), &ctx->db);
+      status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
     } else {
 
 #ifdef HAVE_RUBY_ENCODING_H
