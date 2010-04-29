@@ -375,7 +375,7 @@ static void rb_sqlite3_step(sqlite3_context * ctx, int argc, sqlite3_value **arg
   int i;
 
   if (argc > 0) {
-    VALUE * params = xcalloc((size_t)argc, sizeof(VALUE *));
+    params = xcalloc((size_t)argc, sizeof(VALUE *));
     for(i = 0; i < argc; i++) {
       params[i] = sqlite3val2rb(argv[i]);
     }
