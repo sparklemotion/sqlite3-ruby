@@ -253,8 +253,8 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       break;
     case T_BIGNUM:
 #if SIZEOF_LONG < 8
-      if (RBIGNUM_LEN(result) * SIZEOF_BDIGITS <= 8) {
-          sqlite3_result_int64(ctx, NUM2LL(result));
+      if (RBIGNUM_LEN(value) * SIZEOF_BDIGITS <= 8) {
+          status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)NUM2LL(value));
           break;
       }
 #endif
@@ -262,7 +262,7 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
       break;
     case T_FIXNUM:
-      status = sqlite3_bind_int64(ctx->st, index, FIX2LONG(value));
+      status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)FIX2LONG(value));
       break;
     case T_NIL:
       status = sqlite3_bind_null(ctx->st, index);

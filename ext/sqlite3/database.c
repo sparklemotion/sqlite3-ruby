@@ -274,7 +274,7 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
       sqlite3_result_null(ctx);
       break;
     case T_FIXNUM:
-      sqlite3_result_int64(ctx, FIX2LONG(result));
+      sqlite3_result_int64(ctx, (sqlite3_int64)FIX2LONG(result));
       break;
     case T_BIGNUM:
 #if SIZEOF_LONG < 8
