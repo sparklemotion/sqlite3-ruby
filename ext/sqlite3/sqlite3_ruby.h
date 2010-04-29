@@ -12,6 +12,10 @@
 # define UNUSED(x) x
 #endif
 
+#ifndef RBIGNUM_LEN
+#define RBIGNUM_LEN(x) RBIGNUM(x)->len
+#endif
+
 #ifdef HAVE_RUBY_ENCODING_H
 #include <ruby/encoding.h>
 
