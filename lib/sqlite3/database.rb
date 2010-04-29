@@ -70,7 +70,7 @@ module SQLite3
     # to the database. If the block returns 0 (or +nil+), the statement
     # is allowed to proceed. Returning 1 causes an authorization error to
     # occur, and returning 2 causes the access to be silently denied.
-    def authorizer &block
+    def authorizer( &block )
       self.authorizer = block
     end
 
@@ -304,11 +304,11 @@ module SQLite3
       text_rep=Constants::TextRep::ANY, &block )
 
       factory = Class.new do
-        def self.step &block
+        def self.step( &block )
           define_method(:step, &block)
         end
 
-        def self.finalize &block
+        def self.finalize( &block )
           define_method(:finalize, &block)
         end
       end
@@ -326,7 +326,7 @@ module SQLite3
       proxy.extend(Module.new {
         attr_accessor :ctx
 
-        def step *args
+        def step( *args )
           super(@ctx, *args)
         end
 
@@ -391,7 +391,7 @@ module SQLite3
           @fp       = FunctionProxy.new
         end
 
-        def step *args
+        def step( *args )
           @handler.step(@fp, *args)
         end
 

@@ -108,8 +108,11 @@ static VALUE step(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
   sqlite3_stmt *stmt;
-  int value, length, enc_index;
+  int value, length;
   VALUE list;
+#ifdef HAVE_RUBY_ENCODING_H
+  int enc_index;
+#endif
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
@@ -138,7 +141,7 @@ static VALUE step(VALUE self)
         for(i = 0; i < length; i++) {
           switch(sqlite3_column_type(stmt, i)) {
             case SQLITE_INTEGER:
-              rb_ary_push(list, LONG2NUM(sqlite3_column_int64(stmt, i)));
+              rb_ary_push(list, LL2NUM(sqlite3_column_int64(stmt, i)));
               break;
             case SQLITE_FLOAT:
               rb_ary_push(list, rb_float_new(sqlite3_column_double(stmt, i)));
@@ -217,17 +220,11 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 
   switch(TYPE(value)) {
     case T_STRING:
-
+      if(CLASS_OF(value) == cSqlite3Blob
 #ifdef HAVE_RUBY_ENCODING_H
-      if(!UTF8_P(value)) {
-          VALUE db          = rb_iv_get(self, "@connection");
-          VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-          rb_encoding * enc = rb_to_encoding(encoding);
-          value = rb_str_export_to_enc(value, enc);
-      }
+              || rb_enc_get_index(value) == rb_ascii8bit_encindex()
 #endif
-
-      if(CLASS_OF(value) == cSqlite3Blob) {
+        ) {
         status = sqlite3_bind_blob(
             ctx->st,
             index,
@@ -236,6 +233,15 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
             SQLITE_TRANSIENT
             );
       } else {
+#ifdef HAVE_RUBY_ENCODING_H
+        if(!UTF8_P(value)) {
+              VALUE db          = rb_iv_get(self, "@connection");
+              VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
+              rb_encoding * enc = rb_to_encoding(encoding);
+              value = rb_str_export_to_enc(value, enc);
+          }
+#endif
+
         status = sqlite3_bind_text(
             ctx->st,
             index,
@@ -246,14 +252,17 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       }
       break;
     case T_BIGNUM:
+#if SIZEOF_LONG < 8
+      if (RBIGNUM_LEN(value) * SIZEOF_BDIGITS <= 8) {
+          status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)NUM2LL(value));
+          break;
+      }
+#endif
     case T_FLOAT:
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
       break;
     case T_FIXNUM:
-      {
-        long v = NUM2LONG(value);
-        status = sqlite3_bind_int64(ctx->st, index, v);
-      }
+      status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)FIX2LONG(value));
       break;
     case T_NIL:
       status = sqlite3_bind_null(ctx->st, index);

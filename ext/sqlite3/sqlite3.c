@@ -17,7 +17,7 @@ void Init_sqlite3_native()
    */
   cSqlite3Blob = rb_define_class_under(mSqlite3, "Blob", rb_cString);
 
-  // Initialize the sqlite3 library
+  /* Initialize the sqlite3 library */
   sqlite3_initialize();
 
   init_sqlite3_database();

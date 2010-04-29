@@ -23,6 +23,30 @@ module SQLite3
       assert_equal str, string.force_encoding('UTF-8')
     end
 
+    def test_blob_is_ascii8bit
+      str = "猫舌"
+      @db.execute('create table foo(data text)')
+      stmt = @db.prepare('insert into foo(data) values (?)')
+      stmt.bind_param(1, str.dup.force_encoding("ASCII-8BIT"))
+      stmt.step
+
+      string = @db.execute('select data from foo').first.first
+      assert_equal Encoding.find('ASCII-8BIT'), string.encoding
+      assert_equal str, string.force_encoding('UTF-8')
+    end
+
+    def test_blob_with_eucjp
+      str = "猫舌".encode("EUC-JP")
+      @db.execute('create table foo(data text)')
+      stmt = @db.prepare('insert into foo(data) values (?)')
+      stmt.bind_param(1, SQLite3::Blob.new(str))
+      stmt.step
+
+      string = @db.execute('select data from foo').first.first
+      assert_equal Encoding.find('ASCII-8BIT'), string.encoding
+      assert_equal str, string.force_encoding('EUC-JP')
+    end
+
     def test_db_with_eucjp
       db = SQLite3::Database.new(':memory:'.encode('EUC-JP'))
       assert_equal(Encoding.find('UTF-8'), db.encoding)
