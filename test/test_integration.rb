@@ -187,7 +187,7 @@ class TC_Database_Integration < Test::Unit::TestCase
   def test_execute2_no_block_no_bind_no_match
     columns, *rows = @db.execute2( "select * from foo where a > 100" )
     assert rows.empty?
-    assert [ "a", "b" ], columns
+    assert_equal [ "a", "b" ], columns
   end
 
   def test_execute2_with_block_no_bind_no_match
@@ -202,13 +202,13 @@ class TC_Database_Integration < Test::Unit::TestCase
   def test_execute2_no_block_with_bind_no_match
     columns, *rows = @db.execute2( "select * from foo where a > ?", 100 )
     assert rows.empty?
-    assert [ "a", "b" ], columns
+    assert_equal [ "a", "b" ], columns
   end
 
   def test_execute2_with_block_with_bind_no_match
     called = 0
     @db.execute2( "select * from foo where a > ?", 100 ) do |row|
-      assert [ "a", "b" ], row unless called == 0
+      assert_equal [ "a", "b" ], row unless called == 0
       called += 1
     end
     assert_equal 1, called
@@ -217,13 +217,13 @@ class TC_Database_Integration < Test::Unit::TestCase
   def test_execute2_no_block_no_bind_with_match
     columns, *rows = @db.execute2( "select * from foo where a = 1" )
     assert_equal 1, rows.length
-    assert [ "a", "b" ], columns
+    assert_equal [ "a", "b" ], columns
   end
 
   def test_execute2_with_block_no_bind_with_match
     called = 0
     @db.execute2( "select * from foo where a = 1" ) do |row|
-      assert [ "a", "b" ], row unless called == 0
+      assert_equal [ 1, "foo" ], row unless called == 0
       called += 1
     end
     assert_equal 2, called
@@ -232,7 +232,7 @@ class TC_Database_Integration < Test::Unit::TestCase
   def test_execute2_no_block_with_bind_with_match
     columns, *rows = @db.execute2( "select * from foo where a = ?", 1 )
     assert_equal 1, rows.length
-    assert [ "a", "b" ], columns
+    assert_equal [ "a", "b" ], columns
   end
 
   def test_execute2_with_block_with_bind_with_match
