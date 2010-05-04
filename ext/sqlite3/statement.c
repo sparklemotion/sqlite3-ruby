@@ -111,6 +111,7 @@ static VALUE step(VALUE self)
   int value, length;
   VALUE list;
 #ifdef HAVE_RUBY_ENCODING_H
+  rb_encoding * internal_encoding;
   int enc_index;
 #endif
 
@@ -125,6 +126,7 @@ static VALUE step(VALUE self)
       VALUE db          = rb_iv_get(self, "@connection");
       VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
       enc_index = NIL_P(encoding) ? rb_utf8_encindex() : rb_to_encoding_index(encoding);
+      internal_encoding = rb_default_internal_encoding();
   }
 #endif
 
@@ -154,6 +156,8 @@ static VALUE step(VALUE self)
                 );
 #ifdef HAVE_RUBY_ENCODING_H
                 rb_enc_associate_index(str, enc_index);
+                if(internal_encoding)
+                  str = rb_str_export_to_enc(str, internal_encoding);
 #endif
                 rb_ary_push(list, str);
               }

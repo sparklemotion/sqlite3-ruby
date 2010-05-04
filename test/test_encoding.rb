@@ -11,6 +11,24 @@ module SQLite3
       @db.execute(@create);
     end
 
+    def test_default_internal_is_honored
+      before_enc = Encoding.default_internal
+
+      str = "壁に耳あり、障子に目あり"
+      stmt = @db.prepare('insert into ex(data) values (?)')
+      stmt.bind_param 1, str
+      stmt.step
+
+      Encoding.default_internal = 'EUC-JP'
+      string = @db.execute('select data from ex').first.first
+
+      assert_equal Encoding.default_internal, string.encoding
+      assert_equal str.encode('EUC-JP'), string
+      assert_equal str, string.encode(str.encoding)
+    ensure
+      Encoding.default_internal = before_enc
+    end
+
     def test_blob_is_binary
       str = "猫舌"
       @db.execute('create table foo(data text)')
