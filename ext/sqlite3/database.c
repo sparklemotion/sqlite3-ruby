@@ -571,6 +571,47 @@ static VALUE set_busy_timeout(VALUE self, VALUE timeout)
   return self;
 }
 
+/* call-seq: db.load_extension(file)
+ *
+ * Loads an SQLite extension library from the named file. Extension
+ * loading must be enabled using db.enable_load_extension(1) prior
+ * to calling this API.
+ */
+static VALUE load_extension(VALUE self, VALUE file)
+{
+  sqlite3RubyPtr ctx;
+  int status;
+  char *errMsg;
+  VALUE errexp;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  status = sqlite3_load_extension(ctx->db, RSTRING_PTR(file), 0, &errMsg);
+  if (status != SQLITE_OK)
+  {
+    errexp = rb_exc_new2(rb_eRuntimeError, errmsg);
+    sqlite3_free(errmsg);
+    rb_exc_raise(errexp);
+  }
+
+  return self;
+}
+
+/* call-seq: db.enable_load_extension(onoff)
+ *
+ * Enable or disable extension loading.
+ */
+static VALUE enable_load_extension(VALUE self, VALUE onoff)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  CHECK(ctx->db, sqlite3_enable_load_extension(ctx->db, (int)NUM2INT(onoff)));
+
+  return self;
+}
+
 #ifdef HAVE_RUBY_ENCODING_H
 static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(names))
 {
@@ -627,6 +668,8 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+  rb_define_method(cSqlite3Database, "load_extension", load_extension, 1);
+  rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
 
 #ifdef HAVE_RUBY_ENCODING_H
   rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
