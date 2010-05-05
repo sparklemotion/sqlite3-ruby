@@ -589,8 +589,8 @@ static VALUE load_extension(VALUE self, VALUE file)
   status = sqlite3_load_extension(ctx->db, RSTRING_PTR(file), 0, &errMsg);
   if (status != SQLITE_OK)
   {
-    errexp = rb_exc_new2(rb_eRuntimeError, errmsg);
-    sqlite3_free(errmsg);
+    errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
+    sqlite3_free(errMsg);
     rb_exc_raise(errexp);
   }
 
