@@ -15,7 +15,7 @@ HOE = Hoe.spec 'sqlite3-ruby' do
 
   self.readme_file   = 'README.rdoc'
   self.history_file  = 'CHANGELOG.rdoc'
-  self.extra_rdoc_files  = FileList['*.rdoc']
+  self.extra_rdoc_files  = FileList['*.rdoc', 'ext/**/*.c']
 
   spec_extras[:required_ruby_version]     = Gem::Requirement.new('>= 1.8.6')
   spec_extras[:required_rubygems_version] = '>= 1.3.5'
