@@ -9,7 +9,7 @@ RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 $CFLAGS << ' -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion' <<
            '  -Wmissing-noreturn -Winline'
 
-sqlite    = dir_config 'sqlite3', '/opt/local/include', '/opt/local/lib'
+sqlite    = dir_config('sqlite3', ['/usr/local', '/opt/local', '/usr'])
 
 def asplode missing
   abort "#{missing} is missing. Try 'port install sqlite3 +universal' " +
