@@ -3,12 +3,14 @@
 * Enhancements
   * Complete rewrite of C-based adapter from SWIG to hand-crafted one [tenderlove]
     See API_CHANGES document for details.
+    This closes: Bug #27300, Bug #27241, Patch #16020
   * Improved UTF, Unicode, M17N, all that handling and proper BLOB handling [tenderlove, nurse]
 
 * Experimental
-  * Added API to access and load extensions [kashif]
+  * Added API to access and load extensions. [kashif]
     These functions maps directly into SQLite3 own enable_load_extension()
-    and load_extension() C-API functions. See Database API and SQLite3 documentation for details.
+    and load_extension() C-API functions. See SQLite3::Database API documentation for details.
+    This closes: Patches #9178
 
 * Bugfixes
   * Corrected gem dependencies (runtime and development)
