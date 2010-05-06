@@ -10,6 +10,12 @@ static VALUE libversion(VALUE UNUSED(klass))
 
 void Init_sqlite3_native()
 {
+  /*
+   * SQLite3 is a wrapper around the popular database
+   * sqlite[http://sqlite.org].
+   *
+   * For an example of usage, see SQLite3::Database.
+   */
   mSqlite3     = rb_define_module("SQLite3");
 
   /* A class for differentiating between strings and blobs, when binding them

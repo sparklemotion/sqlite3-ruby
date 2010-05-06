@@ -649,6 +649,9 @@ static VALUE db_encoding(VALUE self)
 void init_sqlite3_database()
 {
   ID id_utf16, id_results_as_hash, id_type_translation;
+#if 0
+  VALUE mSqlite3 = rb_define_module("SQLite3");
+#endif
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Database, allocate);
