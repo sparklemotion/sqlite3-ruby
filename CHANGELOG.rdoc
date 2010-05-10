@@ -1,4 +1,4 @@
-=== 1.3.0 (In Git)
+=== 1.3.0.beta.1 / 2010-05-10
 
 * Enhancements
   * Complete rewrite of C-based adapter from SWIG to hand-crafted one [tenderlove]
