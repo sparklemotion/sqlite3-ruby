@@ -1,8 +1,8 @@
 = SQLite3/Ruby Interface
 
-* http://sqlite3-ruby.rubyforge.org
-* http://rubyforge.org/projects/sqlite3-ruby
 * http://github.com/luislavena/sqlite3-ruby
+* http://rubyforge.org/projects/sqlite-ruby
+* http://sqlite-ruby.rubyforge.org
 
 == DESCRIPTION
 
@@ -41,7 +41,7 @@ FAQ, please send them to jamis@37signals.com
 
 The source repository is accessible via git:
 
-  git clone git://github.com/jamis/sqlite3-ruby.git
+  git clone git://github.com/luislavena/sqlite3-ruby.git
 
 == Contact Information
 
