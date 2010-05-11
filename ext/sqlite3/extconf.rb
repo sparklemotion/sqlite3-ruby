@@ -6,14 +6,23 @@ require 'mkmf'
 
 RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 
-$CFLAGS << ' -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion' <<
-           '  -Wmissing-noreturn -Winline'
+sqlite = dir_config('sqlite3', ['/usr/local', '/opt/local', '/usr'])
 
-sqlite    = dir_config('sqlite3', ['/usr/local', '/opt/local', '/usr'])
+if RUBY_PLATFORM =~ /mswin/
+  $CFLAGS << ' -W3'
+else
+  $CFLAGS << ' -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion' <<
+             ' -Wmissing-noreturn -Winline'
+end
 
 def asplode missing
-  abort "#{missing} is missing. Try 'port install sqlite3 +universal' " +
-        "or 'yum install sqlite3-devel'"
+  if RUBY_PLATFORM =~ /mswin/
+    abort "#{missing} is missing. Install SQLite3 from " +
+          "http://www.sqlite.org/ first."
+  else
+    abort "#{missing} is missing. Try 'port install sqlite3 +universal' " +
+          "or 'yum install sqlite3-devel'"
+  end
 end
 
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'

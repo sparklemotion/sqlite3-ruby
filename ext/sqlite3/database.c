@@ -460,7 +460,7 @@ static VALUE errmsg(VALUE self)
  * Return an integer representing the last error to have occurred with this
  * database.
  */
-static VALUE errcode(VALUE self)
+static VALUE errcode_(VALUE self)
 {
   sqlite3RubyPtr ctx;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
@@ -665,7 +665,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "define_aggregator", define_aggregator, 2);
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
-  rb_define_method(cSqlite3Database, "errcode", errcode, 0);
+  rb_define_method(cSqlite3Database, "errcode", errcode_, 0);
   rb_define_method(cSqlite3Database, "complete?", complete_p, 1);
   rb_define_method(cSqlite3Database, "changes", changes, 0);
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);

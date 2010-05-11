@@ -14,7 +14,10 @@ Note that this module is NOT compatible with SQLite 2.x.
 
 == Compilation and Installation
 
-Simply do the following, after installing SQLite3:
+Install SQLite3, enabling option SQLITE_ENABLE_COLUMN_METADATA (see
+www.sqlite.org/compile.html for details).
+
+Then do the following:
 
   ruby setup.rb config
   ruby setup.rb setup
