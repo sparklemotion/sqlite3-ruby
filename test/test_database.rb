@@ -267,5 +267,13 @@ module SQLite3
     def test_execute_with_empty_bind_params
       assert_equal [['foo']], @db.execute("select 'foo'", [])
     end
+
+    def test_query_with_named_bind_params
+      assert_equal [['foo']], @db.query("select :n", {'n' => 'foo'}).to_a
+    end
+
+    def test_execute_with_named_bind_params
+      assert_equal [['foo']], @db.execute("select :n", {'n' => 'foo'})
+    end
   end
 end

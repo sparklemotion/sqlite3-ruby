@@ -193,5 +193,15 @@ module SQLite3
       stmt = SQLite3::Statement.new(@db, "select ?, ?, ?")
       assert_equal 3, stmt.bind_parameter_count
     end
+
+    def test_execute_with_varargs
+      stmt = @db.prepare('select ?, ?')
+      assert_equal [[nil, nil]], stmt.execute(nil, nil).to_a
+    end
+
+    def test_execute_with_hash
+      stmt = @db.prepare('select :n, :h')
+      assert_equal [[10, nil]], stmt.execute('n' => 10, 'h' => nil).to_a
+    end
   end
 end

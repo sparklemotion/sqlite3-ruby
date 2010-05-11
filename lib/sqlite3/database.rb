@@ -104,13 +104,26 @@ module SQLite3
     #
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
-    def execute sql, *bind_vars, &block
+    def execute sql, bind_vars = [], *args, &block
       # FIXME: This is a terrible hack and should be removed but is required
       # for older versions of rails
       hack = Object.const_defined?(:ActiveRecord) && sql =~ /^PRAGMA index_list/
 
+      if bind_vars.nil? || !args.empty?
+        if args.empty?
+          bind_vars = []
+        else
+          bind_vars = [nil] + args
+        end
+
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling SQLite3::Database#execute with nil or multiple bind params
+without using an array.  Please switch to passing bind parameters as an array.
+        eowarn
+      end
+
       prepare( sql ) do |stmt|
-        stmt.bind_params( *bind_vars )
+        stmt.bind_params(bind_vars)
         if block_given?
           stmt.each do |row|
             if @results_as_hash
@@ -213,7 +226,7 @@ without using an array.  Please switch to passing bind parameters as an array.
         eowarn
       end
 
-      result = prepare( sql ).execute( *bind_vars )
+      result = prepare( sql ).execute( bind_vars )
       if block_given?
         begin
           yield result
