@@ -263,5 +263,9 @@ module SQLite3
         @db.close
       end
     end
+
+    def test_execute_with_empty_bind_params
+      assert_equal [['foo']], @db.execute("select 'foo'", [])
+    end
   end
 end

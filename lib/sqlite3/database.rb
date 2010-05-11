@@ -198,7 +198,21 @@ module SQLite3
     # returned, or you could have problems with locks on the table. If called
     # with a block, +close+ will be invoked implicitly when the block 
     # terminates.
-    def query( sql, *bind_vars )
+    def query( sql, bind_vars = [], *args )
+
+      if bind_vars.nil? || !args.empty?
+        if args.empty?
+          bind_vars = []
+        else
+          bind_vars = [nil] + args
+        end
+
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling SQLite3::Database#query with nil or multiple bind params
+without using an array.  Please switch to passing bind parameters as an array.
+        eowarn
+      end
+
       result = prepare( sql ).execute( *bind_vars )
       if block_given?
         begin
