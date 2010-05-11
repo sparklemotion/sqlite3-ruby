@@ -378,6 +378,8 @@ static VALUE bind_parameter_count(VALUE self)
   return INT2NUM((long)sqlite3_bind_parameter_count(ctx->st));
 }
 
+#ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
+
 /* call-seq: stmt.database_name(column_index)
  *
  * Return the database name for the column at +column_index+
@@ -391,6 +393,8 @@ static VALUE database_name(VALUE self, VALUE index)
   return SQLITE3_UTF8_STR_NEW2(
       sqlite3_column_database_name(ctx->st, NUM2INT(index)));
 }
+
+#endif
 
 void init_sqlite3_statement()
 {
@@ -408,5 +412,8 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
   rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
   rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+
+#ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
   rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
+#endif
 }

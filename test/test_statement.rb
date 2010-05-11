@@ -7,11 +7,15 @@ module SQLite3
       @stmt = SQLite3::Statement.new(@db, "select 'foo'")
     end
 
+    ###
+    # This method may not exist depending on how sqlite3 was compiled
     def test_database_name
       @db.execute('create table foo(text BLOB)')
       @db.execute('insert into foo(text) values (?)',SQLite3::Blob.new('hello'))
       stmt = @db.prepare('select text from foo')
-      assert_equal 'main', stmt.database_name(0)
+      if stmt.respond_to?(:database_name)
+        assert_equal 'main', stmt.database_name(0)
+      end
     end
 
     def test_prepare_blob
