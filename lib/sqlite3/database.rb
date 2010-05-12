@@ -188,7 +188,31 @@ without using an array.  Please switch to passing bind parameters as an array.
     #
     # This always returns +nil+, making it unsuitable for queries that return
     # rows.
-    def execute_batch( sql, *bind_vars )
+    def execute_batch( sql, bind_vars = [], *args )
+      # FIXME: remove this stuff later
+      unless [Array, Hash].include?(bind_vars.class)
+        bind_vars = [bind_vars]
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling SQLite3::Database#execute_batch with bind parameters
+that are not a list of a hash.  Please switch to passing bind parameters as an
+array or hash.
+        eowarn
+      end
+
+      # FIXME: remove this stuff later
+      if bind_vars.nil? || !args.empty?
+        if args.empty?
+          bind_vars = []
+        else
+          bind_vars = [nil] + args
+        end
+
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling SQLite3::Database#execute_batch with nil or multiple bind params
+without using an array.  Please switch to passing bind parameters as an array.
+        eowarn
+      end
+
       sql = sql.strip
       until sql.empty? do
         prepare( sql ) do |stmt|

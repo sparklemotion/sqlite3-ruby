@@ -7,6 +7,18 @@ module SQLite3
       @db = SQLite3::Database.new(':memory:')
     end
 
+    def test_changes
+      @db.execute("CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, number integer)")
+      assert_equal 0, @db.changes
+      @db.execute("INSERT INTO items (number) VALUES (10)")
+      assert_equal 1, @db.changes
+      @db.execute_batch(
+        "UPDATE items SET number = (number + :nn) WHERE (number = :n)",
+        {"nn" => 20, "n" => 10})
+      assert_equal 1, @db.changes
+      assert_equal [[30]], @db.execute("select number from items")
+    end
+
     def test_new
       db = SQLite3::Database.new(':memory:')
       assert db
