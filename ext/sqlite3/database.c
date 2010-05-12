@@ -671,8 +671,14 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+
+#ifdef HAVE_SQLITE3_LOAD_EXTENSION
   rb_define_method(cSqlite3Database, "load_extension", load_extension, 1);
+#endif
+
+#ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
   rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
+#endif
 
 #ifdef HAVE_RUBY_ENCODING_H
   rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);

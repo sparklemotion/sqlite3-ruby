@@ -33,5 +33,7 @@ have_func('rb_proc_arity')
 
 # These functions may not be defined
 have_func('sqlite3_column_database_name')
+have_func('sqlite3_enable_load_extension')
+have_func('sqlite3_load_extension')
 
 create_makefile('sqlite3/sqlite3_native')
