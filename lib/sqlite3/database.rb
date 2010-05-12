@@ -124,6 +124,10 @@ without using an array.  Please switch to passing bind parameters as an array.
 
       prepare( sql ) do |stmt|
         stmt.bind_params(bind_vars)
+        if type_translation
+          stmt = ResultSet.new(self, stmt).to_a
+        end
+
         if block_given?
           stmt.each do |row|
             if @results_as_hash

@@ -71,6 +71,18 @@ class TC_ResultSet < Test::Unit::TestCase
     end
   end
 
+  def test_type_translation_execute
+    @db.type_translation = true
+    @db.execute "create table bar ( a integer, b america )"
+    @db.execute "insert into bar (a, b) values (NULL, '1974-07-25 14:39:00')"
+
+    @db.translator.add_translator('america') do |type, thing|
+      'america'
+    end
+
+    assert_equal [[nil, 'america']], @db.execute("select * from bar")
+  end
+
   def test_type_translation_with_null_column
     @db.type_translation = true
     @db.execute "create table bar ( a integer, b time, c string )"

@@ -94,7 +94,9 @@ module SQLite3
     # Required by the Enumerable mixin. Provides an internal iterator over the
     # rows of the result set.
     def each( &block )
-      @stmt.each(&block)
+      while node = self.next
+        yield node
+      end
     end
 
     # Closes the statement that spawned this result set.
