@@ -1,9 +1,18 @@
-=== (In Git)
+=== 1.3.0.beta.2 / 2010-05-15
+
+* Enhancements
+  * Added support for type translations [tenderlove]
+
+      @db.translator.add_translator('sometime') do |type, thing|
+        'output' # this will be returned as value for that column
+      end
 
 * Bugfixes
   * Allow extension compilation search for common lib paths [kashif]
     (lookup /usr/local, /opt/local and /usr)
   * Corrected extension compilation under MSVC [romuloceccon]
+  * Define load_extension functionality based on availability [tenderlove]
+  * Deprecation notices for Database#query. Fixes RF #28192
 
 === 1.3.0.beta.1 / 2010-05-10
 
