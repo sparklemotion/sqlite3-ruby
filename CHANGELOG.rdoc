@@ -1,3 +1,36 @@
+=== 1.3.0 / 2010-06-06
+
+* Enhancements
+  * Complete rewrite of C-based adapter from SWIG to hand-crafted one [tenderlove]
+    See API_CHANGES document for details.
+    This closes: Bug #27300, Bug #27241, Patch #16020
+  * Improved UTF, Unicode, M17N, all that handling and proper BLOB handling [tenderlove, nurse]
+  * Added support for type translations [tenderlove]
+  
+      @db.translator.add_translator('sometime') do |type, thing|
+        'output' # this will be returned as value for that column
+      end
+
+* Experimental
+  * Added API to access and load extensions. [kashif]
+    These functions maps directly into SQLite3 own enable_load_extension()
+    and load_extension() C-API functions. See SQLite3::Database API documentation for details.
+    This closes: Patches #9178
+
+* Bugfixes
+  * Corrected gem dependencies (runtime and development)
+  * Fixed threaded tests [Alexey Borzenkov]
+  * Removed GitHub gemspec
+  * Fixed "No definition for" warnings from RDoc
+  * Generate zip and tgz files for releases
+  * Added Luis Lavena as gem Author (maintainer)
+  * Prevent mkmf interfere with Mighty Snow Leopard
+  * Allow extension compilation search for common lib paths [kashif]
+    (lookup /usr/local, /opt/local and /usr)
+  * Corrected extension compilation under MSVC [romuloceccon]
+  * Define load_extension functionality based on availability [tenderlove]
+  * Deprecation notices for Database#query. Fixes RF #28192
+
 === 1.3.0.beta.2 / 2010-05-15
 
 * Enhancements
