@@ -3,6 +3,7 @@
 * http://github.com/luislavena/sqlite3-ruby
 * http://rubyforge.org/projects/sqlite-ruby
 * http://sqlite-ruby.rubyforge.org
+* http://groups.google.com/group/sqlite3-ruby
 
 == DESCRIPTION
 
@@ -32,6 +33,25 @@ If you have sqlite3 installed in a non-standard location, you can specify the lo
 
   gem install sqlite3-ruby -- --with-sqlite3-include=/opt/local/include \
      --with-sqlite3-lib=/opt/local/lib
+
+= SUPPORT!!!
+
+== OMG!  Something has gone wrong!  Where do I get help?
+
+The best place to get help is from the
+{sqlite3-ruby mailing list}[http://groups.google.com/group/sqlite3-ruby] which
+can be found here:
+
+  * http://groups.google.com/group/sqlite3-ruby
+
+== I've found a bug!  Where do I file it?
+
+Uh oh.  After contacting the mailing list, you've found that you've actually
+discovered a bug.  You can file the bug at the
+{sqlite3-ruby rubyforge tracker}[http://rubyforge.org/tracker/?group_id=254]
+which can be found here:
+
+  * http://rubyforge.org/tracker/?group_id=254
 
 == Usage
 
