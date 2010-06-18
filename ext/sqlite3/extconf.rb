@@ -31,6 +31,10 @@ asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
 # Functions defined in 1.9 but not 1.8
 have_func('rb_proc_arity')
 
+unless have_func('sqlite3_initialize') && have_func('sqlite3_next_stmt')
+  abort "sqlite3-ruby only supports sqlite3 versions 3.6.16+, please upgrade!"
+end
+
 # These functions may not be defined
 have_func('sqlite3_column_database_name')
 have_func('sqlite3_enable_load_extension')
