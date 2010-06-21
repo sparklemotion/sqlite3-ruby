@@ -101,7 +101,7 @@ module SQLite3
 
     def test_utf_8
       str = "猫舌"
-      @db.execute(@insert, 10, str)
+      @db.execute(@insert, [10, str])
       row = @db.execute("select data from ex")
       assert_equal @db.encoding, row.first.first.encoding
       assert_equal str, row.first.first
@@ -109,7 +109,7 @@ module SQLite3
 
     def test_euc_jp
       str = "猫舌".encode('EUC-JP')
-      @db.execute(@insert, 10, str)
+      @db.execute(@insert, [10, str])
       row = @db.execute("select data from ex")
       assert_equal @db.encoding, row.first.first.encoding
       assert_equal str.encode('UTF-8'), row.first.first
