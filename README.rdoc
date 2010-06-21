@@ -48,10 +48,10 @@ can be found here:
 
 Uh oh.  After contacting the mailing list, you've found that you've actually
 discovered a bug.  You can file the bug at the
-{sqlite3-ruby rubyforge tracker}[http://rubyforge.org/tracker/?group_id=254]
+{github issues page}[http://github.com/luislavena/sqlite3-ruby/issues]
 which can be found here:
 
-  * http://rubyforge.org/tracker/?group_id=254
+  * http://github.com/luislavena/sqlite3-ruby/issues
 
 == Usage
 
