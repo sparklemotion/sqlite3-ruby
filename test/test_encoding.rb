@@ -12,6 +12,9 @@ module SQLite3
     end
 
     def test_default_internal_is_honored
+      warn_before = $-w
+      $-w = false
+
       before_enc = Encoding.default_internal
 
       str = "壁に耳あり、障子に目あり"
@@ -27,6 +30,7 @@ module SQLite3
       assert_equal str, string.encode(str.encoding)
     ensure
       Encoding.default_internal = before_enc
+      $-w = warn_before
     end
 
     def test_blob_is_binary
