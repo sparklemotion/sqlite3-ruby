@@ -64,6 +64,8 @@ module SQLite3
       bind_params(*bind_vars) unless bind_vars.empty?
       @results = ResultSet.new(@connection, self)
 
+      step if 0 == column_count
+
       yield @results if block_given?
       @results
     end

@@ -42,3 +42,4 @@ test/test_integration_resultset.rb
 test/test_integration_statement.rb
 test/test_sqlite3.rb
 test/test_statement.rb
+test/test_statement_execute.rb
