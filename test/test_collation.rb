@@ -4,6 +4,18 @@ require 'helper'
 
 module SQLite3
   class TestCollation < Test::Unit::TestCase
+    class Comparator
+      attr_reader :calls
+      def initialize
+        @calls = []
+      end
+
+      def compare left, right
+        @calls << [left, right]
+        left <=> right
+      end
+    end
+
     def setup
       @db = SQLite3::Database.new(':memory:')
       @create = "create table ex(id int, data string)"
@@ -14,23 +26,25 @@ module SQLite3
     end
 
     def test_custom_collation
-      comparator = Class.new {
-        attr_reader :calls
-        def initialize
-          @calls = []
-        end
-
-        def compare left, right
-          @calls << [left, right]
-          left <=> right
-        end
-      }.new
+      comparator = Comparator.new
 
       @db.collation 'foo', comparator
 
       assert_equal comparator, @db.collations['foo']
       @db.execute('select data from ex order by 1 collate foo')
       assert_equal 1, comparator.calls.length
+    end
+
+    def test_remove_collation
+      comparator = Comparator.new
+
+      @db.collation 'foo', comparator
+      @db.collation 'foo', nil
+
+      assert_nil @db.collations['foo']
+      assert_raises(SQLite3::SQLException) do
+        @db.execute('select data from ex order by 1 collate foo')
+      end
     end
   end
 end

@@ -606,7 +606,7 @@ static VALUE collation(VALUE self, VALUE name, VALUE comparator)
         StringValuePtr(name),
         SQLITE_UTF8,
         (void *)comparator,
-        rb_comparator_func,
+        NIL_P(comparator) ? NULL : rb_comparator_func,
         NULL));
 
   /* Make sure our comparator doesn't get garbage collected. */
