@@ -46,5 +46,18 @@ module SQLite3
         @db.execute('select data from ex order by 1 collate foo')
       end
     end
+
+    if RUBY_VERSION >= '1.9.1'
+      def test_encoding
+        comparator = Comparator.new
+        @db.collation 'foo', comparator
+        @db.execute('select data from ex order by 1 collate foo')
+
+        a, b = *comparator.calls.first
+
+        assert_equal Encoding.find('UTF-8'), a.encoding
+        assert_equal Encoding.find('UTF-8'), b.encoding
+      end
+    end
   end
 end

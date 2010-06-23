@@ -583,6 +583,11 @@ int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const v
   a_str = rb_str_new((const char *)a, a_len);
   b_str = rb_str_new((const char *)b, b_len);
 
+#ifdef HAVE_RUBY_ENCODING_H
+  rb_enc_associate_index(a_str, rb_utf8_encindex());
+  rb_enc_associate_index(b_str, rb_utf8_encindex());
+#endif
+
   comparison = rb_funcall(comparator, rb_intern("compare"), 2, a_str, b_str);
 
   return NUM2INT(comparison);
@@ -611,7 +616,6 @@ static VALUE collation(VALUE self, VALUE name, VALUE comparator)
 
   /* Make sure our comparator doesn't get garbage collected. */
   rb_hash_aset(rb_iv_get(self, "@collations"), name, comparator);
-
 
   return self;
 }
