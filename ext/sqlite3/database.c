@@ -578,6 +578,11 @@ int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const v
   VALUE a_str;
   VALUE b_str;
   VALUE comparison;
+#ifdef HAVE_RUBY_ENCODING_H
+  rb_encoding * internal_encoding;
+
+  internal_encoding = rb_default_internal_encoding();
+#endif
 
   comparator = (VALUE)ctx;
   a_str = rb_str_new((const char *)a, a_len);
@@ -586,6 +591,11 @@ int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const v
 #ifdef HAVE_RUBY_ENCODING_H
   rb_enc_associate_index(a_str, rb_utf8_encindex());
   rb_enc_associate_index(b_str, rb_utf8_encindex());
+
+  if(internal_encoding) {
+    a_str = rb_str_export_to_enc(a_str, internal_encoding);
+    b_str = rb_str_export_to_enc(b_str, internal_encoding);
+  }
 #endif
 
   comparison = rb_funcall(comparator, rb_intern("compare"), 2, a_str, b_str);
