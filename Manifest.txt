@@ -32,6 +32,7 @@ tasks/gem.rake
 tasks/native.rake
 tasks/vendor_sqlite3.rake
 test/helper.rb
+test/test_collation.rb
 test/test_database.rb
 test/test_deprecated.rb
 test/test_encoding.rb

@@ -91,6 +91,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   rb_iv_set(self, "@authorizer", Qnil);
   rb_iv_set(self, "@encoding", Qnil);
   rb_iv_set(self, "@busy_handler", Qnil);
+  rb_iv_set(self, "@collations", rb_hash_new());
   rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, sym_results_as_hash));
   rb_iv_set(self, "@type_translation", rb_hash_aref(opts, sym_type_translation));
 
@@ -571,6 +572,50 @@ static VALUE set_busy_timeout(VALUE self, VALUE timeout)
   return self;
 }
 
+int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const void * b)
+{
+  VALUE comparator;
+  VALUE a_str;
+  VALUE b_str;
+  VALUE comparison;
+
+  comparator = (VALUE)ctx;
+  a_str = rb_str_new((const char *)a, a_len);
+  b_str = rb_str_new((const char *)b, b_len);
+
+  comparison = rb_funcall(comparator, rb_intern("compare"), 2, a_str, b_str);
+
+  return NUM2INT(comparison);
+}
+
+/* call-seq: db.collation(name, comparator)
+ *
+ * Add a collation with name +name+, and a +comparator+ object.  The
+ * +comparator+ object should implement a method called "compare" that takes
+ * two parameters and returns an integer less than, equal to, or greater than
+ * 0.
+ */
+static VALUE collation(VALUE self, VALUE name, VALUE comparator)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  CHECK(ctx->db, sqlite3_create_collation_v2(
+        ctx->db,
+        StringValuePtr(name),
+        SQLITE_UTF8,
+        (void *)comparator,
+        rb_comparator_func,
+        NULL));
+
+  /* Make sure our comparator doesn't get garbage collected. */
+  rb_hash_aset(rb_iv_get(self, "@collations"), name, comparator);
+
+
+  return self;
+}
+
 /* call-seq: db.load_extension(file)
  *
  * Loads an SQLite extension library from the named file. Extension
@@ -656,6 +701,7 @@ void init_sqlite3_database()
 
   rb_define_alloc_func(cSqlite3Database, allocate);
   rb_define_method(cSqlite3Database, "initialize", initialize, -1);
+  rb_define_method(cSqlite3Database, "collation", collation, 2);
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);

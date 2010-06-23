@@ -33,6 +33,8 @@ module SQLite3
   # module before performing a query, and if you have not enabled results as
   # hashes, then the results will all be indexible by field name.
   class Database
+    attr_reader :collations
+
     include Pragmas
 
     class << self
