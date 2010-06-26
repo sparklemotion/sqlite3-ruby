@@ -12,6 +12,9 @@ Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
   # reference to the sqlite3 library
   sqlite3_lib = File.expand_path(File.join(File.dirname(__FILE__), '..', 'vendor', 'sqlite3'))
 
+  # clean binary folders always
+  CLEAN.include("#{ext.lib_dir}/?.?")
+
   # automatically add build options to avoid need of manual input
   if RUBY_PLATFORM =~ /mswin|mingw/ then
     # define target for extension (supporting fat binaries)
