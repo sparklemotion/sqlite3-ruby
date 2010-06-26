@@ -25,15 +25,12 @@ def dlltool(dllname, deffile, libfile)
   end
 end
 
-SQLITE_VERSION = '3.6.22'
-url_version = SQLITE_VERSION.gsub('.', '_')
-
 # required folder structure for --with-sqlite3-dir (include + lib)
 directory "vendor/sqlite3/lib"
 directory "vendor/sqlite3/include"
 
 # download amalgamation version (for include files)
-file "vendor/sqlite-amalgamation-#{url_version}.zip" => ['vendor'] do |t|
+file "vendor/sqlite-amalgamation-#{URL_VERSION}.zip" => ['vendor'] do |t|
   url = "http://www.sqlite.org/#{File.basename(t.name)}"
   when_writing "downloading #{t.name}" do
     cd File.dirname(t.name) do
@@ -43,7 +40,7 @@ file "vendor/sqlite-amalgamation-#{url_version}.zip" => ['vendor'] do |t|
 end
 
 # download dll binaries
-file "vendor/sqlitedll-#{url_version}.zip" => ['vendor'] do |t|
+file "vendor/sqlitedll-#{URL_VERSION}.zip" => ['vendor'] do |t|
   url = "http://www.sqlite.org/#{File.basename(t.name)}"
   when_writing "downloading #{t.name}" do
     cd File.dirname(t.name) do
@@ -53,7 +50,7 @@ file "vendor/sqlitedll-#{url_version}.zip" => ['vendor'] do |t|
 end
 
 # extract header files into include folder
-file "vendor/sqlite3/include/sqlite3.h" => ['vendor/sqlite3/include', "vendor/sqlite-amalgamation-#{url_version}.zip"] do |t|
+file "vendor/sqlite3/include/sqlite3.h" => ['vendor/sqlite3/include', "vendor/sqlite-amalgamation-#{URL_VERSION}.zip"] do |t|
   full_file = File.expand_path(t.prerequisites.last)
   when_writing "creating #{t.name}" do
     cd File.dirname(t.name) do
@@ -65,7 +62,7 @@ file "vendor/sqlite3/include/sqlite3.h" => ['vendor/sqlite3/include', "vendor/sq
 end
 
 # extract dll files into lib folder
-file "vendor/sqlite3/lib/sqlite3.dll" => ['vendor/sqlite3/lib', "vendor/sqlitedll-#{url_version}.zip"] do |t|
+file "vendor/sqlite3/lib/sqlite3.dll" => ['vendor/sqlite3/lib', "vendor/sqlitedll-#{URL_VERSION}.zip"] do |t|
   full_file = File.expand_path(t.prerequisites.last)
   when_writing "creating #{t.name}" do
     cd File.dirname(t.name) do
