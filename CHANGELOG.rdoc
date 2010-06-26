@@ -5,6 +5,7 @@
 
 * Bugfixes
   * Statements returning 0 columns are automatically stepped. [RF #28308]
+  * SQLite3::Database#encoding works on 1.8 and 1.9
 
 === 1.3.0 / 2010-06-06
 

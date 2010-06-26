@@ -7,6 +7,10 @@ module SQLite3
       @db = SQLite3::Database.new(':memory:')
     end
 
+    def test_encoding
+      assert @db.encoding, 'database has encoding'
+    end
+
     def test_changes
       @db.execute("CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, number integer)")
       assert_equal 0, @db.changes

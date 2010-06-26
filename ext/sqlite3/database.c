@@ -682,6 +682,16 @@ static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(
 
   return 0;
 }
+#else
+static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(names))
+{
+  VALUE self = (VALUE)_self;
+
+  rb_iv_set(self, "@encoding", rb_str_new2(data[0]));
+
+  return 0;
+}
+#endif
 
 /* call-seq: db.encoding
  *
@@ -703,7 +713,6 @@ static VALUE db_encoding(VALUE self)
 
   return rb_iv_get(self, "@encoding");
 }
-#endif
 
 void init_sqlite3_database()
 {
@@ -740,9 +749,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
 #endif
 
-#ifdef HAVE_RUBY_ENCODING_H
   rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
-#endif
 
   id_utf16 = rb_intern("utf16");
   sym_utf16 = ID2SYM(id_utf16);
