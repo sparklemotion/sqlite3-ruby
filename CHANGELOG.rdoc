@@ -1,4 +1,4 @@
-=== 1.3.1 / unreleased
+=== 1.3.1 / 2010-07-09
 
 * Enhancements
   * Custom collations may be defined using SQLite3::Database#collation
@@ -15,7 +15,7 @@
     This closes: Bug #27300, Bug #27241, Patch #16020
   * Improved UTF, Unicode, M17N, all that handling and proper BLOB handling [tenderlove, nurse]
   * Added support for type translations [tenderlove]
-  
+
       @db.translator.add_translator('sometime') do |type, thing|
         'output' # this will be returned as value for that column
       end
