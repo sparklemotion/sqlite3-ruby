@@ -1,3 +1,12 @@
+=== 1.3.2 / unreleased
+
+* Bugfixes
+  * type_translation= works along with Database#execute and a block
+
+* DEPRECATIONS
+  * SQLite3::Database#type_translation= will be deprecated in the future with
+    no replacement.
+
 === 1.3.1 / 2010-07-09
 
 * Enhancements

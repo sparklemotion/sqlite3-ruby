@@ -54,9 +54,15 @@ module SQLite3
     # as hashes or not. By default, rows are returned as arrays.
     attr_accessor :results_as_hash
 
-    # A boolean indicating whether or not type translation is enabled for this
-    # database.
-    attr_accessor :type_translation
+    def type_translation= value # :nodoc:
+      warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling SQLite3::Database#type_translation=
+SQLite3::Database#type_translation= is deprecated and will be removed
+in the future.
+      eowarn
+      @type_translation = value
+    end
+    attr_reader :type_translation # :nodoc:
 
     # Return the type translator employed by this database instance. Each
     # database instance has its own type translator; this allows for different
@@ -126,17 +132,13 @@ without using an array.  Please switch to passing bind parameters as an array.
 
       prepare( sql ) do |stmt|
         stmt.bind_params(bind_vars)
-        if type_translation
-          stmt = ResultSet.new(self, stmt).to_a
-        end
+        columns = stmt.columns
+        stmt    = ResultSet.new(self, stmt).to_a if type_translation
 
         if block_given?
           stmt.each do |row|
             if @results_as_hash
-              h = Hash[*stmt.columns.zip(row).flatten]
-              row.each_with_index { |r, i| h[i] = r }
-
-              yield h
+              yield type_translation ? row : ordered_map_for(columns, row)
             else
               yield row
             end
@@ -144,8 +146,7 @@ without using an array.  Please switch to passing bind parameters as an array.
         else
           if @results_as_hash
             stmt.map { |row|
-              h = Hash[*stmt.columns.zip(row).flatten]
-              row.each_with_index { |r, i| h[i] = r }
+              h = type_translation ? row : ordered_map_for(columns, row)
 
               # FIXME UGH TERRIBLE HACK!
               h['unique'] = h['unique'].to_s if hack
@@ -273,8 +274,7 @@ without using an array.  Please switch to passing bind parameters as an array.
     #
     # See also #get_first_value.
     def get_first_row( sql, *bind_vars )
-      execute( sql, *bind_vars ) { |row| return row }
-      nil
+      execute( sql, *bind_vars ).first
     end
 
     # A convenience method for obtaining the first value of the first row of a
@@ -565,6 +565,14 @@ without using an array.  Please switch to passing bind parameters as an array.
       def []=( key, value )
         @context[ key ] = value
       end
+    end
+
+    private
+
+    def ordered_map_for columns, row
+      h = Hash[*columns.zip(row).flatten]
+      row.each_with_index { |r, i| h[i] = r }
+      h
     end
   end
 end
