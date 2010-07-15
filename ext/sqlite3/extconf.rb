@@ -6,7 +6,7 @@ require 'mkmf'
 
 RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 
-sqlite = dir_config('sqlite3', ['/usr/local', '/opt/local', '/usr'])
+sqlite = dir_config('sqlite3', ['/usr/local', '/opt/local', '/sw/local', '/usr'])
 
 if RUBY_PLATFORM =~ /mswin/
   $CFLAGS << ' -W3'
