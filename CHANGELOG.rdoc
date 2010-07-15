@@ -2,6 +2,7 @@
 
 * Bugfixes
   * type_translation= works along with Database#execute and a block
+  * defined functions are kept in a hash to prevent GC. #7
 
 * DEPRECATIONS
   * SQLite3::Database#type_translation= will be deprecated in the future with

@@ -92,6 +92,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   rb_iv_set(self, "@encoding", Qnil);
   rb_iv_set(self, "@busy_handler", Qnil);
   rb_iv_set(self, "@collations", rb_hash_new());
+  rb_iv_set(self, "@functions", rb_hash_new());
   rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, sym_results_as_hash));
   rb_iv_set(self, "@type_translation", rb_hash_aref(opts, sym_type_translation));
 
@@ -357,6 +358,8 @@ static VALUE define_function(VALUE self, VALUE name)
   );
 
   CHECK(ctx->db, status);
+
+  rb_hash_aset(rb_iv_get(self, "@functions"), name, block);
 
   return self;
 }
