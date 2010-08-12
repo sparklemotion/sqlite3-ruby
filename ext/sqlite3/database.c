@@ -11,14 +11,8 @@ static void deallocate(void * ctx)
 {
   sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
   sqlite3 * db     = c->db;
-  sqlite3_stmt * stmt;
 
-  if(db) {
-    while((stmt = sqlite3_next_stmt(db, NULL)) != NULL) {
-      sqlite3_finalize(stmt);
-    }
-    sqlite3_close(db);
-  }
+  if(db) sqlite3_close(db);
   xfree(c);
 }
 
