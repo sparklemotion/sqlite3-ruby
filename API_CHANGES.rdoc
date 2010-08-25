@@ -1,5 +1,7 @@
 = API Changes
 
+* SQLite3::Database#execute only accepts an array for bind parameters.
+
 * SQLite3::ResultSet used to query the database for the first row, regardless
   of whether the user asked for it or not.  I have removed that so that rows
   will not be returned until the user asks for them.  This is a subtle but
