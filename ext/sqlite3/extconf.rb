@@ -10,9 +10,6 @@ sqlite = dir_config('sqlite3', ['/usr/local', '/opt/local', '/sw/local', '/usr']
 
 if RUBY_PLATFORM =~ /mswin/
   $CFLAGS << ' -W3'
-else
-  $CFLAGS << ' -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion' <<
-             ' -Wmissing-noreturn -Winline'
 end
 
 def asplode missing
