@@ -60,6 +60,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
     if(Qtrue == rb_hash_aref(opts, sym_utf16)) {
       status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
     } else {
+      int mode;	
 
 #ifdef HAVE_RUBY_ENCODING_H
       if(!UTF8_P(file)) {
@@ -67,11 +68,16 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
       }
 #endif
 
+      if (Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("readonly")))) {
+	mode = SQLITE_OPEN_READONLY;
+      } else {
+	mode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+      }
       status = sqlite3_open_v2(
           StringValuePtr(file),
           &ctx->db,
-          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
-          NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
+          mode,
+	  NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
       );
     }
 
