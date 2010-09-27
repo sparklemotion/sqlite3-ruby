@@ -225,7 +225,7 @@ module SQLite3
 
       result = [] unless block_given?
       stmt.each do |row|
-        new_row = Hash[*columns.zip(row).flatten]
+        new_row = Hash[columns.zip(row)]
 
         # FIXME: This should be removed but is required for older versions
         # of rails
