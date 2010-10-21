@@ -301,7 +301,7 @@ Support for this will be removed in version 2.0.0.
     # arguments it needs (up to its arity).
     #
     # The block does not return a value directly. Instead, it will invoke
-    # the FunctionProxy#set_result method on the +func+ parameter and
+    # the FunctionProxy#result= method on the +func+ parameter and
     # indicate the return value that way.
     #
     # Example:
@@ -340,7 +340,7 @@ Support for this will be removed in version 2.0.0.
     #
     # The +finalize+ parameter must be a +proc+ object that accepts only a
     # single parameter, the FunctionProxy instance representing the current
-    # function invocation. It should invoke FunctionProxy#set_result to
+    # function invocation. It should invoke FunctionProxy#result= to
     # store the result of the function.
     #
     # Example:
@@ -352,7 +352,7 @@ Support for this will be removed in version 2.0.0.
     #     end
     #
     #     finalize do |func|
-    #       func.set_result( func[ :total ] || 0 )
+    #       func.result = func[ :total ] || 0
     #     end
     #   end
     #
@@ -438,7 +438,7 @@ Support for this will be removed in version 2.0.0.
     #     end
     #
     #     def finalize( ctx )
-    #       ctx.set_result( @total )
+    #       ctx.result = @total
     #     end
     #   end
     #
