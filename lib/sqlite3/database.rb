@@ -298,7 +298,7 @@ without using an array.  Please switch to passing bind parameters as an array.
     # arguments it needs (up to its arity).
     #
     # The block does not return a value directly. Instead, it will invoke
-    # the FunctionProxy#set_result method on the +func+ parameter and
+    # the FunctionProxy#result= method on the +func+ parameter and
     # indicate the return value that way.
     #
     # Example:
@@ -337,7 +337,7 @@ without using an array.  Please switch to passing bind parameters as an array.
     #
     # The +finalize+ parameter must be a +proc+ object that accepts only a
     # single parameter, the FunctionProxy instance representing the current
-    # function invocation. It should invoke FunctionProxy#set_result to
+    # function invocation. It should invoke FunctionProxy#result= to
     # store the result of the function.
     #
     # Example:
@@ -349,7 +349,7 @@ without using an array.  Please switch to passing bind parameters as an array.
     #     end
     #
     #     finalize do |func|
-    #       func.set_result( func[ :total ] || 0 )
+    #       func.result = func[ :total ] || 0
     #     end
     #   end
     #
@@ -435,7 +435,7 @@ without using an array.  Please switch to passing bind parameters as an array.
     #     end
     #
     #     def finalize( ctx )
-    #       ctx.set_result( @total )
+    #       ctx.result = @total
     #     end
     #   end
     #
