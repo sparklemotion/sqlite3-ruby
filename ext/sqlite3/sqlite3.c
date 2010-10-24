@@ -31,4 +31,6 @@ void Init_sqlite3_native()
   init_sqlite3_backup();
 
   rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
+  rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
+  rb_define_const(mSqlite3, "SQLITE_VERSION_NUMBER", INT2FIX(SQLITE_VERSION_NUMBER));
 }
