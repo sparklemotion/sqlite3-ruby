@@ -150,6 +150,9 @@ static VALUE pagecount(VALUE self)
 
 void init_sqlite3_backup()
 {
+#if 0
+  VALUE mSqlite3 = rb_define_module("SQLite3");
+#endif
   cSqlite3Backup = rb_define_class_under(mSqlite3, "Backup", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Backup, allocate);
