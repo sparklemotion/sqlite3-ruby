@@ -1,6 +1,8 @@
 module SQLite3
 
-  module Version
+  VERSION = '1.3.1'
+
+  module VersionProxy
 
     MAJOR = 1
     MINOR = 3
@@ -10,8 +12,14 @@ module SQLite3
     STRING = [ MAJOR, MINOR, TINY, BUILD ].compact.join( "." )
     #:beta-tag:
 
-    VERSION = '1.3.1'
+    VERSION = ::SQLite3::VERSION
   end
 
-  VERSION = Version::VERSION
+  def self.const_missing(name)
+    return super unless name == :Version
+    warn(<<-eowarn) if $VERBOSE
+#{caller[0]}: SQLite::Version will be removed in sqlite3-ruby version 2.0.0
+    eowarn
+    VersionProxy
+  end
 end
