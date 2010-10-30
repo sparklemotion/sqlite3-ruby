@@ -17,8 +17,11 @@ def asplode missing
     abort "#{missing} is missing. Install SQLite3 from " +
           "http://www.sqlite.org/ first."
   else
-    abort "#{missing} is missing. Try 'port install sqlite3 +universal' " +
-          "or 'yum install sqlite3-devel'"
+    abort <<-error
+#{missing} is missing. Try 'port install sqlite3 +universal'
+or 'yum install sqlite3-devel' and check your shared library search path (the
+location where your sqlite3 shared library is located).
+    error
   end
 end
 
