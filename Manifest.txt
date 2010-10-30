@@ -24,7 +24,6 @@ lib/sqlite3/database.rb
 lib/sqlite3/errors.rb
 lib/sqlite3/pragmas.rb
 lib/sqlite3/resultset.rb
-lib/sqlite3/sqlite3_native.bundle
 lib/sqlite3/statement.rb
 lib/sqlite3/translator.rb
 lib/sqlite3/value.rb
@@ -38,6 +37,7 @@ test/helper.rb
 test/test_backup.rb
 test/test_collation.rb
 test/test_database.rb
+test/test_database_readonly.rb
 test/test_deprecated.rb
 test/test_encoding.rb
 test/test_integration.rb
