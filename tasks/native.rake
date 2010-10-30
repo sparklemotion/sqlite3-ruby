@@ -4,7 +4,7 @@ require 'rake/extensiontask'
 # NOTE: version used by cross compilation of Windows native extension
 # It do not affect compilation under other operating systems
 # The version indicated is the minimum DLL suggested for correct functionality
-BINARY_VERSION = '3.6.23.1'
+BINARY_VERSION = '3.7.3'
 URL_VERSION = BINARY_VERSION.gsub('.', '_')
 
 # build sqlite3_native C extension

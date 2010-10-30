@@ -1,5 +1,8 @@
 === 1.3.2 / unreleased
 
+* Enhancements:
+  * Windows: build against 3.7.3 version of SQLite3
+
 * Bugfixes
   * type_translation= works along with Database#execute and a block
   * defined functions are kept in a hash to prevent GC. #7
