@@ -59,58 +59,31 @@ class TC_ResultSet < Test::Unit::TestCase
   end
 
   def test_next_type_translation
-    @db.type_translation = true
     @result.reset( 1 )
     assert_equal [ 1, "foo" ], @result.next
   end
 
   def test_next_type_translation_with_untyped_column
-    @db.type_translation = true
     @db.query( "select count(*) from foo" ) do |result|
       assert_equal [3], result.next
     end
   end
 
-  def test_type_translation_execute
-    @db.type_translation = true
-    @db.execute "create table bar ( a integer, b america )"
-    @db.execute "insert into bar (a, b) values (NULL, '1974-07-25 14:39:00')"
-
-    @db.translator.add_translator('america') do |type, thing|
-      'america'
-    end
-
-    assert_equal [[nil, 'america']], @db.execute("select * from bar")
-  end
-
   def test_type_translation_with_null_column
-    @db.type_translation = true
-    @db.execute "create table bar ( a integer, b time, c string )"
-    @db.execute "insert into bar (a, b, c) values (NULL, '1974-07-25 14:39:00', 'hello')"
-    @db.execute "insert into bar (a, b, c) values (1, NULL, 'hello')"
-    @db.execute "insert into bar (a, b, c) values (2, '1974-07-25 14:39:00', NULL)"
-    @db.query( "select * from bar" ) do |result|
-      assert_equal [nil, Time.local(1974, 7, 25, 14, 39, 0), 'hello'], result.next
-      assert_equal [1, nil, 'hello'], result.next
-      assert_equal [2, Time.local(1974, 7, 25, 14, 39, 0), nil], result.next
-    end
-  end
+    time = '1974-07-25 14:39:00'
 
-  def test_date_and_time_translation
-    @db.type_translation = true
-    @db.execute "create table bar ( a date, b datetime, c time, d timestamp )"
-    @db.execute "insert into bar (a, b, c, d) values ('1999-01-08', '1997-12-17 07:37:16', '07:37:16', '2004-10-19 10:23:54')"
+    @db.execute "create table bar ( a integer, b time, c string )"
+    @db.execute "insert into bar (a, b, c) values (NULL, '#{time}', 'hello')"
+    @db.execute "insert into bar (a, b, c) values (1, NULL, 'hello')"
+    @db.execute "insert into bar (a, b, c) values (2, '#{time}', NULL)"
     @db.query( "select * from bar" ) do |result|
-      result = result.next
-      assert result[0].is_a?(Date)
-      assert result[1].is_a?(DateTime)
-      assert result[2].is_a?(Time)
-      assert result[3].is_a?(Time)
+      assert_equal [nil, time, 'hello'], result.next
+      assert_equal [1, nil, 'hello'], result.next
+      assert_equal [2, time, nil], result.next
     end
   end
 
   def test_real_translation
-    @db.type_translation = true
     @db.execute('create table foo_real(a real)')
     @db.execute('insert into foo_real values (42)' )
     @db.query('select a, sum(a), typeof(a), typeof(sum(a)) from foo_real') do |result|

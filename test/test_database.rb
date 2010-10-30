@@ -13,13 +13,11 @@ module SQLite3
 
     def test_get_first_row_with_type_translation_and_hash_results
       @db.results_as_hash = true
-      @db.type_translation = true
       assert_equal({0=>1, "1"=>1}, @db.get_first_row('SELECT 1'))
     end
 
     def test_execute_with_type_translation_and_hash
       @db.results_as_hash = true
-      @db.type_translation = true
       rows = []
       @db.execute('SELECT 1') { |row| rows << row }
 

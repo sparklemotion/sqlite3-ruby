@@ -5,6 +5,8 @@ LICENSE
 Manifest.txt
 README.rdoc
 Rakefile
+ext/sqlite3/backup.c
+ext/sqlite3/backup.h
 ext/sqlite3/database.c
 ext/sqlite3/database.h
 ext/sqlite3/exception.c
@@ -22,6 +24,7 @@ lib/sqlite3/database.rb
 lib/sqlite3/errors.rb
 lib/sqlite3/pragmas.rb
 lib/sqlite3/resultset.rb
+lib/sqlite3/sqlite3_native.bundle
 lib/sqlite3/statement.rb
 lib/sqlite3/translator.rb
 lib/sqlite3/value.rb
@@ -32,6 +35,7 @@ tasks/gem.rake
 tasks/native.rake
 tasks/vendor_sqlite3.rake
 test/helper.rb
+test/test_backup.rb
 test/test_collation.rb
 test/test_database.rb
 test/test_deprecated.rb

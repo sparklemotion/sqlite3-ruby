@@ -16,7 +16,6 @@ class TC_Database_Integration < Test::Unit::TestCase
   end
 
   def test_table_info_with_type_translation_active
-    @db.type_translation = true
     assert_nothing_raised { @db.table_info("foo") }
   end
 

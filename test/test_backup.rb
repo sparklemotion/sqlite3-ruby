@@ -8,7 +8,7 @@ module SQLite3
       @sdb.execute('CREATE TABLE foo (idx, val);');
       @data = ('A'..'Z').map{|x|x * 40}
       @data.each_with_index do |v, i|
-        @sdb.execute('INSERT INTO foo (idx, val) VALUES (?, ?);', i, v)
+        @sdb.execute('INSERT INTO foo (idx, val) VALUES (?, ?);', [i, v])
       end
     end
 
