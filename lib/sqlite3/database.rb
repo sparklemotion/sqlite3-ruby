@@ -242,7 +242,7 @@ Support for this behavior will be removed in version 2.0.0.
     #
     # You must be sure to call +close+ on the ResultSet instance that is
     # returned, or you could have problems with locks on the table. If called
-    # with a block, +close+ will be invoked implicitly when the block 
+    # with a block, +close+ will be invoked implicitly when the block
     # terminates.
     def query( sql, bind_vars = [], *args )
 
@@ -522,6 +522,12 @@ Support for this will be removed in version 2.0.0.
     # Returns +true+ if there is a transaction active, and +false+ otherwise.
     def transaction_active?
       @transaction_active
+    end
+
+    # Returns +true+ if the database has been open in readonly mode
+    # A helper to check before performing any operation
+    def readonly?
+      @readonly
     end
 
     # A helper class for dealing with custom functions (see #create_function,

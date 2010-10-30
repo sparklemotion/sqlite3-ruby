@@ -2,6 +2,9 @@
 
 * Enhancements:
   * Windows: build against 3.7.3 version of SQLite3
+  * SQLite3::Database can now be open as readonly
+
+    db = SQLite3::Database.new('my.db', :readonly => true)
 
 * Bugfixes
   * type_translation= works along with Database#execute and a block

@@ -44,6 +44,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   VALUE file;
   VALUE opts;
   VALUE zvfs;
+  int mode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
   int status;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
@@ -60,7 +61,6 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
     if(Qtrue == rb_hash_aref(opts, sym_utf16)) {
       status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
     } else {
-      int mode;	
 
 #ifdef HAVE_RUBY_ENCODING_H
       if(!UTF8_P(file)) {
@@ -69,15 +69,13 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 #endif
 
       if (Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("readonly")))) {
-	mode = SQLITE_OPEN_READONLY;
-      } else {
-	mode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+        mode = SQLITE_OPEN_READONLY;
       }
       status = sqlite3_open_v2(
           StringValuePtr(file),
           &ctx->db,
           mode,
-	  NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
+          NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
       );
     }
 
@@ -95,6 +93,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   rb_iv_set(self, "@functions", rb_hash_new());
   rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, sym_results_as_hash));
   rb_iv_set(self, "@type_translation", rb_hash_aref(opts, sym_type_translation));
+  rb_iv_set(self, "@readonly", mode == SQLITE_OPEN_READONLY ? Qtrue : Qfalse);
 
   if(rb_block_given_p()) {
     rb_yield(self);
