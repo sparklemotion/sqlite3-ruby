@@ -58,7 +58,7 @@ module SQLite3
       warn(<<-eowarn) if $VERBOSE
 #{caller[0]} is calling SQLite3::Database#type_translation=
 SQLite3::Database#type_translation= is deprecated and will be removed
-in the future.
+in version 2.0.0.
       eowarn
       @type_translation = value
     end
@@ -127,6 +127,7 @@ in the future.
         warn(<<-eowarn) if $VERBOSE
 #{caller[0]} is calling SQLite3::Database#execute with nil or multiple bind params
 without using an array.  Please switch to passing bind parameters as an array.
+Support for bind parameters as *args will be removed in 2.0.0.
         eowarn
       end
 
@@ -198,7 +199,7 @@ without using an array.  Please switch to passing bind parameters as an array.
         warn(<<-eowarn) if $VERBOSE
 #{caller[0]} is calling SQLite3::Database#execute_batch with bind parameters
 that are not a list of a hash.  Please switch to passing bind parameters as an
-array or hash.
+array or hash. Support for this behavior will be removed in version 2.0.0.
         eowarn
       end
 
@@ -213,6 +214,7 @@ array or hash.
         warn(<<-eowarn) if $VERBOSE
 #{caller[0]} is calling SQLite3::Database#execute_batch with nil or multiple bind params
 without using an array.  Please switch to passing bind parameters as an array.
+Support for this behavior will be removed in version 2.0.0.
         eowarn
       end
 
@@ -254,6 +256,7 @@ without using an array.  Please switch to passing bind parameters as an array.
         warn(<<-eowarn) if $VERBOSE
 #{caller[0]} is calling SQLite3::Database#query with nil or multiple bind params
 without using an array.  Please switch to passing bind parameters as an array.
+Support for this will be removed in version 2.0.0.
         eowarn
       end
 

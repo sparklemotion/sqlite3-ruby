@@ -37,7 +37,7 @@ module SQLite3
     def add_translator( type, &block ) # :yields: type, value
       warn(<<-eowarn) if $VERBOSE
 #{caller[0]} is calling `add_translator`.
-Built in translators are deprecated and will be removed in the future
+Built in translators are deprecated and will be removed in version 2.0.0
       eowarn
       @translators[ type_name( type ) ] = block
     end
