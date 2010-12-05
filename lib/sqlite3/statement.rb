@@ -33,6 +33,7 @@ module SQLite3
     # See also #execute, #bind_param, Statement#bind_param, and
     # Statement#bind_params.
     def bind_params( *bind_vars )
+      reset! if active? || done?
       index = 1
       bind_vars.flatten.each do |var|
         if Hash === var
