@@ -121,7 +121,7 @@ in version 2.0.0.
         if args.empty?
           bind_vars = []
         else
-          bind_vars = [nil] + args
+          bind_vars = [bind_vars] + args
         end
 
         warn(<<-eowarn) if $VERBOSE

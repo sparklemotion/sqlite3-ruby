@@ -14,6 +14,10 @@ module SQLite3
       $-w = @warn_before
     end
 
+    def test_execute_with_many_bind_params_not_nil
+      assert_equal [[1, 2]], @db.execute("select ?, ?", 1, 2).to_a
+    end
+
     def test_query_with_many_bind_params
       assert_equal [[nil, 1]], @db.query("select ?, ?", nil, 1).to_a
     end
