@@ -8,7 +8,7 @@ end
 
 Hoe.plugin :debugging, :doofus, :git
 
-HOE = Hoe.spec 'sqlite3-ruby' do
+HOE = Hoe.spec 'sqlite3' do
   developer           'Jamis Buck', 'jamis@37signals.com'
   developer           'Luis Lavena', 'luislavena@gmail.com'
   developer           'Aaron Patterson', 'aaron@tenderlovemaking.com'
