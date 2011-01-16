@@ -1,0 +1,7 @@
+.autotest
+CHANGELOG.rdoc
+Manifest.txt
+README.rdoc
+Rakefile
+bin/sqlite3_ruby
+lib/sqlite3/dummy.rb
