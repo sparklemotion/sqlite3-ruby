@@ -1,4 +1,3 @@
-.autotest
 CHANGELOG.rdoc
 Manifest.txt
 README.rdoc
