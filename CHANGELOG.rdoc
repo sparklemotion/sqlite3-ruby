@@ -1,4 +1,4 @@
-=== 1.3.3 / unreleased
+=== 1.3.3 / 2010-01-16
 
 * Bugfixes
   * Abort on installation if sqlite3_backup_init is missing. Fixes #19
