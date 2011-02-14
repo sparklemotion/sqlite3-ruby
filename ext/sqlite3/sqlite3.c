@@ -24,11 +24,15 @@ void Init_sqlite3_native()
   cSqlite3Blob = rb_define_class_under(mSqlite3, "Blob", rb_cString);
 
   /* Initialize the sqlite3 library */
+#ifdef HAVE_SQLITE3_INITIALIZE
   sqlite3_initialize();
+#endif
 
   init_sqlite3_database();
   init_sqlite3_statement();
+#ifdef HAVE_SQLITE3_BACKUP_INIT
   init_sqlite3_backup();
+#endif
 
   rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
   rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));

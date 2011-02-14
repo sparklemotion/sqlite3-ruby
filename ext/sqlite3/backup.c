@@ -1,3 +1,5 @@
+#ifdef HAVE_SQLITE3_BACKUP_INIT
+
 #include <sqlite3_ruby.h>
 
 #define REQUIRE_OPEN_BACKUP(_ctxt) \
@@ -162,3 +164,5 @@ void init_sqlite3_backup()
   rb_define_method(cSqlite3Backup, "remaining", remaining, 0);
   rb_define_method(cSqlite3Backup, "pagecount", pagecount, 0);
 }
+
+#endif
