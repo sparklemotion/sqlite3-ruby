@@ -56,11 +56,11 @@ Then do the following:
 Alternatively, you can download and install the RubyGem package for
 SQLite3/Ruby (you must have RubyGems and SQLite3 installed, first):
 
-  gem install sqlite3-ruby
+  gem install sqlite3
 
 If you have sqlite3 installed in a non-standard location, you can specify the location of the include and lib files by doing:
 
-  gem install sqlite3-ruby -- --with-sqlite3-include=/opt/local/include \
+  gem install sqlite3 -- --with-sqlite3-include=/opt/local/include \
      --with-sqlite3-lib=/opt/local/lib
 
 = SUPPORT!!!
