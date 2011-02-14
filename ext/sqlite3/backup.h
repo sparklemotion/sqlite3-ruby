@@ -1,4 +1,4 @@
-#ifndef SQLITE3_BACKUP_RUBY
+#if !defined(SQLITE3_BACKUP_RUBY) && defined(HAVE_SQLITE3_BACKUP_INIT)
 #define SQLITE3_BACKUP_RUBY
 
 #include <sqlite3_ruby.h>

@@ -29,5 +29,5 @@ module SQLite3
       b.finish
       assert_equal(@data.length, @ddb.execute('SELECT * FROM foo;').length)
     end
-  end
+  end if defined?(SQLite3::Backup)
 end
