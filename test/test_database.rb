@@ -7,6 +7,13 @@ module SQLite3
       @db = SQLite3::Database.new(':memory:')
     end
 
+    def test_blob
+      @db.execute("CREATE TABLE blobs ( id INTEGER, hash BLOB(10) )")
+      str = "\0foo"
+      @db.execute("INSERT INTO blobs VALUES (0, ?)", [str])
+      assert_equal [[0, str]], @db.execute("SELECT * FROM blobs")
+    end
+
     def test_get_first_row
       assert_equal [1], @db.get_first_row('SELECT 1')
     end
