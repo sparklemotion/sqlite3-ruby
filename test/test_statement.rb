@@ -7,6 +7,12 @@ module SQLite3
       @stmt = SQLite3::Statement.new(@db, "select 'foo'")
     end
 
+    def test_raises_type_error
+      assert_raises(TypeError) do
+        SQLite3::Statement.new( @db, nil )
+      end
+    end
+
     ###
     # This method may not exist depending on how sqlite3 was compiled
     def test_database_name

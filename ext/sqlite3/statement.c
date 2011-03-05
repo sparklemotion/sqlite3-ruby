@@ -35,6 +35,8 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   const char *tail = NULL;
   int status;
 
+  StringValue(sql);
+
   Data_Get_Struct(db, sqlite3Ruby, db_ctx);
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
