@@ -1,8 +1,6 @@
 = SQLite3/Ruby Interface
 
 * http://github.com/luislavena/sqlite3-ruby
-* http://rubyforge.org/projects/sqlite-ruby
-* http://sqlite-ruby.rubyforge.org
 * http://groups.google.com/group/sqlite3-ruby
 
 == DESCRIPTION
@@ -85,9 +83,9 @@ which can be found here:
 == Usage
 
 For help figuring out the SQLite3/Ruby interface, check out the
-FAQ[http://sqlite-ruby.rubyforge.org/sqlite3/faq.html]. It includes examples of
+SYNOPSIS as well as the RDoc. It includes examples of
 usage. If you have any questions that you feel should be address in the
-FAQ, please send them to jamis@37signals.com
+FAQ, please send them to {the mailing list}[http://groups.google.com/group/sqlite3-ruby]
 
 == Source Code
 
@@ -95,9 +93,3 @@ The source repository is accessible via git:
 
   git clone git://github.com/luislavena/sqlite3-ruby.git
 
-== Contact Information
-
-The project page is http://rubyforge.org/projects/sqlite-ruby. There, you can
-find links to mailing lists and forums that you can use to discuss this
-library. Additionally, there are trackers for submitting bugs and feature
-requests. Feel free to use them!
