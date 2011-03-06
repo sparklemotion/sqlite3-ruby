@@ -482,7 +482,6 @@ Support for this will be removed in version 2.0.0.
     # #rollback.
     def transaction( mode = :deferred )
       execute "begin #{mode.to_s} transaction"
-      @transaction_active = true
 
       if block_given?
         abort = false
@@ -505,7 +504,6 @@ Support for this will be removed in version 2.0.0.
     # <tt>abort? and rollback or commit</tt>.
     def commit
       execute "commit transaction"
-      @transaction_active = false
       true
     end
 
@@ -515,13 +513,7 @@ Support for this will be removed in version 2.0.0.
     # <tt>abort? and rollback or commit</tt>.
     def rollback
       execute "rollback transaction"
-      @transaction_active = false
       true
-    end
-
-    # Returns +true+ if there is a transaction active, and +false+ otherwise.
-    def transaction_active?
-      @transaction_active
     end
 
     # Returns +true+ if the database has been open in readonly mode

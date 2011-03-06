@@ -454,6 +454,17 @@ class TC_Database_Integration < Test::Unit::TestCase
     assert !@db.transaction_active?
   end
 
+  def test_transaction_implicit_rollback
+    assert !@db.transaction_active?
+    @db.transaction 
+    @db.execute('create table bar (x CHECK(1 = 0))')
+    assert @db.transaction_active?
+    assert_raises( SQLite3::ConstraintException ) do
+      @db.execute("insert or rollback into bar (x) VALUES ('x')")
+    end
+    assert !@db.transaction_active?
+  end
+
   def test_interrupt
     @db.create_function( "abort", 1 ) do |func,x|
       @db.interrupt
