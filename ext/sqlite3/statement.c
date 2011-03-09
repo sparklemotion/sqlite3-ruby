@@ -45,10 +45,7 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(!UTF8_P(sql)) {
-    VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-    rb_encoding * enc = NIL_P(encoding) ? rb_utf8_encoding() :
-                                          rb_to_encoding(encoding);
-    sql               = rb_str_export_to_enc(sql, enc);
+    sql               = rb_str_export_to_enc(sql, rb_utf8_encoding());
   }
 #endif
 
