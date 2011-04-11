@@ -22,6 +22,7 @@ HOE = Hoe.spec 'sqlite3' do
   spec_extras[:extensions]                = ["ext/sqlite3/extconf.rb"]
 
   extra_dev_deps << ['rake-compiler', "~> 0.7.0"]
+  extra_dev_deps << ["mini_portile", "~> 0.2.2"]
 
   clean_globs.push('**/test.db')
 end
