@@ -6,7 +6,11 @@ require 'mkmf'
 
 RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 
-sqlite = dir_config('sqlite3', ['/usr/local', '/opt/local', '/sw/local', '/usr'])
+if enable_config("local", false)
+  $LDFLAGS = ENV.fetch("LDFLAGS", nil)
+else
+  sqlite = dir_config('sqlite3', ['/usr/local', '/opt/local', '/sw/local', '/usr'])
+end
 
 if RUBY_PLATFORM =~ /mswin/
   $CFLAGS << ' -W3'
@@ -23,10 +27,6 @@ or 'yum install sqlite3-devel' and check your shared library search path (the
 location where your sqlite3 shared library is located).
     error
   end
-end
-
-if enable_config("local", false)
-  $LDFLAGS = ENV.fetch("LDFLAGS", nil)
 end
 
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'
