@@ -26,27 +26,6 @@ Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
   else
     ext.cross_compile = true
     ext.cross_platform = ['i386-mswin32-60', 'i386-mingw32']
-    ext.cross_compiling do |gemspec|
-      gemspec.post_install_message = <<-POST_INSTALL_MESSAGE
-
-=============================================================================
-
-  You've installed the binary version of #{gemspec.name}.
-  It was built using SQLite3 version #{BINARY_VERSION}.
-  It's recommended to use the exact same version to avoid potential issues.
-
-  At the time of building this gem, the necessary DLL files where available
-  in the following download:
-
-  http://www.sqlite.org/sqlitedll-#{URL_VERSION}.zip
-
-  You can put the sqlite3.dll available in this package in your Ruby bin
-  directory, for example C:\\Ruby\\bin
-
-=============================================================================
-
-      POST_INSTALL_MESSAGE
-    end
   end
 end
 
