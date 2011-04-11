@@ -25,6 +25,10 @@ location where your sqlite3 shared library is located).
   end
 end
 
+if enable_config("static", false)
+  $LDFLAGS = ENV.fetch("LDFLAGS", nil)
+end
+
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'
 asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
 

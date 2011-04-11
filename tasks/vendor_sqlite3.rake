@@ -24,7 +24,7 @@ namespace :ports do
   end
 end
 
-unless ENV["SKIP_PORTILE"]
+if RUBY_PLATFORM =~ /mingw/
   Rake::Task['compile'].prerequisites.unshift "ports:sqlite3"
 end
 
