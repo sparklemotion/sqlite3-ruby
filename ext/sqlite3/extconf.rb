@@ -25,7 +25,7 @@ location where your sqlite3 shared library is located).
   end
 end
 
-if enable_config("static", false)
+if enable_config("local", false)
   $LDFLAGS = ENV.fetch("LDFLAGS", nil)
 end
 
