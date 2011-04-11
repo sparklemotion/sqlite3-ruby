@@ -35,7 +35,7 @@ task :cross do
   end
 
   # hook compile task with dependencies
-  Rake::Task["compile"].prerequisites.unshift "ports:freetds"
+  Rake::Task["compile"].prerequisites.unshift "ports:sqlite3"
 end
 
 CLOBBER.include("ports")
