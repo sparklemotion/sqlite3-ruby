@@ -25,8 +25,14 @@ module SQLite3
 
     # The class of which we return an object in case we want a Hash as
     # result.
-    class HashWithTypes < Hash
+    class HashWithTypesAndFields < Hash
       attr_accessor :types
+      attr_accessor :fields
+      
+      def [] key
+        key = fields[key] if key.is_a? Numeric
+        super key
+      end
     end
 
     # Create a new ResultSet attached to the given database, using the
@@ -73,11 +79,8 @@ module SQLite3
       end
 
       if @db.results_as_hash
-        new_row = HashWithTypes[*@stmt.columns.zip(row).flatten]
-        row.each_with_index { |value,idx|
-          new_row[idx] = value
-        }
-        row = new_row
+        row = HashWithTypesAndFields[*@stmt.columns.zip(row).flatten]
+        row.fields = @stmt.columns
       else
         if row.respond_to?(:fields)
           row = ArrayWithTypes.new(row)
