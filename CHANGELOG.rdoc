@@ -1,9 +1,15 @@
 === 1.3.4 / Unreleased
 
+* Enhancements:
+  * Windows: build against SQLite 3.7.7.1
+  * Windows: build static binaries that do not depend on sqlite3.dll be
+    installed anymore
+
 * Bugfixes
   * Backup API is conditionaly required so that older libsqlite3 can be used.
     Thanks Hongli Lai.
   * Fixed segmentation fault when nil is passed to SQLite3::Statement.new
+  * Fix extconf's hardcoded path that affected installation on certain systems.
 
 === 1.3.3 / 2010-01-16
 
