@@ -1,5 +1,4 @@
 require 'helper'
-require 'iconv'
 
 module SQLite3
   class TestDatabase < Test::Unit::TestCase
@@ -298,7 +297,7 @@ module SQLite3
     end
 
     def test_close_with_open_statements
-      stmt = @db.prepare("select 'foo'")
+      @db.prepare("select 'foo'")
       assert_raises(SQLite3::BusyException) do
         @db.close
       end
