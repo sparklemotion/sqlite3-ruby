@@ -14,12 +14,12 @@ if enable_config("local", false)
   $LDFLAGS = ENV.fetch("LDFLAGS", nil)
 end
 
-if RUBY_PLATFORM =~ /mswin/
+if RbConfig::CONFIG["host_os"] =~ /mswin/
   $CFLAGS << ' -W3'
 end
 
 def asplode missing
-  if RUBY_PLATFORM =~ /mswin/
+  if RUBY_PLATFORM =~ /mingw|mswin/
     abort "#{missing} is missing. Install SQLite3 from " +
           "http://www.sqlite.org/ first."
   else
