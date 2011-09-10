@@ -9,7 +9,7 @@ This module allows Ruby programs to interface with the SQLite3
 database engine (http://www.sqlite.org).  You must have the
 SQLite engine installed in order to build this module.
 
-Note that this module is NOT compatible with SQLite 2.x.
+Note that this module is only compatible with SQLite 3.6.16 or newer.
 
 == SYNOPSIS
 
@@ -42,7 +42,7 @@ Note that this module is NOT compatible with SQLite 2.x.
 
 == Compilation and Installation
 
-Install SQLite3, enabling option SQLITE_ENABLE_COLUMN_METADATA (see
+Install SQLite3, enabling the option SQLITE_ENABLE_COLUMN_METADATA (see
 www.sqlite.org/compile.html for details).
 
 Then do the following:
