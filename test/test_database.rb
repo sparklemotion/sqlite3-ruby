@@ -60,7 +60,10 @@ module SQLite3
     end
 
     def test_new_with_options
-      db = SQLite3::Database.new(Iconv.conv('UTF-16LE', 'UTF-8', ':memory:'),
+      # determine if Ruby is running on Big Endian platform
+      utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
+
+      db = SQLite3::Database.new(Iconv.conv(utf16, 'UTF-8', ':memory:'),
                                  :utf16 => true)
       assert db
     end
