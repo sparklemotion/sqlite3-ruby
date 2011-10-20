@@ -75,8 +75,10 @@ module SQLite3
     end
 
     def test_db_with_utf16
-      db = SQLite3::Database.new(':memory:'.encode('UTF-16LE'))
-      assert_equal(Encoding.find('UTF-16LE'), db.encoding)
+      utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
+
+      db = SQLite3::Database.new(':memory:'.encode(utf16))
+      assert_equal(Encoding.find(utf16), db.encoding)
     end
 
     def test_statement_eucjp
