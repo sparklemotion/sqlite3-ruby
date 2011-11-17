@@ -2,8 +2,18 @@ require 'helper'
 
 module SQLite3
   class TestDatabase < Test::Unit::TestCase
+    attr_reader :db
+
     def setup
       @db = SQLite3::Database.new(':memory:')
+    end
+
+    def test_bignum
+      num = 4907021672125087844
+      db.execute 'CREATE TABLE "employees" ("token" integer(8), "name" varchar(20) NOT NULL)'
+      db.execute "INSERT INTO employees(name, token) VALUES('employee-1', ?)", [num]
+      rows = db.execute 'select token from employees'
+      assert_equal num, rows.first.first
     end
 
     def test_blob
