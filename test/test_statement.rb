@@ -209,13 +209,16 @@ module SQLite3
       stmt = @db.prepare('select :n, :h')
       assert_equal [[10, nil]], stmt.execute('n' => 10, 'h' => nil).to_a
     end
-    
+
     def test_with_error
       @db.execute('CREATE TABLE "employees" ("name" varchar(20) NOT NULL CONSTRAINT "index_employees_on_name" UNIQUE)')
       stmt = @db.prepare("INSERT INTO Employees(name) VALUES(?)")
       stmt.execute('employee-1')
       stmt.execute('employee-1') rescue SQLite3::ConstraintException
-      assert_nothing_raised(SQLite3::ConstraintException) { stmt.execute('employee-2') }
+      stmt.reset!
+      assert_nothing_raised(SQLite3::ConstraintException) {
+        stmt.execute('employee-2')
+      }
     end
 
   end

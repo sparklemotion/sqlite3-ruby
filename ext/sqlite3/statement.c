@@ -295,7 +295,6 @@ static VALUE reset_bang(VALUE self)
   REQUIRE_OPEN_STMT(ctx);
 
   status = sqlite3_reset(ctx->st);
-  CHECK(sqlite3_db_handle(ctx->st), status);
 
   ctx->done_p = 0;
 
