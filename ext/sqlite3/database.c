@@ -50,7 +50,14 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
   rb_scan_args(argc, argv, "12", &file, &opts, &zvfs);
+#if defined StringValueCStr
+  StringValuePtr(file);
+  rb_check_safe_obj(file);
+#else
+  Check_SafeStr(file);
+#endif
   if(NIL_P(opts)) opts = rb_hash_new();
+  else Check_Type(opts, T_HASH);
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(UTF16_LE_P(file)) {

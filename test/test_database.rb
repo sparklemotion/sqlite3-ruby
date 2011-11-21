@@ -8,6 +8,10 @@ module SQLite3
       @db = SQLite3::Database.new(':memory:')
     end
 
+    def test_segv
+      assert_raises(TypeError) { SQLite3::Database.new 1 }
+    end
+
     def test_bignum
       num = 4907021672125087844
       db.execute 'CREATE TABLE "employees" ("token" integer(8), "name" varchar(20) NOT NULL)'
