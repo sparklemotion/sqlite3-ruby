@@ -221,5 +221,18 @@ module SQLite3
       }
     end
 
+    def test_clear_bindings
+      stmt = @db.prepare('select ?, ?')
+      stmt.bind_param 1, "foo"
+      stmt.bind_param 2, "bar"
+
+      # We can't fetch bound parameters back out of sqlite3, so just call
+      # the clear_bindings! method and assert that nil is returned
+      stmt.clear_bindings!
+
+      while x = stmt.step
+        assert_equal [nil, nil], x
+      end
+    end
   end
 end
