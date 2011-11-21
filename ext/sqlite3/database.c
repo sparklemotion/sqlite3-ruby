@@ -723,6 +723,20 @@ static VALUE db_encoding(VALUE self)
   return rb_iv_get(self, "@encoding");
 }
 
+/* call-seq: db.transaction_active?
+ *
+ * Returns +true+ if there is a transaction active, and +false+ otherwise.
+ *
+ */
+static VALUE transaction_active_p(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
+}
+
 void init_sqlite3_database()
 {
   ID id_utf16, id_results_as_hash, id_type_translation;
@@ -749,6 +763,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+  rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
   rb_define_method(cSqlite3Database, "load_extension", load_extension, 1);
