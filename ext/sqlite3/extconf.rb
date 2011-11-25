@@ -25,7 +25,7 @@ def asplode missing
   else
     abort <<-error
 #{missing} is missing. Try 'port install sqlite3 +universal'
-or 'yum install sqlite3-devel' and check your shared library search path (the
+or 'yum install sqlite-devel' and check your shared library search path (the
 location where your sqlite3 shared library is located).
     error
   end
