@@ -11,6 +11,17 @@ module SQLite3
     def test_segv
       assert_raises(TypeError) { SQLite3::Database.new 1 }
     end
+    
+    def test_sqlite3_int64_binding
+      #Min and max values for sqlite3_int64: http://www.sqlite.org/capi3ref.html#sqlite3_int64
+      min = -9223372036854775808
+      max = 9223372036854775807
+      db.execute 'CREATE TABLE "sqlite3_int64_test" ("min" integer(8), "max" integer(8))'
+      db.execute "INSERT INTO sqlite3_int64_test(min, max) VALUES(?, ?)", [min, max]
+      rows = db.execute 'select min, max from sqlite3_int64_test'
+      assert_equal min, rows.first.first
+      assert_equal max, rows.first.last
+    end
 
     def test_bignum
       num = 4907021672125087844
