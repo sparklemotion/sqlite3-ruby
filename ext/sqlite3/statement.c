@@ -255,12 +255,12 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       }
       break;
     case T_BIGNUM:
-#if SIZEOF_LONG < 8
+// #if SIZEOF_LONG < 8
       if (RBIGNUM_LEN(value) * SIZEOF_BDIGITS <= 8) {
           status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)NUM2LL(value));
           break;
       }
-#endif
+// #endif
     case T_FLOAT:
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
       break;
