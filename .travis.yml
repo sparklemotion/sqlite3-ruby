@@ -1,4 +1,5 @@
 before_script:
+  - gem install rdoc
   - gem install hoe
   - gem install rake-compiler
   - gem install mini_portile
