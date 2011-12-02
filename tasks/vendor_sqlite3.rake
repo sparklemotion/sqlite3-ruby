@@ -28,6 +28,10 @@ if RUBY_PLATFORM =~ /mingw/
   Rake::Task['compile'].prerequisites.unshift "ports:sqlite3"
 end
 
+if ENV["USE_MINI_PORTILE"] == "true"
+  Rake::Task["compile"].prerequisites.unshift "ports:sqlite3"
+end
+
 task :cross do
   host = ENV.fetch("HOST", Rake::ExtensionCompiler.mingw_host)
   $recipes.each do |_, recipe|
