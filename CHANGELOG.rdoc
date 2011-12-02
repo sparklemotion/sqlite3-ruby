@@ -6,6 +6,8 @@
   * Database error is not reset, so don't check it in Statement#reset!
   * Added Statement#clear_bindings! to set bindings back to nil
   * Fixed a segv on Database.new. Fixes #34 (thanks nobu!)
+  * Remove conditional around Bignum statement bindings.
+    Fixes #52. Fixes #56. Thank you Evgeny Myasishchev.
 
 === 1.3.4 / 2011-07-25
 
