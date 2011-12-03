@@ -4,8 +4,8 @@ require 'rake/extensiontask'
 # NOTE: version used by cross compilation of Windows native extension
 # It do not affect compilation under other operating systems
 # The version indicated is the minimum DLL suggested for correct functionality
-BINARY_VERSION = '3.7.7.1'
-URL_VERSION = BINARY_VERSION.tr(".", "0")
+BINARY_VERSION = "3.7.9"
+URL_VERSION    = "3070900"
 
 # build sqlite3_native C extension
 Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
