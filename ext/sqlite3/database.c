@@ -625,13 +625,12 @@ static VALUE collation(VALUE self, VALUE name, VALUE comparator)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  CHECK(ctx->db, sqlite3_create_collation_v2(
+  CHECK(ctx->db, sqlite3_create_collation(
         ctx->db,
         StringValuePtr(name),
         SQLITE_UTF8,
         (void *)comparator,
-        NIL_P(comparator) ? NULL : rb_comparator_func,
-        NULL));
+        NIL_P(comparator) ? NULL : rb_comparator_func));
 
   /* Make sure our comparator doesn't get garbage collected. */
   rb_hash_aset(rb_iv_get(self, "@collations"), name, comparator);
