@@ -43,5 +43,6 @@ have_func('sqlite3_backup_init')
 have_func('sqlite3_column_database_name')
 have_func('sqlite3_enable_load_extension')
 have_func('sqlite3_load_extension')
+have_func('sqlite3_prepare_v2')
 
 create_makefile('sqlite3/sqlite3_native')
