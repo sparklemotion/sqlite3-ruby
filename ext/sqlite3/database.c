@@ -44,7 +44,9 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   VALUE file;
   VALUE opts;
   VALUE zvfs;
+#ifdef HAVE_SQLITE3_OPEN_V2
   int mode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+#endif
   int status;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
@@ -76,14 +78,25 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 #endif
 
       if (Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("readonly")))) {
+#ifdef HAVE_SQLITE3_OPEN_V2
         mode = SQLITE_OPEN_READONLY;
+#else
+        rb_raise(rb_eNotImpError, "sqlite3-ruby was compiled against a version of sqlite that does not support readonly databases");
+#endif
       }
+#ifdef HAVE_SQLITE3_OPEN_V2
       status = sqlite3_open_v2(
           StringValuePtr(file),
           &ctx->db,
           mode,
           NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
       );
+#else
+      status = sqlite3_open(
+          StringValuePtr(file),
+          &ctx->db
+      );
+#endif
     }
 
 #ifdef HAVE_RUBY_ENCODING_H
@@ -100,7 +113,11 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   rb_iv_set(self, "@functions", rb_hash_new());
   rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, sym_results_as_hash));
   rb_iv_set(self, "@type_translation", rb_hash_aref(opts, sym_type_translation));
+#ifdef HAVE_SQLITE3_OPEN_V2
   rb_iv_set(self, "@readonly", mode == SQLITE_OPEN_READONLY ? Qtrue : Qfalse);
+#else
+  rb_iv_set(self, "@readonly", Qfalse);
+#endif
 
   if(rb_block_given_p()) {
     rb_yield(self);
@@ -625,13 +642,12 @@ static VALUE collation(VALUE self, VALUE name, VALUE comparator)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  CHECK(ctx->db, sqlite3_create_collation_v2(
+  CHECK(ctx->db, sqlite3_create_collation(
         ctx->db,
         StringValuePtr(name),
         SQLITE_UTF8,
         (void *)comparator,
-        NIL_P(comparator) ? NULL : rb_comparator_func,
-        NULL));
+        NIL_P(comparator) ? NULL : rb_comparator_func));
 
   /* Make sure our comparator doesn't get garbage collected. */
   rb_hash_aset(rb_iv_get(self, "@collations"), name, comparator);
@@ -639,6 +655,7 @@ static VALUE collation(VALUE self, VALUE name, VALUE comparator)
   return self;
 }
 
+#ifdef HAVE_SQLITE3_LOAD_EXTENSION
 /* call-seq: db.load_extension(file)
  *
  * Loads an SQLite extension library from the named file. Extension
@@ -664,7 +681,9 @@ static VALUE load_extension(VALUE self, VALUE file)
 
   return self;
 }
+#endif
 
+#ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
 /* call-seq: db.enable_load_extension(onoff)
  *
  * Enable or disable extension loading.
@@ -679,6 +698,7 @@ static VALUE enable_load_extension(VALUE self, VALUE onoff)
 
   return self;
 }
+#endif
 
 #ifdef HAVE_RUBY_ENCODING_H
 static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(names))

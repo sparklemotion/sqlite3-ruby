@@ -49,7 +49,11 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   }
 #endif
 
+#ifdef HAVE_SQLITE3_PREPARE_V2
   status = sqlite3_prepare_v2(
+#else
+  status = sqlite3_prepare(
+#endif
       db_ctx->db,
       (const char *)StringValuePtr(sql),
       (int)RSTRING_LEN(sql),
