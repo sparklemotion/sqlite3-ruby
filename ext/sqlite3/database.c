@@ -336,7 +336,9 @@ static void rb_sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **arg
     params = xcalloc((size_t)argc, sizeof(VALUE *));
 
     for(i = 0; i < argc; i++) {
-      params[i] = sqlite3val2rb(argv[i]);
+      VALUE param = sqlite3val2rb(argv[i]);
+      RB_GC_GUARD(param);
+      params[i] = param;
     }
   }
 
