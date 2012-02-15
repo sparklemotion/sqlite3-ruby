@@ -2,16 +2,23 @@ require 'helper'
 
 module SQLite3
   class TestDeprecated < Test::Unit::TestCase
+    attr_reader :db
+
     def setup
       super
       @warn_before = $-w
       $-w = false
       @db = SQLite3::Database.new(':memory:')
+      @db.execute 'CREATE TABLE test_table (name text, age int)'
     end
 
     def teardown
       super
       $-w = @warn_before
+    end
+
+    def test_query_with_many_bind_params_not_nil
+      assert_equal [[1, 2]], db.query('select ?, ?', 1, 2).to_a
     end
 
     def test_execute_with_many_bind_params_not_nil

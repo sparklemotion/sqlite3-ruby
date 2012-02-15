@@ -3,6 +3,8 @@
 * Bugfixes
   * Protect parameters to custom functions from being garbage collected too
     soon. Fixes #60. Thanks hirataya!
+  * Fix backwards compatibility with 1.2.5 with bind vars and `query` method.
+    Fixes #35.
 
 === 1.3.5 / 2011-12-03 - ZOMG Holidays are here Edition!
 

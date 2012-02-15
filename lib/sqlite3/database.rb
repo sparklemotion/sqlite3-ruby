@@ -236,7 +236,7 @@ Support for this behavior will be removed in version 2.0.0.
     # This is a convenience method for creating a statement, binding
     # paramters to it, and calling execute:
     #
-    #   result = db.query( "select * from foo where a=?", 5 )
+    #   result = db.query( "select * from foo where a=?", [5])
     #   # is the same as
     #   result = db.prepare( "select * from foo where a=?" ).execute( 5 )
     #
@@ -250,7 +250,7 @@ Support for this behavior will be removed in version 2.0.0.
         if args.empty?
           bind_vars = []
         else
-          bind_vars = [nil] + args
+          bind_vars = [bind_vars] + args
         end
 
         warn(<<-eowarn) if $VERBOSE
