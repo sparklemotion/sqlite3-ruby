@@ -661,7 +661,7 @@ static VALUE collation(VALUE self, VALUE name, VALUE comparator)
 /* call-seq: db.load_extension(file)
  *
  * Loads an SQLite extension library from the named file. Extension
- * loading must be enabled using db.enable_load_extension(1) prior
+ * loading must be enabled using db.enable_load_extension(true) prior
  * to calling this API.
  */
 static VALUE load_extension(VALUE self, VALUE file)
@@ -693,10 +693,19 @@ static VALUE load_extension(VALUE self, VALUE file)
 static VALUE enable_load_extension(VALUE self, VALUE onoff)
 {
   sqlite3RubyPtr ctx;
+  int onoffparam;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  CHECK(ctx->db, sqlite3_enable_load_extension(ctx->db, (int)NUM2INT(onoff)));
+  if (Qtrue == onoff) {
+    onoffparam = 1;
+  } else if (Qfalse == onoff) {
+    onoffparam = 0;
+  } else {
+    onoffparam = (int)NUM2INT(onoff);
+  }
+
+  CHECK(ctx->db, sqlite3_enable_load_extension(ctx->db, onoffparam));
 
   return self;
 }
