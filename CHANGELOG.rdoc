@@ -1,5 +1,9 @@
 === 1.3.6
 
+* Enhancements
+  * Added SQLite3::ResultSet#each_hash for fetching each row as a hash.
+  * Added SQLite3::ResultSet#next_hash for fetching one row as a hash.
+
 * Bugfixes
   * Protect parameters to custom functions from being garbage collected too
     soon. Fixes #60. Thanks hirataya!

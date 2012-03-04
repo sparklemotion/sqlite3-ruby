@@ -28,7 +28,7 @@ module SQLite3
     class HashWithTypesAndFields < Hash
       attr_accessor :types
       attr_accessor :fields
-      
+
       def [] key
         key = fields[key] if key.is_a? Numeric
         super key
@@ -69,6 +69,10 @@ module SQLite3
     # For hashes, the column names are the keys of the hash, and the column
     # types are accessible via the +types+ property.
     def next
+      if @db.results_as_hash
+        return next_hash
+      end
+
       row = @stmt.step
       return nil if @stmt.done?
 
@@ -78,17 +82,12 @@ module SQLite3
         end
       end
 
-      if @db.results_as_hash
-        row = HashWithTypesAndFields[*@stmt.columns.zip(row).flatten]
-        row.fields = @stmt.columns
+      if row.respond_to?(:fields)
+        row = ArrayWithTypes.new(row)
       else
-        if row.respond_to?(:fields)
-          row = ArrayWithTypes.new(row)
-        else
-          row = ArrayWithTypesAndFields.new(row)
-        end
-        row.fields = @stmt.columns
+        row = ArrayWithTypesAndFields.new(row)
       end
+      row.fields = @stmt.columns
 
       row.types = @stmt.types
       row
@@ -98,6 +97,14 @@ module SQLite3
     # rows of the result set.
     def each( &block )
       while node = self.next
+        yield node
+      end
+    end
+
+    # Provides an internal iterator over the rows of the result set where
+    # each row is yielded as a hash.
+    def each_hash
+      while node = next_hash
         yield node
       end
     end
@@ -124,6 +131,22 @@ module SQLite3
       @stmt.columns
     end
 
-  end
+    # Return the next row as a hash
+    def next_hash
+      row = @stmt.step
+      return nil if @stmt.done?
 
+      if @db.type_translation
+        row = @stmt.types.zip(row).map do |type, value|
+          @db.translator.translate( type, value )
+        end
+      end
+
+      row = HashWithTypesAndFields[*@stmt.columns.zip(row).flatten]
+      row.fields = @stmt.columns
+
+      row.types = @stmt.types
+      row
+    end
+  end
 end
