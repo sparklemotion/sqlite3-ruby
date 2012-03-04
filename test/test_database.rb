@@ -77,8 +77,12 @@ module SQLite3
       # determine if Ruby is running on Big Endian platform
       utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
 
-      db = SQLite3::Database.new(Iconv.conv(utf16, 'UTF-8', ':memory:'),
-                                 :utf16 => true)
+      if RUBY_VERSION >= "1.9"
+        db = SQLite3::Database.new(':memory:'.encode(utf16), :utf16 => true)
+      else
+        db = SQLite3::Database.new(Iconv.conv(utf16, 'UTF-8', ':memory:'),
+                                   :utf16 => true)
+      end
       assert db
     end
 
