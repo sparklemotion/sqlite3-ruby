@@ -363,7 +363,7 @@ static VALUE column_name(VALUE self, VALUE index)
 
   name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
 
-  if(name) return rb_str_new2(name);
+  if(name) return SQLITE3_UTF8_STR_NEW2(name);
   return Qnil;
 }
 
