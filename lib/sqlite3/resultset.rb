@@ -10,24 +10,56 @@ module SQLite3
   class ResultSet
     include Enumerable
 
-    # The class of which we return an object in case we want an Array as
-    # result. (ArrayFields is installed.)
-    class ArrayWithTypes < Array
+    class ArrayWithTypes < Array # :nodoc:
       attr_accessor :types
     end
 
-    # The class of which we return an object in case we want an Array as
-    # result. (ArrayFields is not installed.)
-    class ArrayWithTypesAndFields < Array
-      attr_accessor :types
-      attr_accessor :fields
+    class ArrayWithTypesAndFields < Array # :nodoc:
+      attr_writer :types
+      attr_writer :fields
+
+      def types
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling #{self.class}#types.  This method will be removed in
+sqlite3 version 2.0.0, please call the `types` method on the SQLite3::ResultSet
+object that created this object
+        eowarn
+        @types
+      end
+
+      def fields
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling #{self.class}#fields.  This method will be removed in
+sqlite3 version 2.0.0, please call the `columns` method on the SQLite3::ResultSet
+object that created this object
+        eowarn
+        @fields
+      end
     end
 
     # The class of which we return an object in case we want a Hash as
     # result.
-    class HashWithTypesAndFields < Hash
-      attr_accessor :types
-      attr_accessor :fields
+    class HashWithTypesAndFields < Hash # :nodoc:
+      attr_writer :types
+      attr_writer :fields
+
+      def types
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling #{self.class}#types.  This method will be removed in
+sqlite3 version 2.0.0, please call the `types` method on the SQLite3::ResultSet
+object that created this object
+        eowarn
+        @types
+      end
+
+      def fields
+        warn(<<-eowarn) if $VERBOSE
+#{caller[0]} is calling #{self.class}#fields.  This method will be removed in
+sqlite3 version 2.0.0, please call the `columns` method on the SQLite3::ResultSet
+object that created this object
+        eowarn
+        @fields
+      end
 
       def [] key
         key = fields[key] if key.is_a? Numeric
@@ -83,12 +115,18 @@ module SQLite3
       end
 
       if row.respond_to?(:fields)
+        # FIXME: this can only happen if the translator returns something
+        # that responds to `fields`.  Since we're removing the translator
+        # in 2.0, we can remove this branch in 2.0.
         row = ArrayWithTypes.new(row)
       else
+        # FIXME: the `fields` and `types` methods are deprecated on this
+        # object for version 2.0, so we can safely remove this branch
+        # as well.
         row = ArrayWithTypesAndFields.new(row)
       end
-      row.fields = @stmt.columns
 
+      row.fields = @stmt.columns
       row.types = @stmt.types
       row
     end
@@ -136,15 +174,20 @@ module SQLite3
       row = @stmt.step
       return nil if @stmt.done?
 
+      # FIXME: type translation is deprecated, so this can be removed
+      # in 2.0
       if @db.type_translation
         row = @stmt.types.zip(row).map do |type, value|
           @db.translator.translate( type, value )
         end
       end
 
+      # FIXME: this can be switched to a regular hash in 2.0
       row = HashWithTypesAndFields[*@stmt.columns.zip(row).flatten]
-      row.fields = @stmt.columns
 
+      # FIXME: these methods are deprecated for version 2.0, so we can remove
+      # this code in 2.0
+      row.fields = @stmt.columns
       row.types = @stmt.types
       row
     end

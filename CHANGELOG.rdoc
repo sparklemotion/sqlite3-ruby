@@ -10,6 +10,22 @@
   * Fix backwards compatibility with 1.2.5 with bind vars and `query` method.
     Fixes #35.
 
+* Deprecations
+  * ArrayWithTypesAndFields#types is deprecated and the class will be removed
+    in version 2.0.0.  Please use the `types` method on the ResultSet class
+    that created this object.
+  * ArrayWithTypesAndFields#fields is deprecated and the class will be removed
+    in version 2.0.0.  Please use the `columns` method on the ResultSet class
+    that created this object.
+  * The ArrayWithTypesAndFields class will be removed in 2.0.0
+  * The ArrayWithTypes class will be removed in 2.0.0
+  * HashWithTypesAndFields#types is deprecated and the class will be removed
+    in version 2.0.0.  Please use the `types` method on the ResultSet class
+    that created this object.
+  * HashWithTypesAndFields#fields is deprecated and the class will be removed
+    in version 2.0.0.  Please use the `columns` method on the ResultSet class
+    that created this object.
+
 === 1.3.5 / 2011-12-03 - ZOMG Holidays are here Edition!
 
 * Enhancements
