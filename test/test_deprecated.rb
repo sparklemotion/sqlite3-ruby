@@ -1,7 +1,7 @@
 require 'helper'
 
 module SQLite3
-  class TestDeprecated < Test::Unit::TestCase
+  class TestDeprecated < SQLite3::TestCase
     attr_reader :db
 
     def setup

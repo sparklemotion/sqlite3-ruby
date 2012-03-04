@@ -3,7 +3,7 @@ require 'helper'
 require 'thread'
 require 'benchmark'
 
-class TC_Integration_Pending < Test::Unit::TestCase
+class TC_Integration_Pending < SQLite3::TestCase
   def setup
     @db = SQLite3::Database.new("test.db")
     @db.transaction do

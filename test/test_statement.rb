@@ -1,7 +1,7 @@
 require 'helper'
 
 module SQLite3
-  class TestStatement < Test::Unit::TestCase
+  class TestStatement < SQLite3::TestCase
     def setup
       @db   = SQLite3::Database.new(':memory:')
       @stmt = SQLite3::Statement.new(@db, "select 'foo'")

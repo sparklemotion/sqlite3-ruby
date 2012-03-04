@@ -3,7 +3,7 @@
 require 'helper'
 
 module SQLite3
-  class TestCollation < Test::Unit::TestCase
+  class TestCollation < SQLite3::TestCase
     class Comparator
       attr_reader :calls
       def initialize

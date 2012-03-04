@@ -1,7 +1,7 @@
 require 'helper'
 
 module SQLite3
-  class TestDatabase < Test::Unit::TestCase
+  class TestDatabase < SQLite3::TestCase
     attr_reader :db
 
     def setup

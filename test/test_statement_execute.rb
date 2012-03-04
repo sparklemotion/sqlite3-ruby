@@ -1,7 +1,7 @@
 require 'helper'
 
 module SQLite3
-  class TestStatementExecute < Test::Unit::TestCase
+  class TestStatementExecute < SQLite3::TestCase
     def setup
       @db   = SQLite3::Database.new(':memory:')
       @db.execute_batch(

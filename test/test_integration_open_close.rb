@@ -1,6 +1,6 @@
 require 'helper'
 
-class TC_OpenClose < Test::Unit::TestCase
+class TC_OpenClose < SQLite3::TestCase
   def test_create_close
     begin
       db = SQLite3::Database.new( "test-create.db" )

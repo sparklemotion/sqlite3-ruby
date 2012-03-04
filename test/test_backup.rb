@@ -1,7 +1,7 @@
 require 'helper'
 
 module SQLite3
-  class TestBackup < Test::Unit::TestCase
+  class TestBackup < SQLite3::TestCase
     def setup
       @sdb = SQLite3::Database.new(':memory:')
       @ddb = SQLite3::Database.new(':memory:')

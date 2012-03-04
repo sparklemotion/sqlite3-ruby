@@ -1,7 +1,7 @@
 require 'helper'
 
 module SQLite3
-  class TestDatabaseReadonly < Test::Unit::TestCase
+  class TestDatabaseReadonly < SQLite3::TestCase
     def setup
       File.unlink 'test-readonly.db' if File.exists?('test-readonly.db')
       @db = SQLite3::Database.new('test-readonly.db')

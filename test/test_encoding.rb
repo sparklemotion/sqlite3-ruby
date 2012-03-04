@@ -3,7 +3,7 @@
 require 'helper'
 
 module SQLite3
-  class TestEncoding < Test::Unit::TestCase
+  class TestEncoding < SQLite3::TestCase
     def setup
       @db = SQLite3::Database.new(':memory:')
       @create = "create table ex(id int, data string)"

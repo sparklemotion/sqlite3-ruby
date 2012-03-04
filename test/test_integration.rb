@@ -1,6 +1,6 @@
 require 'helper'
 
-class TC_Database_Integration < Test::Unit::TestCase
+class TC_Database_Integration < SQLite3::TestCase
   def setup
     @db = SQLite3::Database.new(":memory:")
     @db.transaction do
