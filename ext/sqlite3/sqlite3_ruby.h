@@ -33,7 +33,7 @@
 
 #include <sqlite3.h>
 
-#ifndef HAVE_SQLITE3_INT64
+#ifndef HAVE_TYPE_SQLITE3_INT64
 typedef sqlite_int64 sqlite3_int64;
 typedef sqlite_uint64 sqlite3_uint64;
 #endif
