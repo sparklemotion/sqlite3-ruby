@@ -1,4 +1,4 @@
-require File.expand_path('helper', File.dirname(__FILE__))
+require 'helper'
 
 module SQLite3
   class TestBackup < Test::Unit::TestCase
