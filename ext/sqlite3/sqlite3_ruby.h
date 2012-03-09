@@ -35,6 +35,9 @@
 
 #ifndef HAVE_TYPE_SQLITE3_INT64
 typedef sqlite_int64 sqlite3_int64;
+#endif
+
+#ifndef HAVE_TYPE_SQLITE3_UINT64
 typedef sqlite_uint64 sqlite3_uint64;
 #endif
 
