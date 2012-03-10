@@ -10,6 +10,7 @@
   * Fix backwards compatibility with 1.2.5 with bind vars and `query` method.
     Fixes #35.
   * Fix double definition error caused by defining sqlite3_int64/uint64.
+  * Fix suspicious version regexp.
 
 * Deprecations
   * ArrayWithTypesAndFields#types is deprecated and the class will be removed
