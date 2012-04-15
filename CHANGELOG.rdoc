@@ -1,5 +1,8 @@
 === (in Git)
 
+* Enhancements
+  * Windows: build against SQLite 3.7.11
+
 * Bugfixes
   * Support both UTF-16LE and UTF-16BE encoding modes on PPC. Closes #63
 
