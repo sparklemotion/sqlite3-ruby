@@ -1,19 +1,12 @@
-=== (in Git)
-
-* Enhancements
-  * Windows: build against SQLite 3.7.11
-
-* Bugfixes
-  * Support both UTF-16LE and UTF-16BE encoding modes on PPC. Closes #63
-
 === 1.3.6
 
 * Enhancements
-  * Windows: build against SQLite 3.7.10
+  * Windows: build against SQLite 3.7.11
   * Added SQLite3::ResultSet#each_hash for fetching each row as a hash.
   * Added SQLite3::ResultSet#next_hash for fetching one row as a hash.
 
 * Bugfixes
+  * Support both UTF-16LE and UTF-16BE encoding modes on PPC. Closes #63
   * Protect parameters to custom functions from being garbage collected too
     soon. Fixes #60. Thanks hirataya!
   * Fix backwards compatibility with 1.2.5 with bind vars and `query` method.
