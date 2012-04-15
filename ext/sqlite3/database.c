@@ -62,7 +62,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   else Check_Type(opts, T_HASH);
 
 #ifdef HAVE_RUBY_ENCODING_H
-  if(UTF16_LE_P(file)) {
+  if(UTF16_LE_P(file) || UTF16_BE_P(file)) {
     status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
   } else {
 #endif

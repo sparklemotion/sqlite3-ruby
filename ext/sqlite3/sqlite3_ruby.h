@@ -21,6 +21,7 @@
 
 #define UTF8_P(_obj) (rb_enc_get_index(_obj) == rb_utf8_encindex())
 #define UTF16_LE_P(_obj) (rb_enc_get_index(_obj) == rb_enc_find_index("UTF-16LE"))
+#define UTF16_BE_P(_obj) (rb_enc_get_index(_obj) == rb_enc_find_index("UTF-16BE"))
 #define SQLITE3_UTF8_STR_NEW2(_obj) \
     (rb_enc_associate_index(rb_str_new2(_obj), rb_utf8_encindex()))
 
