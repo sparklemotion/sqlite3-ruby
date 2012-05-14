@@ -1,3 +1,8 @@
+=== Unreleased
+
+* Bugfixes
+  * Closing a bad statement twice will not segv.
+
 === 1.3.6 / 2012-04-16
 
 * Enhancements

@@ -7,6 +7,17 @@ module SQLite3
       @stmt = SQLite3::Statement.new(@db, "select 'foo'")
     end
 
+    def test_double_close_does_not_segv
+      @db.execute 'CREATE TABLE "things" ("number" float NOT NULL)'
+
+      stmt = @db.prepare 'INSERT INTO things (number) VALUES (?)'
+      assert_raises(SQLite3::ConstraintException) { stmt.execute(nil) }
+
+      stmt.close
+
+      assert_raises(SQLite3::Exception) { stmt.close }
+    end
+
     def test_raises_type_error
       assert_raises(TypeError) do
         SQLite3::Statement.new( @db, nil )
