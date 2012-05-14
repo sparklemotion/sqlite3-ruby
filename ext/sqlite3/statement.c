@@ -80,8 +80,6 @@ static VALUE sqlite3_rb_close(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
   sqlite3 * db;
-  int current_status;
-  int closed_status;
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
