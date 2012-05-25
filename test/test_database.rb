@@ -22,9 +22,9 @@ module SQLite3
 
     def test_blob
       @db.execute("CREATE TABLE blobs ( id INTEGER, hash BLOB(10) )")
-      str = "\0foo"
-      @db.execute("INSERT INTO blobs VALUES (0, ?)", [str])
-      assert_equal [[0, str]], @db.execute("SELECT * FROM blobs")
+      blob = Blob.new("foo\0bar")
+      @db.execute("INSERT INTO blobs VALUES (0, ?)", [blob])
+      assert_equal [[0, blob, blob.length, blob.length*2]], @db.execute("SELECT id, hash, length(hash), length(hex(hash)) FROM blobs")
     end
 
     def test_get_first_row
@@ -225,6 +225,17 @@ module SQLite3
       end
       @db.execute("select hello(2.2, 'foo', NULL)")
       assert_equal [2.2, 'foo', nil], called_with
+    end
+
+    def test_call_func_blob
+      called_with = nil
+      @db.define_function("hello") do |a, b, c|
+        called_with = [a, b, c]
+        nil
+      end
+      blob = Blob.new("a\0fine\0kettle\0of\0fish")
+      @db.execute("select hello(?, length(?), length(?))", [blob, blob, blob])
+      assert_equal [blob, blob.length, 21], called_with
     end
 
     def test_function_return
