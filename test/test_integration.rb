@@ -21,12 +21,14 @@ class TC_Database_Integration < SQLite3::TestCase
 
   def test_table_info_with_defaults_for_version_3_3_8_and_higher
     @db.transaction do
-      @db.execute "create table defaults_test ( a string default NULL, b string default 'Hello' )"
+      @db.execute "create table defaults_test ( a string default NULL, b string default 'Hello', c string default '--- []\n' )"
       data = @db.table_info( "defaults_test" )
       assert_equal({"name" => "a", "type" => "string", "dflt_value" => nil, "notnull" => 0, "cid" => 0, "pk" => 0},
         data[0])
       assert_equal({"name" => "b", "type" => "string", "dflt_value" => "Hello", "notnull" => 0, "cid" => 1, "pk" => 0},
         data[1])
+      assert_equal({"name" => "c", "type" => "string", "dflt_value" => "--- []\n", "notnull" => 0, "cid" => 2, "pk" => 0},
+        data[2])
     end
   end
 
