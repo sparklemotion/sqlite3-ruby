@@ -11,7 +11,7 @@ dir_config("sqlite3")
 
 # prioritize local builds
 if enable_config("local", false)
-  $LDFLAGS = ENV.fetch("LDFLAGS", nil)
+  $LDFLAGS = ENV.fetch("LDFLAGS", "")
 end
 
 if RbConfig::CONFIG["host_os"] =~ /mswin/
