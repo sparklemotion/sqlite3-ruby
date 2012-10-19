@@ -1,10 +1,10 @@
 module SQLite3
 
-  VERSION = '1.3.6'
+  VERSION = '2.3.6'
 
   module VersionProxy
 
-    MAJOR = 1
+    MAJOR = 2
     MINOR = 3
     TINY  = 6
     BUILD = nil
