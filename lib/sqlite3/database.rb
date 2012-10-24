@@ -115,8 +115,14 @@ in version 2.0.0.
     def execute sql, bind_vars = [], *args, &block
       # FIXME: This is a terrible hack and should be removed but is required
       # for older versions of rails
-      hack = Object.const_defined?(:ActiveRecord) && sql =~ /^PRAGMA index_list/
 
+      if bind_vars.is_a?(Array) && bind_vars[1].is_a?(Array) 
+        marks = Array.new(bind_vars[0].length, "?").join(",")
+        additions = 2.upto(bind_vars.length).map { |e| ",(#{marks})" }.join
+        sql << additions
+      end
+
+      hack = Object.const_defined?(:ActiveRecord) && sql =~ /^PRAGMA index_list/
       if bind_vars.nil? || !args.empty?
         if args.empty?
           bind_vars = []

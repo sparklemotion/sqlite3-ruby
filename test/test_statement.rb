@@ -82,6 +82,21 @@ module SQLite3
       end
     end
 
+    #Works naturally: each val is bound to the parameter markers that have to be explicitly set
+    def test_parameter_binding_multi_insert
+      @db.execute('create table vals(bio int, foo int)')
+      @db.execute("INSERT INTO vals VALUES (?,?),(?,?)", [9,9,8,8])
+      assert_equal 2, @db.changes
+    end
+
+    #My Patch: each nested array represents a row, does this by converting the sql statement
+    #based on the arguments it is passed
+    def test_parameter_binding_multi_insert_with_uknown_number_of_values
+      @db.execute('create table vals(bio int, foo int)')
+      @db.execute("INSERT INTO vals VALUES (?,?)", [ [8, 8], [9, 9] ] )
+      assert_equal 2, @db.changes
+    end
+
     def test_bind_param_string
       stmt = SQLite3::Statement.new(@db, "select ?")
       stmt.bind_param(1, "hello")
