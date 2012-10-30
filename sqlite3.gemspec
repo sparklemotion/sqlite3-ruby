@@ -23,7 +23,9 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 1.9.1"
 
-  s.files = Dir.glob("{lib}/**/*") + %w(LICENSE README.rdoc)
+  s.files = Dir.glob("lib/**/*.rb") + %w(LICENSE README.rdoc) +  Dir.glob('ext/**/*.{c,h,rb}')
+  s.extensions = ['ext/sqlite3/extconf.rb']
+  #s.executables = ['sqlite3_native']
 
   s.post_install_message = <<-EOM
 EOM
