@@ -446,21 +446,28 @@ Support for this will be removed in version 2.0.0.
     #   puts db.get_first_value( "select lengths(name) from A" )
     def create_aggregate_handler( handler )
       proxy = Class.new do
-        def initialize handler
-          @handler  = handler
-          @fp       = FunctionProxy.new
+        def initialize klass
+          @klass = klass
+          @fp    = FunctionProxy.new
         end
 
         def step( *args )
-          @handler.step(@fp, *args)
+          instance.step(@fp, *args)
         end
 
         def finalize
-          @handler.finalize @fp
+          instance.finalize @fp
+          @instance = nil
           @fp.result
         end
+
+        private
+
+        def instance
+          @instance ||= @klass.new
+        end
       end
-      define_aggregator(handler.name, proxy.new(handler.new))
+      define_aggregator(handler.name, proxy.new(handler))
       self
     end
 

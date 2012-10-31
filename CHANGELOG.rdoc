@@ -2,6 +2,7 @@
 
 * Bugfixes
   * Closing a bad statement twice will not segv.
+  * Aggregate handlers are initialized on each query. Closes #44
 
 === 1.3.6 / 2012-04-16
 
