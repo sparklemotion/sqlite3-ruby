@@ -290,6 +290,10 @@ static int rb_sqlite3_timeout_busy_handler(void * self, int count)
   if (busy_handle == (VALUE) NULL || busy_handle == Qnil || busy_handle == Qundef)
   {
     // no busy handler.
+	if (timeout == 0) {
+	  // no timeout value, so return ime.
+	  return 0;
+	}
 #if USING_RUBY_SLEEP
     if (rb_thread_alone()) {
 	  // we just sleep c thread
