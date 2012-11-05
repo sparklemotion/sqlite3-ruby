@@ -8,7 +8,8 @@
  * and read from here: blog.urbylog.info/2010/01/inside-ruby-19-interpreter-threading-in.html
  * it said timer for thread scheduling is 10ms.
  */
-#define USING_RUBY_SLEEP	1
+//#define USING_RUBY_SLEEP	1
+#define USING_BLOCKING_RUBY	1
 #define SQLITE_BUSY_SLEEP_TIME	5	// ms
 #define RUBY_BUSY_SLEEP_TIME	"0.005"	//s
 
@@ -35,6 +36,7 @@ static VALUE allocate(VALUE klass)
   sqlite3RubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3Ruby));
   ctx->busy_timeout = 0;
   ctx->total = 0;
+  ctx->is_busy_imm = 1;
   return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
 }
 
@@ -254,6 +256,11 @@ static int rb_sqlite3_timeout_busy_handler(void * self, int count)
   sqlite3_vfs* os_func=NULL;
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   
+#if USING_BLOCKING_RUBY
+  if (ctx->is_busy_imm)
+	  return 0;
+#endif // USING_BLOCKING_RUBY
+  
   if (rb_self == (VALUE)NULL || ctx == NULL) {
 	assert(0);
     return 0;
@@ -304,13 +311,17 @@ static int rb_sqlite3_timeout_busy_handler(void * self, int count)
 #else
 	// this should cause more than 10ms sleep as ruby thread scheduling.
 	// however, if this is the only ruby thread, 
+#ifndef USING_BLOCKING_RUBY
 	if (rb_thread_alone()) {
+#endif // USING_BLOCKING_RUBY
 	  // we just sleep c thread
 	  os_func->xSleep(os_func, SQLITE_BUSY_SLEEP_TIME);
+#ifndef USING_BLOCKING_RUBY
 	} else {
 	  // we schedule ruby thread.
 	  rb_thread_schedule();
 	}
+#endif // USING_BLOCKING_RUBY
 #endif // USING_RUBY_SLEEP
     
   } else {
