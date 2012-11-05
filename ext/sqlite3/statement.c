@@ -147,7 +147,7 @@ static VALUE step(VALUE self)
 
   stmt = ctx->st;
   value = sqlite3_step(stmt);
-  if (value == SQLITE_BUSY || value == SQLITE_LOCKED)
+  if (value == SQLITE_BUSY || value == SQLITE_LOCKED || value == SQLITE_IOERR_BLOCKED)
   {
 	  struct Block_call try_again;
 	  VALUE db = rb_iv_get(self, "@connection");
