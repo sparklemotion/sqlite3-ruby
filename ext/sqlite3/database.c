@@ -279,7 +279,7 @@ static int rb_sqlite3_timeout_busy_handler(void * self, int count)
   timeout = ctx->busy_timeout;
   if (timeout != 0) {
 	// need to check current total.
-	if (count > 1) {
+	if (count > 0) {
 	  total = ctx->total;
 	  if (total >= timeout) {
 	    // failed, timeout.
@@ -311,12 +311,12 @@ static int rb_sqlite3_timeout_busy_handler(void * self, int count)
 #else
 	// this should cause more than 10ms sleep as ruby thread scheduling.
 	// however, if this is the only ruby thread, 
-#if !(USING_BLOCKING_RUBY)
+#ifndef USING_BLOCKING_RUBY
 	if (rb_thread_alone()) {
 #endif // USING_BLOCKING_RUBY
 	  // we just sleep c thread
 	  os_func->xSleep(os_func, SQLITE_BUSY_SLEEP_TIME);
-#if !(USING_BLOCKING_RUBY)
+#ifndef USING_BLOCKING_RUBY
 	} else {
 	  // we schedule ruby thread.
 	  rb_thread_schedule();

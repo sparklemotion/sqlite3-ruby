@@ -152,7 +152,8 @@ static VALUE step(VALUE self)
 	  struct Block_call try_again;
 	  VALUE db = rb_iv_get(self, "@connection");
 	  sqlite3RubyPtr r_ctx = NULL;
-	  Data_Get_Struct(db, sqlite3Ruby, r_ctx);
+	  if (db != Qnil)
+		Data_Get_Struct(db, sqlite3Ruby, r_ctx);
 	  if (r_ctx != NULL)
 		  r_ctx->is_busy_imm = 0;
 	  try_again.stmt = stmt;
