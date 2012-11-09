@@ -97,3 +97,7 @@ The source repository is accessible via git:
 
   git clone git://github.com/luislavena/sqlite3-ruby.git
 
+== Busy_exception fix
+It fixes the deadlock condition which will cause the throwing of the busy_exception. 
+
+Noted: don't put selection inside transaction, that will be likely to cause busy exception, which is expected behiour
