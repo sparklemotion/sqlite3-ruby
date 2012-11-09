@@ -99,5 +99,8 @@ The source repository is accessible via git:
 
 == Busy_exception fix
 It fixes the deadlock condition which will cause the throwing of the busy_exception. 
+<pre>
+some testing is done here: https://github.com/dxj19831029/sqlite3-test-multithread
+</pre>
 
 Noted: don't put selection inside transaction, that will be likely to cause busy exception, which is expected behiour
