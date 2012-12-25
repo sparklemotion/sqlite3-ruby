@@ -97,3 +97,23 @@ The source repository is accessible via git:
 
   git clone git://github.com/luislavena/sqlite3-ruby.git
 
+== Busy_exception fix
+It fixes the deadlock condition which will cause the throwing of the busy_exception. 
+
+<pre>
+some testing is done here: https://github.com/dxj19831029/sqlite3-test-multithread
+</pre>
+
+Noted: don't put selection inside transaction, that will be likely to cause busy exception, which is expected behiour
+
+http://www.sqlite.org/c3ref/busy_handler.html
+
+    The presence of a busy handler does not guarantee that it will be invoked when there is lock contention. 
+    If SQLite determines that invoking the busy handler could result in a deadlock, it will go ahead and return 
+    SQLITE_BUSY or SQLITE_IOERR_BLOCKED instead of invoking the busy handler. Consider a scenario where one process 
+    is holding a read lock that it is trying to promote to a reserved lock and a second process is holding a 
+    reserved lock that it is trying to promote to an exclusive lock. The first process cannot proceed because 
+    it is blocked by the second and the second process cannot proceed because it is blocked by the first. 
+    If both processes invoke the busy handlers, neither will make any progress. Therefore, SQLite returns 
+    SQLITE_BUSY for the first process, hoping that this will induce the first process to release its read 
+    lock and allow the second process to proceed.

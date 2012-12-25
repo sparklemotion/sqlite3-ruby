@@ -105,6 +105,20 @@ static VALUE closed_p(VALUE self)
   return Qfalse;
 }
 
+struct Block_call {
+	sqlite3_stmt *stmt;
+	int value;
+};
+
+static VALUE rb_blocking_step_call(void* inout)
+{
+	struct Block_call* call = (struct Block_call*) inout;
+	if (call) {
+		call->value = sqlite3_step(call->stmt);
+	}
+	return Qnil;
+}
+
 static VALUE step(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
@@ -132,8 +146,22 @@ static VALUE step(VALUE self)
 #endif
 
   stmt = ctx->st;
-
   value = sqlite3_step(stmt);
+  if (value == SQLITE_BUSY || value == SQLITE_LOCKED || value == SQLITE_IOERR_BLOCKED)
+  {
+	  struct Block_call try_again;
+	  VALUE db = rb_iv_get(self, "@connection");
+	  sqlite3RubyPtr r_ctx = NULL;
+	  if (db != Qnil)
+		Data_Get_Struct(db, sqlite3Ruby, r_ctx);
+	  if (r_ctx != NULL)
+		  r_ctx->is_busy_imm = 0;
+	  try_again.stmt = stmt;
+	  rb_thread_blocking_region(rb_blocking_step_call, (void*)(&try_again), NULL, NULL);
+	  value = try_again.value;
+	  if (r_ctx != NULL)
+		  r_ctx->is_busy_imm = 1;
+  }
   length = sqlite3_column_count(stmt);
   list = rb_ary_new2((long)length);
 

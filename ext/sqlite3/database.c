@@ -1,4 +1,19 @@
+#include <ruby.h>
 #include <sqlite3_ruby.h>
+#include <assert.h>
+
+/**
+ *  enable/disable calling sleep in ruby for timeout.
+ * sqlite3 sleep should performs better. however, it may cause deadlock.
+ * and read from here: blog.urbylog.info/2010/01/inside-ruby-19-interpreter-threading-in.html
+ * it said timer for thread scheduling is 10ms.
+ */
+//#define USING_RUBY_SLEEP	1
+#define USING_BLOCKING_RUBY	1
+#define SQLITE_BUSY_SLEEP_TIME	5	// ms
+#define RUBY_BUSY_SLEEP_TIME	"0.005"	//s
+
+static int rb_sqlite3_timeout_busy_handler(void * ctx, int count);
 
 #define REQUIRE_OPEN_DB(_ctxt) \
   if(!_ctxt->db) \
@@ -19,6 +34,9 @@ static void deallocate(void * ctx)
 static VALUE allocate(VALUE klass)
 {
   sqlite3RubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3Ruby));
+  ctx->busy_timeout = 0;
+  ctx->total = 0;
+  ctx->is_busy_imm = 1;
   return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
 }
 
@@ -104,6 +122,8 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 #endif
 
   CHECK(ctx->db, status)
+  sqlite3_busy_handler(
+      ctx->db, rb_sqlite3_timeout_busy_handler, (void *)self);
 
   rb_iv_set(self, "@tracefunc", Qnil);
   rb_iv_set(self, "@authorizer", Qnil);
@@ -207,15 +227,122 @@ static VALUE trace(int argc, VALUE *argv, VALUE self)
   return self;
 }
 
-static int rb_sqlite3_busy_handler(void * ctx, int count)
+static int rb_sqlite3_os_current_time_int64(sqlite3_vfs *pVfs, sqlite3_int64* time) {
+    /**
+     *  this code is copied from sqlite30sCurrentTimeInt64
+     */
+    int rc;
+    if (pVfs == NULL) {
+      return 0;
+    }
+
+    if (pVfs->iVersion >= 2 && pVfs->xCurrentTimeInt64) {
+        rc = pVfs->xCurrentTimeInt64(pVfs, time);
+    } else {
+        double r;
+        rc = pVfs->xCurrentTime(pVfs, &r);
+        *time = (sqlite3_int64)(r*86400000.0);
+    }
+    return rc;
+}
+
+static int rb_sqlite3_timeout_busy_handler(void * self, int count)
 {
-  VALUE self = (VALUE)(ctx);
-  VALUE handle = rb_iv_get(self, "@busy_handler");
-  VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM((long)count));
+  VALUE rb_self = (VALUE)(self);
+  sqlite3RubyPtr ctx;
+  VALUE busy_handle = (VALUE) NULL;
+  sqlite3_int64 start = 0,end = 0,total = 0, timeout = 0;
+  int passed = 0;
+  sqlite3_vfs* os_func=NULL;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  
+#if USING_BLOCKING_RUBY
+  if (ctx->is_busy_imm)
+	  return 0;
+#endif // USING_BLOCKING_RUBY
+  
+  if (rb_self == (VALUE)NULL || ctx == NULL) {
+	assert(0);
+    return 0;
+  }
 
-  if(Qfalse == result) return 0;
+  // get os interface.
+  os_func = sqlite3_vfs_find(NULL);
+  if (os_func == NULL) {
+    // no ptr for os, in this case, we need to calculate time by ourself.
+    // check the sqlite3 logic, we should always have at least one interface
+    assert(0);
+    return 0;
+  }
 
+  // init the timeout value.
+  timeout = ctx->busy_timeout;
+  if (timeout != 0) {
+	// need to check current total.
+	if (count > 0) {
+	  total = ctx->total;
+	  if (total >= timeout) {
+	    // failed, timeout.
+	    return 0;
+	    }
+	} else {
+	  // init the total value.
+	  ctx->total = 0;
+	}
+    rb_sqlite3_os_current_time_int64(os_func, &start);
+  }
+  
+  // we only want to schedule the ruby thread or call busy_handler
+  busy_handle = rb_iv_get(rb_self, "@busy_handler");
+  if (busy_handle == (VALUE) NULL || busy_handle == Qnil || busy_handle == Qundef)
+  {
+    // no busy handler.
+	if (timeout == 0) {
+	  // no timeout value, so return ime.
+	  return 0;
+	}
+#if USING_RUBY_SLEEP
+    if (rb_thread_alone()) {
+	  // we just sleep c thread
+	  os_func->xSleep(os_func, SQLITE_BUSY_SLEEP_TIME);
+	} else {
+	  rb_eval_string("sleep "RUBY_BUSY_SLEEP_TIME);
+	}
+#else
+	// this should cause more than 10ms sleep as ruby thread scheduling.
+	// however, if this is the only ruby thread, 
+#ifndef USING_BLOCKING_RUBY
+	if (rb_thread_alone()) {
+#endif // USING_BLOCKING_RUBY
+	  // we just sleep c thread
+	  os_func->xSleep(os_func, SQLITE_BUSY_SLEEP_TIME);
+#ifndef USING_BLOCKING_RUBY
+	} else {
+	  // we schedule ruby thread.
+	  rb_thread_schedule();
+	}
+#endif // USING_BLOCKING_RUBY
+#endif // USING_RUBY_SLEEP
+    
+  } else {
+	// we have busy handler, so let's call it.
+	VALUE result = rb_funcall(busy_handle, rb_intern("call"), 1, INT2NUM((long)count));
+	if(Qfalse == result) return 0;
+	
+  }
+
+  if (timeout != 0) {
+	rb_sqlite3_os_current_time_int64(os_func, &end);
+	
+	// let's calculated the passed time.
+	passed = end - start;
+	total += passed;
+	
+	ctx->total = total;
+  }
+  
   return 1;
+
 }
 
 /* call-seq:
@@ -236,7 +363,6 @@ static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
 {
   sqlite3RubyPtr ctx;
   VALUE block;
-  int status;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
@@ -247,10 +373,6 @@ static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
 
   rb_iv_set(self, "@busy_handler", block);
 
-  status = sqlite3_busy_handler(
-      ctx->db, NIL_P(block) ? NULL : rb_sqlite3_busy_handler, (void *)self);
-
-  CHECK(ctx->db, status);
 
   return self;
 }
@@ -602,7 +724,11 @@ static VALUE set_busy_timeout(VALUE self, VALUE timeout)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  CHECK(ctx->db, sqlite3_busy_timeout(ctx->db, (int)NUM2INT(timeout)));
+  //CHECK(ctx->db, sqlite3_busy_timeout(ctx->db, (int)NUM2INT(timeout)));
+  ctx->busy_timeout = timeout;
+  ctx->total = 0;
+  CHECK(ctx->db, sqlite3_busy_handler(
+        ctx->db, rb_sqlite3_timeout_busy_handler, (void *)self));
 
   return self;
 }
