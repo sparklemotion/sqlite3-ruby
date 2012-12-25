@@ -94,7 +94,7 @@ in version 2.0.0.
       begin
         yield stmt
       ensure
-        stmt.close
+        stmt.close unless stmt.closed?
       end
     end
 

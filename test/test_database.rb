@@ -107,6 +107,15 @@ module SQLite3
       assert_instance_of(SQLite3::Statement, stmt)
     end
 
+    def test_block_prepare_does_not_double_close
+      db = SQLite3::Database.new(':memory:')
+      r = db.prepare('select "hello world"') do |stmt|
+        stmt.close
+        :foo
+      end
+      assert_equal :foo, r
+    end
+
     def test_total_changes
       db = SQLite3::Database.new(':memory:')
       db.execute("create table foo ( a integer primary key, b text )")
