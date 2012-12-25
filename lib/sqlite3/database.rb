@@ -221,15 +221,18 @@ Support for this behavior will be removed in version 2.0.0.
       sql = sql.strip
       until sql.empty? do
         prepare( sql ) do |stmt|
-          # FIXME: this should probably use sqlite3's api for batch execution
-          # This implementation requires stepping over the results.
-          if bind_vars.length == stmt.bind_parameter_count
-            stmt.bind_params(bind_vars)
+          unless stmt.closed?
+            # FIXME: this should probably use sqlite3's api for batch execution
+            # This implementation requires stepping over the results.
+            if bind_vars.length == stmt.bind_parameter_count
+              stmt.bind_params(bind_vars)
+            end
+            stmt.step
           end
-          stmt.step
           sql = stmt.remainder.strip
         end
       end
+      # FIXME: we should not return `nil` as a success return value
       nil
     end
 

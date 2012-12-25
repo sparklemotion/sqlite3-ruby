@@ -60,6 +60,14 @@ module SQLite3
       assert_equal [[30]], @db.execute("select number from items")
     end
 
+    def test_batch_last_comment_is_processed
+      # FIXME: nil as a successful return value is kinda dumb
+      assert_nil @db.execute_batch <<-eosql
+        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT);
+        -- omg
+      eosql
+    end
+
     def test_new
       db = SQLite3::Database.new(':memory:')
       assert db
