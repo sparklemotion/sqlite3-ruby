@@ -1,12 +1,12 @@
 module SQLite3
 
-  VERSION = '1.3.6'
+  VERSION = '1.3.7'
 
   module VersionProxy
 
     MAJOR = 1
     MINOR = 3
-    TINY  = 6
+    TINY  = 7
     BUILD = nil
 
     STRING = [ MAJOR, MINOR, TINY, BUILD ].compact.join( "." )
