@@ -17,7 +17,7 @@ namespace :ports do
 
     unless File.exist?(checkpoint)
       cflags = "-O2 -DSQLITE_ENABLE_COLUMN_METADATA"
-      cflags << " -fPIC" if recipe.host.include?("x86_64")
+      cflags << " -fPIC" if recipe.host && recipe.host.include?("x86_64")
       recipe.configure_options << "CFLAGS='#{cflags}'"
       recipe.cook
       touch checkpoint
