@@ -36,6 +36,9 @@ if ENV["USE_MINI_PORTILE"] == "true"
 end
 
 task :cross do
+  ["CC", "CXX", "LDFLAGS", "CPPFLAGS", "RUBYOPT"].each do |var|
+    ENV.delete(var)
+  end
   host = ENV.fetch("HOST", Rake::ExtensionCompiler.mingw_host)
   $recipes.each do |_, recipe|
     recipe.host = host
