@@ -24,6 +24,15 @@ module SQLite3
       end
     end
 
+    def test_insert_duplicate_records
+      @db.execute 'CREATE TABLE "things" ("name" varchar(20) CONSTRAINT "index_things_on_name" UNIQUE)'
+      stmt = @db.prepare("INSERT INTO things(name) VALUES(?)")
+      stmt.execute('ruby')
+
+      exception = assert_raises(SQLite3::ConstraintException) { stmt.execute('ruby') }
+      assert_match /column(s)? .* (is|are) not unique/, exception.message
+    end
+
     ###
     # This method may not exist depending on how sqlite3 was compiled
     def test_database_name

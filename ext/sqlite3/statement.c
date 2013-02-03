@@ -186,6 +186,8 @@ static VALUE step(VALUE self)
       return Qnil;
       break;
     default:
+      sqlite3_reset(stmt);
+      ctx->done_p = 0;
       CHECK(sqlite3_db_handle(ctx->st), value);
   }
 
