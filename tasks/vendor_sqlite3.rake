@@ -2,17 +2,12 @@ require "rake/clean"
 require "rake/extensioncompiler"
 require "mini_portile"
 
-$recipes = {}
+def define_sqlite_task(platform, host)
+  task "sqlite3:#{platform}" => ["ports"] do |t|
+    recipe = MiniPortile.new "sqlite3", BINARY_VERSION
+    recipe.files << "http://sqlite.org/sqlite-autoconf-#{URL_VERSION}.tar.gz"
+    recipe.host = host
 
-$recipes[:sqlite3] = MiniPortile.new "sqlite3", BINARY_VERSION
-$recipes[:sqlite3].files << "http://sqlite.org/sqlite-autoconf-#{URL_VERSION}.tar.gz"
-
-namespace :ports do
-  directory "ports"
-
-  desc "Install port sqlite3 #{$recipes[:sqlite3].version}"
-  task :sqlite3 => ["ports"] do |t|
-    recipe = $recipes[:sqlite3]
     checkpoint = "ports/.#{recipe.name}-#{recipe.version}-#{recipe.host}.installed"
 
     unless File.exist?(checkpoint)
@@ -25,6 +20,30 @@ namespace :ports do
 
     recipe.activate
   end
+
+  task :sqlite3 => ["sqlite3:#{platform}"]
+end
+
+
+# HACK: Use rake-compilers config.yml to determine the toolchain that was used
+# to build Ruby for this platform.
+# This is probably something that could be provided by rake-compiler.gem.
+def host_for_platform(for_platform)
+  begin
+    config_file = YAML.load_file(File.expand_path("~/.rake-compiler/config.yml"))
+    _, rbfile = config_file.find{|key, fname| key.start_with?("rbconfig-#{for_platform}-") }
+    IO.read(rbfile).match(/CONFIG\["host"\] = "(.*)"/)[1]
+  rescue
+    nil
+  end
+end
+
+
+namespace :ports do
+  directory "ports"
+
+  desc "Install port sqlite3"
+  define_sqlite_task(RUBY_PLATFORM, RbConfig::CONFIG['host'])
 end
 
 if RUBY_PLATFORM =~ /mingw/
@@ -36,16 +55,19 @@ if ENV["USE_MINI_PORTILE"] == "true"
 end
 
 task :cross do
-  ["CC", "CXX", "LDFLAGS", "CPPFLAGS", "RUBYOPT"].each do |var|
-    ENV.delete(var)
-  end
-  host = ENV.fetch("HOST", Rake::ExtensionCompiler.mingw_host)
-  $recipes.each do |_, recipe|
-    recipe.host = host
-  end
+  namespace :ports do
+    ["CC", "CXX", "LDFLAGS", "CPPFLAGS", "RUBYOPT"].each do |var|
+      ENV.delete(var)
+    end
 
-  # hook compile task with dependencies
-  Rake::Task["compile"].prerequisites.unshift "ports:sqlite3"
+    # TODO: Use ExtensionTask#cross_platform array
+    ['i386-mswin32-60', 'i386-mingw32', 'x64-mingw32'].each do |platform|
+      define_sqlite_task(platform, host_for_platform(platform))
+
+      # hook compile task with dependencies
+      Rake::Task["compile:#{platform}"].prerequisites.unshift "ports:sqlite3:#{platform}"
+    end
+  end
 end
 
 CLOBBER.include("ports")
