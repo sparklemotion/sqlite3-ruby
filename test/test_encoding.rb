@@ -32,7 +32,6 @@ module SQLite3
       stmt = db.prepare @insert
 
       ['US-ASCII', 'UTF-16LE', 'UTF-16BE', 'EUC-JP', 'UTF-8'].each_with_index do |enc,i|
-        str2 = str.encode(enc)
         stmt.bind_param 1, i
         stmt.bind_param 2, str.encode(enc)
         stmt.to_a
