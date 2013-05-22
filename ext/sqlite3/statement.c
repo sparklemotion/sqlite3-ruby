@@ -156,7 +156,7 @@ static VALUE step(VALUE self)
                     (long)sqlite3_column_bytes(stmt, i)
                 );
 #ifdef HAVE_RUBY_ENCODING_H
-                rb_enc_associate_index(str, enc_index);
+                rb_enc_associate_index(str, rb_utf8_encindex());
                 if(internal_encoding)
                   str = rb_str_export_to_enc(str, internal_encoding);
 #endif
@@ -238,15 +238,22 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
             SQLITE_TRANSIENT
             );
       } else {
+
+
 #ifdef HAVE_RUBY_ENCODING_H
-        if(!UTF8_P(value)) {
-              VALUE db          = rb_iv_get(self, "@connection");
-              VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-              rb_encoding * enc = rb_to_encoding(encoding);
-              value = rb_str_export_to_enc(value, enc);
+        if (UTF16_LE_P(value)) {
+          status = sqlite3_bind_text16(
+              ctx->st,
+              index,
+              (const char *)StringValuePtr(value),
+              (int)RSTRING_LEN(value),
+              SQLITE_TRANSIENT
+              );
+        } else {
+          if (!UTF8_P(value) || !USASCII_P(value)) {
+              value = rb_str_encode(value, rb_enc_from_encoding(rb_utf8_encoding()), 0, Qnil);
           }
 #endif
-
         status = sqlite3_bind_text(
             ctx->st,
             index,
@@ -254,6 +261,9 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
             (int)RSTRING_LEN(value),
             SQLITE_TRANSIENT
             );
+#ifdef HAVE_RUBY_ENCODING_H
+        }
+#endif
       }
       break;
     case T_BIGNUM:

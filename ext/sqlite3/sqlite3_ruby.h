@@ -19,6 +19,7 @@
 #ifdef HAVE_RUBY_ENCODING_H
 #include <ruby/encoding.h>
 
+#define USASCII_P(_obj) (rb_enc_get_index(_obj) == rb_usascii_encindex())
 #define UTF8_P(_obj) (rb_enc_get_index(_obj) == rb_utf8_encindex())
 #define UTF16_LE_P(_obj) (rb_enc_get_index(_obj) == rb_enc_find_index("UTF-16LE"))
 #define UTF16_BE_P(_obj) (rb_enc_get_index(_obj) == rb_enc_find_index("UTF-16BE"))
