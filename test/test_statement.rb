@@ -227,9 +227,7 @@ module SQLite3
       stmt.execute('employee-1')
       stmt.execute('employee-1') rescue SQLite3::ConstraintException
       stmt.reset!
-      assert_nothing_raised(SQLite3::ConstraintException) {
-        stmt.execute('employee-2')
-      }
+      assert stmt.execute('employee-2')
     end
 
     def test_clear_bindings
