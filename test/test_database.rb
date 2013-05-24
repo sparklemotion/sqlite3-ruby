@@ -1,10 +1,51 @@
 require 'helper'
-require 'iconv'
 
 module SQLite3
-  class TestDatabase < Test::Unit::TestCase
+  class TestDatabase < SQLite3::TestCase
+    attr_reader :db
+
     def setup
       @db = SQLite3::Database.new(':memory:')
+    end
+
+    def test_segv
+      assert_raises(TypeError) { SQLite3::Database.new 1 }
+    end
+
+    def test_bignum
+      num = 4907021672125087844
+      db.execute 'CREATE TABLE "employees" ("token" integer(8), "name" varchar(20) NOT NULL)'
+      db.execute "INSERT INTO employees(name, token) VALUES('employee-1', ?)", [num]
+      rows = db.execute 'select token from employees'
+      assert_equal num, rows.first.first
+    end
+
+    def test_blob
+      @db.execute("CREATE TABLE blobs ( id INTEGER, hash BLOB(10) )")
+      blob = Blob.new("foo\0bar")
+      @db.execute("INSERT INTO blobs VALUES (0, ?)", [blob])
+      assert_equal [[0, blob, blob.length, blob.length*2]], @db.execute("SELECT id, hash, length(hash), length(hex(hash)) FROM blobs")
+    end
+
+    def test_get_first_row
+      assert_equal [1], @db.get_first_row('SELECT 1')
+    end
+
+    def test_get_first_row_with_type_translation_and_hash_results
+      @db.results_as_hash = true
+      assert_equal({0=>1, "1"=>1}, @db.get_first_row('SELECT 1'))
+    end
+
+    def test_execute_with_type_translation_and_hash
+      @db.results_as_hash = true
+      rows = []
+      @db.execute('SELECT 1') { |row| rows << row }
+
+      assert_equal({0=>1, "1"=>1}, rows.first)
+    end
+
+    def test_encoding
+      assert @db.encoding, 'database has encoding'
     end
 
     def test_changes
@@ -17,6 +58,14 @@ module SQLite3
         {"nn" => 20, "n" => 10})
       assert_equal 1, @db.changes
       assert_equal [[30]], @db.execute("select number from items")
+    end
+
+    def test_batch_last_comment_is_processed
+      # FIXME: nil as a successful return value is kinda dumb
+      assert_nil @db.execute_batch <<-eosql
+        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT);
+        -- omg
+      eosql
     end
 
     def test_new
@@ -33,8 +82,15 @@ module SQLite3
     end
 
     def test_new_with_options
-      db = SQLite3::Database.new(Iconv.conv('UTF-16LE', 'UTF-8', ':memory:'),
-                                 :utf16 => true)
+      # determine if Ruby is running on Big Endian platform
+      utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
+
+      if RUBY_VERSION >= "1.9"
+        db = SQLite3::Database.new(':memory:'.encode(utf16), :utf16 => true)
+      else
+        db = SQLite3::Database.new(Iconv.conv(utf16, 'UTF-8', ':memory:'),
+                                   :utf16 => true)
+      end
       assert db
     end
 
@@ -57,6 +113,15 @@ module SQLite3
       db = SQLite3::Database.new(':memory:')
       stmt = db.prepare('select "hello world"')
       assert_instance_of(SQLite3::Statement, stmt)
+    end
+
+    def test_block_prepare_does_not_double_close
+      db = SQLite3::Database.new(':memory:')
+      r = db.prepare('select "hello world"') do |stmt|
+        stmt.close
+        :foo
+      end
+      assert_equal :foo, r
     end
 
     def test_total_changes
@@ -179,6 +244,17 @@ module SQLite3
       assert_equal [2.2, 'foo', nil], called_with
     end
 
+    def test_call_func_blob
+      called_with = nil
+      @db.define_function("hello") do |a, b, c|
+        called_with = [a, b, c]
+        nil
+      end
+      blob = Blob.new("a\0fine\0kettle\0of\0fish")
+      @db.execute("select hello(?, length(?), length(?))", [blob, blob, blob])
+      assert_equal [blob, blob.length, 21], called_with
+    end
+
     def test_function_return
       @db.define_function("hello") { |a| 10 }
       assert_equal [10], @db.execute("select hello('world')").first
@@ -270,7 +346,7 @@ module SQLite3
     end
 
     def test_close_with_open_statements
-      stmt = @db.prepare("select 'foo'")
+      @db.prepare("select 'foo'")
       assert_raises(SQLite3::BusyException) do
         @db.close
       end

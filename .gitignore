@@ -6,7 +6,7 @@ doc/faq/faq.html
 *.swp
 test/test.db
 tmp
-vendor
+ports
 *.log
 *.o
 .config

@@ -1,7 +1,7 @@
 require 'helper'
 
 module SQLite3
-  class TestVFS < Test::Unit::TestCase
+  class TestVFS < TestCase
     class MyVFS < SQLite3::VFS
       def open name, flags
         SQLite3::VFS::StringIO.new name, flags

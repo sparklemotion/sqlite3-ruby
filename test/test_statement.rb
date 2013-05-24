@@ -1,10 +1,27 @@
 require 'helper'
 
 module SQLite3
-  class TestStatement < Test::Unit::TestCase
+  class TestStatement < SQLite3::TestCase
     def setup
       @db   = SQLite3::Database.new(':memory:')
       @stmt = SQLite3::Statement.new(@db, "select 'foo'")
+    end
+
+    def test_double_close_does_not_segv
+      @db.execute 'CREATE TABLE "things" ("number" float NOT NULL)'
+
+      stmt = @db.prepare 'INSERT INTO things (number) VALUES (?)'
+      assert_raises(SQLite3::ConstraintException) { stmt.execute(nil) }
+
+      stmt.close
+
+      assert_raises(SQLite3::Exception) { stmt.close }
+    end
+
+    def test_raises_type_error
+      assert_raises(TypeError) do
+        SQLite3::Statement.new( @db, nil )
+      end
     end
 
     ###
@@ -202,6 +219,29 @@ module SQLite3
     def test_execute_with_hash
       stmt = @db.prepare('select :n, :h')
       assert_equal [[10, nil]], stmt.execute('n' => 10, 'h' => nil).to_a
+    end
+
+    def test_with_error
+      @db.execute('CREATE TABLE "employees" ("name" varchar(20) NOT NULL CONSTRAINT "index_employees_on_name" UNIQUE)')
+      stmt = @db.prepare("INSERT INTO Employees(name) VALUES(?)")
+      stmt.execute('employee-1')
+      stmt.execute('employee-1') rescue SQLite3::ConstraintException
+      stmt.reset!
+      assert stmt.execute('employee-2')
+    end
+
+    def test_clear_bindings
+      stmt = @db.prepare('select ?, ?')
+      stmt.bind_param 1, "foo"
+      stmt.bind_param 2, "bar"
+
+      # We can't fetch bound parameters back out of sqlite3, so just call
+      # the clear_bindings! method and assert that nil is returned
+      stmt.clear_bindings!
+
+      while x = stmt.step
+        assert_equal [nil, nil], x
+      end
     end
   end
 end

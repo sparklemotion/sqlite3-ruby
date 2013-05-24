@@ -3,7 +3,7 @@ require 'helper'
 require 'thread'
 require 'benchmark'
 
-class TC_Integration_Pending < Test::Unit::TestCase
+class TC_Integration_Pending < SQLite3::TestCase
   def setup
     @db = SQLite3::Database.new("test.db")
     @db.transaction do
@@ -20,6 +20,8 @@ class TC_Integration_Pending < Test::Unit::TestCase
   end
 
   def test_busy_handler_outwait
+    skip("not working in 1.9") if RUBY_VERSION >= '1.9'
+
     busy = Mutex.new
     busy.lock
     handler_call_count = 0

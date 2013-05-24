@@ -35,6 +35,8 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
   const char *tail = NULL;
   int status;
 
+  StringValue(sql);
+
   Data_Get_Struct(db, sqlite3Ruby, db_ctx);
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
@@ -43,14 +45,15 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(!UTF8_P(sql)) {
-    VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-    rb_encoding * enc = NIL_P(encoding) ? rb_utf8_encoding() :
-                                          rb_to_encoding(encoding);
-    sql               = rb_str_export_to_enc(sql, enc);
+    sql               = rb_str_export_to_enc(sql, rb_utf8_encoding());
   }
 #endif
 
+#ifdef HAVE_SQLITE3_PREPARE_V2
   status = sqlite3_prepare_v2(
+#else
+  status = sqlite3_prepare(
+#endif
       db_ctx->db,
       (const char *)StringValuePtr(sql),
       (int)RSTRING_LEN(sql),
@@ -82,9 +85,7 @@ static VALUE sqlite3_rb_close(VALUE self)
 
   REQUIRE_OPEN_STMT(ctx);
 
-  db = sqlite3_db_handle(ctx->st);
-  CHECK(db, sqlite3_finalize(ctx->st));
-
+  sqlite3_finalize(ctx->st);
   ctx->st = NULL;
 
   return self;
@@ -155,7 +156,7 @@ static VALUE step(VALUE self)
                     (long)sqlite3_column_bytes(stmt, i)
                 );
 #ifdef HAVE_RUBY_ENCODING_H
-                rb_enc_associate_index(str, enc_index);
+                rb_enc_associate_index(str, rb_utf8_encindex());
                 if(internal_encoding)
                   str = rb_str_export_to_enc(str, internal_encoding);
 #endif
@@ -237,15 +238,22 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
             SQLITE_TRANSIENT
             );
       } else {
+
+
 #ifdef HAVE_RUBY_ENCODING_H
-        if(!UTF8_P(value)) {
-              VALUE db          = rb_iv_get(self, "@connection");
-              VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-              rb_encoding * enc = rb_to_encoding(encoding);
-              value = rb_str_export_to_enc(value, enc);
+        if (UTF16_LE_P(value)) {
+          status = sqlite3_bind_text16(
+              ctx->st,
+              index,
+              (const char *)StringValuePtr(value),
+              (int)RSTRING_LEN(value),
+              SQLITE_TRANSIENT
+              );
+        } else {
+          if (!UTF8_P(value) || !USASCII_P(value)) {
+              value = rb_str_encode(value, rb_enc_from_encoding(rb_utf8_encoding()), 0, Qnil);
           }
 #endif
-
         status = sqlite3_bind_text(
             ctx->st,
             index,
@@ -253,15 +261,16 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
             (int)RSTRING_LEN(value),
             SQLITE_TRANSIENT
             );
+#ifdef HAVE_RUBY_ENCODING_H
+        }
+#endif
       }
       break;
     case T_BIGNUM:
-#if SIZEOF_LONG < 8
       if (RBIGNUM_LEN(value) * SIZEOF_BDIGITS <= 8) {
           status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)NUM2LL(value));
           break;
       }
-#endif
     case T_FLOAT:
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
       break;
@@ -296,7 +305,26 @@ static VALUE reset_bang(VALUE self)
   REQUIRE_OPEN_STMT(ctx);
 
   status = sqlite3_reset(ctx->st);
-  CHECK(sqlite3_db_handle(ctx->st), status);
+
+  ctx->done_p = 0;
+
+  return self;
+}
+
+/* call-seq: stmt.clear_bindings!
+ *
+ * Resets the statement. This is typically done internally, though it might
+ * occassionally be necessary to manually reset the statement.
+ */
+static VALUE clear_bindings(VALUE self)
+{
+  sqlite3StmtRubyPtr ctx;
+  int status;
+
+  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  REQUIRE_OPEN_STMT(ctx);
+
+  status = sqlite3_clear_bindings(ctx->st);
 
   ctx->done_p = 0;
 
@@ -343,7 +371,7 @@ static VALUE column_name(VALUE self, VALUE index)
 
   name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
 
-  if(name) return rb_str_new2(name);
+  if(name) return SQLITE3_UTF8_STR_NEW2(name);
   return Qnil;
 }
 
@@ -406,6 +434,7 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
   rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
+  rb_define_method(cSqlite3Statement, "clear_bindings!", clear_bindings, 0);
   rb_define_method(cSqlite3Statement, "step", step, 0);
   rb_define_method(cSqlite3Statement, "done?", done_p, 0);
   rb_define_method(cSqlite3Statement, "column_count", column_count, 0);

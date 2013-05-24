@@ -6,9 +6,9 @@ rescue LoadError
   require 'hoe'
 end
 
-Hoe.plugin :debugging, :doofus, :git
+Hoe.plugin :debugging, :doofus, :git, :minitest
 
-HOE = Hoe.spec 'sqlite3-ruby' do
+HOE = Hoe.spec 'sqlite3' do
   developer           'Jamis Buck', 'jamis@37signals.com'
   developer           'Luis Lavena', 'luislavena@gmail.com'
   developer           'Aaron Patterson', 'aaron@tenderlovemaking.com'
@@ -17,11 +17,14 @@ HOE = Hoe.spec 'sqlite3-ruby' do
   self.history_file  = 'CHANGELOG.rdoc'
   self.extra_rdoc_files  = FileList['*.rdoc', 'ext/**/*.c']
 
-  spec_extras[:required_ruby_version]     = Gem::Requirement.new('>= 1.8.6')
-  spec_extras[:required_rubygems_version] = '>= 1.3.5'
-  spec_extras[:extensions]                = ["ext/sqlite3/extconf.rb"]
+  require_ruby_version ">= 1.8.7"
+  require_rubygems_version ">= 1.3.5"
 
-  extra_dev_deps << ['rake-compiler', "~> 0.7.0"]
+  spec_extras[:extensions] = ["ext/sqlite3/extconf.rb"]
+
+  extra_dev_deps << ['rake-compiler', "~> 0.8.2"]
+  extra_dev_deps << ["mini_portile", "~> 0.2.2"]
+  extra_dev_deps << ["minitest", "~> 5.0"]
 
   clean_globs.push('**/test.db')
 end
