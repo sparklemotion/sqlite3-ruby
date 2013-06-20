@@ -246,12 +246,12 @@ module SQLite3
 
     def test_call_func_blob
       called_with = nil
-      @db.define_function("hello") do |a, b, c|
-        called_with = [a, b, c]
+      @db.define_function("hello") do |a, b|
+        called_with = [a, b, a.length]
         nil
       end
       blob = Blob.new("a\0fine\0kettle\0of\0fish")
-      @db.execute("select hello(?, length(?), length(?))", [blob, blob, blob])
+      @db.execute("select hello(?, length(?))", [blob, blob])
       assert_equal [blob, blob.length, 21], called_with
     end
 
