@@ -26,7 +26,7 @@ Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
     ext.config_options << "--enable-local"
   else
     ext.cross_compile = true
-    ext.cross_platform = ['i386-mswin32-60', 'i386-mingw32']
+    ext.cross_platform = ['i386-mswin32-60', 'i386-mingw32', 'x64-mingw32']
     ext.cross_config_options << "--enable-local"
   end
 end
