@@ -69,7 +69,7 @@ class TC_Integration_Pending < SQLite3::TestCase
     end
     sleep 1
 
-    @db.busy_handler do |count|
+    @db.busy_handler do
       handler_call_count += 1
       false
     end
