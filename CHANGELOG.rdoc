@@ -1,6 +1,7 @@
 === (in Git)
 
 * Bugfixes:
+  * Correctly convert BLOB values to Ruby. Closes #65
   * Add MIT license reference to gemspec. Closes #99
 
 === 1.3.7 / 2013-01-11
