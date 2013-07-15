@@ -20,6 +20,7 @@ HOE = Hoe.spec 'sqlite3' do
   spec_extras[:required_ruby_version]     = Gem::Requirement.new('>= 1.8.7')
   spec_extras[:required_rubygems_version] = '>= 1.3.5'
   spec_extras[:extensions]                = ["ext/sqlite3/extconf.rb"]
+  spec_extras[:license]                   = "MIT"
 
   extra_dev_deps << ['rake-compiler', "~> 0.8.2"]
   extra_dev_deps << ["mini_portile", "~> 0.2.2"]
