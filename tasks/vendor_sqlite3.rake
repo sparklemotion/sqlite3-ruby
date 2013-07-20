@@ -2,8 +2,13 @@ require "rake/clean"
 require "rake/extensioncompiler"
 require "mini_portile"
 
+CLOBBER.include("ports")
+
+directory "ports"
+
 def define_sqlite_task(platform, host)
-  task "sqlite3:#{platform}" => ["ports"] do |t|
+  desc "Compile sqlite3 for #{platform} (#{host})"
+  task "ports:sqlite3:#{platform}" => ["ports"] do |t|
     recipe = MiniPortile.new "sqlite3", BINARY_VERSION
     recipe.files << "http://sqlite.org/sqlite-autoconf-#{URL_VERSION}.tar.gz"
     recipe.host = host
@@ -20,54 +25,61 @@ def define_sqlite_task(platform, host)
 
     recipe.activate
   end
-
-  task :sqlite3 => ["sqlite3:#{platform}"]
 end
 
+# native sqlite3 compilation
+define_sqlite_task RUBY_PLATFORM, RbConfig::CONFIG["host"]
 
-# HACK: Use rake-compilers config.yml to determine the toolchain that was used
-# to build Ruby for this platform.
-# This is probably something that could be provided by rake-compiler.gem.
-def host_for_platform(for_platform)
-  begin
-    config_file = YAML.load_file(File.expand_path("~/.rake-compiler/config.yml"))
-    _, rbfile = config_file.find{|key, fname| key.start_with?("rbconfig-#{for_platform}-") }
-    IO.read(rbfile).match(/CONFIG\["host"\] = "(.*)"/)[1]
-  rescue
-    nil
-  end
-end
-
-
-namespace :ports do
-  directory "ports"
-
-  desc "Install port sqlite3"
-  define_sqlite_task(RUBY_PLATFORM, RbConfig::CONFIG['host'])
-end
-
-if RUBY_PLATFORM =~ /mingw/
-  Rake::Task['compile'].prerequisites.unshift "ports:sqlite3"
-end
-
+# trick to test local compilation of sqlite3
 if ENV["USE_MINI_PORTILE"] == "true"
-  Rake::Task["compile"].prerequisites.unshift "ports:sqlite3"
+  # fake recipe so we can build a directory to it
+  recipe = MiniPortile.new "sqlite3", BINARY_VERSION
+  recipe.host = RbConfig::CONFIG["host"]
+
+  RUBY_EXTENSION.config_options << "--enable-local --with-sqlite3-dir=#{recipe.path}"
+
+  # compile sqlite3 first
+  Rake::Task["compile"].prerequisites.unshift "ports:sqlite3:#{RUBY_PLATFORM}"
+end
+
+# force compilation of sqlite3 when working natively under MinGW
+if RUBY_PLATFORM =~ /mingw/
+  Rake::Task['compile'].prerequisites.unshift "ports:sqlite3:#{RUBY_PLATFORM}"
+end
+
+# iterate over all cross-compilation platforms and define the proper
+# sqlite3 recipe for it.
+if RUBY_EXTENSION.cross_compile
+  config_path = File.expand_path("~/.rake-compiler/config.yml")
+  if File.exist?(config_path)
+    # obtains platforms from rake-compiler's config.yml
+    config_file = YAML.load_file(config_path)
+
+    Array(RUBY_EXTENSION.cross_platform).each do |platform|
+      # obtain platform from rbconfig file
+      config_key = config_file.keys.sort.find { |key|
+        key.start_with?("rbconfig-#{platform}-")
+      }
+      rbfile = config_file[config_key]
+
+      # skip if rbconfig cannot be read
+      next unless File.exist?(rbfile)
+
+      host = IO.read(rbfile).match(/CONFIG\["host"\] = "(.*)"/)[1]
+      puts "platform: #{platform}, host: #{host}"
+
+      define_sqlite_task platform, host
+
+      # hook compile task for the right platform
+      Rake::Task["compile:#{platform}"].prerequisites.unshift "ports:sqlite3:#{platform}"
+    end
+  else
+    warn "rake-compiler configuration doesn't exist, but is required for ports"
+  end
 end
 
 task :cross do
-  namespace :ports do
-    ["CC", "CXX", "LDFLAGS", "CPPFLAGS", "RUBYOPT"].each do |var|
-      ENV.delete(var)
-    end
-
-    # TODO: Use ExtensionTask#cross_platform array
-    ['i386-mswin32-60', 'i386-mingw32', 'x64-mingw32'].each do |platform|
-      define_sqlite_task(platform, host_for_platform(platform))
-
-      # hook compile task with dependencies
-      Rake::Task["compile:#{platform}"].prerequisites.unshift "ports:sqlite3:#{platform}"
-    end
+  ["CC", "CXX", "LDFLAGS", "CPPFLAGS", "RUBYOPT"].each do |var|
+    ENV.delete(var)
   end
 end
-
-CLOBBER.include("ports")
