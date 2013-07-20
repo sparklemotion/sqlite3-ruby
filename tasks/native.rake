@@ -8,7 +8,7 @@ BINARY_VERSION = "3.7.13"
 URL_VERSION    = "3071300"
 
 # build sqlite3_native C extension
-Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
+RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
   # where to locate the extension
   ext.ext_dir = 'ext/sqlite3'
 
