@@ -38,7 +38,7 @@ if ENV["USE_MINI_PORTILE"] == "true"
   recipe = MiniPortile.new "sqlite3", BINARY_VERSION
   recipe.host = RbConfig::CONFIG["host"]
 
-  RUBY_EXTENSION.config_options << "--enable-local --with-sqlite3-dir=#{recipe.path}"
+  RUBY_EXTENSION.config_options << "--with-opt-dir=#{recipe.path}"
 
   # compile sqlite3 first
   Rake::Task["compile"].prerequisites.unshift "ports:sqlite3:#{RUBY_PLATFORM}"
