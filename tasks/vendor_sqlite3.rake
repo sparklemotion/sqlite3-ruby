@@ -7,12 +7,12 @@ CLOBBER.include("ports")
 directory "ports"
 
 def define_sqlite_task(platform, host)
+  recipe = MiniPortile.new "sqlite3", BINARY_VERSION
+  recipe.files << "http://sqlite.org/sqlite-autoconf-#{URL_VERSION}.tar.gz"
+  recipe.host = host
+
   desc "Compile sqlite3 for #{platform} (#{host})"
   task "ports:sqlite3:#{platform}" => ["ports"] do |t|
-    recipe = MiniPortile.new "sqlite3", BINARY_VERSION
-    recipe.files << "http://sqlite.org/sqlite-autoconf-#{URL_VERSION}.tar.gz"
-    recipe.host = host
-
     checkpoint = "ports/.#{recipe.name}-#{recipe.version}-#{recipe.host}.installed"
 
     unless File.exist?(checkpoint)
@@ -25,6 +25,8 @@ def define_sqlite_task(platform, host)
 
     recipe.activate
   end
+
+  recipe
 end
 
 # native sqlite3 compilation
