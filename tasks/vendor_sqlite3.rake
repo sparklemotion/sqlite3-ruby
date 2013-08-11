@@ -67,10 +67,12 @@ if RUBY_EXTENSION.cross_compile
       # skip if rbconfig cannot be read
       next unless File.exist?(rbfile)
 
-      host = IO.read(rbfile).match(/CONFIG\["host"\] = "(.*)"/)[1]
-      puts "platform: #{platform}, host: #{host}"
+      host = IO.read(rbfile).match(/CONFIG\["CC"\] = "(.*)"/)[1].sub(/\-gcc/, '')
+      recipe = define_sqlite_task(platform, host)
 
-      define_sqlite_task platform, host
+      RUBY_EXTENSION.cross_config_options << {
+        platform => "--with-opt-dir=#{recipe.path}"
+      }
 
       # hook compile task for the right platform
       Rake::Task["compile:#{platform}"].prerequisites.unshift "ports:sqlite3:#{platform}"
