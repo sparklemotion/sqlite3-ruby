@@ -74,8 +74,8 @@ if RUBY_EXTENSION.cross_compile
         platform => "--with-opt-dir=#{recipe.path}"
       }
 
-      # hook compile task for the right platform
-      Rake::Task["compile:#{platform}"].prerequisites.unshift "ports:sqlite3:#{platform}"
+      # pre-compile sqlite3 port when cross-compiling
+      task :cross => "ports:sqlite3:#{platform}"
     end
   else
     warn "rake-compiler configuration doesn't exist, but is required for ports"
