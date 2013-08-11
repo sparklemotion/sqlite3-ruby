@@ -331,7 +331,7 @@
       p obj == h
     </pre>
 
-- "How do insert binary data into the database?": >-
+- "How do I insert binary data into the database?": >-
     Use blobs. Blobs are new features of SQLite3. You have to use bind
     variables to make it work:
 
