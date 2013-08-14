@@ -22,8 +22,6 @@ def define_sqlite_task(platform, host)
       recipe.cook
       touch checkpoint
     end
-
-    recipe.activate
   end
 
   recipe
