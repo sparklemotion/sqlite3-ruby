@@ -4,11 +4,12 @@ require 'rake/extensiontask'
 # NOTE: version used by cross compilation of Windows native extension
 # It do not affect compilation under other operating systems
 # The version indicated is the minimum DLL suggested for correct functionality
-BINARY_VERSION = "3.7.13"
-URL_VERSION    = "3071300"
+BINARY_VERSION = "3.7.17"
+URL_VERSION    = "3071700"
+URL_PATH       = "/2013"
 
 # build sqlite3_native C extension
-Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
+RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
   # where to locate the extension
   ext.ext_dir = 'ext/sqlite3'
 
@@ -26,8 +27,7 @@ Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
     ext.config_options << "--enable-local"
   else
     ext.cross_compile = true
-    ext.cross_platform = ['i386-mswin32-60', 'i386-mingw32']
-    ext.cross_config_options << "--enable-local"
+    ext.cross_platform = ['i386-mswin32-60', 'i386-mingw32', 'x64-mingw32']
   end
 end
 
