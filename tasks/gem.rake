@@ -6,7 +6,7 @@ rescue LoadError
   require 'hoe'
 end
 
-Hoe.plugin :debugging, :doofus, :git, :minitest
+Hoe.plugin :debugging, :doofus, :git, :minitest, :bundler
 
 HOE = Hoe.spec 'sqlite3' do
   developer           'Jamis Buck', 'jamis@37signals.com'
@@ -23,9 +23,10 @@ HOE = Hoe.spec 'sqlite3' do
   spec_extras[:extensions] = ["ext/sqlite3/extconf.rb"]
   spec_extras[:license] = "MIT"
 
-  extra_dev_deps << ['rake-compiler', "~> 0.8.2"]
+  extra_dev_deps << ['rake-compiler', "~> 0.9.1"]
   extra_dev_deps << ["mini_portile", "~> 0.2.2"]
   extra_dev_deps << ["minitest", "~> 5.0"]
+  extra_dev_deps << ["hoe-bundler", "~> 1.0"]
 
   clean_globs.push('**/test.db')
 end
