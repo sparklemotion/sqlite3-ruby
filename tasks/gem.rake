@@ -13,6 +13,8 @@ HOE = Hoe.spec 'sqlite3' do
   developer           'Luis Lavena', 'luislavena@gmail.com'
   developer           'Aaron Patterson', 'aaron@tenderlovemaking.com'
 
+  license             "MIT"
+
   self.readme_file   = 'README.rdoc'
   self.history_file  = 'CHANGELOG.rdoc'
   self.extra_rdoc_files  = FileList['*.rdoc', 'ext/**/*.c']
@@ -21,7 +23,6 @@ HOE = Hoe.spec 'sqlite3' do
   require_rubygems_version ">= 1.3.5"
 
   spec_extras[:extensions] = ["ext/sqlite3/extconf.rb"]
-  spec_extras[:license] = "MIT"
 
   extra_dev_deps << ['rake-compiler', "~> 0.9.1"]
   extra_dev_deps << ["mini_portile", "~> 0.5.1"]
