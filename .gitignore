@@ -12,3 +12,4 @@ ports
 .config
 InstalledFiles
 Makefile
+Gemfile.lock
