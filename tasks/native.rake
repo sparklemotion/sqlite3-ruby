@@ -1,5 +1,6 @@
 # use rake-compiler for building the extension
 require 'rake/extensiontask'
+require 'rake/extensioncompiler'
 
 # NOTE: version used by cross compilation of Windows native extension
 # It do not affect compilation under other operating systems
@@ -26,8 +27,15 @@ RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
     ext.lib_dir = "lib/sqlite3/#{$1}"
     ext.config_options << "--enable-local"
   else
-    ext.cross_compile = true
-    ext.cross_platform = ['i386-mswin32-60', 'i386-mingw32', 'x64-mingw32']
+
+    # detect cross-compiler available
+    begin
+      Rake::ExtensionCompiler.mingw_host
+      ext.cross_compile = true
+      ext.cross_platform = ['i386-mswin32-60', 'i386-mingw32', 'x64-mingw32']
+    rescue RuntimeError
+      # noop
+    end
   end
 end
 
