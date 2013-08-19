@@ -3,7 +3,7 @@
 * Bugfixes:
   * Reset exception message. Closes #80
   * Reduce warnings due unused pointers. Closes #89
-  * Add MIT license reference to gemspec. Closes #99
+  * Add BSD-3 license reference to gemspec. Refs #99 and #106
 
 === 1.3.7 / 2013-01-11
 
