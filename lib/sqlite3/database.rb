@@ -493,10 +493,11 @@ Support for this will be removed in version 2.0.0.
     def transaction( mode = :deferred )
       execute "begin #{mode.to_s} transaction"
 
+      block_value=nil
       if block_given?
         abort = false
         begin
-          yield self
+          block_value=yield self
         rescue ::Object
           abort = true
           raise
@@ -505,7 +506,7 @@ Support for this will be removed in version 2.0.0.
         end
       end
 
-      true
+      block_value.nil? ? block_value : abort
     end
 
     # Commits the current transaction. If there is no current transaction,
