@@ -505,8 +505,8 @@ Support for this will be removed in version 2.0.0.
           abort and rollback or commit
         end
       end
-      
-      block_value.nil? ? !abort : block_value
+
+      block_value.nil? ? block_value : abort
     end
 
     # Commits the current transaction. If there is no current transaction,
