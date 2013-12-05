@@ -55,6 +55,10 @@ module SQLite3
         raise NotImplementedError
       end
 
+      def file_control op
+        0
+      end
+
       def unlock mode
         @mutex.synchronize do
           @locks[mode] -= 1
