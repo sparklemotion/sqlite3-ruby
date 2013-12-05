@@ -238,7 +238,7 @@ class TC_Database_Integration < SQLite3::TestCase
 
   def test_execute2_with_block_with_bind_with_match
     called = 0
-    @db.execute2( "select * from foo where a = ?", 1 ) do |row|
+    @db.execute2( "select * from foo where a = ?", 1 ) do
       called += 1
     end
     assert_equal 2, called

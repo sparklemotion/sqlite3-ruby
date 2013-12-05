@@ -79,7 +79,6 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 static VALUE sqlite3_rb_close(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
-  sqlite3 * db;
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
@@ -186,6 +185,8 @@ static VALUE step(VALUE self)
       return Qnil;
       break;
     default:
+      sqlite3_reset(stmt);
+      ctx->done_p = 0;
       CHECK(sqlite3_db_handle(ctx->st), value);
   }
 

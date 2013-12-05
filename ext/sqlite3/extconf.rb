@@ -24,8 +24,9 @@ def asplode missing
           "http://www.sqlite.org/ first."
   else
     abort <<-error
-#{missing} is missing. Try 'port install sqlite3 +universal'
-or 'yum install sqlite-devel' and check your shared library search path (the
+#{missing} is missing. Try 'port install sqlite3 +universal',
+'yum install sqlite-devel' or 'apt-get install libsqlite3-dev'
+and check your shared library search path (the
 location where your sqlite3 shared library is located).
     error
   end
