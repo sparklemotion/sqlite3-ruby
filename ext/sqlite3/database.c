@@ -334,7 +334,7 @@ static VALUE sqlite3val2rb(sqlite3_value * val)
   }
 }
 
-static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
+void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
 {
   switch(TYPE(result)) {
     case T_NIL:

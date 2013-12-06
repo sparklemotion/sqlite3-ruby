@@ -135,6 +135,7 @@ void Init_sqlite3_native()
 #ifdef HAVE_SQLITE3_BACKUP_INIT
   init_sqlite3_backup();
 #endif
+  init_sqlite3_module();
 
   rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
   rb_define_singleton_method(mSqlite3, "threadsafe", threadsafe_p, 0);
