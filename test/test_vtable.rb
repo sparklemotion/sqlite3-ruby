@@ -1,6 +1,4 @@
 require "helper"
-require "sqlite3"
-require "sqlite3_native"
 
 #the ruby module name should be the one given to sqlite when creating the virtual table.
 module RubyModule
