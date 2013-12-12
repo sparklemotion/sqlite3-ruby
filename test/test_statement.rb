@@ -30,7 +30,11 @@ module SQLite3
       stmt.execute('ruby')
 
       exception = assert_raises(SQLite3::ConstraintException) { stmt.execute('ruby') }
-      assert_match /column(s)? .* (is|are) not unique/, exception.message
+      # SQLite 3.8.2 returns new error message:
+      #   UNIQUE constraint failed: *table_name*.*column_name*
+      # Older versions of SQLite return:
+      #   column *column_name* is not unique
+      assert_match /(column(s)? .* (is|are) not unique|UNIQUE constraint failed: .*)/, exception.message
     end
 
     ###
