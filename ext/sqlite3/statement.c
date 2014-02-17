@@ -300,12 +300,11 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 static VALUE reset_bang(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
-  int status;
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
-  status = sqlite3_reset(ctx->st);
+  sqlite3_reset(ctx->st);
 
   ctx->done_p = 0;
 
@@ -320,12 +319,11 @@ static VALUE reset_bang(VALUE self)
 static VALUE clear_bindings(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
-  int status;
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
-  status = sqlite3_clear_bindings(ctx->st);
+  sqlite3_clear_bindings(ctx->st);
 
   ctx->done_p = 0;
 
