@@ -112,7 +112,6 @@ static VALUE step(VALUE self)
   VALUE list;
 #ifdef HAVE_RUBY_ENCODING_H
   rb_encoding * internal_encoding;
-  int enc_index;
 #endif
 
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
@@ -124,8 +123,7 @@ static VALUE step(VALUE self)
 #ifdef HAVE_RUBY_ENCODING_H
   {
       VALUE db          = rb_iv_get(self, "@connection");
-      VALUE encoding    = rb_funcall(db, rb_intern("encoding"), 0);
-      enc_index = NIL_P(encoding) ? rb_utf8_encindex() : rb_to_encoding_index(encoding);
+      rb_funcall(db, rb_intern("encoding"), 0);
       internal_encoding = rb_default_internal_encoding();
   }
 #endif
