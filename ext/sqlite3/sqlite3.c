@@ -5,6 +5,30 @@ VALUE cSqlite3Blob;
 
 int bignum_to_int64(VALUE value, sqlite3_int64 *result)
 {
+#ifdef HAVE_RB_INTEGER_PACK
+  const int nails = 0;
+  int t = rb_integer_pack(value, result, 1, sizeof(*result), nails,
+			  INTEGER_PACK_NATIVE_BYTE_ORDER|
+			  INTEGER_PACK_2COMP);
+  switch (t) {
+  case -2: case +2:
+    return 0;
+  case +1:
+    if (!nails) {
+      if (*result < 0) return 0;
+    }
+    break;
+  case -1:
+    if (!nails) {
+      if (*result >= 0) return 0;
+    }
+    else {
+      *result += INT64_MIN;
+    }
+    break;
+  }
+  return 1;
+#else
 # ifndef RBIGNUM_LEN
 #   define RBIGNUM_LEN(x) RBIGNUM(x)->len
 # endif
@@ -33,6 +57,7 @@ int bignum_to_int64(VALUE value, sqlite3_int64 *result)
   }
   *result = (sqlite3_int64)NUM2LL(value);
   return 1;
+#endif
 }
 
 static VALUE libversion(VALUE UNUSED(klass))
