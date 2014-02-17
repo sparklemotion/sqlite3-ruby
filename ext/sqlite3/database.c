@@ -308,13 +308,16 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
     case T_FIXNUM:
       sqlite3_result_int64(ctx, (sqlite3_int64)FIX2LONG(result));
       break;
-    case T_BIGNUM:
+    case T_BIGNUM: {
 #if SIZEOF_LONG < 8
-      if (RBIGNUM_LEN(result) * SIZEOF_BDIGITS <= 8) {
-          sqlite3_result_int64(ctx, NUM2LL(result));
-          break;
+      sqlite3_int64 num64;
+
+      if (bignum_to_int64(result, &num64)) {
+	  sqlite3_result_int64(ctx, num64);
+	  break;
       }
 #endif
+    }
     case T_FLOAT:
       sqlite3_result_double(ctx, NUM2DBL(result));
       break;

@@ -3,6 +3,38 @@
 VALUE mSqlite3;
 VALUE cSqlite3Blob;
 
+int bignum_to_int64(VALUE value, sqlite3_int64 *result)
+{
+# ifndef RBIGNUM_LEN
+#   define RBIGNUM_LEN(x) RBIGNUM(x)->len
+# endif
+  const long len = RBIGNUM_LEN(value);
+  if (len == 0) {
+    *result = 0;
+    return 1;
+  }
+  if (len > 63 / (SIZEOF_BDIGITS * CHAR_BIT) + 1) return 0;
+  if (len == 63 / (SIZEOF_BDIGITS * CHAR_BIT) + 1) {
+    const BDIGIT *digits = RBIGNUM_DIGITS(value);
+    BDIGIT blast = digits[len-1];
+    BDIGIT bmax = (BDIGIT)1UL << (63 % (CHAR_BIT * SIZEOF_BDIGITS));
+    if (blast > bmax) return 0;
+    if (blast == bmax) {
+      if (RBIGNUM_POSITIVE_P(value)) {
+	return 0;
+      }
+      else {
+	long i = len-1;
+	while (i) {
+	  if (digits[--i]) return 0;
+	}
+      }
+    }
+  }
+  *result = (sqlite3_int64)NUM2LL(value);
+  return 1;
+}
+
 static VALUE libversion(VALUE UNUSED(klass))
 {
   return INT2NUM(sqlite3_libversion_number());

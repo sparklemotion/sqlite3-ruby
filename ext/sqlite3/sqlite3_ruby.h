@@ -12,10 +12,6 @@
 # define UNUSED(x) x
 #endif
 
-#ifndef RBIGNUM_LEN
-#define RBIGNUM_LEN(x) RBIGNUM(x)->len
-#endif
-
 #ifdef HAVE_RUBY_ENCODING_H
 #include <ruby/encoding.h>
 
@@ -50,5 +46,7 @@ extern VALUE cSqlite3Blob;
 #include <statement.h>
 #include <exception.h>
 #include <backup.h>
+
+int bignum_to_int64(VALUE big, sqlite3_int64 *result);
 
 #endif
