@@ -268,9 +268,12 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       }
       break;
     case T_BIGNUM:
-      if (RBIGNUM_LEN(value) * SIZEOF_BDIGITS <= 8) {
-          status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)NUM2LL(value));
+      {
+        sqlite3_int64 n;
+        if (sqlite3_ruby_bignum2int64(&n, value)) {
+          status = sqlite3_bind_int64(ctx->st, index, n);
           break;
+        }
       }
     case T_FLOAT:
       status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));

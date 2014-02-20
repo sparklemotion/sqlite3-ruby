@@ -51,4 +51,6 @@ extern VALUE cSqlite3Blob;
 #include <exception.h>
 #include <backup.h>
 
+int sqlite3_ruby_bignum2int64(sqlite3_int64 *n, VALUE bignum);
+
 #endif
