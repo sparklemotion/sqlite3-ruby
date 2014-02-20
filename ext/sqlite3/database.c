@@ -310,9 +310,12 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
       break;
     case T_BIGNUM:
 #if SIZEOF_LONG < 8
-      if (RBIGNUM_LEN(result) * SIZEOF_BDIGITS <= 8) {
-          sqlite3_result_int64(ctx, NUM2LL(result));
+      {
+        sqlite3_int64 n;
+        if (sqlite3_ruby_bignum2int64(&n, result)) {
+          sqlite3_result_int64(ctx, n);
           break;
+        }
       }
 #endif
     case T_FLOAT:
