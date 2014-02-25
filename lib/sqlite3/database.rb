@@ -431,6 +431,7 @@ Support for this will be removed in version 2.0.0.
     #
     #   class LengthsAggregateHandler
     #     def self.arity; 1; end
+    #     def self.name; 'lengths'; end
     #
     #     def initialize
     #       @total = 0
