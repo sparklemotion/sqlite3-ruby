@@ -1,6 +1,7 @@
 API_CHANGES.rdoc
 CHANGELOG.rdoc
 ChangeLog.cvs
+Gemfile
 LICENSE
 Manifest.txt
 README.rdoc
@@ -45,6 +46,7 @@ test/test_integration_open_close.rb
 test/test_integration_pending.rb
 test/test_integration_resultset.rb
 test/test_integration_statement.rb
+test/test_result_set.rb
 test/test_sqlite3.rb
 test/test_statement.rb
 test/test_statement_execute.rb
