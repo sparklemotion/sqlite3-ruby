@@ -7,6 +7,7 @@ rvm:
   - 1.9.3
   - 2.0.0
   - ruby-head
+  - rbx-2
 matrix:
   allow_failures:
     - env: USE_MINI_PORTILE=false
