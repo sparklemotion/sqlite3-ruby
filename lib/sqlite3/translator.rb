@@ -95,6 +95,7 @@ Built in translators are deprecated and will be removed in version 2.0.0
         "bool",
         "boolean" ].each do |type|
         add_translator( type ) do |t,v|
+          v = v.to_s
           !( v.strip.gsub(/00+/,"0") == "0" ||
              v.downcase == "false" ||
              v.downcase == "f" ||

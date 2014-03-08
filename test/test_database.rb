@@ -363,5 +363,13 @@ module SQLite3
     def test_execute_with_named_bind_params
       assert_equal [['foo']], @db.execute("select :n", {'n' => 'foo'})
     end
+
+    def test_boolean_type_translation
+      db = SQLite3::Database.new(':memory:', type_translation: true)
+      db.execute("CREATE TABLE foo (bar boolean);")
+      db.execute("INSERT INTO foo VALUES('0')")
+      rows = db.execute("SELECT * FROM foo")
+      assert_equal([[false]], rows)
+    end
   end
 end
