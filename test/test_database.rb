@@ -365,7 +365,7 @@ module SQLite3
     end
 
     def test_boolean_type_translation
-      db = SQLite3::Database.new(':memory:', type_translation: true)
+      db = SQLite3::Database.new(':memory:', :type_translation => true)
       db.execute("CREATE TABLE foo (bar boolean);")
       db.execute("INSERT INTO foo VALUES('0')")
       rows = db.execute("SELECT * FROM foo")
