@@ -18,7 +18,7 @@ Note that this module is only compatible with SQLite 3.6.16 or newer.
   # Open a database
   db = SQLite3::Database.new "test.db"
   
-  # Create a database
+  # Create a table
   rows = db.execute <<-SQL
     create table numbers (
       name varchar(30),
