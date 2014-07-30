@@ -92,6 +92,22 @@ module SQLite3
     # The enumeration of valid temp store modes.
     TEMP_STORE_MODES  = [ [ 'default', 0 ], [ 'file', 1 ], [ 'memory', 2 ] ]
 
+    # The enumeration of valid auto vacuum modes.
+    AUTO_VACUUM_MODES  = [ [ 'none', 0 ], [ 'full', 1 ], [ 'incremental', 2 ] ]
+
+    # The list of valid journaling modes.
+    JOURNAL_MODES  = [ [ 'delete' ], [ 'truncate' ], [ 'persist' ], [ 'memory' ],
+                       [ 'wal' ], [ 'off' ] ]
+
+    # The list of valid locking modes.
+    LOCKING_MODES  = [ [ 'normal' ], [ 'exclusive' ] ]
+
+    # The list of valid encodings.
+    ENCODINGS = [ [ 'utf-8' ], [ 'utf-16' ], [ 'utf-16le' ], [ 'utf-16be ' ] ]
+
+    # The list of valid WAL checkpoints.
+    WAL_CHECKPOINTS = [ [ 'passive' ], [ 'full' ], [ 'restart' ], [ 'truncate' ] ]
+
     # Does an integrity check on the database. If the check fails, a
     # SQLite3::Exception will be raised. Otherwise it
     # returns silently.
@@ -101,28 +117,36 @@ module SQLite3
       end
     end
 
+    def application_id
+      get_int_pragma "application_id"
+    end
+
+    def application_id=( integer )
+      set_int_pragma "application_id", integer
+    end
+
     def auto_vacuum
-      get_boolean_pragma "auto_vacuum"
+      get_enum_pragma "auto_vacuum"
     end
 
     def auto_vacuum=( mode )
-      set_boolean_pragma "auto_vacuum", mode
+      set_enum_pragma "auto_vacuum", mode, AUTO_VACUUM_MODES
     end
 
-    def schema_cookie
-      get_int_pragma "schema_cookie"
+    def automatic_index
+      get_boolean_pragma "automatic_index"
     end
 
-    def schema_cookie=( cookie )
-      set_int_pragma "schema_cookie", cookie
+    def automatic_index=( mode )
+      set_boolean_pragma "automatic_index", mode
     end
 
-    def user_cookie
-      get_int_pragma "user_cookie"
+    def busy_timeout
+      get_int_pragma "busy_timeout"
     end
 
-    def user_cookie=( cookie )
-      set_int_pragma "user_cookie", cookie
+    def busy_timeout=( milliseconds )
+      set_int_pragma "busy_timeout", milliseconds
     end
 
     def cache_size
@@ -131,6 +155,58 @@ module SQLite3
 
     def cache_size=( size )
       set_int_pragma "cache_size", size
+    end
+
+    def cache_spill
+      get_boolean_pragma "cache_spill"
+    end
+
+    def cache_spill=( mode )
+      set_boolean_pragma "cache_spill", mode
+    end
+
+    def case_sensitive_like=( mode )
+      set_boolean_pragma "case_sensitive_like", mode
+    end
+
+    def cell_size_check
+      get_boolean_pragma "cell_size_check"
+    end
+
+    def cell_size_check=( mode )
+      set_boolean_pragma "cell_size_check", mode
+    end
+
+    def checkpoint_fullfsync
+      get_boolean_pragma "checkpoint_fullfsync"
+    end
+
+    def checkpoint_fullfsync=( mode )
+      set_boolean_pragma "checkpoint_fullfsync", mode
+    end
+
+    def collation_list( &block ) # :yields: row
+      get_query_pragma "collation_list", &block
+    end
+
+    def compile_options( &block ) # :yields: row
+      get_query_pragma "compile_options", &block
+    end
+
+    def count_changes
+      get_boolean_pragma "count_changes"
+    end
+
+    def count_changes=( mode )
+      set_boolean_pragma "count_changes", mode
+    end
+
+    def data_version
+      get_int_pragma "data_version"
+    end
+
+    def database_list( &block ) # :yields: row
+      get_query_pragma "database_list", &block
     end
 
     def default_cache_size
@@ -149,14 +225,6 @@ module SQLite3
       set_enum_pragma "default_synchronous", mode, SYNCHRONOUS_MODES
     end
 
-    def synchronous
-      get_enum_pragma "synchronous"
-    end
-
-    def synchronous=( mode )
-      set_enum_pragma "synchronous", mode, SYNCHRONOUS_MODES
-    end
-
     def default_temp_store
       get_enum_pragma "default_temp_store"
     end
@@ -164,13 +232,41 @@ module SQLite3
     def default_temp_store=( mode )
       set_enum_pragma "default_temp_store", mode, TEMP_STORE_MODES
     end
-  
-    def temp_store
-      get_enum_pragma "temp_store"
+
+    def defer_foreign_keys
+      get_boolean_pragma "defer_foreign_keys"
     end
 
-    def temp_store=( mode )
-      set_enum_pragma "temp_store", mode, TEMP_STORE_MODES
+    def defer_foreign_keys=( mode )
+      set_boolean_pragma "defer_foreign_keys", mode
+    end
+
+    def encoding
+      get_enum_pragma "encoding"
+    end
+
+    def encoding=( mode )
+      set_enum_pragma "encoding", mode, ENCODINGS
+    end
+
+    def foreign_key_check( *table, &block ) # :yields: row
+      get_query_pragma "foreign_key_check", *table, &block
+    end
+
+    def foreign_key_list( table, &block ) # :yields: row
+      get_query_pragma "foreign_key_list", table, &block
+    end
+
+    def foreign_keys
+      get_boolean_pragma "foreign_keys"
+    end
+
+    def foreign_keys=( mode )
+      set_boolean_pragma "foreign_keys", mode
+    end
+
+    def freelist_count
+      get_int_pragma "freelist_count"
     end
 
     def full_column_names
@@ -181,28 +277,20 @@ module SQLite3
       set_boolean_pragma "full_column_names", mode
     end
   
-    def parser_trace
-      get_boolean_pragma "parser_trace"
+    def fullfsync
+      get_boolean_pragma "fullfsync"
     end
 
-    def parser_trace=( mode )
-      set_boolean_pragma "parser_trace", mode
-    end
-  
-    def vdbe_trace
-      get_boolean_pragma "vdbe_trace"
+    def fullfsync=( mode )
+      set_boolean_pragma "fullfsync", mode
     end
 
-    def vdbe_trace=( mode )
-      set_boolean_pragma "vdbe_trace", mode
+    def ignore_check_constraints=( mode )
+      set_boolean_pragma "ignore_check_constraints", mode
     end
 
-    def database_list( &block ) # :yields: row
-      get_query_pragma "database_list", &block
-    end
-
-    def foreign_key_list( table, &block ) # :yields: row
-      get_query_pragma "foreign_key_list", table, &block
+    def incremental_vacuum( pages, &block ) # :yields: row
+      get_query_pragma "incremental_vacuum", pages, &block
     end
 
     def index_info( index, &block ) # :yields: row
@@ -211,6 +299,242 @@ module SQLite3
 
     def index_list( table, &block ) # :yields: row
       get_query_pragma "index_list", table, &block
+    end
+
+    def index_xinfo( index, &block ) # :yields: row
+      get_query_pragma "index_xinfo", index, &block
+    end
+
+    def integrity_check( *num_errors, &block ) # :yields: row
+      get_query_pragma "integrity_check", *num_errors, &block
+    end
+
+    def journal_mode
+      get_enum_pragma "journal_mode"
+    end
+
+    def journal_mode=( mode )
+      set_enum_pragma "journal_mode", mode, JOURNAL_MODES
+    end
+
+    def journal_size_limit
+      get_int_pragma "journal_size_limit"
+    end
+
+    def journal_size_limit=( size )
+      set_int_pragma "journal_size_limit", size
+    end
+
+    def legacy_file_format
+      get_boolean_pragma "legacy_file_format"
+    end
+
+    def legacy_file_format=( mode )
+      set_boolean_pragma "legacy_file_format", mode
+    end
+
+    def locking_mode
+      get_enum_pragma "locking_mode"
+    end
+
+    def locking_mode=( mode )
+      set_enum_pragma "locking_mode", mode, LOCKING_MODES
+    end
+
+    def max_page_count
+      get_int_pragma "max_page_count"
+    end
+
+    def max_page_count=( size )
+      set_int_pragma "max_page_count", size
+    end
+
+    def mmap_size
+      get_int_pragma "mmap_size"
+    end
+
+    def mmap_size=( size )
+      set_int_pragma "mmap_size", size
+    end
+
+    def page_count
+      get_int_pragma "page_count"
+    end
+
+    def page_size
+      get_int_pragma "page_size"
+    end
+
+    def page_size=( size )
+      set_int_pragma "page_size", size
+    end
+
+    def parser_trace=( mode )
+      set_boolean_pragma "parser_trace", mode
+    end
+  
+    def query_only
+      get_boolean_pragma "query_only"
+    end
+
+    def query_only=( mode )
+      set_boolean_pragma "query_only", mode
+    end
+
+    def quick_check( *num_errors, &block ) # :yields: row
+      get_query_pragma "quick_check", *num_errors, &block
+    end
+
+    def read_uncommitted
+      get_boolean_pragma "read_uncommitted"
+    end
+
+    def read_uncommitted=( mode )
+      set_boolean_pragma "read_uncommitted", mode
+    end
+
+    def recursive_triggers
+      get_boolean_pragma "recursive_triggers"
+    end
+
+    def recursive_triggers=( mode )
+      set_boolean_pragma "recursive_triggers", mode
+    end
+
+    def reverse_unordered_selects
+      get_boolean_pragma "reverse_unordered_selects"
+    end
+
+    def reverse_unordered_selects=( mode )
+      set_boolean_pragma "reverse_unordered_selects", mode
+    end
+
+    def schema_cookie
+      get_int_pragma "schema_cookie"
+    end
+
+    def schema_cookie=( cookie )
+      set_int_pragma "schema_cookie", cookie
+    end
+
+    def schema_version
+      get_int_pragma "schema_version"
+    end
+
+    def schema_version=( version )
+      set_int_pragma "schema_version", version
+    end
+
+    def secure_delete
+      get_boolean_pragma "secure_delete"
+    end
+
+    def secure_delete=( mode )
+      set_boolean_pragma "secure_delete", mode
+    end
+
+    def short_column_names
+      get_boolean_pragma "short_column_names"
+    end
+
+    def short_column_names=( mode )
+      set_boolean_pragma "short_column_names", mode
+    end
+
+    def shrink_memory
+      execute( "PRAGMA shrink_memory" )
+    end
+
+    def soft_heap_limit
+      get_int_pragma "soft_heap_limit"
+    end
+
+    def soft_heap_limit=( mode )
+      set_int_pragma "soft_heap_limit", mode
+    end
+
+    def stats( &block ) # :yields: row
+      get_query_pragma "stats", &block
+    end
+
+    def synchronous
+      get_enum_pragma "synchronous"
+    end
+
+    def synchronous=( mode )
+      set_enum_pragma "synchronous", mode, SYNCHRONOUS_MODES
+    end
+
+    def temp_store
+      get_enum_pragma "temp_store"
+    end
+
+    def temp_store=( mode )
+      set_enum_pragma "temp_store", mode, TEMP_STORE_MODES
+    end
+
+    def threads
+      get_int_pragma "threads"
+    end
+
+    def threads=( count )
+      set_int_pragma "threads", count
+    end
+
+    def user_cookie
+      get_int_pragma "user_cookie"
+    end
+
+    def user_cookie=( cookie )
+      set_int_pragma "user_cookie", cookie
+    end
+
+    def user_version
+      get_int_pragma "user_version"
+    end
+
+    def user_version=( version )
+      set_int_pragma "user_version", version
+    end
+
+    def vdbe_addoptrace=( mode )
+      set_boolean_pragma "vdbe_addoptrace", mode
+    end
+
+    def vdbe_debug=( mode )
+      set_boolean_pragma "vdbe_debug", mode
+    end
+
+    def vdbe_listing=( mode )
+      set_boolean_pragma "vdbe_listing", mode
+    end
+
+    def vdbe_trace
+      get_boolean_pragma "vdbe_trace"
+    end
+
+    def vdbe_trace=( mode )
+      set_boolean_pragma "vdbe_trace", mode
+    end
+
+    def wal_autocheckpoint
+      get_int_pragma "wal_autocheckpoint"
+    end
+
+    def wal_autocheckpoint=( mode )
+      set_int_pragma "wal_autocheckpoint", mode
+    end
+
+    def wal_checkpoint
+      get_enum_pragma "wal_checkpoint"
+    end
+
+    def wal_checkpoint=( mode )
+      set_enum_pragma "wal_checkpoint", mode, WAL_CHECKPOINTS
+    end
+
+    def writable_schema=( mode )
+      set_boolean_pragma "writable_schema", mode
     end
 
     ###
