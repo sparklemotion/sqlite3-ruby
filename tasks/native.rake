@@ -9,6 +9,20 @@ BINARY_VERSION = "3.7.17"
 URL_VERSION    = "3071700"
 URL_PATH       = "/2013"
 
+# prepend DevKit into compilation phase
+if RUBY_PLATFORM =~ /mingw/
+  task :compile => [:devkit]
+  task :native  => [:devkit]
+end
+
+task :devkit do
+  begin
+    require "devkit"
+  rescue LoadError => e
+    abort "Failed to activate RubyInstaller's DevKit required for compilation."
+  end
+end
+
 # build sqlite3_native C extension
 RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
   # where to locate the extension
