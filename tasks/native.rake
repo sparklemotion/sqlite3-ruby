@@ -33,7 +33,6 @@ RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
     # define target for extension (supporting fat binaries)
     RUBY_VERSION =~ /(\d+\.\d+)/
     ext.lib_dir = "lib/sqlite3/#{$1}"
-    ext.config_options << "--enable-local"
   else
 
     # detect cross-compiler available
