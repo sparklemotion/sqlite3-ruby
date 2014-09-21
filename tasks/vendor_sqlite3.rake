@@ -85,3 +85,9 @@ task :cross do
     ENV.delete(var)
   end
 end
+
+# prepend DevKit into compilation phase
+if RUBY_PLATFORM =~ /mingw/
+  Rake::Task["compile"].prerequisites.unshift "devkit"
+  Rake::Task["native"].prerequisites.unshift  "devkit"
+end

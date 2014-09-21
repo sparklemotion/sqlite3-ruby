@@ -9,12 +9,6 @@ BINARY_VERSION = "3.7.17"
 URL_VERSION    = "3071700"
 URL_PATH       = "/2013"
 
-# prepend DevKit into compilation phase
-if RUBY_PLATFORM =~ /mingw/
-  task :compile => [:devkit]
-  task :native  => [:devkit]
-end
-
 task :devkit do
   begin
     require "devkit"
