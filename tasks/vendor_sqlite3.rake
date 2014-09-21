@@ -34,7 +34,9 @@ recipe = define_sqlite_task(RUBY_PLATFORM, RbConfig::CONFIG["host"])
 if RUBY_PLATFORM =~ /mingw/
   RUBY_EXTENSION.config_options << "--with-opt-dir=#{recipe.path}"
 
-  Rake::Task['compile'].prerequisites.unshift "ports:sqlite3:#{RUBY_PLATFORM}"
+  # also prepend DevKit into compilation phase
+  Rake::Task["compile"].prerequisites.unshift "devkit", "ports:sqlite3:#{RUBY_PLATFORM}"
+  Rake::Task["native"].prerequisites.unshift "devkit", "ports:sqlite3:#{RUBY_PLATFORM}"
 end
 
 # trick to test local compilation of sqlite3
@@ -86,10 +88,4 @@ task :cross do
   ["CC", "CXX", "LDFLAGS", "CPPFLAGS", "RUBYOPT"].each do |var|
     ENV.delete(var)
   end
-end
-
-# prepend DevKit into compilation phase
-if RUBY_PLATFORM =~ /mingw/
-  Rake::Task["compile"].prerequisites.unshift "devkit"
-  Rake::Task["native"].prerequisites.unshift  "devkit"
 end
