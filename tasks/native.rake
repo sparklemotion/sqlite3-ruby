@@ -5,9 +5,9 @@ require 'rake/extensioncompiler'
 # NOTE: version used by cross compilation of Windows native extension
 # It do not affect compilation under other operating systems
 # The version indicated is the minimum DLL suggested for correct functionality
-BINARY_VERSION = "3.7.17"
-URL_VERSION    = "3071700"
-URL_PATH       = "/2013"
+BINARY_VERSION = "3.8.6"
+URL_VERSION    = "3080600"
+URL_PATH       = "/2014"
 
 task :devkit do
   begin
