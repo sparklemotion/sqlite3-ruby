@@ -28,7 +28,16 @@ def define_sqlite_task(platform, host)
 end
 
 # native sqlite3 compilation
-define_sqlite_task RUBY_PLATFORM, RbConfig::CONFIG["host"]
+recipe = define_sqlite_task(RUBY_PLATFORM, RbConfig::CONFIG["host"])
+
+# force compilation of sqlite3 when working natively under MinGW
+if RUBY_PLATFORM =~ /mingw/
+  RUBY_EXTENSION.config_options << "--with-opt-dir=#{recipe.path}"
+
+  # also prepend DevKit into compilation phase
+  Rake::Task["compile"].prerequisites.unshift "devkit", "ports:sqlite3:#{RUBY_PLATFORM}"
+  Rake::Task["native"].prerequisites.unshift "devkit", "ports:sqlite3:#{RUBY_PLATFORM}"
+end
 
 # trick to test local compilation of sqlite3
 if ENV["USE_MINI_PORTILE"] == "true"
@@ -40,11 +49,6 @@ if ENV["USE_MINI_PORTILE"] == "true"
 
   # compile sqlite3 first
   Rake::Task["compile"].prerequisites.unshift "ports:sqlite3:#{RUBY_PLATFORM}"
-end
-
-# force compilation of sqlite3 when working natively under MinGW
-if RUBY_PLATFORM =~ /mingw/
-  Rake::Task['compile'].prerequisites.unshift "ports:sqlite3:#{RUBY_PLATFORM}"
 end
 
 # iterate over all cross-compilation platforms and define the proper
