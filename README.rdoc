@@ -2,6 +2,8 @@
 
 * https://github.com/sparklemotion/sqlite3-ruby
 * http://groups.google.com/group/sqlite3-ruby
+* http://rubygems.org/gems/sqlite3
+* http://www.rubydoc.info/gems/sqlite3/1.3.9/frames
 
 == DESCRIPTION
 
