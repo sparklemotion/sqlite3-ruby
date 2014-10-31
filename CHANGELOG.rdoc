@@ -1,7 +1,7 @@
 === (in Git)
 
 * Enhancements:
-  * Windows: build against SQLite 3.8.6. Closes #135 [Hubro]
+  * Windows: build against SQLite 3.8.7.1. Closes #134, #135 [Hubro]
 
 === 1.3.9 / 2014-02-25
 
