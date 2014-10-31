@@ -1,4 +1,4 @@
-=== (in Git)
+=== 1.3.10 / 2014-10-30
 
 * Enhancements:
   * Windows: build against SQLite 3.8.7.1. Closes #134, #135 [Hubro]
