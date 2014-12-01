@@ -5,7 +5,7 @@ module SQLite3
 
   # The ResultSet object encapsulates the enumerability of a query's output.
   # It is a simple cursor over the data that the query returns. It will
-  # very rarely (if ever) be instantiated directly. Instead, client's should
+  # very rarely (if ever) be instantiated directly. Instead, clients should
   # obtain a ResultSet instance via Statement#execute.
   class ResultSet
     include Enumerable
