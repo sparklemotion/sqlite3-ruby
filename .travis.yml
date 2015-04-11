@@ -1,4 +1,6 @@
+sudo: false
 language: ruby
+cache: bundler
 env:
   - USE_MINI_PORTILE=true
   - USE_MINI_PORTILE=false
