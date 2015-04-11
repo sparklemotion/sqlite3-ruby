@@ -240,7 +240,7 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 
 
 #ifdef HAVE_RUBY_ENCODING_H
-        if (UTF16_LE_P(value)) {
+        if (UTF16_LE_P(value) || UTF16_BE_P(value)) {
           status = sqlite3_bind_text16(
               ctx->st,
               index,
