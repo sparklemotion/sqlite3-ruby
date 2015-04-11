@@ -533,6 +533,13 @@ Support for this will be removed in version 2.0.0.
       @readonly
     end
 
+    # Returns +true+ if SQLite3 was compiled with threadsafe mode enabled to
+    # SQLITE_CONFIG_MULTITHREAD or SQLITE_CONFIG_SERIALIZED
+    def threadsafe?
+      option = execute("PRAGMA compile_options").find { |r| r[0] =~ /THREADSAFE/ }[0]
+      ["THREADSAFE=1", "THREADSAFE=2"].include? option
+    end
+
     # A helper class for dealing with custom functions (see #create_function,
     # #create_aggregate, and #create_aggregate_handler). It encapsulates the
     # opaque function object that represents the current invocation. It also

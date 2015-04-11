@@ -363,5 +363,12 @@ module SQLite3
     def test_execute_with_named_bind_params
       assert_equal [['foo']], @db.execute("select :n", {'n' => 'foo'})
     end
+
+    def test_threadsafe_mode
+      assert [true, false].include?(@db.threadsafe?)
+      @db.stub("execute", [["THREADSAFE=0"]]) { assert !@db.threadsafe? }
+      @db.stub("execute", [["THREADSAFE=1"]]) { assert @db.threadsafe? }
+      @db.stub("execute", [["THREADSAFE=2"]]) { assert @db.threadsafe? }
+    end
   end
 end
