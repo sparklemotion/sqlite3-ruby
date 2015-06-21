@@ -89,3 +89,9 @@ task :cross do
     ENV.delete(var)
   end
 end
+
+desc "Build windows binary gems per rake-compiler-dock."
+task "gem:windows" do
+  require "rake_compiler_dock"
+  RakeCompilerDock.sh "bundle && rake cross native gem MAKE='nice make -j`nproc`'"
+end
