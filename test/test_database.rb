@@ -27,6 +27,13 @@ module SQLite3
       assert_equal [[0, blob, blob.length, blob.length*2]], @db.execute("SELECT id, hash, length(hash), length(hex(hash)) FROM blobs")
     end
 
+    def test_time
+      @db.execute("CREATE TABLE datetimes ( id INTEGER, dt DATETIME )")
+      time = Time.parse('2015-01-01 12:00:00')
+      @db.execute("INSERT INTO datetimes VALUES (0, ?)", [time])
+      assert_equal [["2015-01-01 12:00:00"]], @db.execute("SELECT dt FROM datetimes")
+    end
+
     def test_get_first_row
       assert_equal [1], @db.get_first_row('SELECT 1')
     end

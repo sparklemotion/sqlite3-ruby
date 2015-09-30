@@ -282,8 +282,14 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
       status = sqlite3_bind_null(ctx->st, index);
       break;
     default:
-      rb_raise(rb_eRuntimeError, "can't prepare %s",
-          rb_class2name(CLASS_OF(value)));
+      if (CLASS_OF(value) == rb_cTime) {
+        /* convert to String and make a recursive call */
+        VALUE timestr = rb_funcall(value, rb_intern("strftime"), 1,
+          rb_str_new2("%Y-%m-%d %H:%M:%S"));
+        return bind_param(self, key, timestr);
+      } else {
+        rb_raise(rb_eRuntimeError, "can't prepare %s", rb_class2name(CLASS_OF(value)));
+      }
       break;
   }
 

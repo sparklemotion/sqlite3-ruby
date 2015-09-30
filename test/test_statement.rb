@@ -119,6 +119,14 @@ module SQLite3
       assert_equal [nil], result
     end
 
+    def test_bind_time
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      stmt.bind_param(1, Time.parse("2000-10-01"))
+      result = nil
+      stmt.each { |x| result = x }
+      assert_equal ['2000-10-01 00:00:00'], result
+    end
+
     def test_bind_blobs
     end
 
