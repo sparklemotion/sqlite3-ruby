@@ -34,7 +34,7 @@ module SQLite3
       #   UNIQUE constraint failed: *table_name*.*column_name*
       # Older versions of SQLite return:
       #   column *column_name* is not unique
-      assert_match /(column(s)? .* (is|are) not unique|UNIQUE constraint failed: .*)/, exception.message
+      assert_match(/(column(s)? .* (is|are) not unique|UNIQUE constraint failed: .*)/, exception.message)
     end
 
     ###
