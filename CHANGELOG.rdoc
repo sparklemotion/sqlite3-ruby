@@ -1,3 +1,12 @@
+=== (in Git)
+
+* Enhancements:
+  * Windows: build against SQLite 3.8.11.1
+
+* Internal:
+  * Use rake-compiler-dock to build Windows binaries. Pull #159 [larskanis]
+  * Expand Ruby versions being tested for Travis and AppVeyor
+
 === 1.3.10 / 2014-10-30
 
 * Enhancements:
