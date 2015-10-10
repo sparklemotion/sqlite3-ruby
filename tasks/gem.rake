@@ -26,7 +26,7 @@ HOE = Hoe.spec 'sqlite3' do
 
   extra_dev_deps << ['rake-compiler', "~> 0.9.3"]
   extra_dev_deps << ['rake-compiler-dock', "~> 0.4.3"]
-  extra_dev_deps << ["mini_portile", "~> 0.6.1"]
+  extra_dev_deps << ["mini_portile", "~> 0.6.2"]
   extra_dev_deps << ["minitest", "~> 5.0"]
   extra_dev_deps << ["hoe-bundler", "~> 1.0"]
 
