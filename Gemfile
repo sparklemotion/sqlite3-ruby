@@ -5,11 +5,12 @@
 source "https://rubygems.org/"
 
 
-gem "mini_portile", "~>0.6.1", :group => [:development, :test]
-gem "minitest", "~>5.4", :group => [:development, :test]
-gem "hoe-bundler", "~>1.0", :group => [:development, :test]
-gem "rake-compiler", "~>0.9.3", :group => [:development, :test]
+gem "minitest", "~>5.8", :group => [:development, :test]
 gem "rdoc", "~>4.0", :group => [:development, :test]
-gem "hoe", "~>3.12", :group => [:development, :test]
+gem "rake-compiler", "~>0.9.3", :group => [:development, :test]
+gem "rake-compiler-dock", "~>0.4.3", :group => [:development, :test]
+gem "mini_portile", "~>0.6.2", :group => [:development, :test]
+gem "hoe-bundler", "~>1.0", :group => [:development, :test]
+gem "hoe", "~>3.14", :group => [:development, :test]
 
 # vim: syntax=ruby

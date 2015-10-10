@@ -13,12 +13,13 @@ module SQLite3
 
     def test_select_encoding_on_utf_16
       str = "foo"
-      db = SQLite3::Database.new(':memory:'.encode('UTF-16LE'))
+      utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
+      db = SQLite3::Database.new(':memory:'.encode(utf16))
       db.execute @create
       db.execute "insert into ex (id, data) values (1, \"#{str}\")"
 
       stmt = db.prepare 'select * from ex where data = ?'
-      ['US-ASCII', 'UTF-16LE', 'EUC-JP', 'UTF-8'].each do |enc|
+      ['US-ASCII', utf16, 'EUC-JP', 'UTF-8'].each do |enc|
         stmt.bind_param 1, str.encode(enc)
         assert_equal 1, stmt.to_a.length
         stmt.reset!
@@ -27,11 +28,12 @@ module SQLite3
 
     def test_insert_encoding
       str = "foo"
-      db = SQLite3::Database.new(':memory:'.encode('UTF-16LE'))
+      utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
+      db = SQLite3::Database.new(':memory:'.encode(utf16))
       db.execute @create
       stmt = db.prepare @insert
 
-      ['US-ASCII', 'UTF-16LE', 'UTF-16BE', 'EUC-JP', 'UTF-8'].each_with_index do |enc,i|
+      ['US-ASCII', utf16, 'EUC-JP', 'UTF-8'].each_with_index do |enc,i|
         stmt.bind_param 1, i
         stmt.bind_param 2, str.encode(enc)
         stmt.to_a
