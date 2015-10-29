@@ -109,6 +109,18 @@ module SQLite3
       assert thing.closed?
     end
 
+    def test_block_closes_self_even_raised
+      thing = nil
+      begin
+        SQLite3::Database.new(':memory:') do |db|
+          thing = db
+          raise
+        end
+      rescue
+      end
+      assert thing.closed?
+    end
+
     def test_prepare
       db = SQLite3::Database.new(':memory:')
       stmt = db.prepare('select "hello world"')
