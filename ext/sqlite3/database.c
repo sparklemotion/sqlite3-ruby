@@ -359,22 +359,17 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
 static void rb_sqlite3_func(sqlite3_context * ctx, int argc, sqlite3_value **argv)
 {
   VALUE callable = (VALUE)sqlite3_user_data(ctx);
-  VALUE * params = NULL;
+  VALUE params[argc]; /* RB_GC_GUARD unreliable -- keep values safely on the stack */
   VALUE result;
   int i;
 
   if (argc > 0) {
-    params = xcalloc((size_t)argc, sizeof(VALUE *));
-
     for(i = 0; i < argc; i++) {
-      VALUE param = sqlite3val2rb(argv[i]);
-      RB_GC_GUARD(param);
-      params[i] = param;
+      params[i] = sqlite3val2rb(argv[i]);
     }
   }
 
   result = rb_funcall2(callable, rb_intern("call"), argc, params);
-  xfree(params);
 
   set_sqlite3_func_result(ctx, result);
 }
