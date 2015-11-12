@@ -41,4 +41,5 @@ module SQLite3
   class FormatException < Exception; end
   class RangeException < Exception; end
   class NotADatabaseException < Exception; end
+  class DatabaseNotFound < Exception; end
 end
