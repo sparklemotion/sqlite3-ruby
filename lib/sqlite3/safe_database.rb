@@ -3,6 +3,8 @@ require 'sqlite3/database'
 module SQLite3
   class SafeDatabase < SQLite3::Database
 
+    attr_reader :path
+
     def self.open(path)
       raise SQLite3::DatabaseNotFound, "Could not find database at #{path}" unless File.exist?(path)
       self.new(path)
