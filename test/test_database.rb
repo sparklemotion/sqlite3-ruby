@@ -269,7 +269,7 @@ module SQLite3
 
     def test_function_return_type_round_trip
       [10, 2.2, nil, "foo", Blob.new("foo\0bar")].each do |thing|
-        @db.define_function("hello") { |thing| thing }
+        @db.define_function("hello") { |a| a }
         assert_equal [thing], @db.execute("select hello(hello(?))", [thing]).first
       end
     end
