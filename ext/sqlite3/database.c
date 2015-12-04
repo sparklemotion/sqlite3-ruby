@@ -322,8 +322,11 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
       sqlite3_result_double(ctx, NUM2DBL(result));
       break;
     case T_STRING:
+      if(CLASS_OF(result) == cSqlite3Blob
 #ifdef HAVE_RUBY_ENCODING_H
-      if (rb_enc_get_index(result) == rb_ascii8bit_encindex()) {
+              || rb_enc_get_index(result) == rb_ascii8bit_encindex()
+#endif
+        ) {
         sqlite3_result_blob(
             ctx,
             (const void *)StringValuePtr(result),
@@ -331,16 +334,13 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
             SQLITE_TRANSIENT
         );
       } else {
-#endif
         sqlite3_result_text(
             ctx,
             (const char *)StringValuePtr(result),
             (int)RSTRING_LEN(result),
             SQLITE_TRANSIENT
         );
-#ifdef HAVE_RUBY_ENCODING_H
       }
-#endif
       break;
     default:
       rb_raise(rb_eRuntimeError, "can't return %s",
