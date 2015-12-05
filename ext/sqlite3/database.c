@@ -288,7 +288,14 @@ static VALUE sqlite3val2rb(sqlite3_value * val)
          which is what we want, as blobs are binary
        */
       int len = sqlite3_value_bytes(val);
+#ifdef HAVE_RUBY_ENCODING_H
       return rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
+#else
+      /* When encoding is not available, make it class SQLite3::Blob. */
+      VALUE strargv[1];
+      strargv[0] = rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
+      return rb_class_new_instance(1, strargv, cSqlite3Blob);
+#endif
       break;
     }
     case SQLITE_NULL:
