@@ -288,7 +288,14 @@ static VALUE sqlite3val2rb(sqlite3_value * val)
          which is what we want, as blobs are binary
        */
       int len = sqlite3_value_bytes(val);
+#ifdef HAVE_RUBY_ENCODING_H
       return rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
+#else
+      /* When encoding is not available, make it class SQLite3::Blob. */
+      VALUE strargv[1];
+      strargv[0] = rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
+      return rb_class_new_instance(1, strargv, cSqlite3Blob);
+#endif
       break;
     }
     case SQLITE_NULL:
@@ -322,12 +329,25 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
       sqlite3_result_double(ctx, NUM2DBL(result));
       break;
     case T_STRING:
-      sqlite3_result_text(
-          ctx,
-          (const char *)StringValuePtr(result),
-          (int)RSTRING_LEN(result),
-          SQLITE_TRANSIENT
-      );
+      if(CLASS_OF(result) == cSqlite3Blob
+#ifdef HAVE_RUBY_ENCODING_H
+              || rb_enc_get_index(result) == rb_ascii8bit_encindex()
+#endif
+        ) {
+        sqlite3_result_blob(
+            ctx,
+            (const void *)StringValuePtr(result),
+            (int)RSTRING_LEN(result),
+            SQLITE_TRANSIENT
+        );
+      } else {
+        sqlite3_result_text(
+            ctx,
+            (const char *)StringValuePtr(result),
+            (int)RSTRING_LEN(result),
+            SQLITE_TRANSIENT
+        );
+      }
       break;
     default:
       rb_raise(rb_eRuntimeError, "can't return %s",
