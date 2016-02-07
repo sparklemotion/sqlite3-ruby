@@ -395,6 +395,9 @@ Support for this will be removed in version 2.0.0.
 
         def finalize
           super(@ctx)
+          result = @ctx.result
+          @ctx = FunctionProxy.new
+          result
         end
       })
       proxy.ctx = FunctionProxy.new

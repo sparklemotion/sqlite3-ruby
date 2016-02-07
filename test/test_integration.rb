@@ -499,6 +499,10 @@ class TC_Database_Integration < SQLite3::TestCase
 
     value = @db.get_first_value( "select accumulate(a) from foo" )
     assert_equal 6, value
+
+    # calling #get_first_value twice don't add up to the latest result
+    value = @db.get_first_value( "select accumulate(a) from foo" )
+    assert_equal 6, value
   end
 
   def test_create_aggregate_with_block
