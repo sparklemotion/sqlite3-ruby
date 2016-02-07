@@ -30,6 +30,8 @@ utf16_string_value_ptr(VALUE str)
   return RSTRING_PTR(str);
 }
 
+static VALUE sqlite3_rb_close(VALUE self);
+
 /* call-seq: SQLite3::Database.new(file, options = {})
  *
  * Create a new Database object that opens the given file. If utf16
@@ -120,8 +122,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 #endif
 
   if(rb_block_given_p()) {
-    rb_yield(self);
-    rb_funcall(self, rb_intern("close"), 0);
+    rb_ensure(rb_yield, self, sqlite3_rb_close, self);
   }
 
   return self;
