@@ -279,6 +279,15 @@ module SQLite3
       end
     end
 
+    def test_function_gc_segfault
+      skip("Segfault is unsettling to see when running rake test")
+      @db.create_function("bug", -1) { |func, *values| func.result = values.join }
+      # With a lot of data and a lot of threads, try to induce a GC segfault.
+      params = Array.new(127, "?" * 28000)
+      proc = Proc.new { db.execute("select bug(#{Array.new(params.length, "?").join(",")})", *params) }
+      Mutex.new.tap { |m| threads = (0..30).inject([]) { |a| a << Thread.new { m.synchronize { proc.call } } }.each { |thread| thread.join } }
+    end
+
     def test_function_return_type_round_trip
       [10, 2.2, nil, "foo", Blob.new("foo\0bar")].each do |thing|
         @db.define_function("hello") { |a| a }
