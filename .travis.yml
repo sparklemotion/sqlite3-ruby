@@ -1,6 +1,11 @@
 sudo: false
 language: ruby
 cache: bundler
+addons:
+  apt:
+    packages:
+      - libgmp-dev
+
 env:
   - USE_MINI_PORTILE=true
   - USE_MINI_PORTILE=false
