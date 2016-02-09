@@ -283,8 +283,11 @@ module SQLite3
       @db.create_function("bug", -1) { |func, *values| func.result = values.join }
       # With a lot of data and a lot of threads, try to induce a GC segfault.
       params = Array.new(127, "?" * 28000)
-      proc = Proc.new { db.execute("select bug(#{Array.new(params.length, "?").join(",")})", params) }
-      Mutex.new.tap { |m| threads = (0..30).inject([]) { |a| a << Thread.new { m.synchronize { proc.call } } }.each { |thread| thread.join } }
+      proc = Proc.new {
+        db.execute("select bug(#{Array.new(params.length, "?").join(",")})", params)
+      }
+      m = Mutex.new
+      threads = 30.times.map { Thread.new { m.synchronize { proc.call } } }.each(&:join)
     end
 
     def test_function_return_type_round_trip
