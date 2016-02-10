@@ -13,7 +13,6 @@ module SQLite3
     def get_boolean_pragma( name )
       get_first_value( "PRAGMA #{name}" ) != "0"
     end
-    private :get_boolean_pragma
 
     # Sets the given pragma to the given boolean value. The value itself
     # may be +true+ or +false+, or any other commonly used string or
@@ -39,7 +38,6 @@ module SQLite3
 
       execute( "PRAGMA #{name}=#{mode}" )
     end
-    private :set_boolean_pragma
 
     # Requests the given pragma (and parameters), and if the block is given,
     # each row of the result set will be yielded to it. Otherwise, the results
@@ -52,13 +50,11 @@ module SQLite3
         execute( "PRAGMA #{name}( #{args} )", &block )
       end
     end
-    private :get_query_pragma
 
     # Return the value of the given pragma.
     def get_enum_pragma( name )
       get_first_value( "PRAGMA #{name}" )
     end
-    private :get_enum_pragma
 
     # Set the value of the given pragma to +mode+. The +mode+ parameter must
     # conform to one of the values in the given +enum+ array. Each entry in
@@ -71,20 +67,17 @@ module SQLite3
         "unrecognized #{name} #{mode.inspect}" unless match
       execute( "PRAGMA #{name}='#{match.first.upcase}'" )
     end
-    private :set_enum_pragma
 
     # Returns the value of the given pragma as an integer.
     def get_int_pragma( name )
       get_first_value( "PRAGMA #{name}" ).to_i
     end
-    private :get_int_pragma
 
     # Set the value of the given pragma to the integer value of the +value+
     # parameter.
     def set_int_pragma( name, value )
       execute( "PRAGMA #{name}=#{value.to_i}" )
     end
-    private :set_int_pragma
 
     # The enumeration of valid synchronous modes.
     SYNCHRONOUS_MODES = [ [ 'full', 2 ], [ 'normal', 1 ], [ 'off', 0 ] ]
