@@ -65,6 +65,14 @@ static VALUE libversion(VALUE UNUSED(klass))
   return INT2NUM(sqlite3_libversion_number());
 }
 
+/* Returns the compile time setting of the SQLITE_THREADSAFE flag.
+ * See: https://www.sqlite.org/c3ref/threadsafe.html
+ */
+static VALUE threadsafe_p(VALUE UNUSED(klass))
+{
+  return INT2NUM(sqlite3_threadsafe());
+}
+
 void Init_sqlite3_native()
 {
   /*
@@ -92,6 +100,7 @@ void Init_sqlite3_native()
 #endif
 
   rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
+  rb_define_singleton_method(mSqlite3, "threadsafe", threadsafe_p, 0);
   rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
   rb_define_const(mSqlite3, "SQLITE_VERSION_NUMBER", INT2FIX(SQLITE_VERSION_NUMBER));
 }
