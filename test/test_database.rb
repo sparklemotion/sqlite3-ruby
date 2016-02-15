@@ -32,6 +32,15 @@ module SQLite3
       tf.unlink
     end
 
+    def test_filename_with_attachment
+      assert_equal '', @db.filename
+      tf = Tempfile.new
+      @db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"
+      assert_equal tf.path, @db.filename('testing')
+    ensure
+      tf.unlink
+    end
+
     def test_bignum
       num = 4907021672125087844
       db.execute 'CREATE TABLE "employees" ("token" integer(8), "name" varchar(20) NOT NULL)'
