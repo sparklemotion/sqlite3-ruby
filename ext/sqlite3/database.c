@@ -795,6 +795,24 @@ static VALUE transaction_active_p(VALUE self)
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
+/* call-seq: db.db_filename(database_name)
+ *
+ * Returns the file associated with +database_name+.  Can return nil or an
+ * empty string if the database is temporary, or in-memory.
+ */
+static VALUE db_filename(VALUE self, VALUE db_name)
+{
+  sqlite3RubyPtr ctx;
+  const char * fname;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  fname = sqlite3_db_filename(ctx->db, StringValueCStr(db_name));
+
+  if(fname) return SQLITE3_UTF8_STR_NEW2(fname);
+  return Qnil;
+}
+
 void init_sqlite3_database()
 {
   ID id_utf16, id_results_as_hash, id_type_translation;
@@ -822,6 +840,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
+  rb_define_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
   rb_define_method(cSqlite3Database, "load_extension", load_extension, 1);

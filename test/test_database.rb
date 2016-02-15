@@ -1,4 +1,5 @@
 require 'helper'
+require 'tempfile'
 
 module SQLite3
   class TestDatabase < SQLite3::TestCase
@@ -6,10 +7,20 @@ module SQLite3
 
     def setup
       @db = SQLite3::Database.new(':memory:')
+      super
     end
 
     def test_segv
       assert_raises(TypeError) { SQLite3::Database.new 1 }
+    end
+
+    def test_db_filename
+      assert_equal '', @db.db_filename('main')
+      tf = Tempfile.new
+      @db = SQLite3::Database.new tf.path
+      assert_equal tf.path, @db.db_filename('main')
+    ensure
+      tf.unlink
     end
 
     def test_bignum
