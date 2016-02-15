@@ -840,7 +840,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
-  rb_define_method(cSqlite3Database, "db_filename", db_filename, 1);
+  rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
   rb_define_method(cSqlite3Database, "load_extension", load_extension, 1);

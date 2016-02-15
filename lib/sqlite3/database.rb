@@ -98,6 +98,13 @@ in version 2.0.0.
       end
     end
 
+    # Returns the filename for the database named +db_name+.  +db_name+ defaults
+    # to "main".  Main return `nil` or an empty string if the database is
+    # temporary or in-memory.
+    def filename db_name = 'main'
+      db_filename db_name
+    end
+
     # Executes the given SQL statement. If additional parameters are given,
     # they are treated as bind variables, and are bound to the placeholders in
     # the query.

@@ -15,10 +15,19 @@ module SQLite3
     end
 
     def test_db_filename
-      assert_equal '', @db.db_filename('main')
+      assert_equal '', @db.filename('main')
       tf = Tempfile.new
       @db = SQLite3::Database.new tf.path
-      assert_equal tf.path, @db.db_filename('main')
+      assert_equal tf.path, @db.filename('main')
+    ensure
+      tf.unlink
+    end
+
+    def test_filename
+      assert_equal '', @db.filename
+      tf = Tempfile.new
+      @db = SQLite3::Database.new tf.path
+      assert_equal tf.path, @db.filename
     ensure
       tf.unlink
     end
