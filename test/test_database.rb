@@ -16,29 +16,29 @@ module SQLite3
 
     def test_db_filename
       assert_equal '', @db.filename('main')
-      tf = Tempfile.new
+      tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
       assert_equal tf.path, @db.filename('main')
     ensure
-      tf.unlink
+      tf.unlink if tf
     end
 
     def test_filename
       assert_equal '', @db.filename
-      tf = Tempfile.new
+      tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
       assert_equal tf.path, @db.filename
     ensure
-      tf.unlink
+      tf.unlink if tf
     end
 
     def test_filename_with_attachment
       assert_equal '', @db.filename
-      tf = Tempfile.new
+      tf = Tempfile.new 'thing'
       @db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"
       assert_equal tf.path, @db.filename('testing')
     ensure
-      tf.unlink
+      tf.unlink if tf
     end
 
     def test_bignum
