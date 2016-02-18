@@ -15,6 +15,7 @@ module SQLite3
     end
 
     def test_db_filename
+      tf = nil
       assert_equal '', @db.filename('main')
       tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
@@ -24,6 +25,7 @@ module SQLite3
     end
 
     def test_filename
+      tf = nil
       assert_equal '', @db.filename
       tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
@@ -33,6 +35,7 @@ module SQLite3
     end
 
     def test_filename_with_attachment
+      tf = nil
       assert_equal '', @db.filename
       tf = Tempfile.new 'thing'
       @db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"

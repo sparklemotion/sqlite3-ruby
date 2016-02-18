@@ -73,6 +73,42 @@ static VALUE threadsafe_p(VALUE UNUSED(klass))
   return INT2NUM(sqlite3_threadsafe());
 }
 
+void init_sqlite3_constants()
+{
+  VALUE mSqlite3Constants;
+  VALUE mSqlite3Open;
+
+  mSqlite3Constants = rb_define_module_under(mSqlite3, "Constants");
+
+  /* sqlite3_open_v2 flags for Database::new */
+  mSqlite3Open = rb_define_module_under(mSqlite3Constants, "Open");
+
+  /* symbols = IO.readlines('sqlite3.h').map { |n| /\A#define\s+(SQLITE_OPEN_\w+)\s/ =~ n && $1 }.compact
+   * pad = symbols.map(&:length).max - 9
+   * symbols.each { |s| printf %Q{  rb_define_const(mSqlite3Open, %-#{pad}s INT2FIX(#{s}));\n}, '"' + s[12..-1] + '",' }
+   */
+  rb_define_const(mSqlite3Open, "READONLY",       INT2FIX(SQLITE_OPEN_READONLY));
+  rb_define_const(mSqlite3Open, "READWRITE",      INT2FIX(SQLITE_OPEN_READWRITE));
+  rb_define_const(mSqlite3Open, "CREATE",         INT2FIX(SQLITE_OPEN_CREATE));
+  rb_define_const(mSqlite3Open, "DELETEONCLOSE",  INT2FIX(SQLITE_OPEN_DELETEONCLOSE));
+  rb_define_const(mSqlite3Open, "EXCLUSIVE",      INT2FIX(SQLITE_OPEN_EXCLUSIVE));
+  rb_define_const(mSqlite3Open, "AUTOPROXY",      INT2FIX(SQLITE_OPEN_AUTOPROXY));
+  rb_define_const(mSqlite3Open, "URI",            INT2FIX(SQLITE_OPEN_URI));
+  rb_define_const(mSqlite3Open, "MEMORY",         INT2FIX(SQLITE_OPEN_MEMORY));
+  rb_define_const(mSqlite3Open, "MAIN_DB",        INT2FIX(SQLITE_OPEN_MAIN_DB));
+  rb_define_const(mSqlite3Open, "TEMP_DB",        INT2FIX(SQLITE_OPEN_TEMP_DB));
+  rb_define_const(mSqlite3Open, "TRANSIENT_DB",   INT2FIX(SQLITE_OPEN_TRANSIENT_DB));
+  rb_define_const(mSqlite3Open, "MAIN_JOURNAL",   INT2FIX(SQLITE_OPEN_MAIN_JOURNAL));
+  rb_define_const(mSqlite3Open, "TEMP_JOURNAL",   INT2FIX(SQLITE_OPEN_TEMP_JOURNAL));
+  rb_define_const(mSqlite3Open, "SUBJOURNAL",     INT2FIX(SQLITE_OPEN_SUBJOURNAL));
+  rb_define_const(mSqlite3Open, "MASTER_JOURNAL", INT2FIX(SQLITE_OPEN_MASTER_JOURNAL));
+  rb_define_const(mSqlite3Open, "NOMUTEX",        INT2FIX(SQLITE_OPEN_NOMUTEX));
+  rb_define_const(mSqlite3Open, "FULLMUTEX",      INT2FIX(SQLITE_OPEN_FULLMUTEX));
+  rb_define_const(mSqlite3Open, "SHAREDCACHE",    INT2FIX(SQLITE_OPEN_SHAREDCACHE));
+  rb_define_const(mSqlite3Open, "PRIVATECACHE",   INT2FIX(SQLITE_OPEN_PRIVATECACHE));
+  rb_define_const(mSqlite3Open, "WAL",            INT2FIX(SQLITE_OPEN_WAL));
+}
+
 void Init_sqlite3_native()
 {
   /*
@@ -93,6 +129,7 @@ void Init_sqlite3_native()
   sqlite3_initialize();
 #endif
 
+  init_sqlite3_constants();
   init_sqlite3_database();
   init_sqlite3_statement();
 #ifdef HAVE_SQLITE3_BACKUP_INIT
