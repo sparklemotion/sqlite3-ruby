@@ -319,7 +319,7 @@ module SQLite3
         db.execute("select bug(#{Array.new(params.length, "?").join(",")})", params)
       }
       m = Mutex.new
-      threads = 30.times.map { Thread.new { m.synchronize { proc.call } } }.each(&:join)
+      30.times.map { Thread.new { m.synchronize { proc.call } } }.each(&:join)
     end
 
     def test_function_return_type_round_trip

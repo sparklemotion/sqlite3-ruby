@@ -3,7 +3,7 @@ require 'helper'
 module SQLite3
   class TestDatabaseReadonly < SQLite3::TestCase
     def setup
-      File.unlink 'test-readonly.db' if File.exists?('test-readonly.db')
+      File.unlink 'test-readonly.db' if File.exist?('test-readonly.db')
       @db = SQLite3::Database.new('test-readonly.db')
       @db.execute("CREATE TABLE foos (id integer)")
       @db.close
@@ -11,7 +11,7 @@ module SQLite3
 
     def teardown
       @db.close unless @db.closed?
-      File.unlink 'test-readonly.db' if File.exists?('test-readonly.db')
+      File.unlink 'test-readonly.db' if File.exist?('test-readonly.db')
     end
 
     def test_open_readonly_database

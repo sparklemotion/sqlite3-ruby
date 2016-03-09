@@ -3,7 +3,7 @@ require 'helper'
 module SQLite3
   class TestDatabaseFlags < SQLite3::TestCase
     def setup
-      File.unlink 'test-flags.db' if File.exists?('test-flags.db')
+      File.unlink 'test-flags.db' if File.exist?('test-flags.db')
       @db = SQLite3::Database.new('test-flags.db')
       @db.execute("CREATE TABLE foos (id integer)")
       @db.close
@@ -11,7 +11,7 @@ module SQLite3
 
     def teardown
       @db.close unless @db.closed?
-      File.unlink 'test-flags.db' if File.exists?('test-flags.db')
+      File.unlink 'test-flags.db' if File.exist?('test-flags.db')
     end
 
     def test_open_database_flags_constants
@@ -28,7 +28,7 @@ module SQLite3
       if SQLite3::SQLITE_VERSION_NUMBER > 3007013
         defined_to_date += [:MEMORY]
       end
-      assert (defined_to_date - SQLite3::Constants::Open.constants).empty?
+      assert defined_to_date.sort == SQLite3::Constants::Open.constants.sort
     end
 
     def test_open_database_flags_conflicts_with_readonly
@@ -81,7 +81,7 @@ module SQLite3
         db.execute("CREATE TABLE foos (id integer)")
         db.execute("INSERT INTO foos (id) VALUES (12)")
       end
-      assert File.exists?('test-flags.db')
+      assert File.exist?('test-flags.db')
     end
 
     def test_open_database_exotic_flags
