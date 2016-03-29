@@ -13,6 +13,8 @@ ext/sqlite3/database.h
 ext/sqlite3/exception.c
 ext/sqlite3/exception.h
 ext/sqlite3/extconf.rb
+ext/sqlite3/module.c
+ext/sqlite3/module.h
 ext/sqlite3/sqlite3.c
 ext/sqlite3/sqlite3_ruby.h
 ext/sqlite3/statement.c
@@ -38,7 +40,9 @@ test/helper.rb
 test/test_backup.rb
 test/test_collation.rb
 test/test_database.rb
+test/test_database_flags.rb
 test/test_database_readonly.rb
+test/test_database_readwrite.rb
 test/test_deprecated.rb
 test/test_encoding.rb
 test/test_integration.rb
@@ -50,3 +54,4 @@ test/test_result_set.rb
 test/test_sqlite3.rb
 test/test_statement.rb
 test/test_statement_execute.rb
+test/test_vtable.rb
