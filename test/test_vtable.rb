@@ -1,8 +1,9 @@
 require "helper"
+require 'sqlite3/vtable'
 
 #the ruby module name should be the one given to sqlite when creating the virtual table.
 module RubyModule
-  class TestVTable
+  class TestVTable < VTableInterface
     def initialize
       @str = "A"*1500
     end
@@ -31,11 +32,6 @@ module RubyModule
         nil
       end
 
-    end
-
-    #required method for vtable
-    #called after each statement
-    def close
     end
   end
 end

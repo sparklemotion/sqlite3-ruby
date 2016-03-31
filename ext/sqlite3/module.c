@@ -36,6 +36,9 @@ static int xCreate(sqlite3* db, VALUE *module_name,
 	const char* module_name_cstr = (const char*)StringValuePtr(*module_name);
 	const char* table_name_cstr = (const char*)argv[2];
 
+	// method will raise in case of error: no need to use pzErr
+	*pzErr = NULL;
+
 	// lookup for ruby class named like <module_id>::<table_name>
 	module_id = rb_intern( module_name_cstr );
 	module = rb_const_get(rb_cObject, module_id);
@@ -57,8 +60,9 @@ static int xCreate(sqlite3* db, VALUE *module_name,
 		sql_stmt = rb_str_export_to_enc(sql_stmt, rb_utf8_encoding());
 	}
 #endif
-	if ( sqlite3_declare_vtab(db, StringValuePtr(sql_stmt)) )
+	if ( sqlite3_declare_vtab(db, StringValuePtr(sql_stmt)) ) {
 		rb_raise(rb_eArgError, "fail to declare virtual table");
+	}
 
 	return SQLITE_OK;
 }
