@@ -31,6 +31,7 @@ lib/sqlite3/statement.rb
 lib/sqlite3/translator.rb
 lib/sqlite3/value.rb
 lib/sqlite3/version.rb
+lib/sqlite3/vtable.rb
 setup.rb
 tasks/faq.rake
 tasks/gem.rake

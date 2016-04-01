@@ -75,8 +75,136 @@ static int xConnect(sqlite3* db, void *pAux,
 	return xCreate(db, pAux, argc, argv, ppVTab, pzErr);
 }
 
+static VALUE constraint_op_as_symbol(unsigned char op)
+{
+	ID op_id;
+	switch(op) {
+		case SQLITE_INDEX_CONSTRAINT_EQ:
+			op_id = rb_intern("==");
+			break;
+		case SQLITE_INDEX_CONSTRAINT_GT:
+			op_id = rb_intern(">");
+			break;
+		case SQLITE_INDEX_CONSTRAINT_LE:
+			op_id = rb_intern("<=");
+			break;
+		case SQLITE_INDEX_CONSTRAINT_LT:
+			op_id = rb_intern("<");
+			break;
+		case SQLITE_INDEX_CONSTRAINT_GE:
+			op_id = rb_intern(">=");
+			break;
+		case SQLITE_INDEX_CONSTRAINT_MATCH:
+			op_id = rb_intern("match");
+			break;
+#if SQLITE_VERSION_NUMBER>=3010000
+		case SQLITE_INDEX_CONSTRAINT_LIKE:
+			op_id = rb_intern("like");
+			break;
+		case SQLITE_INDEX_CONSTRAINT_GLOB:
+			op_id = rb_intern("glob");
+			break;
+		case SQLITE_INDEX_CONSTRAINT_REGEXP:
+			op_id = rb_intern("regexp");
+			break;
+#endif
+#if SQLITE_VERSION_NUMBER>=3009000
+		case SQLITE_INDEX_SCAN_UNIQUE:
+			op_id = rb_intern("unique");
+			break;
+#endif
+		default:
+			op_id = rb_intern("unsupported");
+	}
+	return ID2SYM(op_id);
+}
+
+static VALUE constraint_to_ruby(const struct sqlite3_index_constraint* c)
+{
+	VALUE cons = rb_ary_new2(2);
+	rb_ary_store(cons, 0, LONG2FIX(c->iColumn));
+	rb_ary_store(cons, 1, constraint_op_as_symbol(c->op));
+	return cons;
+}
+
+static VALUE order_by_to_ruby(const struct sqlite3_index_orderby* c)
+{
+	VALUE order_by = rb_ary_new2(2);
+	rb_ary_store(order_by, 0, LONG2FIX(c->iColumn));
+	rb_ary_store(order_by, 1, LONG2FIX(1-2*c->desc));
+	return order_by;
+}
+
 static int xBestIndex(ruby_sqlite3_vtab *pVTab, sqlite3_index_info* info)
 {
+	int i;
+	VALUE constraint = rb_ary_new();
+        VALUE order_by = rb_ary_new2(info->nOrderBy);
+	VALUE ret, idx_num, estimated_cost, order_by_consumed, omit_all;
+#if SQLITE_VERSION_NUMBER >= 3008002
+	VALUE estimated_rows;
+#endif
+#if SQLITE_VERSION_NUMBER >= 3009000
+	VALUE idx_flags;
+#endif
+#if SQLITE_VERSION_NUMBER >= 3010000
+	VALUE col_used;
+#endif
+
+	// convert constraints to ruby
+	for (i = 0; i < info->nConstraint; ++i) {
+		if (info->aConstraint[i].usable) {
+			rb_ary_push(constraint, constraint_to_ruby(info->aConstraint + i));
+		} else {
+			printf("ignoring %d %d\n", info->aConstraint[i].iColumn, info->aConstraint[i].op);
+		}
+	}
+
+	// convert order_by to ruby
+	for (i = 0; i < info->nOrderBy; ++i) {
+		rb_ary_store(order_by, i, order_by_to_ruby(info->aOrderBy + i));
+	}
+
+	
+	ret = rb_funcall( pVTab->vtable, rb_intern("best_index"), 2, constraint, order_by );
+	if (ret != Qnil ) {
+		if (!RB_TYPE_P(ret, T_HASH)) {
+			rb_raise(rb_eTypeError, "best_index: expect returned value to be a Hash");
+		}
+		idx_num = rb_hash_aref(ret, ID2SYM(rb_intern("idxNum")));
+		if (idx_num == Qnil ) { 
+			rb_raise(rb_eKeyError, "best_index: mandatory key 'idxNum' not found");
+		}
+		info->idxNum = FIX2INT(idx_num);
+		estimated_cost = rb_hash_aref(ret, ID2SYM(rb_intern("estimatedCost")));
+		if (estimated_cost != Qnil) { info->estimatedCost = NUM2DBL(estimated_cost); }
+		order_by_consumed = rb_hash_aref(ret, ID2SYM(rb_intern("orderByConsumed")));
+		info->orderByConsumed = RTEST(order_by_consumed);
+#if SQLITE_VERSION_NUMBER >= 3008002
+		estimated_rows = rb_hash_aref(ret, ID2SYM(rb_intern("estimatedRows")));
+		if (estimated_rows != Qnil) { bignum_to_int64(estimated_rows, &info->estimatedRows); }
+#endif
+#if SQLITE_VERSION_NUMBER >= 3009000
+		idx_flags = rb_hash_aref(ret, ID2SYM(rb_intern("idxFlags")));
+		if (idx_flags != Qnil) { info->idxFlags = FIX2INT(idx_flags); }
+#endif
+#if SQLITE_VERSION_NUMBER >= 3010000
+		col_used = rb_hash_aref(ret, ID2SYM(rb_intern("colUsed")));
+		if (col_used != Qnil) { bignum_to_int64(col_used, &info->colUsed); }
+#endif
+
+		// make sure that expression are given to filter
+		omit_all = rb_hash_aref(ret, ID2SYM(rb_intern("omitAllConstraint")));
+		for (i = 0; i < info->nConstraint; ++i) {
+			if (RTEST(omit_all)) {
+				info->aConstraintUsage[i].omit = 1;
+			}
+			if (info->aConstraint[i].usable) {
+				info->aConstraintUsage[i].argvIndex = (i+1);
+			}
+		}
+	}
+
 	return SQLITE_OK;
 }
 
@@ -117,6 +245,12 @@ static int xNext(ruby_sqlite3_vtab_cursor* cursor)
 static int xFilter(ruby_sqlite3_vtab_cursor* cursor, int idxNum, const char *idxStr,
 		int argc, sqlite3_value **argv)
 {
+	int i;
+	VALUE argv_ruby = rb_ary_new2(argc);
+	for (i = 0; i < argc; ++i) {
+		rb_ary_store(argv_ruby, i, sqlite3val2rb(argv[i]));
+	}
+	rb_funcall( cursor->pVTab->vtable, rb_intern("filter"), 2,  LONG2FIX(idxNum), argv_ruby );
 	cursor->rowid = 0;
 	return xNext(cursor);
 }

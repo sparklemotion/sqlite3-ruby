@@ -5,6 +5,7 @@
 
 // used by module.c too
 void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result);
+VALUE sqlite3val2rb(sqlite3_value * val);
 
 struct _sqlite3Ruby {
   sqlite3 *db;
