@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <sqlite3_ruby.h>
 
-VALUE cSqlite3Module;
+VALUE cVTable;
 
 /** structure for ruby virtual table: inherits from sqlite3_vtab */
 typedef struct { 
@@ -20,39 +20,64 @@ typedef struct {
 	int rowid;
 } ruby_sqlite3_vtab_cursor;
 
-
 /**
  * lookup for a ruby class <ModuleName>::<TableName> and create an instance of this class
  * This instance is then used to bind sqlite vtab callbacks
  */
-static int xCreate(sqlite3* db, VALUE *module_name,
+static int xCreate(sqlite3* db, VALUE *db_ruby,
 		int argc, char **argv,
 		ruby_sqlite3_vtab **ppVTab,
 		char **pzErr)
 {
-	VALUE sql_stmt, module, ruby_class;
-	ID table_id, module_id;
-	VALUE ruby_class_args[0];
-	const char* module_name_cstr = (const char*)StringValuePtr(*module_name);
+	VALUE sql_stmt, tables;
+	VALUE module_name, module;
+	VALUE table_name, table;
+	const char* module_name_cstr = (const char*)argv[0];
 	const char* table_name_cstr = (const char*)argv[2];
 
 	// method will raise in case of error: no need to use pzErr
 	*pzErr = NULL;
 
-	// lookup for ruby class named like <module_id>::<table_name>
-	module_id = rb_intern( module_name_cstr );
-	module = rb_const_get(rb_cObject, module_id);
-	table_id = rb_intern( table_name_cstr );
-	ruby_class = rb_const_get(module, table_id);
+	// lookup for hash db.vtables
+	tables = rb_funcall(*db_ruby, rb_intern("vtables"), 0);
+	if (!RB_TYPE_P(tables, T_HASH)) {
+		rb_raise(rb_eTypeError, "xCreate: expect db.vtables to be a Hash");
+	}
+	module_name = rb_str_new2(module_name_cstr);
+	module = rb_hash_aref(tables, module_name);
+	if (module == Qnil ) {
+		rb_raise(
+			rb_eKeyError,
+			"xCreate: module %s is declared in sqlite3 but cant be found in db.vtables.",
+			module_name_cstr
+			);
+	}
+
+	table_name = rb_str_new2(table_name_cstr);
+	table = rb_hash_aref(module, table_name);
+	if (table == Qnil) {
+		rb_raise(
+			rb_eKeyError,
+			"no such table: %s in module %s",
+			table_name_cstr,
+			module_name_cstr
+			);
+	}
+	if (rb_obj_is_kind_of(table, cVTable) != Qtrue) {
+		VALUE table_inspect = rb_funcall(table, rb_intern("inspect"), 0);
+		rb_raise(
+			rb_eTypeError,
+			"Object %s must inherit from VTable",
+			StringValuePtr(table_inspect)
+			);
+	}
 
 	// alloc a new ruby_sqlite3_vtab object
 	// and store related attributes
 	(*ppVTab) = (ruby_sqlite3_vtab*)malloc(sizeof(ruby_sqlite3_vtab));
+	(*ppVTab)->vtable = table;
 
-	// create a new instance
-	(*ppVTab)->vtable = rb_class_new_instance(0, ruby_class_args, ruby_class);
-
-	// call the create function
+	// get the create statement
 	sql_stmt = rb_funcall((*ppVTab)->vtable, rb_intern("create_statement"), 0);
 
 #ifdef HAVE_RUBY_ENCODING_H
@@ -61,7 +86,7 @@ static int xCreate(sqlite3* db, VALUE *module_name,
 	}
 #endif
 	if ( sqlite3_declare_vtab(db, StringValuePtr(sql_stmt)) ) {
-		rb_raise(rb_eArgError, "fail to declare virtual table");
+		rb_raise(rb_path2class("SQLite3::Exception"), "fail to declare virtual table with \"%s\": %s", StringValuePtr(sql_stmt), sqlite3_errmsg(db));
 	}
 
 	return SQLITE_OK;
@@ -155,9 +180,7 @@ static int xBestIndex(ruby_sqlite3_vtab *pVTab, sqlite3_index_info* info)
 	for (i = 0; i < info->nConstraint; ++i) {
 		if (info->aConstraint[i].usable) {
 			rb_ary_push(constraint, constraint_to_ruby(info->aConstraint + i));
-		} else {
-			printf("ignoring %d %d\n", info->aConstraint[i].iColumn, info->aConstraint[i].op);
-		}
+		} 
 	}
 
 	// convert order_by to ruby
@@ -165,7 +188,6 @@ static int xBestIndex(ruby_sqlite3_vtab *pVTab, sqlite3_index_info* info)
 		rb_ary_store(order_by, i, order_by_to_ruby(info->aOrderBy + i));
 	}
 
-	
 	ret = rb_funcall( pVTab->vtable, rb_intern("best_index"), 2, constraint, order_by );
 	if (ret != Qnil ) {
 		if (!RB_TYPE_P(ret, T_HASH)) {
@@ -263,7 +285,6 @@ static int xEof(ruby_sqlite3_vtab_cursor* cursor)
 static int xColumn(ruby_sqlite3_vtab_cursor* cursor, sqlite3_context* context, int i)
 {
 	VALUE val = rb_ary_entry(cursor->row, i);
-
 	set_sqlite3_func_result(context, val);
 	return SQLITE_OK;
 }
@@ -297,57 +318,41 @@ static sqlite3_module ruby_proxy_module =
 	NULL,           /* xFindFunction - function overloading */
 };
 
-static void deallocate(void * ctx)
+static VALUE create_module(VALUE self, VALUE db, VALUE name)
 {
-	sqlite3ModuleRubyPtr c = (sqlite3ModuleRubyPtr)ctx;
-	xfree(c);
-}
-
-static VALUE allocate(VALUE klass)
-{
-	sqlite3ModuleRubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3ModuleRuby));
-	ctx->module     = NULL;
-
-	return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
-}
-
-static VALUE initialize(VALUE self, VALUE db, VALUE name)
-{
+	VALUE *db_ruby;
 	sqlite3RubyPtr db_ctx;
-	sqlite3ModuleRubyPtr ctx;
-
 	StringValue(name);
-
 	Data_Get_Struct(db, sqlite3Ruby, db_ctx);
-	Data_Get_Struct(self, sqlite3ModuleRuby, ctx);
 
-
-	if(!db_ctx->db)
-		rb_raise(rb_eArgError, "initializing a module on a closed database");
+	if(!db_ctx->db) {
+		rb_raise(rb_eArgError, "create_module on a closed database");
+	}
 
 #ifdef HAVE_RUBY_ENCODING_H
 	if(!UTF8_P(name)) {
-		name               = rb_str_export_to_enc(name, rb_utf8_encoding());
+		name = rb_str_export_to_enc(name, rb_utf8_encoding());
 	}
 #endif
-	
-	// make possible to access to ruby object from c
-	ctx->module_name = name;
 
-	sqlite3_create_module(
+	db_ruby = xcalloc(1, sizeof(VALUE));
+	*db_ruby = db;
+	if (sqlite3_create_module_v2(
 			db_ctx->db,
-			(const char *)StringValuePtr(name),
+			StringValuePtr(name),
 			&ruby_proxy_module,
-			&(ctx->module_name) //the vtable required the module name
-			);
+			db_ruby,
+			xfree
+			) != SQLITE_OK) {
+		rb_raise(rb_path2class("SQLite3::Exception"), sqlite3_errmsg(db_ctx->db));
+	}
 
-	return self;
+	return Qnil;
 }
 
-void init_sqlite3_module()
+void init_sqlite3_vtable()
 {
-	cSqlite3Module = rb_define_class_under(mSqlite3, "Module", rb_cObject);
-	rb_define_alloc_func(cSqlite3Module, allocate);
-	rb_define_method(cSqlite3Module, "initialize", initialize, 2);
+	cVTable = rb_define_class_under(mSqlite3, "VTable", rb_cObject);
+	rb_define_singleton_method(cVTable, "create_module", create_module, 2);
 }
 

@@ -118,7 +118,9 @@ static VALUE step(VALUE self)
 
   REQUIRE_OPEN_STMT(ctx);
 
-  if(ctx->done_p) return Qnil;
+  if(ctx->done_p) {
+	return Qnil;
+  }
 
 #ifdef HAVE_RUBY_ENCODING_H
   {
@@ -128,8 +130,8 @@ static VALUE step(VALUE self)
   }
 #endif
 
+  
   stmt = ctx->st;
-
   value = sqlite3_step(stmt);
   length = sqlite3_column_count(stmt);
   list = rb_ary_new2((long)length);

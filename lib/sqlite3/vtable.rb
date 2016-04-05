@@ -4,10 +4,23 @@ module SQLite3_VTables
 end
 
 module SQLite3
-  class VTableInterface
+  class VTable
+    def register(db, module_name, table_name)
+      tables = (db.vtables ||= {})
+      m = tables[module_name]
+      raise "VTable #{table_name} for module #{module_name} is already registered" if m && m[table_name]
+      unless m
+        self.class.create_module(db, module_name) 
+        m = tables[module_name] = {}
+      end
+      m[table_name] = self
+    end
+    def initialize(db, module_name, table_name = nil)
+      register(db, module_name, table_name || self.class.name.split('::').last)
+    end
     #this method is needed to declare the type of each column to sqlite
     def create_statement
-      fail 'VTableInterface#create_statement not implemented'
+      fail 'VTable#create_statement not implemented'
     end
 
     #called before each statement
@@ -30,42 +43,40 @@ module SQLite3
     # may be called several times between open/close
     # it initialize/reset cursor
     def filter(idxNum, args)
-      fail 'VTableInterface#filter not implemented'
+      fail 'VTable#filter not implemented'
     end
 
     # called to retrieve a new row
     def next
-      fail 'VTableInterface#next not implemented'
+      fail 'VTable#next not implemented'
     end
   end
 
+  class VTableFromEnumerable < VTable
+    DEFAULT_MODULE = 'DEFAULT_MODULE'
+    def initialize(db, table_name, table_columns, enumerable)
+      super(db, DEFAULT_MODULE, table_name)
+      @table_name = table_name
+      @table_columns = table_columns
+      @enumerable = enumerable
+      db.execute("create virtual table #{table_name} using #{DEFAULT_MODULE}")
+    end
+
+    def filter(idxNum, args)
+      @enum = @enumerable.to_enum
+    end
+
+    def create_statement
+      "create table #{@table_name}(#{@table_columns})"
+    end
+
+    def next
+      @enum.next
+    rescue StopIteration
+      nil
+    end
+  end
   def self.vtable(db, table_name, table_columns, enumerable)
-    Module.new(db, 'SQLite3_VTables')
-    if SQLite3_VTables.const_defined?(table_name, inherit = false)
-      raise "'#{table_name}' already declared" 
-    end
-
-    klass = Class.new(VTableInterface)
-    klass.send(:define_method, :filter) do |idxNum, args|
-      @enumerable = enumerable.to_enum
-    end
-    klass.send(:define_method, :create_statement) do
-      "create table #{table_name}(#{table_columns})"
-    end
-    klass.send(:define_method, :next) do
-      begin
-        @enumerable.next
-      rescue StopIteration
-        nil
-      end
-    end
-
-    begin
-      SQLite3_VTables.const_set(table_name, klass)
-    rescue NameError
-      raise "'#{table_name}' must be a valid ruby constant name"
-    end
-    db.execute("create virtual table #{table_name} using SQLite3_VTables")
-    klass
-  end
+    VTableFromEnumerable.new(db, table_name, table_columns, enumerable)
+  end 
 end

@@ -34,6 +34,7 @@ module SQLite3
   # hashes, then the results will all be indexible by field name.
   class Database
     attr_reader :collations
+    attr_accessor :vtables
 
     include Pragmas
 

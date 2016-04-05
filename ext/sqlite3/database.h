@@ -3,7 +3,9 @@
 
 #include <sqlite3_ruby.h>
 
-// used by module.c too
+#define DEBUG_LOG(...) (void)(0)
+//#define DEBUG_LOG(...) printf(__VA_ARGS__); fflush(stdout)
+// used by vtable.c too
 void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result);
 VALUE sqlite3val2rb(sqlite3_value * val);
 
