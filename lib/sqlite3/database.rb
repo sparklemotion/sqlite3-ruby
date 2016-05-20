@@ -119,11 +119,22 @@ in version 2.0.0.
     #
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
+    def is_nested_array?(bind_vars)
+      bind_vars.is_a?(Array) && bind_vars[1].is_a?(Array)
+    end
+
+    def add_host_parameters_to_sql(sql, bind_vars)
+      param_markers = Array.new(bind_vars.first.length, "?").join(",")
+      host_params   = 2.upto(bind_vars.length).map { ",(#{param_markers})" }.join
+      sql << host_params
+    end
+
     def execute sql, bind_vars = [], *args, &block
       # FIXME: This is a terrible hack and should be removed but is required
       # for older versions of rails
-      hack = Object.const_defined?(:ActiveRecord) && sql =~ /^PRAGMA index_list/
+      add_host_parameters_to_sql(sql, bind_vars) if is_nested_array?(bind_vars)
 
+      hack = Object.const_defined?(:ActiveRecord) && sql =~ /^PRAGMA index_list/
       if bind_vars.nil? || !args.empty?
         if args.empty?
           bind_vars = []
