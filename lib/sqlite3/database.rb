@@ -337,11 +337,19 @@ Support for this will be removed in version 2.0.0.
       self
     end
 
+    # Returns an array of the names of all functions that have been created on
+    # the target instance using #create_function.
     def created_function_names
       @created_function_names ||= []
       @created_function_names.dup
     end
 
+    # Returns true if a function with the given name (case insensitive) has been
+    # created on the target instance using #create_function.
+    #
+    # After creating a function named "mIxEd_CaSe", for instance, both
+    # `function_created?("mixed_case")` and `function_created?("MIXED_CASE")`
+    # will return `true`.
     def function_created?(name)
       key = name.downcase
       created_function_keys.include?(key)
