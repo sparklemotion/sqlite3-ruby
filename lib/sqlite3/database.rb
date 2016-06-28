@@ -1,3 +1,4 @@
+require 'set'
 require 'sqlite3/constants'
 require 'sqlite3/errors'
 require 'sqlite3/pragmas'
@@ -331,8 +332,25 @@ Support for this will be removed in version 2.0.0.
         block.call(fp, *args)
         fp.result
       end
+      ( @created_function_names ||= [] ) << name
+      created_function_keys << name.downcase
       self
     end
+
+    def created_function_names
+      @created_function_names ||= []
+      @created_function_names.dup
+    end
+
+    def function_created?(name)
+      key = name.downcase
+      created_function_keys.include?(key)
+    end
+
+    def created_function_keys
+      @created_function_keys ||= Set.new
+    end
+    private :created_function_keys
 
     # Creates a new aggregate function for use in SQL statements. Aggregate
     # functions are functions that apply over every row in the result set,

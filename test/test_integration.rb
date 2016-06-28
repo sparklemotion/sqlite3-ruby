@@ -487,6 +487,25 @@ class TC_Database_Integration < SQLite3::TestCase
     assert_match( />>>.*<<</, value )
   end
 
+  def test_track_created_functions
+    @db.create_function( "foo", 0 ) do |*args| ; end
+    @db.create_function( "BAR", 0 ) do |*args| ; end
+
+    assert_includes( @db.created_function_names, "foo" )
+    assert_includes( @db.created_function_names, "BAR" )
+  end
+
+  def test_check_whether_function_created?
+    @db.create_function( "foo", 0 ) do |*args| ; end
+    @db.create_function( "BAR", 0 ) do |*args| ; end
+
+    assert_equal( false, @db.function_created?("baz") )
+
+    assert_equal( true, @db.function_created?("foo") )
+    assert_equal( true, @db.function_created?("FOO") )
+    assert_equal( true, @db.function_created?("bar") )
+  end
+
   def test_create_aggregate_without_block
     step = proc do |ctx,a|
       ctx[:sum] ||= 0
