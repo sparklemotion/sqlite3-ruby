@@ -3,7 +3,7 @@ require 'helper'
 module SQLite3
   class TestDatabaseReadwrite < SQLite3::TestCase
     def setup
-      File.unlink 'test-readwrite.db' if File.exists?('test-readwrite.db')
+      File.unlink 'test-readwrite.db' if File.exist?('test-readwrite.db')
       @db = SQLite3::Database.new('test-readwrite.db')
       @db.execute("CREATE TABLE foos (id integer)")
       @db.close
@@ -11,7 +11,7 @@ module SQLite3
 
     def teardown
       @db.close unless @db.closed?
-      File.unlink 'test-readwrite.db' if File.exists?('test-readwrite.db')
+      File.unlink 'test-readwrite.db' if File.exist?('test-readwrite.db')
     end
 
     def test_open_readwrite_database

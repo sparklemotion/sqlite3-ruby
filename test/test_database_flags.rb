@@ -3,7 +3,7 @@ require 'helper'
 module SQLite3
   class TestDatabaseFlags < SQLite3::TestCase
     def setup
-      File.unlink 'test-flags.db' if File.exists?('test-flags.db')
+      File.unlink 'test-flags.db' if File.exist?('test-flags.db')
       @db = SQLite3::Database.new('test-flags.db')
       @db.execute("CREATE TABLE foos (id integer)")
       @db.close
@@ -11,17 +11,24 @@ module SQLite3
 
     def teardown
       @db.close unless @db.closed?
-      File.unlink 'test-flags.db' if File.exists?('test-flags.db')
+      File.unlink 'test-flags.db' if File.exist?('test-flags.db')
     end
 
     def test_open_database_flags_constants
-      defined_to_date = [:READONLY, :READWRITE, :CREATE,
-                         :DELETEONCLOSE, :EXCLUSIVE, :AUTOPROXY, :URI, :MEMORY,
-                         :MAIN_DB, :TEMP_DB, :TRANSIENT_DB,
-                         :MAIN_JOURNAL, :TEMP_JOURNAL, :SUBJOURNAL, :MASTER_JOURNAL,
-                         :NOMUTEX, :FULLMUTEX,
-                         :SHAREDCACHE, :PRIVATECACHE, :WAL]
-      assert (defined_to_date - SQLite3::Constants::Open.constants).empty?
+      defined_to_date = [:READONLY, :READWRITE, :CREATE, :DELETEONCLOSE,
+                         :EXCLUSIVE, :MAIN_DB, :TEMP_DB, :TRANSIENT_DB,
+                         :MAIN_JOURNAL, :TEMP_JOURNAL, :SUBJOURNAL,
+                         :MASTER_JOURNAL, :NOMUTEX, :FULLMUTEX]
+      if SQLite3::SQLITE_VERSION_NUMBER > 3007002
+        defined_to_date += [:AUTOPROXY, :SHAREDCACHE, :PRIVATECACHE, :WAL]
+      end
+      if SQLite3::SQLITE_VERSION_NUMBER > 3007007
+        defined_to_date += [:URI]
+      end
+      if SQLite3::SQLITE_VERSION_NUMBER > 3007013
+        defined_to_date += [:MEMORY]
+      end
+      assert defined_to_date.sort == SQLite3::Constants::Open.constants.sort
     end
 
     def test_open_database_flags_conflicts_with_readonly
@@ -74,12 +81,12 @@ module SQLite3
         db.execute("CREATE TABLE foos (id integer)")
         db.execute("INSERT INTO foos (id) VALUES (12)")
       end
-      assert File.exists?('test-flags.db')
+      assert File.exist?('test-flags.db')
     end
 
     def test_open_database_exotic_flags
       flags = SQLite3::Constants::Open::READWRITE | SQLite3::Constants::Open::CREATE
-      exotic_flags = SQLite3::Constants::Open::NOMUTEX | SQLite3::Constants::Open::PRIVATECACHE
+      exotic_flags = SQLite3::Constants::Open::NOMUTEX | SQLite3::Constants::Open::TEMP_DB
       @db = SQLite3::Database.new('test-flags.db', :flags => flags | exotic_flags)
       @db.execute("INSERT INTO foos (id) VALUES (12)")
       assert @db.changes == 1

@@ -92,9 +92,6 @@ void init_sqlite3_constants()
   rb_define_const(mSqlite3Open, "CREATE",         INT2FIX(SQLITE_OPEN_CREATE));
   rb_define_const(mSqlite3Open, "DELETEONCLOSE",  INT2FIX(SQLITE_OPEN_DELETEONCLOSE));
   rb_define_const(mSqlite3Open, "EXCLUSIVE",      INT2FIX(SQLITE_OPEN_EXCLUSIVE));
-  rb_define_const(mSqlite3Open, "AUTOPROXY",      INT2FIX(SQLITE_OPEN_AUTOPROXY));
-  rb_define_const(mSqlite3Open, "URI",            INT2FIX(SQLITE_OPEN_URI));
-  rb_define_const(mSqlite3Open, "MEMORY",         INT2FIX(SQLITE_OPEN_MEMORY));
   rb_define_const(mSqlite3Open, "MAIN_DB",        INT2FIX(SQLITE_OPEN_MAIN_DB));
   rb_define_const(mSqlite3Open, "TEMP_DB",        INT2FIX(SQLITE_OPEN_TEMP_DB));
   rb_define_const(mSqlite3Open, "TRANSIENT_DB",   INT2FIX(SQLITE_OPEN_TRANSIENT_DB));
@@ -104,9 +101,21 @@ void init_sqlite3_constants()
   rb_define_const(mSqlite3Open, "MASTER_JOURNAL", INT2FIX(SQLITE_OPEN_MASTER_JOURNAL));
   rb_define_const(mSqlite3Open, "NOMUTEX",        INT2FIX(SQLITE_OPEN_NOMUTEX));
   rb_define_const(mSqlite3Open, "FULLMUTEX",      INT2FIX(SQLITE_OPEN_FULLMUTEX));
+#ifdef SQLITE_OPEN_AUTOPROXY
+  /* SQLITE_VERSION_NUMBER>=3007002 */
+  rb_define_const(mSqlite3Open, "AUTOPROXY",      INT2FIX(SQLITE_OPEN_AUTOPROXY));
   rb_define_const(mSqlite3Open, "SHAREDCACHE",    INT2FIX(SQLITE_OPEN_SHAREDCACHE));
   rb_define_const(mSqlite3Open, "PRIVATECACHE",   INT2FIX(SQLITE_OPEN_PRIVATECACHE));
   rb_define_const(mSqlite3Open, "WAL",            INT2FIX(SQLITE_OPEN_WAL));
+#endif
+#ifdef SQLITE_OPEN_URI
+  /* SQLITE_VERSION_NUMBER>=3007007 */
+  rb_define_const(mSqlite3Open, "URI",            INT2FIX(SQLITE_OPEN_URI));
+#endif
+#ifdef SQLITE_OPEN_MEMORY
+  /* SQLITE_VERSION_NUMBER>=3007013 */
+  rb_define_const(mSqlite3Open, "MEMORY",         INT2FIX(SQLITE_OPEN_MEMORY));
+#endif
 }
 
 void Init_sqlite3_native()
