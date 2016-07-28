@@ -10,7 +10,6 @@ env:
   - USE_MINI_PORTILE=true
   - USE_MINI_PORTILE=false
 rvm:
-  - 1.8.7
   - 1.9.3
   - 2.0.0
   - 2.1.7
