@@ -34,6 +34,7 @@ module SQLite3
   # hashes, then the results will all be indexible by field name.
   class Database
     attr_reader :collations
+    attr_accessor :vtables
 
     include Pragmas
 
@@ -393,7 +394,7 @@ Support for this will be removed in version 2.0.0.
       end
 
       proxy = factory.new
-      proxy.extend(Module.new {
+      proxy.extend(::Module.new {
         attr_accessor :ctx
 
         def step( *args )

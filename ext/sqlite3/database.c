@@ -297,7 +297,7 @@ static VALUE last_insert_row_id(VALUE self)
   return LL2NUM(sqlite3_last_insert_rowid(ctx->db));
 }
 
-static VALUE sqlite3val2rb(sqlite3_value * val)
+VALUE sqlite3val2rb(sqlite3_value * val)
 {
   switch(sqlite3_value_type(val)) {
     case SQLITE_INTEGER:
@@ -334,7 +334,7 @@ static VALUE sqlite3val2rb(sqlite3_value * val)
   }
 }
 
-static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
+void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
 {
   switch(TYPE(result)) {
     case T_NIL:
