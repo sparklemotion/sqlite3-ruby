@@ -5,7 +5,7 @@
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
 
 VALUE cSqlite3Database;
-static VALUE sym_utf16, sym_results_as_hash, sym_type_translation;
+static VALUE sym_utf16;
 
 static void deallocate(void * ctx)
 {
@@ -125,14 +125,6 @@ static VALUE init_internals(int argc, VALUE *argv, VALUE self)
 
   CHECK(ctx->db, status)
 
-  rb_iv_set(self, "@tracefunc", Qnil);
-  rb_iv_set(self, "@authorizer", Qnil);
-  rb_iv_set(self, "@encoding", Qnil);
-  rb_iv_set(self, "@busy_handler", Qnil);
-  rb_iv_set(self, "@collations", rb_hash_new());
-  rb_iv_set(self, "@functions", rb_hash_new());
-  rb_iv_set(self, "@results_as_hash", rb_hash_aref(opts, sym_results_as_hash));
-  rb_iv_set(self, "@type_translation", rb_hash_aref(opts, sym_type_translation));
 #ifdef HAVE_SQLITE3_OPEN_V2
   rb_iv_set(self, "@readonly", (mode & SQLITE_OPEN_READONLY) ? Qtrue : Qfalse);
 #else
@@ -868,8 +860,4 @@ void init_sqlite3_database()
 
   id_utf16 = rb_intern("utf16");
   sym_utf16 = ID2SYM(id_utf16);
-  id_results_as_hash = rb_intern("results_as_hash");
-  sym_results_as_hash = ID2SYM(id_results_as_hash);
-  id_type_translation = rb_intern("type_translation");
-  sym_type_translation = ID2SYM(id_type_translation);
 }

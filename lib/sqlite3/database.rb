@@ -61,6 +61,15 @@ module SQLite3
     def initialize file, options = {}
       init_internals file, options
 
+      @tracefunc        = nil
+      @authorizer       = nil
+      @encoding         = nil
+      @busy_handler     = nil
+      @collations       = {}
+      @functions        = {}
+      @results_as_hash  = options[:results_as_hash]
+      @type_translation = options[:type_translation]
+
       if block_given?
         begin
           yield self
