@@ -63,7 +63,11 @@ have_func('sqlite3_backup_init')
 have_func('sqlite3_column_database_name')
 have_func('sqlite3_enable_load_extension')
 have_func('sqlite3_load_extension')
-have_func('sqlite3_open_v2')
+
+unless have_func('sqlite3_open_v2')
+  abort "Please use a newer version of SQLite3"
+end
+
 have_func('sqlite3_prepare_v2')
 have_type('sqlite3_int64', 'sqlite3.h')
 have_type('sqlite3_uint64', 'sqlite3.h')

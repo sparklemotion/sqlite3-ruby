@@ -35,10 +35,8 @@ static VALUE sqlite3_rb_close(VALUE self);
 static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
 {
   sqlite3RubyPtr ctx;
-#ifdef HAVE_SQLITE3_OPEN_V2
   VALUE flags;
   int mode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
-#endif
   int status;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
@@ -73,46 +71,27 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
        * SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE -- always used for sqlite3_open and sqlite3_open16
        */
       if (Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("readonly")))) {
-#ifdef HAVE_SQLITE3_OPEN_V2
         mode = SQLITE_OPEN_READONLY;
-#else
-        rb_raise(rb_eNotImpError, "sqlite3-ruby was compiled against a version of sqlite that does not support readonly databases");
-#endif
       }
       if (Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("readwrite")))) {
-#ifdef HAVE_SQLITE3_OPEN_V2
         if (mode == SQLITE_OPEN_READONLY) {
             rb_raise(rb_eRuntimeError, "conflicting options: readonly and readwrite");
         }
         mode = SQLITE_OPEN_READWRITE;
-#else
-        rb_raise(rb_eNotImpError, "sqlite3-ruby was compiled against a version of sqlite that does not support readwrite without create");
-#endif
       }
       flags = rb_hash_aref(opts, ID2SYM(rb_intern("flags")));
       if (flags != Qnil) {
-#ifdef HAVE_SQLITE3_OPEN_V2
         if ((mode & SQLITE_OPEN_CREATE) == 0) {
             rb_raise(rb_eRuntimeError, "conflicting options: flags with readonly and/or readwrite");
         }
         mode = (int)NUM2INT(flags);
-#else
-        rb_raise(rb_eNotImpError, "sqlite3-ruby was compiled against a version of sqlite that does not support flags on open");
-#endif
       }
-#ifdef HAVE_SQLITE3_OPEN_V2
       status = sqlite3_open_v2(
           StringValuePtr(file),
           &ctx->db,
           mode,
           NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
       );
-#else
-      status = sqlite3_open(
-          StringValuePtr(file),
-          &ctx->db
-      );
-#endif
     }
 
 #ifdef HAVE_RUBY_ENCODING_H
@@ -121,11 +100,7 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
 
   CHECK(ctx->db, status)
 
-#ifdef HAVE_SQLITE3_OPEN_V2
   rb_iv_set(self, "@readonly", (mode & SQLITE_OPEN_READONLY) ? Qtrue : Qfalse);
-#else
-  rb_iv_set(self, "@readonly", Qfalse);
-#endif
 
   return self;
 }
