@@ -58,8 +58,8 @@ module SQLite3
     # By default, the new database will return result rows as arrays
     # (#results_as_hash) and has type translation disabled (#type_translation=).
 
-    def initialize file, options = {}
-      init_internals file, options
+    def initialize file, options = {}, zvfs = nil
+      init_internals file, options, zvfs
 
       @tracefunc        = nil
       @authorizer       = nil
