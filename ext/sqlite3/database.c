@@ -31,11 +31,10 @@ utf16_string_value_ptr(VALUE str)
 
 static VALUE sqlite3_rb_close(VALUE self);
 
-static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
+static VALUE init_internals(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 {
   sqlite3RubyPtr ctx;
   VALUE flags;
-  int mode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
   int status;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
@@ -46,39 +45,15 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
 #else
   Check_SafeStr(file);
 #endif
-  Check_Type(opts, T_HASH);
 
-      /* The three primary flag values for sqlite3_open_v2 are:
-       * SQLITE_OPEN_READONLY
-       * SQLITE_OPEN_READWRITE
-       * SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE -- always used for sqlite3_open and sqlite3_open16
-       */
-      if (Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("readonly")))) {
-        mode = SQLITE_OPEN_READONLY;
-      }
-      if (Qtrue == rb_hash_aref(opts, ID2SYM(rb_intern("readwrite")))) {
-        if (mode == SQLITE_OPEN_READONLY) {
-            rb_raise(rb_eRuntimeError, "conflicting options: readonly and readwrite");
-        }
-        mode = SQLITE_OPEN_READWRITE;
-      }
-      flags = rb_hash_aref(opts, ID2SYM(rb_intern("flags")));
-      if (flags != Qnil) {
-        if ((mode & SQLITE_OPEN_CREATE) == 0) {
-            rb_raise(rb_eRuntimeError, "conflicting options: flags with readonly and/or readwrite");
-        }
-        mode = (int)NUM2INT(flags);
-      }
       status = sqlite3_open_v2(
           StringValuePtr(file),
           &ctx->db,
-          mode,
+          NUM2INT(mode),
           NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
       );
 
   CHECK(ctx->db, status)
-
-  rb_iv_set(self, "@readonly", (mode & SQLITE_OPEN_READONLY) ? Qtrue : Qfalse);
 
   return self;
 }
