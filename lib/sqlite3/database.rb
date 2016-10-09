@@ -59,7 +59,12 @@ module SQLite3
     # (#results_as_hash) and has type translation disabled (#type_translation=).
 
     def initialize file, options = {}, zvfs = nil
-      init_internals file, options, zvfs
+      if file.encoding == ::Encoding::UTF_16LE || file.encoding == ::Encoding::UTF_16BE
+        open16 file
+        @readonly = false
+      else
+        init_internals file, options, zvfs
+      end
 
       @tracefunc        = nil
       @authorizer       = nil

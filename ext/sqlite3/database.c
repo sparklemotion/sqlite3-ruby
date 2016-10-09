@@ -49,10 +49,6 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
 #endif
   Check_Type(opts, T_HASH);
 
-  if(UTF16_LE_P(file) || UTF16_BE_P(file)) {
-    status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
-  } else {
-
     if(Qtrue == rb_hash_aref(opts, sym_utf16)) {
       status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
     } else {
@@ -89,8 +85,6 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
           NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
       );
     }
-
-  }
 
   CHECK(ctx->db, status)
 
@@ -760,6 +754,22 @@ static VALUE db_filename(VALUE self, VALUE db_name)
   return Qnil;
 }
 
+static VALUE rb_sqlite3_open16(VALUE self, VALUE file)
+{
+  int status;
+  sqlite3RubyPtr ctx;
+
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  StringValuePtr(file);
+  rb_check_safe_obj(file);
+
+  status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
+
+  CHECK(ctx->db, status)
+
+  return INT2NUM(status);
+}
+
 void init_sqlite3_database()
 {
   ID id_utf16, id_results_as_hash, id_type_translation;
@@ -770,6 +780,7 @@ void init_sqlite3_database()
 
   rb_define_alloc_func(cSqlite3Database, allocate);
   rb_define_private_method(cSqlite3Database, "init_internals", init_internals, 3);
+  rb_define_private_method(cSqlite3Database, "open16", rb_sqlite3_open16, 1);
   rb_define_method(cSqlite3Database, "collation", collation, 2);
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
