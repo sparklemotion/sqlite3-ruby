@@ -48,10 +48,6 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
 #endif
   Check_Type(opts, T_HASH);
 
-      if(!UTF8_P(file)) {
-        file = rb_str_export_to_enc(file, rb_utf8_encoding());
-      }
-
       /* The three primary flag values for sqlite3_open_v2 are:
        * SQLITE_OPEN_READONLY
        * SQLITE_OPEN_READWRITE

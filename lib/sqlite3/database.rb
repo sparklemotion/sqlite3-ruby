@@ -67,7 +67,7 @@ module SQLite3
           open16 file
           @readonly = false
         else
-          init_internals file, options, zvfs
+          init_internals file.encode("utf-8"), options, zvfs
         end
       end
 
