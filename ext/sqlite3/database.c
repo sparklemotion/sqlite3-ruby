@@ -32,15 +32,7 @@ utf16_string_value_ptr(VALUE str)
 
 static VALUE sqlite3_rb_close(VALUE self);
 
-/* call-seq: SQLite3::Database.new(file, options = {})
- *
- * Create a new Database object that opens the given file. If utf16
- * is +true+, the filename is interpreted as a UTF-16 encoded string.
- *
- * By default, the new database will return result rows as arrays
- * (#results_as_hash) and has type translation disabled (#type_translation=).
- */
-static VALUE initialize(int argc, VALUE *argv, VALUE self)
+static VALUE init_internals(int argc, VALUE *argv, VALUE self)
 {
   sqlite3RubyPtr ctx;
   VALUE file;
@@ -61,8 +53,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 #else
   Check_SafeStr(file);
 #endif
-  if(NIL_P(opts)) opts = rb_hash_new();
-  else Check_Type(opts, T_HASH);
+  Check_Type(opts, T_HASH);
 
 #ifdef HAVE_RUBY_ENCODING_H
   if(UTF16_LE_P(file) || UTF16_BE_P(file)) {
@@ -147,10 +138,6 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
 #else
   rb_iv_set(self, "@readonly", Qfalse);
 #endif
-
-  if(rb_block_given_p()) {
-    rb_ensure(rb_yield, self, sqlite3_rb_close, self);
-  }
 
   return self;
 }
@@ -849,7 +836,7 @@ void init_sqlite3_database()
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Database, allocate);
-  rb_define_method(cSqlite3Database, "initialize", initialize, -1);
+  rb_define_private_method(cSqlite3Database, "init_internals", init_internals, -1);
   rb_define_method(cSqlite3Database, "collation", collation, 2);
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);

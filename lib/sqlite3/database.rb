@@ -50,6 +50,26 @@ module SQLite3
 
     end
 
+    # call-seq: SQLite3::Database.new(file, options = {})
+    #
+    # Create a new Database object that opens the given file. If utf16
+    # is +true+, the filename is interpreted as a UTF-16 encoded string.
+    #
+    # By default, the new database will return result rows as arrays
+    # (#results_as_hash) and has type translation disabled (#type_translation=).
+
+    def initialize file, options = {}
+      init_internals file, options
+
+      if block_given?
+        begin
+          yield self
+        ensure
+          close
+        end
+      end
+    end
+
     # A boolean that indicates whether rows in result sets should be returned
     # as hashes or not. By default, rows are returned as arrays.
     attr_accessor :results_as_hash
