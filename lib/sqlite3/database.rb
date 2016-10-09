@@ -63,7 +63,12 @@ module SQLite3
         open16 file
         @readonly = false
       else
-        init_internals file, options, zvfs
+        if options[:utf16]
+          open16 file
+          @readonly = false
+        else
+          init_internals file, options, zvfs
+        end
       end
 
       @tracefunc        = nil

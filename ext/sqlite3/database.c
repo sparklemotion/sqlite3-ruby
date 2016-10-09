@@ -5,7 +5,6 @@
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
 
 VALUE cSqlite3Database;
-static VALUE sym_utf16;
 
 static void deallocate(void * ctx)
 {
@@ -49,10 +48,6 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
 #endif
   Check_Type(opts, T_HASH);
 
-    if(Qtrue == rb_hash_aref(opts, sym_utf16)) {
-      status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
-    } else {
-
       if(!UTF8_P(file)) {
         file = rb_str_export_to_enc(file, rb_utf8_encoding());
       }
@@ -84,7 +79,6 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
           mode,
           NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
       );
-    }
 
   CHECK(ctx->db, status)
 
@@ -809,7 +803,4 @@ void init_sqlite3_database()
 #endif
 
   rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
-
-  id_utf16 = rb_intern("utf16");
-  sym_utf16 = ID2SYM(id_utf16);
 }
