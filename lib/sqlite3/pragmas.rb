@@ -101,15 +101,6 @@ module SQLite3
     # The list of valid WAL checkpoints.
     WAL_CHECKPOINTS = [ [ 'passive' ], [ 'full' ], [ 'restart' ], [ 'truncate' ] ]
 
-    # Does an integrity check on the database. If the check fails, a
-    # SQLite3::Exception will be raised. Otherwise it
-    # returns silently.
-    def integrity_check
-      execute( "PRAGMA integrity_check" ) do |row|
-        raise Exception, row[0] if row[0] != "ok"
-      end
-    end
-
     def application_id
       get_int_pragma "application_id"
     end
