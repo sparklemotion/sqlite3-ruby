@@ -49,21 +49,17 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
 #endif
   Check_Type(opts, T_HASH);
 
-#ifdef HAVE_RUBY_ENCODING_H
   if(UTF16_LE_P(file) || UTF16_BE_P(file)) {
     status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
   } else {
-#endif
 
     if(Qtrue == rb_hash_aref(opts, sym_utf16)) {
       status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
     } else {
 
-#ifdef HAVE_RUBY_ENCODING_H
       if(!UTF8_P(file)) {
         file = rb_str_export_to_enc(file, rb_utf8_encoding());
       }
-#endif
 
       /* The three primary flag values for sqlite3_open_v2 are:
        * SQLITE_OPEN_READONLY
@@ -94,9 +90,7 @@ static VALUE init_internals(VALUE self, VALUE file, VALUE opts, VALUE zvfs)
       );
     }
 
-#ifdef HAVE_RUBY_ENCODING_H
   }
-#endif
 
   CHECK(ctx->db, status)
 
@@ -266,14 +260,7 @@ static VALUE sqlite3val2rb(sqlite3_value * val)
          which is what we want, as blobs are binary
        */
       int len = sqlite3_value_bytes(val);
-#ifdef HAVE_RUBY_ENCODING_H
       return rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
-#else
-      /* When encoding is not available, make it class SQLite3::Blob. */
-      VALUE strargv[1];
-      strargv[0] = rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
-      return rb_class_new_instance(1, strargv, cSqlite3Blob);
-#endif
       break;
     }
     case SQLITE_NULL:
@@ -308,9 +295,7 @@ static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
       break;
     case T_STRING:
       if(CLASS_OF(result) == cSqlite3Blob
-#ifdef HAVE_RUBY_ENCODING_H
               || rb_enc_get_index(result) == rb_ascii8bit_encindex()
-#endif
         ) {
         sqlite3_result_blob(
             ctx,
@@ -610,17 +595,14 @@ int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const v
   VALUE a_str;
   VALUE b_str;
   VALUE comparison;
-#ifdef HAVE_RUBY_ENCODING_H
   rb_encoding * internal_encoding;
 
   internal_encoding = rb_default_internal_encoding();
-#endif
 
   comparator = (VALUE)ctx;
   a_str = rb_str_new((const char *)a, a_len);
   b_str = rb_str_new((const char *)b, b_len);
 
-#ifdef HAVE_RUBY_ENCODING_H
   rb_enc_associate_index(a_str, rb_utf8_encindex());
   rb_enc_associate_index(b_str, rb_utf8_encindex());
 
@@ -628,7 +610,6 @@ int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const v
     a_str = rb_str_export_to_enc(a_str, internal_encoding);
     b_str = rb_str_export_to_enc(b_str, internal_encoding);
   }
-#endif
 
   comparison = rb_funcall(comparator, rb_intern("compare"), 2, a_str, b_str);
 
@@ -715,7 +696,6 @@ static VALUE enable_load_extension(VALUE self, VALUE onoff)
 }
 #endif
 
-#ifdef HAVE_RUBY_ENCODING_H
 static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(names))
 {
   VALUE self = (VALUE)_self;
@@ -726,16 +706,6 @@ static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(
 
   return 0;
 }
-#else
-static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(names))
-{
-  VALUE self = (VALUE)_self;
-
-  rb_iv_set(self, "@encoding", rb_str_new2(data[0]));
-
-  return 0;
-}
-#endif
 
 /* call-seq: db.encoding
  *
