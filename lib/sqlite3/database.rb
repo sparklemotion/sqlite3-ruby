@@ -637,9 +637,7 @@ Support for this will be removed in version 2.0.0.
     private
 
     def ordered_map_for columns, row
-      h = Hash[*columns.zip(row).flatten]
-      row.each_with_index { |r, i| h[i] = r }
-      h
+      Hash[*columns.zip(row).flatten]
     end
   end
 end

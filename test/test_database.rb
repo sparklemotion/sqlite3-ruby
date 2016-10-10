@@ -65,7 +65,7 @@ module SQLite3
 
     def test_get_first_row_with_type_translation_and_hash_results
       @db.results_as_hash = true
-      assert_equal({0=>1, "1"=>1}, @db.get_first_row('SELECT 1'))
+      assert_equal({"1"=>1}, @db.get_first_row('SELECT 1'))
     end
 
     def test_execute_with_type_translation_and_hash
@@ -73,7 +73,7 @@ module SQLite3
       rows = []
       @db.execute('SELECT 1') { |row| rows << row }
 
-      assert_equal({0=>1, "1"=>1}, rows.first)
+      assert_equal({"1"=>1}, rows.first)
     end
 
     def test_encoding
@@ -180,7 +180,7 @@ module SQLite3
       db.execute("create table foo ( a integer primary key, b text )")
       db.execute("insert into foo (b) values ('hello')")
       rows = db.execute("select * from foo")
-      assert_equal [{0=>1, "a"=>1, "b"=>"hello", 1=>"hello"}], rows
+      assert_equal [{"a"=>1, "b"=>"hello"}], rows
     end
 
     def test_execute_yields_hash
@@ -188,7 +188,7 @@ module SQLite3
       db.execute("create table foo ( a integer primary key, b text )")
       db.execute("insert into foo (b) values ('hello')")
       db.execute("select * from foo") do |row|
-        assert_equal({0=>1, "a"=>1, "b"=>"hello", 1=>"hello"}, row)
+        assert_equal({"a"=>1, "b"=>"hello"}, row)
       end
     end
 
