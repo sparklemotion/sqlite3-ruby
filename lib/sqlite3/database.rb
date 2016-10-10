@@ -97,6 +97,7 @@ module SQLite3
       @functions        = {}
       @results_as_hash  = options[:results_as_hash]
       @type_translation = options[:type_translation]
+      @type_translator  = make_type_translator @type_translation
       @readonly         = mode & Constants::Open::READONLY != 0
 
       if block_given?
@@ -114,6 +115,7 @@ module SQLite3
 SQLite3::Database#type_translation= is deprecated and will be removed
 in version 2.0.0.
       eowarn
+      @type_translator  = make_type_translator value
       @type_translation = value
     end
     attr_reader :type_translation # :nodoc:
@@ -625,12 +627,22 @@ Support for this will be removed in version 2.0.0.
 
     # Translates a +row+ of data from the database with the given +types+
     def translate_from_db types, row
-      if type_translation
-        types.zip(row).map do |type, value|
-          translator.translate( type, value )
-        end
+      @type_translator.call types, row
+    end
+
+    private
+
+    NULL_TRANSLATOR = lambda { |_, row| row }
+
+    def make_type_translator should_translate
+      if should_translate
+        lambda { |types, row|
+          types.zip(row).map do |type, value|
+            translator.translate( type, value )
+          end
+        }
       else
-        row
+        NULL_TRANSLATOR
       end
     end
   end
