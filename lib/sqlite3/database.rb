@@ -61,32 +61,28 @@ module SQLite3
     def initialize file, options = {}, zvfs = nil
       mode = Constants::Open::READWRITE | Constants::Open::CREATE
 
-      if file.encoding == ::Encoding::UTF_16LE || file.encoding == ::Encoding::UTF_16BE
+      if file.encoding == ::Encoding::UTF_16LE || file.encoding == ::Encoding::UTF_16BE || options[:utf16]
         open16 file
       else
-        if options[:utf16]
-          open16 file
-        else
-          # The three primary flag values for sqlite3_open_v2 are:
-          # SQLITE_OPEN_READONLY
-          # SQLITE_OPEN_READWRITE
-          # SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE -- always used for sqlite3_open and sqlite3_open16
-          mode = Constants::Open::READONLY if options[:readonly]
+        # The three primary flag values for sqlite3_open_v2 are:
+        # SQLITE_OPEN_READONLY
+        # SQLITE_OPEN_READWRITE
+        # SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE -- always used for sqlite3_open and sqlite3_open16
+        mode = Constants::Open::READONLY if options[:readonly]
 
-          if options[:readwrite]
-            raise "conflicting options: readonly and readwrite" if options[:readonly]
-            mode = Constants::Open::READWRITE
-          end
-
-          if options[:flags]
-            if options[:readonly] || options[:readwrite]
-              raise "conflicting options: flags with readonly and/or readwrite"
-            end
-            mode = options[:flags]
-          end
-
-          init_internals file.encode("utf-8"), mode, zvfs
+        if options[:readwrite]
+          raise "conflicting options: readonly and readwrite" if options[:readonly]
+          mode = Constants::Open::READWRITE
         end
+
+        if options[:flags]
+          if options[:readonly] || options[:readwrite]
+            raise "conflicting options: flags with readonly and/or readwrite"
+          end
+          mode = options[:flags]
+        end
+
+        init_internals file.encode("utf-8"), mode, zvfs
       end
 
       @tracefunc        = nil
