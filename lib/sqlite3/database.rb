@@ -553,7 +553,7 @@ Support for this will be removed in version 2.0.0.
         abort = false
         begin
           yield self
-        rescue ::Object
+        rescue
           abort = true
           raise
         ensure
