@@ -6,8 +6,28 @@ require 'mkmf'
 
 RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 
+
+
+ldflags = cppflags = nil
+if RbConfig::CONFIG["host_os"] =~ /darwin/
+  begin
+    brew_info = `brew info sqlite3`
+    ldflags   = brew_info[/LDFLAGS.*$/].split(/-L/).last
+    cppflags  = brew_info[/CPPFLAGS.*$/].split(/-I/).last
+    pkg_conf  = brew_info[/PKG_CONFIG_PATH.*$/].split(": ").last
+
+    # pkg_config should be less error prone than parsing compiler
+    # commandline options, but we need to set default ldflags and cpp flags
+    # in case the user doesn't have pkg-config installed
+    ENV['PKG_CONFIG_PATH'] ||= pkg_conf
+  rescue
+  end
+end
+
+pkg_config("sqlite3")
+
 # --with-sqlite3-{dir,include,lib}
-dir_config("sqlite3")
+dir_config("sqlite3", cppflags, ldflags)
 
 if RbConfig::CONFIG["host_os"] =~ /mswin/
   $CFLAGS << ' -W3'
@@ -19,7 +39,7 @@ def asplode missing
           "http://www.sqlite.org/ first."
   else
     abort <<-error
-#{missing} is missing. Try 'port install sqlite3 +universal',
+#{missing} is missing. Try 'brew install sqlite3',
 'yum install sqlite-devel' or 'apt-get install libsqlite3-dev'
 and check your shared library search path (the
 location where your sqlite3 shared library is located).
@@ -28,6 +48,7 @@ location where your sqlite3 shared library is located).
 end
 
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'
+find_library 'pthread', 'pthread_create' # 1.8 support. *shrug*
 asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
 
 # Functions defined in 1.9 but not 1.8

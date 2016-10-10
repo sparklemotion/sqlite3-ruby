@@ -98,6 +98,13 @@ in version 2.0.0.
       end
     end
 
+    # Returns the filename for the database named +db_name+.  +db_name+ defaults
+    # to "main".  Main return `nil` or an empty string if the database is
+    # temporary or in-memory.
+    def filename db_name = 'main'
+      db_filename db_name
+    end
+
     # Executes the given SQL statement. If additional parameters are given,
     # they are treated as bind variables, and are bound to the placeholders in
     # the query.
@@ -113,10 +120,6 @@ in version 2.0.0.
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
     def execute sql, bind_vars = [], *args, &block
-      # FIXME: This is a terrible hack and should be removed but is required
-      # for older versions of rails
-      hack = Object.const_defined?(:ActiveRecord) && sql =~ /^PRAGMA index_list/
-
       if bind_vars.nil? || !args.empty?
         if args.empty?
           bind_vars = []
@@ -147,12 +150,7 @@ Support for bind parameters as *args will be removed in 2.0.0.
         else
           if @results_as_hash
             stmt.map { |row|
-              h = type_translation ? row : ordered_map_for(columns, row)
-
-              # FIXME UGH TERRIBLE HACK!
-              h['unique'] = h['unique'].to_s if hack
-
-              h
+              type_translation ? row : ordered_map_for(columns, row)
             }
           else
             stmt.to_a
@@ -395,6 +393,9 @@ Support for this will be removed in version 2.0.0.
 
         def finalize
           super(@ctx)
+          result = @ctx.result
+          @ctx = FunctionProxy.new
+          result
         end
       })
       proxy.ctx = FunctionProxy.new

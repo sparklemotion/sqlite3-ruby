@@ -1,4 +1,5 @@
 require 'helper'
+require 'tempfile'
 
 module SQLite3
   class TestDatabase < SQLite3::TestCase
@@ -6,10 +7,41 @@ module SQLite3
 
     def setup
       @db = SQLite3::Database.new(':memory:')
+      super
     end
 
     def test_segv
       assert_raises(TypeError) { SQLite3::Database.new 1 }
+    end
+
+    def test_db_filename
+      tf = nil
+      assert_equal '', @db.filename('main')
+      tf = Tempfile.new 'thing'
+      @db = SQLite3::Database.new tf.path
+      assert_equal tf.path, @db.filename('main')
+    ensure
+      tf.unlink if tf
+    end
+
+    def test_filename
+      tf = nil
+      assert_equal '', @db.filename
+      tf = Tempfile.new 'thing'
+      @db = SQLite3::Database.new tf.path
+      assert_equal tf.path, @db.filename
+    ensure
+      tf.unlink if tf
+    end
+
+    def test_filename_with_attachment
+      tf = nil
+      assert_equal '', @db.filename
+      tf = Tempfile.new 'thing'
+      @db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"
+      assert_equal tf.path, @db.filename('testing')
+    ensure
+      tf.unlink if tf
     end
 
     def test_bignum
@@ -105,6 +137,18 @@ module SQLite3
       SQLite3::Database.new(':memory:') do |db|
         thing = db
         assert !thing.closed?
+      end
+      assert thing.closed?
+    end
+
+    def test_block_closes_self_even_raised
+      thing = nil
+      begin
+        SQLite3::Database.new(':memory:') do |db|
+          thing = db
+          raise
+        end
+      rescue
       end
       assert thing.closed?
     end
@@ -261,9 +305,27 @@ module SQLite3
     end
 
     def test_function_return_types
-      [10, 2.2, nil, "foo"].each do |thing|
+      [10, 2.2, nil, "foo", Blob.new("foo\0bar")].each do |thing|
         @db.define_function("hello") { |a| thing }
         assert_equal [thing], @db.execute("select hello('world')").first
+      end
+    end
+
+    def test_function_gc_segfault
+      @db.create_function("bug", -1) { |func, *values| func.result = values.join }
+      # With a lot of data and a lot of threads, try to induce a GC segfault.
+      params = Array.new(127, "?" * 28000)
+      proc = Proc.new {
+        db.execute("select bug(#{Array.new(params.length, "?").join(",")})", params)
+      }
+      m = Mutex.new
+      30.times.map { Thread.new { m.synchronize { proc.call } } }.each(&:join)
+    end
+
+    def test_function_return_type_round_trip
+      [10, 2.2, nil, "foo", Blob.new("foo\0bar")].each do |thing|
+        @db.define_function("hello") { |a| a }
+        assert_equal [thing], @db.execute("select hello(hello(?))", [thing]).first
       end
     end
 
