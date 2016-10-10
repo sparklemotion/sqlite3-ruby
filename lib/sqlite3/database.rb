@@ -190,25 +190,14 @@ Support for bind parameters as *args will be removed in 2.0.0.
 
       prepare( sql ) do |stmt|
         stmt.bind_params(bind_vars)
-        columns = stmt.columns
-        stmt    = ResultSet.new(self, stmt).to_a if type_translation
+        stmt    = ResultSet.new self, stmt
 
         if block_given?
           stmt.each do |row|
-            if @results_as_hash
-              yield type_translation ? row : ordered_map_for(columns, row)
-            else
-              yield row
-            end
+            yield row
           end
         else
-          if @results_as_hash
-            stmt.map { |row|
-              type_translation ? row : ordered_map_for(columns, row)
-            }
-          else
-            stmt.to_a
-          end
+          stmt.to_a
         end
       end
     end
@@ -643,12 +632,6 @@ Support for this will be removed in version 2.0.0.
       else
         row
       end
-    end
-
-    private
-
-    def ordered_map_for columns, row
-      Hash[*columns.zip(row).flatten]
     end
   end
 end
