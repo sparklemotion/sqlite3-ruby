@@ -31,7 +31,7 @@ utf16_string_value_ptr(VALUE str)
 
 static VALUE sqlite3_rb_close(VALUE self);
 
-static VALUE init_internals(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
+static VALUE rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 {
   sqlite3RubyPtr ctx;
   VALUE flags;
@@ -725,8 +725,13 @@ static VALUE rb_sqlite3_open16(VALUE self, VALUE file)
   sqlite3RubyPtr ctx;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
+
+#if defined StringValueCStr
   StringValuePtr(file);
   rb_check_safe_obj(file);
+#else
+  Check_SafeStr(file);
+#endif
 
   status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
 
@@ -744,7 +749,7 @@ void init_sqlite3_database()
   cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Database, allocate);
-  rb_define_private_method(cSqlite3Database, "init_internals", init_internals, 3);
+  rb_define_private_method(cSqlite3Database, "open_v2", rb_sqlite3_open_v2, 3);
   rb_define_private_method(cSqlite3Database, "open16", rb_sqlite3_open16, 1);
   rb_define_method(cSqlite3Database, "collation", collation, 2);
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);

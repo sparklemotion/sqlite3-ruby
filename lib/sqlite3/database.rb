@@ -82,7 +82,7 @@ module SQLite3
           mode = options[:flags]
         end
 
-        init_internals file.encode("utf-8"), mode, zvfs
+        open_v2 file.encode("utf-8"), mode, zvfs
       end
 
       @tracefunc        = nil
