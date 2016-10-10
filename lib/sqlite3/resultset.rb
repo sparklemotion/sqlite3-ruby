@@ -108,11 +108,7 @@ object that created this object
       row = @stmt.step
       return nil if @stmt.done?
 
-      if @db.type_translation
-        row = @stmt.types.zip(row).map do |type, value|
-          @db.translator.translate( type, value )
-        end
-      end
+      row = @db.translate_from_db @stmt.types, row
 
       if row.respond_to?(:fields)
         # FIXME: this can only happen if the translator returns something
@@ -176,11 +172,7 @@ object that created this object
 
       # FIXME: type translation is deprecated, so this can be removed
       # in 2.0
-      if @db.type_translation
-        row = @stmt.types.zip(row).map do |type, value|
-          @db.translator.translate( type, value )
-        end
-      end
+      row = @db.translate_from_db @stmt.types, row
 
       # FIXME: this can be switched to a regular hash in 2.0
       row = HashWithTypesAndFields[*@stmt.columns.zip(row).flatten]

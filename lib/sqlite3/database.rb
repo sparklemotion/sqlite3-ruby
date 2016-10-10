@@ -634,6 +634,17 @@ Support for this will be removed in version 2.0.0.
       end
     end
 
+    # Translates a +row+ of data from the database with the given +types+
+    def translate_from_db types, row
+      if type_translation
+        types.zip(row).map do |type, value|
+          translator.translate( type, value )
+        end
+      else
+        row
+      end
+    end
+
     private
 
     def ordered_map_for columns, row
