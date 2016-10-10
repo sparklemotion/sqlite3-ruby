@@ -742,7 +742,6 @@ static VALUE rb_sqlite3_open16(VALUE self, VALUE file)
 
 void init_sqlite3_database()
 {
-  ID id_utf16, id_results_as_hash, id_type_translation;
 #if 0
   VALUE mSqlite3 = rb_define_module("SQLite3");
 #endif
