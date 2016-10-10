@@ -50,6 +50,10 @@ module SQLite3
 
     end
 
+    # A boolean that indicates whether rows in result sets should be returned
+    # as hashes or not. By default, rows are returned as arrays.
+    attr_accessor :results_as_hash
+
     # call-seq: SQLite3::Database.new(file, options = {})
     #
     # Create a new Database object that opens the given file. If utf16
@@ -103,10 +107,6 @@ module SQLite3
         end
       end
     end
-
-    # A boolean that indicates whether rows in result sets should be returned
-    # as hashes or not. By default, rows are returned as arrays.
-    attr_accessor :results_as_hash
 
     def type_translation= value # :nodoc:
       warn(<<-eowarn) if $VERBOSE
