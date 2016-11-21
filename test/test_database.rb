@@ -20,7 +20,7 @@ module SQLite3
       assert_equal '', @db.filename('main')
       tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
-      assert_equal tf.path, Pathname.new(@db.filename('main')).to_s
+      assert_equal File.expand_path(tf.path), File.expand_path(Pathname.new(@db.filename('main')).to_s)
     ensure
       tf.unlink if tf
     end
