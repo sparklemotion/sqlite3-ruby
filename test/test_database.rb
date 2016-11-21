@@ -1,5 +1,6 @@
 require 'helper'
 require 'tempfile'
+require 'pathname'
 
 module SQLite3
   class TestDatabase < SQLite3::TestCase
@@ -19,7 +20,7 @@ module SQLite3
       assert_equal '', @db.filename('main')
       tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
-      assert_equal tf.path, @db.filename('main')
+      assert_equal File.expand_path(tf.path), File.expand_path(@db.filename('main'))
     ensure
       tf.unlink if tf
     end
@@ -29,7 +30,7 @@ module SQLite3
       assert_equal '', @db.filename
       tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
-      assert_equal tf.path, @db.filename
+      assert_equal File.expand_path(tf.path), File.expand_path(@db.filename)
     ensure
       tf.unlink if tf
     end
@@ -39,7 +40,7 @@ module SQLite3
       assert_equal '', @db.filename
       tf = Tempfile.new 'thing'
       @db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"
-      assert_equal tf.path, @db.filename('testing')
+      assert_equal File.expand_path(tf.path), File.expand_path(@db.filename('testing'))
     ensure
       tf.unlink if tf
     end
