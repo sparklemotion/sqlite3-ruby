@@ -1,5 +1,6 @@
 require 'helper'
 require 'tempfile'
+require 'pathname'
 
 module SQLite3
   class TestDatabase < SQLite3::TestCase
