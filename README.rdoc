@@ -107,7 +107,7 @@ which can be found here:
 
 For help figuring out the SQLite3/Ruby interface, check out the
 SYNOPSIS as well as the RDoc. It includes examples of
-usage. If you have any questions that you feel should be address in the
+usage. If you have any questions that you feel should be addressed in the
 FAQ, please send them to {the mailing list}[http://groups.google.com/group/sqlite3-ruby]
 
 == Source Code
