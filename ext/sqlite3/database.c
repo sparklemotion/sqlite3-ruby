@@ -46,8 +46,8 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   VALUE file;
   VALUE opts;
   VALUE zvfs;
-#ifdef HAVE_SQLITE3_OPEN_V2
   VALUE flags;
+#ifdef HAVE_SQLITE3_OPEN_V2
   int mode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
 #endif
   int status;
