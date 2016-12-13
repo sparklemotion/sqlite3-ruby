@@ -216,7 +216,7 @@ module SQLite3
 
     def test_column_name
       assert_equal "'foo'", @stmt.column_name(0)
-      assert_equal nil, @stmt.column_name(10)
+      assert_nil @stmt.column_name(10)
     end
 
     def test_bind_parameter_count
