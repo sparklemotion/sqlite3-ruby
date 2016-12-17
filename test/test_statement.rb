@@ -243,7 +243,7 @@ module SQLite3
       assert stmt.execute('employee-2')
     end
 
-    def test_clear_bindings
+    def test_clear_bindings!
       stmt = @db.prepare('select ?, ?')
       stmt.bind_param 1, "foo"
       stmt.bind_param 2, "bar"
