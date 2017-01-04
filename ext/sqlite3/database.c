@@ -548,6 +548,22 @@ static VALUE set_busy_timeout(VALUE self, VALUE timeout)
   return self;
 }
 
+/* call-seq: db.extended_result_codes = true
+ *
+ * Enable extended result codes in SQLite.  These result codes allow for more
+ * detailed exception reporting, such a which type of constraint is violated.
+ */
+static VALUE set_extended_result_codes(VALUE self, VALUE enable)
+{
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  CHECK(ctx->db, sqlite3_extended_result_codes(ctx->db, RTEST(enable) ? 1 : 0));
+
+  return self;
+}
+
 int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const void * b)
 {
   VALUE comparator;
@@ -766,6 +782,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+  rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
   rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
