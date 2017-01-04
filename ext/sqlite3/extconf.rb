@@ -11,7 +11,7 @@ RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 ldflags = cppflags = nil
 if RbConfig::CONFIG["host_os"] =~ /darwin/
   begin
-    brew_prefix = `brew --prefix sqlite3`
+    brew_prefix = `brew --prefix sqlite3`.chomp
     ldflags   = "#{brew_prefix}/lib"
     cppflags  = "#{brew_prefix}/include"
     pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
