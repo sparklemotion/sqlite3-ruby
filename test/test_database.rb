@@ -404,7 +404,7 @@ module SQLite3
         def call action, a, b, c, d; nil end
       }.new
       stmt = @db.prepare("select 'fooooo'")
-      assert_equal nil, stmt.step
+      assert_nil stmt.step
     end
 
     def test_authorizer_fail
