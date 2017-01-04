@@ -90,5 +90,7 @@ void rb_sqlite3_raise(sqlite3 * db, int status)
       klass = rb_eRuntimeError;
   }
 
-  rb_raise(klass, "%s", sqlite3_errmsg(db));
+  klass = rb_exc_new2(klass, sqlite3_errmsg(db));
+  rb_iv_set(klass, "@code", INT2FIX(status));
+  rb_exc_raise(klass);
 }

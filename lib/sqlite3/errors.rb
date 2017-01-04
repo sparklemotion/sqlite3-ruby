@@ -2,17 +2,8 @@ require 'sqlite3/constants'
 
 module SQLite3
   class Exception < ::StandardError
-    @code = 0
-
-    # The numeric error code that this exception represents.
-    def self.code
-      @code
-    end
-
     # A convenience for accessing the error code for this exception.
-    def code
-      self.class.code
-    end
+    attr_reader :code
   end
 
   class SQLException < Exception; end
