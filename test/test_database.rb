@@ -53,6 +53,16 @@ module SQLite3
       assert_equal 1, e.code
     end
 
+    def test_extended_error_code
+      db.extended_result_codes = true
+      db.execute 'CREATE TABLE "employees" ("token" integer NOT NULL)'
+      begin
+        db.execute 'INSERT INTO employees (token) VALUES (NULL)'
+      rescue SQLite3::ConstraintException => e
+      end
+      assert_equal 1299, e.code
+    end
+
     def test_bignum
       num = 4907021672125087844
       db.execute 'CREATE TABLE "employees" ("token" integer(8), "name" varchar(20) NOT NULL)'

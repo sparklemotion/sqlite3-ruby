@@ -4,7 +4,9 @@ void rb_sqlite3_raise(sqlite3 * db, int status)
 {
   VALUE klass = Qnil;
 
-  switch(status) {
+  /* Consider only lower 8 bits, to work correctly when
+     extended result codes are enabled. */
+  switch(status & 0xff) {
     case SQLITE_OK:
       return;
       break;
