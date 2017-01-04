@@ -302,7 +302,7 @@ static VALUE reset_bang(VALUE self)
  * Resets the statement. This is typically done internally, though it might
  * occassionally be necessary to manually reset the statement.
  */
-static VALUE clear_bindings(VALUE self)
+static VALUE clear_bindings_bang(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
 
@@ -419,7 +419,7 @@ void init_sqlite3_statement()
   rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
   rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
-  rb_define_method(cSqlite3Statement, "clear_bindings!", clear_bindings, 0);
+  rb_define_method(cSqlite3Statement, "clear_bindings!", clear_bindings_bang, 0);
   rb_define_method(cSqlite3Statement, "step", step, 0);
   rb_define_method(cSqlite3Statement, "done?", done_p, 0);
   rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
