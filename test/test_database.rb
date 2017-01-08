@@ -121,6 +121,20 @@ module SQLite3
       eosql
     end
 
+    def test_execute_batch2
+      return_value = @db.execute_batch2 <<-eosql
+        CREATE TABLE bros (id integer PRIMARY KEY AUTOINCREMENT, name string);
+        INSERT INTO bros (name) VALUES ("foo");
+        INSERT INTO bros (name) VALUES ("bar");
+        eosql
+      assert_nil return_value
+      assert_equal [["foo"], ["bar"]], @db.execute("select name from bros")
+      assert_raises (RuntimeError) do
+        # "names" is not a valid column
+        @db.execute_batch2 'INSERT INTO bros (names) VALUES ("bazz")'
+      end
+    end
+
     def test_new
       db = SQLite3::Database.new(':memory:')
       assert db

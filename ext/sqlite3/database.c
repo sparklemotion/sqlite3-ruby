@@ -717,6 +717,33 @@ static VALUE transaction_active_p(VALUE self)
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
+/* Is invoked by calling db.execute_batch2(sql)
+ *
+ * Executes all statments in a given string separated by semi-colons.
+ * This always returns +nil+, making it unsuitable for queries that return
+ * rows.
+ */
+static VALUE exec_batch(VALUE self, VALUE sql)
+{
+  sqlite3RubyPtr ctx;
+  int status;
+  char *errMsg;
+  VALUE errexp;
+
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+
+  status = sqlite3_exec(ctx->db, StringValuePtr(sql), 0, 0, &errMsg);
+
+  if (status != SQLITE_OK)
+  {
+    errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
+    sqlite3_free(errMsg);
+    rb_exc_raise(errexp);
+  }
+
+  return Qnil;
+}
+
 /* call-seq: db.db_filename(database_name)
  *
  * Returns the file associated with +database_name+.  Can return nil or an
@@ -784,6 +811,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
   rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
+  rb_define_method(cSqlite3Database, "exec_batch", exec_batch, 1);
   rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
