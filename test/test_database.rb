@@ -128,12 +128,10 @@ module SQLite3
         INSERT INTO bros (name) VALUES ("bar");
         SELECT name FROM bros;
         eosql
-      assert_equal return_value.class, Array
       assert_equal return_value, [["foo"], ["bar"]]
       assert_equal @db.execute("select name from bros"), [["foo"], ["bar"]]
 
       return_value = @db.execute_batch2('INSERT INTO bros (name) VALUES ("oof")')
-      assert_equal return_value.class, Array
       assert_equal return_value, []
 
       assert_raises (RuntimeError) do
