@@ -129,15 +129,24 @@ module SQLite3
         SELECT name FROM bros;
         eosql
       assert_equal return_value.class, Array
-      assert_equal [["foo"], ["bar"]], return_value
-      assert_equal [["foo"], ["bar"]], @db.execute("select name from bros")
+      assert_equal return_value, [["foo"], ["bar"]]
+      assert_equal @db.execute("select name from bros"), [["foo"], ["bar"]]
+
       return_value = @db.execute_batch2('INSERT INTO bros (name) VALUES ("oof")')
       assert_equal return_value.class, Array
       assert_equal return_value, []
+
       assert_raises (RuntimeError) do
         # "names" is not a valid column
         @db.execute_batch2 'INSERT INTO bros (names) VALUES ("bazz")'
       end
+
+      return_value = @db.execute_batch2 <<-eosql
+        CREATE TABLE more_bros (id integer PRIMARY KEY AUTOINCREMENT, name string, age integer(3));
+        INSERT INTO more_bros (age) VALUES (30);
+        SELECT * FROM more_bros;
+        eosql
+      assert_equal return_value, [["1", nil, "30"]]
     end
 
     def test_new

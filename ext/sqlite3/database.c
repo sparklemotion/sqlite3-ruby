@@ -724,9 +724,13 @@ static int callback_function(void *callback_ary, int count, char **data, char **
   int i;
 
   for (i = 0; i < count; i++) {
-    VALUE str;
-    str = rb_str_new_cstr(data[i]);
-    rb_ary_push(row_ary, str);
+    if (data[i] == NULL){
+      rb_ary_push(row_ary, Qnil);
+    } else {
+      VALUE str;
+      str = rb_str_new_cstr(data[i]);
+      rb_ary_push(row_ary, str);
+    }
   }
 
   rb_ary_push(*result, row_ary);
