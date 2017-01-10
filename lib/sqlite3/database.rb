@@ -287,8 +287,8 @@ Support for this behavior will be removed in version 2.0.0.
     # string, ignoring all subsequent statements. This will execute each one
     # in turn. Bind parameters cannot be passed to #execute_batch2.
     #
-    # This always returns +nil+, making it unsuitable for queries that return
-    # rows.
+    # If a query is made, all rows will be returned as arrays inside of an array.
+    # If no query is made, an empty array will be returned.
     #
     # See also #execute_batch for additional ways of
     # executing statments.

@@ -717,22 +717,40 @@ static VALUE transaction_active_p(VALUE self)
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
+static int callback_function(void *callback_ary, int count, char **data, char ** columns)
+{
+  VALUE * result = (VALUE *)callback_ary;
+  VALUE row_ary = rb_ary_new();
+  int i;
+
+  for (i = 0; i < count; i++) {
+    VALUE str;
+    str = rb_str_new_cstr(data[i]);
+    rb_ary_push(row_ary, str);
+  }
+
+  rb_ary_push(*result, row_ary);
+
+  return 0;
+}
+
 /* Is invoked by calling db.execute_batch2(sql)
  *
  * Executes all statments in a given string separated by semi-colons.
- * This always returns +nil+, making it unsuitable for queries that return
- * rows.
+ * If a query is made, all rows will be returned as arrays inside of an array.
+ * If no query is made, an empty array will be returned.
  */
 static VALUE exec_batch(VALUE self, VALUE sql)
 {
   sqlite3RubyPtr ctx;
   int status;
+  VALUE callback_ary = rb_ary_new();
   char *errMsg;
   VALUE errexp;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
-  status = sqlite3_exec(ctx->db, StringValuePtr(sql), 0, 0, &errMsg);
+  status = sqlite3_exec(ctx->db, StringValuePtr(sql), callback_function, &callback_ary, &errMsg);
 
   if (status != SQLITE_OK)
   {
@@ -741,7 +759,7 @@ static VALUE exec_batch(VALUE self, VALUE sql)
     rb_exc_raise(errexp);
   }
 
-  return Qnil;
+  return callback_ary;
 }
 
 /* call-seq: db.db_filename(database_name)
@@ -811,7 +829,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
   rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
-  rb_define_method(cSqlite3Database, "exec_batch", exec_batch, 1);
+  rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 1);
   rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
