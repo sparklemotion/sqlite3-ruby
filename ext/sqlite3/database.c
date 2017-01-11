@@ -753,6 +753,7 @@ static VALUE exec_batch(VALUE self, VALUE sql)
   VALUE errexp;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
 
   status = sqlite3_exec(ctx->db, StringValuePtr(sql), callback_function, &callback_ary, &errMsg);
 
