@@ -717,7 +717,7 @@ static VALUE transaction_active_p(VALUE self)
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
-static int callback_function(void *callback_ary, int count, char **data, char ** columns)
+static int callback_function(void *callback_ary, int count, char **data, char **columns)
 {
   VALUE * result = (VALUE *)callback_ary;
   VALUE row_ary = rb_ary_new();
@@ -727,8 +727,7 @@ static int callback_function(void *callback_ary, int count, char **data, char **
     if (data[i] == NULL){
       rb_ary_push(row_ary, Qnil);
     } else {
-      VALUE str;
-      str = rb_str_new_cstr(data[i]);
+      VALUE str = rb_str_new_cstr(data[i]);
       rb_ary_push(row_ary, str);
     }
   }
@@ -740,7 +739,7 @@ static int callback_function(void *callback_ary, int count, char **data, char **
 
 /* Is invoked by calling db.execute_batch2(sql)
  *
- * Executes all statments in a given string separated by semi-colons.
+ * Executes all statments in a given string separated by semicolons.
  * If a query is made, all rows will be returned as arrays inside of an array.
  * If no query is made, an empty array will be returned.
  */
