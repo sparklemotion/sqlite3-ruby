@@ -1,3 +1,5 @@
+.gemtest
+.travis.yml
 API_CHANGES.rdoc
 CHANGELOG.rdoc
 ChangeLog.cvs
@@ -6,6 +8,7 @@ LICENSE
 Manifest.txt
 README.rdoc
 Rakefile
+appveyor.yml
 ext/sqlite3/backup.c
 ext/sqlite3/backup.h
 ext/sqlite3/database.c
@@ -29,16 +32,18 @@ lib/sqlite3/statement.rb
 lib/sqlite3/translator.rb
 lib/sqlite3/value.rb
 lib/sqlite3/version.rb
+rakelib/faq.rake
+rakelib/gem.rake
+rakelib/native.rake
+rakelib/vendor_sqlite3.rake
 setup.rb
-tasks/faq.rake
-tasks/gem.rake
-tasks/native.rake
-tasks/vendor_sqlite3.rake
 test/helper.rb
 test/test_backup.rb
 test/test_collation.rb
 test/test_database.rb
+test/test_database_flags.rb
 test/test_database_readonly.rb
+test/test_database_readwrite.rb
 test/test_deprecated.rb
 test/test_encoding.rb
 test/test_integration.rb
