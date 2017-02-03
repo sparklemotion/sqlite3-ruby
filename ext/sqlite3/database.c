@@ -717,31 +717,28 @@ static VALUE transaction_active_p(VALUE self)
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
-static int callback_function(void *callback_ary, int count, char **data, char **columns)
+static int callback_function(VALUE callback_ary, int count, char **data, char **columns)
 {
-  VALUE * result = (VALUE *)callback_ary;
-  VALUE row_ary = rb_ary_new();
   int i;
 
   for (i = 0; i < count; i++) {
     if (data[i] == NULL){
-      rb_ary_push(row_ary, Qnil);
+      rb_ary_push(callback_ary, Qnil);
     } else {
-      VALUE str = rb_str_new_cstr(data[i]);
-      rb_ary_push(row_ary, str);
+      VALUE new_object = rb_str_new_cstr(data[i]);
+      rb_ary_push(callback_ary, new_object);
     }
   }
-
-  rb_ary_push(*result, row_ary);
 
   return 0;
 }
 
-/* Is invoked by calling db.execute_batch2(sql)
+/* Is invoked by calling db.execute_batch2(sql, &block)
  *
  * Executes all statments in a given string separated by semicolons.
- * If a query is made, all rows will be returned as arrays inside of an array.
+ * If a query is made, all values will be returned as an array of strings.
  * If no query is made, an empty array will be returned.
+ * All 'NULL' values will return nil.
  */
 static VALUE exec_batch(VALUE self, VALUE sql)
 {
@@ -754,7 +751,7 @@ static VALUE exec_batch(VALUE self, VALUE sql)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  status = sqlite3_exec(ctx->db, StringValuePtr(sql), callback_function, &callback_ary, &errMsg);
+  status = sqlite3_exec(ctx->db, StringValuePtr(sql), callback_function, callback_ary, &errMsg);
 
   if (status != SQLITE_OK)
   {

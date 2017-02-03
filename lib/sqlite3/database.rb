@@ -287,13 +287,24 @@ Support for this behavior will be removed in version 2.0.0.
     # string, ignoring all subsequent statements. This will execute each one
     # in turn. Bind parameters cannot be passed to #execute_batch2.
     #
-    # If a query is made, all rows will be returned as arrays inside of an array.
+    # If a query is made, all values will be returned as an array of strings.
     # If no query is made, an empty array will be returned.
+    # All 'NULL' values will return nil.
+    #
+    # Since all values returned (except for 'NULL') are strings, a block can be
+    # passed to parse the values accordingly.
     #
     # See also #execute_batch for additional ways of
     # executing statments.
-    def execute_batch2(sql)
-      exec_batch(sql)
+    def execute_batch2(sql, &block)
+      if block_given?
+        result = exec_batch(sql)
+        result.map do |val|
+          yield val
+        end
+      else
+        exec_batch(sql)
+      end
     end
 
     # This is a convenience method for creating a statement, binding
