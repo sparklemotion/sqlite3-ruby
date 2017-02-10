@@ -359,9 +359,15 @@ class TC_Database_Integration < SQLite3::TestCase
   def test_get_first_value_no_bind_no_match
     result = @db.get_first_value( "select b, a from foo where a=100" )
     assert_nil result
+    @db.results_as_hash = true
+    result = @db.get_first_value( "select b, a from foo where a=100" )
+    assert_nil result
   end
 
   def test_get_first_value_no_bind_with_match
+    result = @db.get_first_value( "select b, a from foo where a=1" )
+    assert_equal "foo", result
+    @db.results_as_hash = true
     result = @db.get_first_value( "select b, a from foo where a=1" )
     assert_equal "foo", result
   end
@@ -369,9 +375,15 @@ class TC_Database_Integration < SQLite3::TestCase
   def test_get_first_value_with_bind_no_match
     result = @db.get_first_value( "select b, a from foo where a=?", 100 )
     assert_nil result
+    @db.results_as_hash = true
+    result = @db.get_first_value( "select b, a from foo where a=?", 100 )
+    assert_nil result
   end
 
   def test_get_first_value_with_bind_with_match
+    result = @db.get_first_value( "select b, a from foo where a=?", 1 )
+    assert_equal "foo", result
+    @db.results_as_hash = true
     result = @db.get_first_value( "select b, a from foo where a=?", 1 )
     assert_equal "foo", result
   end
