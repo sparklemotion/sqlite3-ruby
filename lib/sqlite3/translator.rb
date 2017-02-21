@@ -49,7 +49,7 @@ Built in translators are deprecated and will be removed in version 2.0.0
     def translate( type, value )
       unless value.nil?
         # FIXME: this is a hack to support Sequel
-        if type && %w{ datetime timestamp }.include?(type.downcase)
+        if type && %w{ bool datetime timestamp }.include?(type.downcase)
           @translators[ type_name( type ) ].call( type, value.to_s )
         else
           @translators[ type_name( type ) ].call( type, value )
