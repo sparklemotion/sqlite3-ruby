@@ -287,11 +287,11 @@ Support for this behavior will be removed in version 2.0.0.
     # string, ignoring all subsequent statements. This will execute each one
     # in turn. Bind parameters cannot be passed to #execute_batch2.
     #
-    # If a query is made, all values will be returned as an array of strings.
+    # If a query is made, all values will be returned as an array of hashes.
     # If no query is made, an empty array will be returned.
-    # All 'NULL' values will return nil.
+    # All values returned are strings (except for 'NULL' values which return nil)
     #
-    # Since all values returned (except for 'NULL') are strings, a block can be
+    # Since all values except for 'NULL' are returned are strings, a block can be
     # passed to parse the values accordingly.
     #
     # See also #execute_batch for additional ways of

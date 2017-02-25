@@ -126,30 +126,38 @@ module SQLite3
         CREATE TABLE bros (id integer PRIMARY KEY AUTOINCREMENT, name string);
         INSERT INTO bros (name) VALUES ("foo");
         INSERT INTO bros (name) VALUES ("bar");
-        SELECT name FROM bros;
+        SELECT * FROM bros;
         eosql
-      assert_equal return_value, ["foo", "bar"]
+      assert_equal return_value, [{"id"=>"1","name"=>"foo"}, {"id"=>"2", "name"=>"bar"}]
+
+      return_value = @db.execute_batch2('SELECT * FROM bros;') do |result|
+        result["id"] = result["id"].to_i
+        result
+      end
+      assert_equal return_value, [{"id"=>1,"name"=>"foo"}, {"id"=>2, "name"=>"bar"}]
 
       return_value = @db.execute_batch2('INSERT INTO bros (name) VALUES ("oof")')
       assert_equal return_value, []
 
-      return_value = @db.execute_batch2 (
+      return_value = @db.execute_batch2(
        'CREATE TABLE more_bros (id integer PRIMARY KEY AUTOINCREMENT, name string, age integer(3));
         INSERT INTO more_bros (age) VALUES (30);
         INSERT INTO more_bros (age) VALUES (40);
         INSERT INTO more_bros (age) VALUES (20);
-        SELECT age FROM more_bros;') do |val|
-          val.to_i
+        SELECT age FROM more_bros;') do |result|
+          result["age"] = result["age"].to_i
+          result
         end
-      assert_equal return_value, [30, 40, 20]
+      assert_equal return_value, [{"age"=>30}, {"age"=>40}, {"age"=>20}]
 
       return_value = @db.execute_batch2('SELECT name FROM more_bros');
-      assert_equal return_value, [nil, nil, nil]
+      assert_equal return_value, [{"name"=>nil}, {"name"=>nil}, {"name"=>nil}]
 
       assert_raises (RuntimeError) do
         # "names" is not a valid column
         @db.execute_batch2 'INSERT INTO bros (names) VALUES ("bazz")'
       end
+
     end
 
     def test_new
