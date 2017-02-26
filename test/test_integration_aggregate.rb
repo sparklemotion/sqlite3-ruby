@@ -81,11 +81,8 @@ class TC_Integration_Aggregate < SQLite3::TestCase
       finalize { |ctx| ctx.result = ctx[:sum] }
     end
 
-    # This is likely to crash, as ruby-sqlite overwrites its only reference
-    # to the "accumulate" handler with the "multiply" handler, although
-    # SQLite still holds a pointer which it follows on next select.
-    #GC.start
-
+    GC.start
+    
     values = @db.get_first_row( "select accumulate(a), multiply(c) from foo" )
     assert_equal 6, values[0]
     assert_equal 1320, values[1]
