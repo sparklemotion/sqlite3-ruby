@@ -7,7 +7,7 @@ class TC_Integration_Aggregate < SQLite3::TestCase
       @db.execute "create table foo ( a integer primary key, b text, c integer )"
       @db.execute "insert into foo ( b, c ) values ( 'foo', 10 )"
       @db.execute "insert into foo ( b, c ) values ( 'bar', 11 )"
-      @db.execute "insert into foo ( b, c ) values ( 'baz', 12 )"
+      @db.execute "insert into foo ( b, c ) values ( 'bar', 12 )"
     end
   end
 
@@ -45,6 +45,23 @@ class TC_Integration_Aggregate < SQLite3::TestCase
 
     value = @db.get_first_value( "select accumulate(a) from foo" )
     assert_equal 6, value
+  end
+
+  def test_create_aggregate_with_group_by
+    @db.create_aggregate( "accumulate", 1 ) do
+      step do |ctx,a|
+        ctx[:sum] ||= 0
+        ctx[:sum] += a.to_i
+      end
+
+      finalize { |ctx| ctx.result = ctx[:sum] }
+    end
+
+    values = @db.execute( "select b, accumulate(c) from foo group by b order by b" )
+    assert_equal "bar", values[0][0]
+    assert_equal 23, values[0][1]
+    assert_equal "foo", values[1][0]
+    assert_equal 10, values[1][1]
   end
 
   def test_create_aggregate_with_the_same_function_twice_in_a_query
