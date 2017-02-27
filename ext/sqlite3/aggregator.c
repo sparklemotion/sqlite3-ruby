@@ -290,10 +290,14 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator)
   }
 
   if (arity < -1 || arity > 127) {
-    rb_raise(rb_eArgError,"%+"PRIsVALUE" arity=%d outside range -1..127",
+#ifdef PRIsVALUE
+    rb_raise(rb_eArgError, "%"PRIsVALUE" arity=%d out of range -1..127",
             self, arity);
+#else
+    rb_raise(rb_eArgError, "Aggregator arity=%d out of range -1..127", arity);
+#endif
   }
-  
+
   aggregator_wrapper_t *aw = xcalloc((size_t)1, sizeof(aggregator_wrapper_t));
   aw->handler_klass = aggregator;
   rb_sqlite3_list_elem_init(&aw->list);
