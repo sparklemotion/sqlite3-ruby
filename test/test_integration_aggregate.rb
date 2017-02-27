@@ -253,7 +253,7 @@ class TC_Integration_Aggregate < SQLite3::TestCase
   def test_create_aggregate_handler_call_with_wrong_arity
     @db.create_aggregate_handler AggregateHandler
 
-    assert_raise (SQLite3::SQLException) do
+    assert_raise(SQLite3::SQLException) do
      @db.get_first_value( "select multiply(a,c) from foo" )
    end
   end
