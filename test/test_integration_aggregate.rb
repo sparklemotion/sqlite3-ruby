@@ -177,13 +177,29 @@ class TC_Integration_Aggregate < SQLite3::TestCase
   class CustomException < Exception
   end
 
-  def test_create_aggregate_with_exception
+  def test_create_aggregate_with_exception_in_step
     @db.create_aggregate( "raiseexception", 1 ) do
       step do |ctx,a|
         raise CustomException.new( "bogus aggregate handler" )
       end
 
       finalize { |ctx| ctx.result = 42 }
+    end
+
+    assert_raise CustomException do
+      @db.get_first_value( "select raiseexception(a) from foo")
+    end
+  end
+
+  def test_create_aggregate_with_exception_in_finalize
+    @db.create_aggregate( "raiseexception", 1 ) do
+      step do |ctx,a|
+        raise CustomException.new( "bogus aggregate handler" )
+      end
+
+      finalize do |ctx|
+        raise CustomException.new( "bogus aggregate handler" )
+      end
     end
 
     assert_raise CustomException do
@@ -242,7 +258,7 @@ class TC_Integration_Aggregate < SQLite3::TestCase
    end
   end
 
-  class RaiseExceptionAggregateHandler
+  class RaiseExceptionStepAggregateHandler
     class << self
       def arity; 1; end
       def text_rep; SQLite3::Constants::TextRep::ANY; end
@@ -254,8 +270,26 @@ class TC_Integration_Aggregate < SQLite3::TestCase
     def finalize(ctx); ctx.result = nil; end
   end
 
-  def test_create_aggregate_handler_with_exception
-    @db.create_aggregate_handler RaiseExceptionAggregateHandler
+  def test_create_aggregate_handler_with_exception_step
+    @db.create_aggregate_handler RaiseExceptionStepAggregateHandler
+    assert_raise CustomException do
+      @db.get_first_value( "select raiseexception(a) from foo")
+    end
+  end
+
+  class RaiseExceptionNewAggregateHandler
+    class << self
+      def name; "raiseexception"; end
+    end
+    def initialize
+      raise CustomException.new( "bogus aggregate handler" )
+    end
+    def step(ctx, a); end
+    def finalize(ctx); ctx.result = nil; end
+  end
+
+  def test_create_aggregate_handler_with_exception_new
+    @db.create_aggregate_handler RaiseExceptionNewAggregateHandler
     assert_raise CustomException do
       @db.get_first_value( "select raiseexception(a) from foo")
     end
