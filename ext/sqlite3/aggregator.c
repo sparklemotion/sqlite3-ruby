@@ -69,16 +69,23 @@ rb_sqlite3_aggregator_step(sqlite3_context * ctx, int argc, sqlite3_value **argv
 {
   aggregator_instance_t *inst = rb_sqlite3_aggregate_instance(ctx);
   VALUE * params = NULL;
+  VALUE one_param;
   int i;
 
-  if (argc > 0) {
+  if (argc == 1) {
+    one_param = sqlite3val2rb(argv[i]);
+    params = &one_param;
+  }
+  if (argc > 1) {
     params = xcalloc((size_t)argc, sizeof(VALUE));
     for(i = 0; i < argc; i++) {
       params[i] = sqlite3val2rb(argv[i]);
     }
   }
   rb_funcall2(inst->handler_instance, rb_intern("step"), argc, params);
-  xfree(params);
+  if (argc > 1) {
+    xfree(params);
+  }
 }
 
 /* we assume that this function is only called once per execution context */
