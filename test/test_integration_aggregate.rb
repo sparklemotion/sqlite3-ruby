@@ -165,6 +165,15 @@ class TC_Integration_Aggregate < SQLite3::TestCase
     assert_equal 2145, values[1]
   end
 
+  def test_create_aggregate_with_invalid_arity
+    assert_raise ArgumentError do
+      @db.create_aggregate( "accumulate", 1000 ) do
+        step {|ctx,*args| }
+        finalize { |ctx| }
+      end
+    end
+  end
+
   class CustomException < Exception
   end
 
