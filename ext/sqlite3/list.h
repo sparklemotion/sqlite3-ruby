@@ -162,9 +162,12 @@ rb_sqlite3_list_remove(rb_sqlite3_list_elem_t* elem)
 static inline rb_sqlite3_list_iter_t
 rb_sqlite3_list_iter_new(rb_sqlite3_list_head_t* head)
 {
+  rb_sqlite3_list_iter_t iter;
+
   /* again check if head looks initalized */
   assert(head->elem.prev && head->elem.next);
-  rb_sqlite3_list_iter_t iter = {.head = head, .next = head->elem.next };
+  iter.head = head;
+  iter.next = head->elem.next;
   return iter;
 }
 
