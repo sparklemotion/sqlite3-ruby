@@ -162,7 +162,7 @@ class TC_Integration_Aggregate < SQLite3::TestCase
 
     values = @db.get_first_row( "select accumulate(c), accumulate(a,c) from foo")
     assert_equal 33, values[0]
-    assert_equal 39, values[1]
+    assert_equal 2145, values[1]
   end
 
   class CustomException < Exception

@@ -30,6 +30,6 @@ void
 rb_sqlite3_aggregator_mark(sqlite3RubyPtr ctx);
 
 void
-rb_sqlite3_aggrgegator_destory_all(sqlite3RubyPtr ctx);
+rb_sqlite3_aggregator_destroy_all(sqlite3RubyPtr ctx);
 
 #endif

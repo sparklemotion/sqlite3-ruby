@@ -18,7 +18,7 @@ rb_sqlite3_aggregator_step(sqlite3_context * ctx, int argc, sqlite3_value **argv
   int i;
 
   if (argc > 0) {
-    params = xcalloc((size_t)argc, sizeof(VALUE *));
+    params = xcalloc((size_t)argc, sizeof(VALUE));
     for(i = 0; i < argc; i++) {
       params[i] = sqlite3val2rb(argv[i]);
     }
@@ -81,7 +81,7 @@ rb_sqlite3_aggregator_mark(sqlite3RubyPtr ctx)
  * because SQLIite should have already called sqlite3_create_function_v2's
  * destroy callback of all registered aggregate functions. */
 void
-rb_sqlite3_aggregator_destory_all(sqlite3RubyPtr ctx)
+rb_sqlite3_aggregator_destroy_all(sqlite3RubyPtr ctx)
 {
   rb_sqlite3_list_iter_t iter = rb_sqlite3_list_iter_new(&ctx->aggregators);
   aggregator_wrapper_t *aw;

@@ -13,7 +13,7 @@ static void deallocate(void * ctx)
   sqlite3 * db     = c->db;
 
   if(db) sqlite3_close(db);
-  rb_sqlite3_aggregator_destory_all(ctx);
+  rb_sqlite3_aggregator_destroy_all(ctx);
   xfree(c);
 }
 
@@ -81,7 +81,7 @@ static VALUE sqlite3_rb_close(VALUE self)
 
   ctx->db = NULL;
 
-  rb_sqlite3_aggregator_destory_all(ctx);
+  rb_sqlite3_aggregator_destroy_all(ctx);
 
   return self;
 }
