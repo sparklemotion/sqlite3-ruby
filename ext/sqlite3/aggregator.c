@@ -1,19 +1,73 @@
 #include <aggregator.h>
 #include <database.h>
 
-static int
-rb_sqlite3_aggregator_obj_method_arity(VALUE obj, ID id)
-{
-  VALUE method = rb_funcall(obj, rb_intern("method"), 1, ID2SYM(id));
-  VALUE arity  = rb_funcall(method, rb_intern("arity"), 0);
+typedef rb_sqlite3_aggregator_wrapper_t aggregator_wrapper_t;
+typedef rb_sqlite3_aggregator_instance_t aggregator_instance_t;
 
-  return (int)NUM2INT(arity);
+static aggregator_instance_t already_destroyed_aggregator_instance;
+
+/* called in rb_sqlite3_aggregator_step and rb_sqlite3_aggregator_final. It
+ * checks if the exection context already has an associated instance. If it
+ * has one, it returns it. If there is no instance yet, it creates one and
+ * associates it with the context. */
+static aggregator_instance_t*
+rb_sqlite3_aggregate_instance(sqlite3_context *ctx)
+{
+  aggregator_wrapper_t *aw = sqlite3_user_data(ctx);
+  aggregator_instance_t *inst;
+  aggregator_instance_t **inst_ptr =
+    sqlite3_aggregate_context(ctx, (int)sizeof(aggregator_instance_t*));
+
+  if (!inst_ptr) {
+    rb_fatal("SQLite is out-of-merory");
+  }
+
+  inst = *inst_ptr;
+  if (!inst) {
+    inst = xcalloc((size_t)1, sizeof(aggregator_instance_t));
+    // just so we know should rb_funcall raise and we get here a second time.
+    *inst_ptr = &already_destroyed_aggregator_instance;
+    rb_sqlite3_list_elem_init(&inst->list);
+    inst->handler_instance = rb_funcall(aw->handler_klass, rb_intern("new"), 0);
+    rb_sqlite3_list_insert_tail(&aw->instances, &inst->list);
+    *inst_ptr = inst;
+  }
+
+  if (inst == &already_destroyed_aggregator_instance) {
+    rb_fatal("SQLite called us back on an already destroyed aggregate instance");
+  }
+
+  return inst;
+}
+
+/* called by rb_sqlite3_aggregator_final. Unlinks and frees the
+ * aggregator_instance_t, so the handler_instance won't be marked any more
+ * and Ruby's GC may free it. */
+static void
+rb_sqlite3_aggregate_instance_destroy(sqlite3_context *ctx)
+{
+  aggregator_instance_t *inst;
+  aggregator_instance_t **inst_ptr = sqlite3_aggregate_context(ctx, 0);
+
+  if (!inst_ptr || (inst = *inst_ptr)) {
+    return;
+  }
+
+  if (inst == &already_destroyed_aggregator_instance) {
+    rb_fatal("attempt to destroy aggregate instance twice");
+  }
+
+  inst->handler_instance = Qnil; // may catch use-after-free
+  rb_sqlite3_list_remove(&inst->list);
+  xfree(inst);
+
+  *inst_ptr = &already_destroyed_aggregator_instance;
 }
 
 static void
 rb_sqlite3_aggregator_step(sqlite3_context * ctx, int argc, sqlite3_value **argv)
 {
-  aggregator_wrapper_t *aw = sqlite3_user_data(ctx);
+  aggregator_instance_t *inst = rb_sqlite3_aggregate_instance(ctx);
   VALUE * params = NULL;
   int i;
 
@@ -23,16 +77,18 @@ rb_sqlite3_aggregator_step(sqlite3_context * ctx, int argc, sqlite3_value **argv
       params[i] = sqlite3val2rb(argv[i]);
     }
   }
-  rb_funcall2(aw->handler_klass, rb_intern("step"), argc, params);
+  rb_funcall2(inst->handler_instance, rb_intern("step"), argc, params);
   xfree(params);
 }
 
+/* we assume that this function is only called once per execution context */
 static void
 rb_sqlite3_aggregator_final(sqlite3_context * ctx)
 {
-  aggregator_wrapper_t *aw = sqlite3_user_data(ctx);
-  VALUE result = rb_funcall(aw->handler_klass, rb_intern("finalize"), 0);
+  aggregator_instance_t *inst = rb_sqlite3_aggregate_instance(ctx);
+  VALUE result = rb_funcall(inst->handler_instance, rb_intern("finalize"), 0);
   set_sqlite3_func_result(ctx, result);
+  rb_sqlite3_aggregate_instance_destroy(ctx);
 }
 
 /* called both by sqlite3_create_function_v2's xDestroy-callback and
@@ -45,13 +101,15 @@ rb_sqlite3_aggregator_destroy(void *void_aw)
 {
   aggregator_wrapper_t *aw = void_aw;
   rb_sqlite3_list_iter_t iter = rb_sqlite3_list_iter_new(&aw->instances);
-  rb_sqlite3_list_elem_t *e;
-
-  while ((e = rb_sqlite3_list_iter_step(&iter))) {
-    rb_sqlite3_list_remove(e);
-    xfree(e);
+  aggregator_instance_t *inst;
+  
+  while ((inst = (aggregator_instance_t*)rb_sqlite3_list_iter_step(&iter))) {
+    rb_sqlite3_list_remove(&inst->list);
+    inst->handler_instance = Qnil;
+    xfree(inst);
   }
   rb_sqlite3_list_remove(&aw->list);
+  // chances are we see this in a use-after-free
   aw->handler_klass = Qnil;
   xfree(aw);
 }
@@ -64,10 +122,16 @@ rb_sqlite3_aggregator_mark(sqlite3RubyPtr ctx)
 {
   rb_sqlite3_list_iter_t iter = rb_sqlite3_list_iter_new(&ctx->aggregators);
   aggregator_wrapper_t *aw;
-
+  
   while ((aw = (aggregator_wrapper_t*)rb_sqlite3_list_iter_step(&iter))) {
+    rb_sqlite3_list_iter_t iter2 = rb_sqlite3_list_iter_new(&aw->instances);
+    aggregator_instance_t *inst;
+
     rb_gc_mark(aw->handler_klass);
-    /* TODO: mark instances */
+
+    while ((inst = (aggregator_instance_t*)rb_sqlite3_list_iter_step(&iter2))) {
+      rb_gc_mark(inst->handler_instance);
+    }
   }
 }
 
@@ -115,27 +179,66 @@ int rb_sqlite3_create_function_v1or2(sqlite3 *db, const char *zFunctionName,
 #endif
 }
 
-/* call-seq: define_aggregator(name, aggregator)
+/* call-seq: define_aggregator2(aggregator)
  *
- * Define an aggregate function named +name+ using the object +aggregator+.
- * +aggregator+ must respond to +step+ and +finalize+.  +step+ will be called
- * with row information and +finalize+ must return the return value for the
- * aggregator function.
+ * Define an aggregrate function according to a factory object (the "handler")
+ * that knows how to obtain to all the information. The handler must provide
+ * the following class methods:
+ *
+ * +arity+:: corresponds to the +arity+ parameter of #create_aggregate. This
+ *           message is optional, and if the handler does not respond to it,
+ *           the function will have an arity of -1.
+ * +name+:: this is the name of the function. The handler _must_ implement
+ *          this message.
+ * +new+:: this must be implemented by the handler. It should return a new
+ *         instance of the object that will handle a specific invocation of
+ *         the function.
+ *
+ * The handler instance (the object returned by the +new+ message, described
+ * above), must respond to the following messages:
+ *
+ * +step+:: this is the method that will be called for each step of the
+ *          aggregate function's evaluation. It should take parameters according
+ *          to the *arity* definition.
+ * +finalize+:: this is the method that will be called to finalize the
+ *              aggregate function's evaluation. It should not take arguments.
+ *
+ * Note the difference between this function and #create_aggregate_handler
+ * is that no FunctionProxy ("ctx") object is involved. This manifests in two
+ * ways: The return value of the aggregate function is the return value of
+ * +finalize+ and neither +step+ nor +finalize+ take an additional "ctx"
+ * parameter.
  */
 VALUE
-rb_sqlite3_define_aggregator(VALUE self, VALUE name, VALUE aggregator)
+rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator)
 {
   /* define_aggregator is added as a method to SQLite3::Database in database.c */
   sqlite3RubyPtr ctx;
   int arity, status;
+  VALUE ruby_name;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   if (!ctx->db) {
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
   }
 
-  arity = rb_sqlite3_aggregator_obj_method_arity(aggregator, rb_intern("step"));
+  /* aggregator is typically a class and testing for :name or :new in class
+   * is a bit pointless */
 
+  ruby_name = rb_funcall(aggregator, rb_intern("name"), 0);
+
+  if (rb_respond_to(aggregator, rb_intern("arity"))) {
+    VALUE ruby_arity = rb_funcall(aggregator, rb_intern("arity"), 0);
+    arity = NUM2INT(ruby_arity);
+  } else {
+    arity = -1;
+  }
+
+  if (arity < -1 || arity > 127) {
+    rb_raise(rb_eArgError,"%+"PRIsVALUE" arity=%d outside range -1..127",
+            self, arity);
+  }
+  
   aggregator_wrapper_t *aw = xcalloc((size_t)1, sizeof(aggregator_wrapper_t));
   aw->handler_klass = aggregator;
   rb_sqlite3_list_elem_init(&aw->list);
@@ -143,7 +246,7 @@ rb_sqlite3_define_aggregator(VALUE self, VALUE name, VALUE aggregator)
 
   status = rb_sqlite3_create_function_v1or2(
     ctx->db,
-    StringValuePtr(name),
+    StringValueCStr(ruby_name),
     arity,
     SQLITE_UTF8,
     aw,

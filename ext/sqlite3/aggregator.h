@@ -21,10 +21,19 @@ typedef struct rb_sqlite3_aggregator_wrapper {
 
   /* linked list of all in-flight instances of the AggregateHandler klass. */
   rb_sqlite3_list_head_t instances;
-} aggregator_wrapper_t;
+} rb_sqlite3_aggregator_wrapper_t;
+
+typedef struct rb_sqlite3_aggregator_instance {
+  /* my node in the aggregator_wrapper_t.instances linked ist. Relevent for
+   * the gc_mark function to find this handler_instance */
+   rb_sqlite3_list_elem_t list;
+
+   /* the AggragateHandler instance we are wrappeng here */
+   VALUE handler_instance;
+} rb_sqlite3_aggregator_instance_t;
 
 VALUE
-rb_sqlite3_define_aggregator(VALUE self, VALUE name, VALUE aggregator);
+rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator);
 
 void
 rb_sqlite3_aggregator_mark(sqlite3RubyPtr ctx);
