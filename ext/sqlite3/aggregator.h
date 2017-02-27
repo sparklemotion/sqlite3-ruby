@@ -23,6 +23,8 @@ typedef struct rb_sqlite3_aggregator_wrapper {
   rb_sqlite3_list_head_t instances;
 } rb_sqlite3_aggregator_wrapper_t;
 
+/* the aggregator_instance holds a refence to an instance of its
+ * AggregatorHandler class. */
 typedef struct rb_sqlite3_aggregator_instance {
   /* my node in the aggregator_wrapper_t.instances linked ist. Relevent for
    * the gc_mark function to find this handler_instance */
@@ -30,6 +32,12 @@ typedef struct rb_sqlite3_aggregator_instance {
 
    /* the AggragateHandler instance we are wrappeng here */
    VALUE handler_instance;
+
+   /* status as returned by rb_protect. If this is non-zero we already had an
+    * expception. From that point on, step() won't call into Ruby anymore
+    * and finalize() will just call sqlite3_result_error. The exception
+    * itself is carried via rb_errinfo up to Statement.step. */
+   int exc_status;
 } rb_sqlite3_aggregator_instance_t;
 
 VALUE

@@ -6,6 +6,33 @@ typedef rb_sqlite3_aggregator_instance_t aggregator_instance_t;
 
 static aggregator_instance_t already_destroyed_aggregator_instance;
 
+typedef struct rb_sqlite3_protected_funcall_args {
+    VALUE self;
+    ID method;
+    int argc;
+    VALUE *params;
+} protected_funcall_args_t;
+
+/* why isn't there something like this in the ruby API? */
+static VALUE
+rb_sqlite3_protected_funcall_body(VALUE protected_funcall_args_ptr)
+{
+  protected_funcall_args_t *args =
+    (protected_funcall_args_t*)protected_funcall_args_ptr;
+
+  return rb_funcall2(args->self, args->method, args->argc, args->params);
+}
+
+static VALUE
+rb_sqlite3_protected_funcall(VALUE self, ID method, int argc, VALUE *params,
+                             int* exc_status)
+{
+  protected_funcall_args_t args = {
+    .self = self, .method = method, .argc = argc, .params = params
+  };
+  return rb_protect(rb_sqlite3_protected_funcall_body, (VALUE)(&args), exc_status);
+}
+
 /* called in rb_sqlite3_aggregator_step and rb_sqlite3_aggregator_final. It
  * checks if the exection context already has an associated instance. If it
  * has one, it returns it. If there is no instance yet, it creates one and
@@ -25,11 +52,14 @@ rb_sqlite3_aggregate_instance(sqlite3_context *ctx)
   inst = *inst_ptr;
   if (!inst) {
     inst = xcalloc((size_t)1, sizeof(aggregator_instance_t));
-    // just so we know should rb_funcall raise and we get here a second time.
-    *inst_ptr = &already_destroyed_aggregator_instance;
     rb_sqlite3_list_elem_init(&inst->list);
-    inst->handler_instance = rb_funcall(aw->handler_klass, rb_intern("new"), 0);
+
+    inst->handler_instance = rb_sqlite3_protected_funcall(
+      aw->handler_klass, rb_intern("new"), 0, NULL, &inst->exc_status);
+    /* we create via instance even if new failed such that step() and finalize()
+     * can go on as usual */
     rb_sqlite3_list_insert_tail(&aw->instances, &inst->list);
+
     *inst_ptr = inst;
   }
 
@@ -72,6 +102,10 @@ rb_sqlite3_aggregator_step(sqlite3_context * ctx, int argc, sqlite3_value **argv
   VALUE one_param;
   int i;
 
+  if (inst->exc_status) {
+    return;
+  }
+
   if (argc == 1) {
     one_param = sqlite3val2rb(argv[i]);
     params = &one_param;
@@ -82,7 +116,8 @@ rb_sqlite3_aggregator_step(sqlite3_context * ctx, int argc, sqlite3_value **argv
       params[i] = sqlite3val2rb(argv[i]);
     }
   }
-  rb_funcall2(inst->handler_instance, rb_intern("step"), argc, params);
+  rb_sqlite3_protected_funcall(
+    inst->handler_instance, rb_intern("step"), argc, params, &inst->exc_status);
   if (argc > 1) {
     xfree(params);
   }
@@ -93,8 +128,21 @@ static void
 rb_sqlite3_aggregator_final(sqlite3_context * ctx)
 {
   aggregator_instance_t *inst = rb_sqlite3_aggregate_instance(ctx);
-  VALUE result = rb_funcall(inst->handler_instance, rb_intern("finalize"), 0);
-  set_sqlite3_func_result(ctx, result);
+  if (!inst->exc_status) {
+    VALUE result = rb_sqlite3_protected_funcall(
+      inst->handler_instance, rb_intern("finalize"), 0, NULL, &inst->exc_status);
+    if (!inst->exc_status) {
+      set_sqlite3_func_result(ctx, result);
+    }
+  }
+
+  if (inst->exc_status) {
+    /* the user should never see this, as Statement.step() will pick up the
+     * outstanding exception and raise it instead of generating a new one
+     * for SQLITE_ERROR with message "Ruby Exception occured" */
+    sqlite3_result_error(ctx, "Ruby Exception occured", -1);
+  }
+
   rb_sqlite3_aggregate_instance_destroy(ctx);
 }
 
