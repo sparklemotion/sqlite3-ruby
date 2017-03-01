@@ -300,4 +300,37 @@ class TC_Integration_Aggregate < SQLite3::TestCase
     value = @db.get_first_value( "select multiply(a) from foo" )
     assert_equal 6, value
   end
+
+  class AccumulateAggregator
+    def step(*args)
+      @sum ||= 0
+      args.each { |a| @sum += a.to_i }
+    end
+
+    def finalize
+      @sum
+    end
+  end
+
+  class AccumulateAggregator2
+    def step(a, b)
+      @sum ||= 1
+      @sum *= (a.to_i + b.to_i)
+    end
+
+    def finalize
+      @sum
+    end
+  end
+
+  def test_define_aggregator_with_two_different_arities
+    @db.define_aggregator( "accumulate", AccumulateAggregator.new )
+    @db.define_aggregator( "accumulate", AccumulateAggregator2.new )
+
+    GC.start
+
+    values = @db.get_first_row( "select accumulate(c), accumulate(a,c) from foo")
+    assert_equal 33, values[0]
+    assert_equal 2145, values[1]
+  end
 end

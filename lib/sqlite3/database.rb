@@ -571,7 +571,7 @@ Support for this will be removed in version 2.0.0.
     # +aggregator+ object will serve as template that is cloned to provide the
     # individual instances of the aggregate function. Regular ruby objects
     # already provide a suitable +clone+.
-    # The functions arity is -1 (veryable arity).
+    # The functions arity is the arity of the +step+ method.
     def define_aggregator( name, aggregator )
       # Previously, this has been implemented in C. Now this is just yet
       # another compatiblity shim
@@ -587,6 +587,11 @@ Support for this will be removed in version 2.0.0.
           @name
         end
 
+        def self.arity
+          # this is what sqlite3_obj_method_arity did before
+          @template.method(:step).arity
+        end
+
         def initialize
           @klass = self.class.template.clone
         end
@@ -599,7 +604,6 @@ Support for this will be removed in version 2.0.0.
           @klass.finalize
         end
       end
-      # as proxy does not set arity, it will be -1
       define_aggregator2(proxy)
       self
     end
