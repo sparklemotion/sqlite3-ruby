@@ -271,6 +271,7 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator)
   sqlite3RubyPtr ctx;
   int arity, status;
   VALUE ruby_name;
+  const char *name;
   aggregator_wrapper_t *aw;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
@@ -299,6 +300,8 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator)
 #endif
   }
 
+  name = StringValueCStr(ruby_name);
+
   aw = xcalloc((size_t)1, sizeof(aggregator_wrapper_t));
   aw->handler_klass = aggregator;
   rb_sqlite3_list_elem_init(&aw->list);
@@ -306,7 +309,7 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator)
 
   status = rb_sqlite3_create_function_v1or2(
     ctx->db,
-    StringValueCStr(ruby_name),
+    name,
     arity,
     SQLITE_UTF8,
     aw,
