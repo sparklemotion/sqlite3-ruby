@@ -361,8 +361,8 @@ Support for this will be removed in version 2.0.0.
     #   end
     #
     #   puts db.get_first_value( "select maim(name) from table" )
-    def create_function name, arity, text_rep=Constants::TextRep::ANY, &block
-      define_function(name) do |*args|
+    def create_function name, arity, text_rep=Constants::TextRep::UTF8, &block
+      define_function_with_flags(name, text_rep) do |*args|
         fp = FunctionProxy.new
         block.call(fp, *args)
         fp.result

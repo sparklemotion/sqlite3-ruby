@@ -303,12 +303,12 @@ int rb_proc_arity(VALUE self)
 }
 #endif
 
-/* call-seq: define_function(name) { |args,...| }
+/* call-seq: define_function_with_flags(name, flags) { |args,...| }
  *
- * Define a function named +name+ with +args+.  The arity of the block
+ * Define a function named +name+ with +args+ using TextRep bitflags +flags+.  The arity of the block
  * will be used as the arity for the function defined.
  */
-static VALUE define_function(VALUE self, VALUE name)
+static VALUE define_function_with_flags(VALUE self, VALUE name, VALUE flags)
 {
   sqlite3RubyPtr ctx;
   VALUE block;
@@ -323,7 +323,7 @@ static VALUE define_function(VALUE self, VALUE name)
     ctx->db,
     StringValuePtr(name),
     rb_proc_arity(block),
-    SQLITE_UTF8,
+    NUM2INT(flags),
     (void *)block,
     rb_sqlite3_func,
     NULL,
@@ -335,6 +335,16 @@ static VALUE define_function(VALUE self, VALUE name)
   rb_hash_aset(rb_iv_get(self, "@functions"), name, block);
 
   return self;
+}
+
+/* call-seq: define_function(name) { |args,...| }
+ *
+ * Define a function named +name+ with +args+.  The arity of the block
+ * will be used as the arity for the function defined.
+ */
+static VALUE define_function(VALUE self, VALUE name)
+{
+  return define_function_with_flags(self, name, SQLITE_UTF8)
 }
 
 static int sqlite3_obj_method_arity(VALUE obj, ID id)
@@ -773,6 +783,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "trace", trace, -1);
   rb_define_method(cSqlite3Database, "last_insert_row_id", last_insert_row_id, 0);
   rb_define_method(cSqlite3Database, "define_function", define_function, 1);
+  rb_define_method(cSqlite3Database, "define_function_with_flags", define_function_with_flags, 2);
   rb_define_method(cSqlite3Database, "define_aggregator", define_aggregator, 2);
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
