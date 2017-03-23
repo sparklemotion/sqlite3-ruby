@@ -332,7 +332,11 @@ Support for this will be removed in version 2.0.0.
     #
     # See also #get_first_row.
     def get_first_value( sql, *bind_vars )
-      execute( sql, *bind_vars ) { |row| return row[0] }
+      query( sql, bind_vars ) do |rs|
+        if (row = rs.next)
+          return @results_as_hash ? row[rs.columns[0]] : row[0]
+        end
+      end
       nil
     end
 
