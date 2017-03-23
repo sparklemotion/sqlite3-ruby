@@ -235,6 +235,9 @@ Support for bind parameters as *args will be removed in 2.0.0.
     #
     # This always returns +nil+, making it unsuitable for queries that return
     # rows.
+    #
+    # See also #execute_batch2 for additional ways of
+    # executing statments.
     def execute_batch( sql, bind_vars = [], *args )
       # FIXME: remove this stuff later
       unless [Array, Hash].include?(bind_vars.class)
@@ -277,6 +280,30 @@ Support for this behavior will be removed in version 2.0.0.
       end
       # FIXME: we should not return `nil` as a success return value
       nil
+    end
+
+    # Executes all SQL statements in the given string. By contrast, the other
+    # means of executing queries will only execute the first statement in the
+    # string, ignoring all subsequent statements. This will execute each one
+    # in turn. Bind parameters cannot be passed to #execute_batch2.
+    #
+    # If a query is made, all values will be returned as strings.
+    # If no query is made, an empty array will be returned.
+    #
+    # Because all values except for 'NULL' are returned as strings,
+    # a block can be passed to parse the values accordingly.
+    #
+    # See also #execute_batch for additional ways of
+    # executing statments.
+    def execute_batch2(sql, &block)
+      if block_given?
+        result = exec_batch(sql, @results_as_hash)
+        result.map do |val|
+          yield val
+        end
+      else
+        exec_batch(sql, @results_as_hash)
+      end
     end
 
     # This is a convenience method for creating a statement, binding

@@ -727,6 +727,78 @@ static VALUE transaction_active_p(VALUE self)
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
+static int hash_callback_function(VALUE callback_ary, int count, char **data, char **columns)
+{
+  VALUE new_hash = rb_hash_new();
+  int i;
+
+  for (i = 0; i < count; i++) {
+    if (data[i] == NULL) {
+      rb_hash_aset(new_hash, rb_str_new_cstr(columns[i]), Qnil);
+    } else {
+      rb_hash_aset(new_hash, rb_str_new_cstr(columns[i]), rb_str_new_cstr(data[i]));
+    }
+  }
+
+  rb_ary_push(callback_ary, new_hash);
+
+  return 0;
+}
+
+static int regular_callback_function(VALUE callback_ary, int count, char **data, char **columns)
+{
+  VALUE new_ary = rb_ary_new();
+  int i;
+
+  for (i = 0; i < count; i++) {
+    if (data[i] == NULL) {
+      rb_ary_push(new_ary, Qnil);
+    } else {
+      rb_ary_push(new_ary, rb_str_new_cstr(data[i]));
+    }
+  }
+
+  rb_ary_push(callback_ary, new_ary);
+
+  return 0;
+}
+
+
+/* Is invoked by calling db.execute_batch2(sql, &block)
+ *
+ * Executes all statments in a given string separated by semicolons.
+ * If a query is made, all values returned are strings
+ * (except for 'NULL' values which return nil),
+ * so the user may parse values with a block.
+ * If no query is made, an empty array will be returned.
+ */
+static VALUE exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
+{
+  sqlite3RubyPtr ctx;
+  int status;
+  VALUE callback_ary = rb_ary_new();
+  char *errMsg;
+  VALUE errexp;
+
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  if(results_as_hash == Qtrue) {
+    status = sqlite3_exec(ctx->db, StringValuePtr(sql), hash_callback_function, callback_ary, &errMsg);
+  } else {
+    status = sqlite3_exec(ctx->db, StringValuePtr(sql), regular_callback_function, callback_ary, &errMsg);
+  }
+
+  if (status != SQLITE_OK)
+  {
+    errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
+    sqlite3_free(errMsg);
+    rb_exc_raise(errexp);
+  }
+
+  return callback_ary;
+}
+
 /* call-seq: db.db_filename(database_name)
  *
  * Returns the file associated with +database_name+.  Can return nil or an
@@ -795,6 +867,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
   rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
+  rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 2);
   rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
