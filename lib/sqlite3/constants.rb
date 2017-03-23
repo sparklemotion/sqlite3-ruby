@@ -6,6 +6,7 @@ module SQLite3 ; module Constants
     UTF16BE = 3
     UTF16   = 4
     ANY     = 5
+    DETERMINISTIC = 0x800
   end
 
   module ColumnType
