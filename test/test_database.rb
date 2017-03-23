@@ -124,52 +124,52 @@ module SQLite3
     def test_execute_batch2
       @db.results_as_hash = true
       return_value = @db.execute_batch2 <<-eosql
-        CREATE TABLE bros (id integer PRIMARY KEY AUTOINCREMENT, name string);
-        INSERT INTO bros (name) VALUES ("foo");
-        INSERT INTO bros (name) VALUES ("bar");
-        SELECT * FROM bros;
+        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, name string);
+        INSERT INTO items (name) VALUES ("foo");
+        INSERT INTO items (name) VALUES ("bar");
+        SELECT * FROM items;
         eosql
       assert_equal return_value, [{"id"=>"1","name"=>"foo"}, {"id"=>"2", "name"=>"bar"}]
 
-      return_value = @db.execute_batch2('SELECT * FROM bros;') do |result|
+      return_value = @db.execute_batch2('SELECT * FROM items;') do |result|
         result["id"] = result["id"].to_i
         result
       end
       assert_equal return_value, [{"id"=>1,"name"=>"foo"}, {"id"=>2, "name"=>"bar"}]
 
-      return_value = @db.execute_batch2('INSERT INTO bros (name) VALUES ("oof")')
+      return_value = @db.execute_batch2('INSERT INTO items (name) VALUES ("oof")')
       assert_equal return_value, []
 
       return_value = @db.execute_batch2(
-       'CREATE TABLE more_bros (id integer PRIMARY KEY AUTOINCREMENT, name string, age integer(3));
-        INSERT INTO more_bros (age) VALUES (30);
-        INSERT INTO more_bros (age) VALUES (40);
-        INSERT INTO more_bros (age) VALUES (20);
-        SELECT age FROM more_bros;') do |result|
+       'CREATE TABLE employees (id integer PRIMARY KEY AUTOINCREMENT, name string, age integer(3));
+        INSERT INTO employees (age) VALUES (30);
+        INSERT INTO employees (age) VALUES (40);
+        INSERT INTO employees (age) VALUES (20);
+        SELECT age FROM employees;') do |result|
           result["age"] = result["age"].to_i
           result
         end
       assert_equal return_value, [{"age"=>30}, {"age"=>40}, {"age"=>20}]
 
-      return_value = @db.execute_batch2('SELECT name FROM more_bros');
+      return_value = @db.execute_batch2('SELECT name FROM employees');
       assert_equal return_value, [{"name"=>nil}, {"name"=>nil}, {"name"=>nil}]
 
       @db.results_as_hash = false
       return_value = @db.execute_batch2(
-        'CREATE TABLE dudes (id integer PRIMARY KEY AUTOINCREMENT, age integer(3));
-        INSERT INTO dudes (age) VALUES (20);
-        INSERT INTO dudes (age) VALUES (30);
-        SELECT id, age from dudes;') do |result|
+        'CREATE TABLE managers (id integer PRIMARY KEY AUTOINCREMENT, age integer(3));
+        INSERT INTO managers (age) VALUES (50);
+        INSERT INTO managers (age) VALUES (60);
+        SELECT id, age from managers;') do |result|
           result = result.map do |res|
             res.to_i
           end
           result
         end
-      assert_equal return_value, [[1, 20], [2, 30]]
+      assert_equal return_value, [[1, 50], [2, 60]]
 
       assert_raises (RuntimeError) do
         # "names" is not a valid column
-        @db.execute_batch2 'INSERT INTO bros (names) VALUES ("bazz")'
+        @db.execute_batch2 'INSERT INTO items (names) VALUES ("bazz")'
       end
 
     end
