@@ -717,7 +717,7 @@ static VALUE transaction_active_p(VALUE self)
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
-static int callback_function(VALUE callback_ary, int count, char **data, char **columns)
+static int hash_callback_function(VALUE callback_ary, int count, char **data, char **columns)
 {
   VALUE new_hash = rb_hash_new();
   int i;
@@ -735,15 +735,34 @@ static int callback_function(VALUE callback_ary, int count, char **data, char **
   return 0;
 }
 
+static int regular_callback_function(VALUE callback_ary, int count, char **data, char **columns)
+{
+  VALUE new_ary = rb_ary_new();
+  int i;
+
+  for (i = 0; i < count; i++) {
+    if (data[i] == NULL) {
+      rb_ary_push(new_ary, Qnil);
+    } else {
+      rb_ary_push(new_ary, rb_str_new_cstr(data[i]));
+    }
+  }
+
+  rb_ary_push(callback_ary, new_ary);
+
+  return 0;
+}
+
+
 /* Is invoked by calling db.execute_batch2(sql, &block)
  *
  * Executes all statments in a given string separated by semicolons.
- * If a query is made, all values will be returned as an array of hashes.
- * All values returned are strings (except for 'NULL' values which return nil),
+ * If a query is made, all values returned are strings
+ * (except for 'NULL' values which return nil),
  * so the user may parse values with a block.
  * If no query is made, an empty array will be returned.
  */
-static VALUE exec_batch(VALUE self, VALUE sql)
+static VALUE exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
 {
   sqlite3RubyPtr ctx;
   int status;
@@ -754,7 +773,11 @@ static VALUE exec_batch(VALUE self, VALUE sql)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  status = sqlite3_exec(ctx->db, StringValuePtr(sql), callback_function, callback_ary, &errMsg);
+  if(results_as_hash == Qtrue) {
+    status = sqlite3_exec(ctx->db, StringValuePtr(sql), hash_callback_function, callback_ary, &errMsg);
+  } else {
+    status = sqlite3_exec(ctx->db, StringValuePtr(sql), regular_callback_function, callback_ary, &errMsg);
+  }
 
   if (status != SQLITE_OK)
   {
@@ -833,7 +856,7 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
   rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
-  rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 1);
+  rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 2);
   rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION

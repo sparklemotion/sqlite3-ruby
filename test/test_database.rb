@@ -122,6 +122,7 @@ module SQLite3
     end
 
     def test_execute_batch2
+      @db.results_as_hash = true
       return_value = @db.execute_batch2 <<-eosql
         CREATE TABLE bros (id integer PRIMARY KEY AUTOINCREMENT, name string);
         INSERT INTO bros (name) VALUES ("foo");
@@ -152,6 +153,19 @@ module SQLite3
 
       return_value = @db.execute_batch2('SELECT name FROM more_bros');
       assert_equal return_value, [{"name"=>nil}, {"name"=>nil}, {"name"=>nil}]
+
+      @db.results_as_hash = false
+      return_value = @db.execute_batch2(
+        'CREATE TABLE dudes (id integer PRIMARY KEY AUTOINCREMENT, age integer(3));
+        INSERT INTO dudes (age) VALUES (20);
+        INSERT INTO dudes (age) VALUES (30);
+        SELECT id, age from dudes;') do |result|
+          result = result.map do |res|
+            res.to_i
+          end
+          result
+        end
+      assert_equal return_value, [[1, 20], [2, 30]]
 
       assert_raises (RuntimeError) do
         # "names" is not a valid column
