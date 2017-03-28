@@ -9,6 +9,8 @@ Manifest.txt
 README.rdoc
 Rakefile
 appveyor.yml
+ext/sqlite3/aggregator.c
+ext/sqlite3/aggregator.h
 ext/sqlite3/backup.c
 ext/sqlite3/backup.h
 ext/sqlite3/database.c
@@ -47,6 +49,7 @@ test/test_database_readwrite.rb
 test/test_deprecated.rb
 test/test_encoding.rb
 test/test_integration.rb
+test/test_integration_aggregate.rb
 test/test_integration_open_close.rb
 test/test_integration_pending.rb
 test/test_integration_resultset.rb

@@ -13,20 +13,13 @@ static void deallocate(void * ctx)
   sqlite3 * db     = c->db;
 
   if(db) sqlite3_close(db);
-  rb_sqlite3_aggregator_destroy_all(ctx);
   xfree(c);
-}
-
-static void rb_sqlite3_mark(sqlite3RubyPtr ctx)
-{
-  rb_sqlite3_aggregator_mark(ctx);
 }
 
 static VALUE allocate(VALUE klass)
 {
   sqlite3RubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3Ruby));
-  rb_sqlite3_list_head_init(&ctx->aggregators);
-  return Data_Wrap_Struct(klass, rb_sqlite3_mark, deallocate, ctx);
+  return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
 }
 
 static char *
@@ -81,7 +74,7 @@ static VALUE sqlite3_rb_close(VALUE self)
 
   ctx->db = NULL;
 
-  rb_sqlite3_aggregator_destroy_all(ctx);
+  rb_iv_set(self, "-aggregators", Qnil);
 
   return self;
 }
@@ -825,4 +818,6 @@ void init_sqlite3_database()
 #endif
 
   rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
+
+  rb_sqlite3_aggregator_init();
 }

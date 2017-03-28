@@ -2,11 +2,9 @@
 #define SQLITE3_DATABASE_RUBY
 
 #include <sqlite3_ruby.h>
-#include <list.h>
 
 struct _sqlite3Ruby {
   sqlite3 *db;
-  rb_sqlite3_list_head_t aggregators;
 };
 
 typedef struct _sqlite3Ruby sqlite3Ruby;
