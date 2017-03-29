@@ -276,6 +276,7 @@ rb_sqlite3_aggregator_init(void)
 {
   rb_gc_register_address(&cAggregatorWrapper);
   rb_gc_register_address(&cAggregatorInstance);
-  cAggregatorWrapper = rb_class_new(rb_cObject);
-  cAggregatorInstance = rb_class_new(rb_cObject);
+  /* rb_class_new generatos class with undefined allocator in ruby 1.9 */
+  cAggregatorWrapper = rb_funcall(rb_cClass, rb_intern("new"), 0);
+  cAggregatorInstance = rb_funcall(rb_cClass, rb_intern("new"), 0);
 }
