@@ -23,6 +23,7 @@ HOE = Hoe.spec 'sqlite3' do
   require_rubygems_version ">= 1.3.5"
 
   spec_extras[:extensions] = ["ext/sqlite3/extconf.rb"]
+  spec_extras[:metadata] = {'msys2_mingw_dependencies' => 'sqlite3'}
 
   extra_dev_deps << ['rake-compiler', "~> 1.0"]
   extra_dev_deps << ['rake-compiler-dock', "~> 0.6.0"]
