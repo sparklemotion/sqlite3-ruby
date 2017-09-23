@@ -344,7 +344,7 @@ static VALUE define_function_with_flags(VALUE self, VALUE name, VALUE flags)
  */
 static VALUE define_function(VALUE self, VALUE name)
 {
-  return define_function_with_flags(self, name, SQLITE_UTF8);
+  return define_function_with_flags(self, name, INT2FIX(SQLITE_UTF8));
 }
 
 static int sqlite3_obj_method_arity(VALUE obj, ID id)
