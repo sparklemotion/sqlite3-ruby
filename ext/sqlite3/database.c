@@ -1,4 +1,5 @@
 #include <sqlite3_ruby.h>
+#include <aggregator.h>
 
 #define REQUIRE_OPEN_DB(_ctxt) \
   if(!_ctxt->db) \
@@ -72,6 +73,8 @@ static VALUE sqlite3_rb_close(VALUE self)
   CHECK(db, sqlite3_close(ctx->db));
 
   ctx->db = NULL;
+
+  rb_iv_set(self, "-aggregators", Qnil);
 
   return self;
 }
@@ -200,7 +203,7 @@ static VALUE last_insert_row_id(VALUE self)
   return LL2NUM(sqlite3_last_insert_rowid(ctx->db));
 }
 
-static VALUE sqlite3val2rb(sqlite3_value * val)
+VALUE sqlite3val2rb(sqlite3_value * val)
 {
   switch(sqlite3_value_type(val)) {
     case SQLITE_INTEGER:
@@ -230,7 +233,7 @@ static VALUE sqlite3val2rb(sqlite3_value * val)
   }
 }
 
-static void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
+void set_sqlite3_func_result(sqlite3_context * ctx, VALUE result)
 {
   switch(TYPE(result)) {
     case T_NIL:
@@ -345,72 +348,6 @@ static VALUE define_function_with_flags(VALUE self, VALUE name, VALUE flags)
 static VALUE define_function(VALUE self, VALUE name)
 {
   return define_function_with_flags(self, name, INT2FIX(SQLITE_UTF8));
-}
-
-static int sqlite3_obj_method_arity(VALUE obj, ID id)
-{
-  VALUE method = rb_funcall(obj, rb_intern("method"), 1, ID2SYM(id));
-  VALUE arity  = rb_funcall(method, rb_intern("arity"), 0);
-
-  return (int)NUM2INT(arity);
-}
-
-static void rb_sqlite3_step(sqlite3_context * ctx, int argc, sqlite3_value **argv)
-{
-  VALUE callable = (VALUE)sqlite3_user_data(ctx);
-  VALUE * params = NULL;
-  int i;
-
-  if (argc > 0) {
-    params = xcalloc((size_t)argc, sizeof(VALUE *));
-    for(i = 0; i < argc; i++) {
-      params[i] = sqlite3val2rb(argv[i]);
-    }
-  }
-  rb_funcall2(callable, rb_intern("step"), argc, params);
-  xfree(params);
-}
-
-static void rb_sqlite3_final(sqlite3_context * ctx)
-{
-  VALUE callable = (VALUE)sqlite3_user_data(ctx);
-  VALUE result = rb_funcall(callable, rb_intern("finalize"), 0);
-  set_sqlite3_func_result(ctx, result);
-}
-
-/* call-seq: define_aggregator(name, aggregator)
- *
- * Define an aggregate function named +name+ using the object +aggregator+.
- * +aggregator+ must respond to +step+ and +finalize+.  +step+ will be called
- * with row information and +finalize+ must return the return value for the
- * aggregator function.
- */
-static VALUE define_aggregator(VALUE self, VALUE name, VALUE aggregator)
-{
-  sqlite3RubyPtr ctx;
-  int arity, status;
-
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
-  REQUIRE_OPEN_DB(ctx);
-
-  arity = sqlite3_obj_method_arity(aggregator, rb_intern("step"));
-
-  status = sqlite3_create_function(
-    ctx->db,
-    StringValuePtr(name),
-    arity,
-    SQLITE_UTF8,
-    (void *)aggregator,
-    NULL,
-    rb_sqlite3_step,
-    rb_sqlite3_final
-  );
-
-  rb_iv_set(self, "@agregator", aggregator);
-
-  CHECK(ctx->db, status);
-
-  return self;
 }
 
 /* call-seq: interrupt
@@ -856,7 +793,9 @@ void init_sqlite3_database()
   rb_define_method(cSqlite3Database, "last_insert_row_id", last_insert_row_id, 0);
   rb_define_method(cSqlite3Database, "define_function", define_function, 1);
   rb_define_method(cSqlite3Database, "define_function_with_flags", define_function_with_flags, 2);
-  rb_define_method(cSqlite3Database, "define_aggregator", define_aggregator, 2);
+  /* public "define_aggregator" is now a shim around define_aggregator2
+   * implemented in Ruby */
+  rb_define_private_method(cSqlite3Database, "define_aggregator2", rb_sqlite3_define_aggregator2, 1);
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
   rb_define_method(cSqlite3Database, "errcode", errcode_, 0);
@@ -879,4 +818,6 @@ void init_sqlite3_database()
 #endif
 
   rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
+
+  rb_sqlite3_aggregator_init();
 }

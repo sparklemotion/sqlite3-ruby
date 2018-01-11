@@ -125,6 +125,15 @@ static VALUE step(VALUE self)
   stmt = ctx->st;
 
   value = sqlite3_step(stmt);
+  if (rb_errinfo() != Qnil) {
+    /* some user defined function was invoked as a callback during step and
+     * it raised an exception that has been suppressed until step returns.
+     * Now re-raise it. */
+    VALUE exception = rb_errinfo();
+    rb_set_errinfo(Qnil);
+    rb_exc_raise(exception);
+  }
+
   length = sqlite3_column_count(stmt);
   list = rb_ary_new2((long)length);
 
