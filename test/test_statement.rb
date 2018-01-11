@@ -119,7 +119,15 @@ module SQLite3
       assert_equal [nil], result
     end
 
-    def test_bind_blobs
+    def test_bind_blob
+      @db.execute('create table foo(text BLOB)')
+      stmt = SQLite3::Statement.new(@db, 'insert into foo(text) values (?)')
+      stmt.bind_param(1, SQLite3::Blob.new('hello'))
+      stmt.execute
+      row = @db.execute('select * from foo')
+
+      assert_equal ['hello'], row.first
+      assert_equal row.first.types, ['BLOB']
     end
 
     def test_bind_64
