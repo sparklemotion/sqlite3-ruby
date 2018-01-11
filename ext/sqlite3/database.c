@@ -406,7 +406,7 @@ static VALUE define_aggregator(VALUE self, VALUE name, VALUE aggregator)
     rb_sqlite3_final
   );
 
-  rb_iv_set(self, "@agregator", aggregator);
+  rb_iv_set(self, "@aggregator", aggregator);
 
   CHECK(ctx->db, status);
 
