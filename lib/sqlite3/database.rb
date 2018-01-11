@@ -485,7 +485,7 @@ Support for this will be removed in version 2.0.0.
           @ctx.result
         end
       end
-      define_aggregator2(proxy)
+      define_aggregator2(proxy, name)
     end
 
     # This is another approach to creating an aggregate function (see
@@ -558,7 +558,7 @@ Support for this will be removed in version 2.0.0.
           @fp.result
         end
       end
-      define_aggregator2(proxy)
+      define_aggregator2(proxy, proxy.name)
       self
     end
 
@@ -604,7 +604,7 @@ Support for this will be removed in version 2.0.0.
           @klass.finalize
         end
       end
-      define_aggregator2(proxy)
+      define_aggregator2(proxy, name)
       self
     end
 
