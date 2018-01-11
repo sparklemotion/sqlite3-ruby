@@ -208,7 +208,6 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
   /* define_aggregator is added as a method to SQLite3::Database in database.c */
   sqlite3RubyPtr ctx;
   int arity, status;
-  const char *name;
   VALUE aw;
   VALUE aggregators;
 
@@ -238,15 +237,13 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
   }
   aggregators = rb_iv_get(self, "-aggregators");
 
-  name = StringValueCStr(ruby_name);
-
   aw = rb_class_new_instance(0, NULL, cAggregatorWrapper);
   rb_iv_set(aw, "-handler_klass", aggregator);
   rb_iv_set(aw, "-instances", rb_ary_new());
 
   status = sqlite3_create_function(
     ctx->db,
-    name,
+    StringValueCStr(ruby_name),
     arity,
     SQLITE_UTF8,
     (void*)aw,
