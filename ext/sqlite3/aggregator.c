@@ -128,7 +128,7 @@ rb_sqlite3_aggregator_step(sqlite3_context * ctx, int argc, sqlite3_value **argv
   }
 
   if (argc == 1) {
-    one_param = sqlite3val2rb(argv[i]);
+    one_param = sqlite3val2rb(argv[0]);
     params = &one_param;
   }
   if (argc > 1) {
