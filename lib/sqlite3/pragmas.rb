@@ -19,19 +19,19 @@ module SQLite3
     # integer that represents truth.
     def set_boolean_pragma( name, mode )
       case mode
-        when String
+      when String
           case mode.downcase
-            when "on", "yes", "true", "y", "t"; mode = "'ON'"
-            when "off", "no", "false", "n", "f"; mode = "'OFF'"
-            else
+          when "on", "yes", "true", "y", "t"; mode = "'ON'"
+          when "off", "no", "false", "n", "f"; mode = "'OFF'"
+          else
               raise Exception,
                 "unrecognized pragma parameter #{mode.inspect}"
           end
-        when true, 1
+      when true, 1
           mode = "ON"
-        when false, 0, nil
+      when false, 0, nil
           mode = "OFF"
-        else
+      else
           raise Exception,
             "unrecognized pragma parameter #{mode.inspect}"
       end
