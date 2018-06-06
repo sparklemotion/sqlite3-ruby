@@ -21,6 +21,8 @@ if RbConfig::CONFIG["host_os"] =~ /darwin/
       pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
     end
 
+    # SQLITE_HAS_CODEC
+
     # pkg_config should be less error prone than parsing compiler
     # commandline options, but we need to set default ldflags and cpp flags
     # in case the user doesn't have pkg-config installed
@@ -38,6 +40,7 @@ end
 # --with-sqlite3-{dir,include,lib}
 if with_config('sqlcipher')
   dir_config("sqlcipher", cppflags, ldflags)
+  $CFLAGS << ' -DSQLITE_HAS_CODEC -DSQLITE_TEMP_STORE=2'
 else
   dir_config("sqlite3", cppflags, ldflags)
 end
