@@ -65,10 +65,12 @@ static VALUE libversion(VALUE UNUSED(klass))
   return INT2NUM(sqlite3_libversion_number());
 }
 
+#ifdef CIPHER_VERSION
 static VALUE cipherversion(VALUE UNUSED(klass))
 {
   return rb_str_new2(codec_get_cipher_version());
 }
+#endif
 
 /* Returns the compile time setting of the SQLITE_THREADSAFE flag.
  * See: https://www.sqlite.org/c3ref/threadsafe.html
@@ -149,7 +151,9 @@ void Init_sqlite3_native()
 #ifdef HAVE_SQLITE3_BACKUP_INIT
   init_sqlite3_backup();
 #endif
+#ifdef CIPHER_VERSION
   rb_define_singleton_method(mSqlite3, "cipherversion", cipherversion, 0);
+#endif
   rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
   rb_define_singleton_method(mSqlite3, "threadsafe", threadsafe_p, 0);
   rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
