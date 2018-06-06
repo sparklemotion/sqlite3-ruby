@@ -39,8 +39,8 @@ end
 
 # --with-sqlite3-{dir,include,lib}
 if with_config('sqlcipher')
+  $CFLAGS << ' -DUSING_SQLCIPHER'
   dir_config("sqlcipher", cppflags, ldflags)
-  $CFLAGS << ' -DSQLITE_HAS_CODEC -DSQLITE_TEMP_STORE=2'
 else
   dir_config("sqlite3", cppflags, ldflags)
 end
@@ -67,7 +67,7 @@ asplode('sqlite3.h')  unless find_header  'sqlite3.h'
 find_library 'pthread', 'pthread_create' # 1.8 support. *shrug*
 
 if with_config('sqlcipher')
-  asplode('sqlcipher') unless find_library 'sqlcipher', 'codec_get_cipher_version'
+  asplode('sqlcipher') unless find_library 'sqlcipher', 'sqlite3_libversion_number'
 else
   asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
 end
