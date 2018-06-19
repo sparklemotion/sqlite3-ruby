@@ -13,3 +13,13 @@ ports
 InstalledFiles
 Makefile
 Gemfile.lock
+
+# windows folders & files
+*.gem
+./Rakefile_wintest
+lib/fastfilereaderext.rb
+lib/rubyeventmachine.rb
+win_gem_test/shared/local_paths.ps1
+win_gem_test/shared/local_paths.ps1.sample
+win_gem_test/packages/
+win_gem_test/test_logs/
