@@ -6,15 +6,20 @@ require 'mkmf'
 
 RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 
-
-
 ldflags = cppflags = nil
 if RbConfig::CONFIG["host_os"] =~ /darwin/
   begin
-    brew_prefix = `brew --prefix sqlite3`.chomp
-    ldflags   = "#{brew_prefix}/lib"
-    cppflags  = "#{brew_prefix}/include"
-    pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
+    if with_config('sqlcipher')
+      brew_prefix = `brew --prefix sqlcipher`.chomp
+      ldflags   = "#{brew_prefix}/lib"
+      cppflags  = "#{brew_prefix}/include/sqlcipher"
+      pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
+    else
+      brew_prefix = `brew --prefix sqlite3`.chomp
+      ldflags   = "#{brew_prefix}/lib"
+      cppflags  = "#{brew_prefix}/include"
+      pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
+    end
 
     # pkg_config should be less error prone than parsing compiler
     # commandline options, but we need to set default ldflags and cpp flags
@@ -24,10 +29,19 @@ if RbConfig::CONFIG["host_os"] =~ /darwin/
   end
 end
 
-pkg_config("sqlite3")
+if with_config('sqlcipher')
+  pkg_config("sqlcipher")
+else
+  pkg_config("sqlite3")
+end
 
 # --with-sqlite3-{dir,include,lib}
-dir_config("sqlite3", cppflags, ldflags)
+if with_config('sqlcipher')
+  $CFLAGS << ' -DUSING_SQLCIPHER'
+  dir_config("sqlcipher", cppflags, ldflags)
+else
+  dir_config("sqlite3", cppflags, ldflags)
+end
 
 if RbConfig::CONFIG["host_os"] =~ /mswin/
   $CFLAGS << ' -W3'
@@ -49,7 +63,12 @@ end
 
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'
 find_library 'pthread', 'pthread_create' # 1.8 support. *shrug*
-asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
+
+if with_config('sqlcipher')
+  asplode('sqlcipher') unless find_library 'sqlcipher', 'sqlite3_libversion_number'
+else
+  asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
+end
 
 # Functions defined in 1.9 but not 1.8
 have_func('rb_proc_arity')
