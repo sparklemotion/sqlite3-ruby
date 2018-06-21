@@ -64,6 +64,12 @@ end
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'
 find_library 'pthread', 'pthread_create' # 1.8 support. *shrug*
 
+have_library 'dl'
+
+%w{ dlopen dlclose dlsym }.each do |func|
+  abort "missing function #{func}" unless have_func(func)
+end
+
 if with_config('sqlcipher')
   asplode('sqlcipher') unless find_library 'sqlcipher', 'sqlite3_libversion_number'
 else

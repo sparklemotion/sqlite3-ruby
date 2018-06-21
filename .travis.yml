@@ -9,6 +9,12 @@ addons:
     packages:
       - libgmp-dev
 
+after_failure:
+  - "find . -name mkmf.log -exec cat {} \\;"
+
+after_success:
+  - "find . -name mkmf.log -exec cat {} \\;"
+
 env:
   - USE_MINI_PORTILE=true
   - USE_MINI_PORTILE=false
