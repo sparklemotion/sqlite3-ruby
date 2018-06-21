@@ -1,36 +1,20 @@
 ---
-version: "{build}"
-branches:
-  only:
-    - master
-    - 1-3-stable
-clone_depth: 10
 install:
-  - SET PATH=C:\Ruby%ruby_version%\bin;%PATH%
-  - ruby --version
-  - gem --version
-  - gem install bundler --quiet --no-ri --no-rdoc
-  - bundler --version
-  - bundle install
+  - ps: >-
+      if ( !(Test-Path -Path ./shared -PathType Container) ) {
+        $uri = 'https://ci.appveyor.com/api/projects/MSP-Greg/av-gem-build-test/artifacts/shared.7z'
+        $7z  = 'C:\Program Files\7-Zip\7z.exe'
+        $fn = "$env:TEMP\shared.7z"
+        (New-Object System.Net.WebClient).DownloadFile($uri, $fn)
+        &$7z x $fn -owin_gem_test 1> $null
+        Remove-Item  -LiteralPath $fn -Force
+        Write-Host "Downloaded shared files" -ForegroundColor Yellow 
+      }
+
 build_script:
-  - rake native gem
-test_script:
-  - rake test
-artifacts:
-  - path: pkg\*.gem
+  - ps: .\win_gem_test\sqlite3-ruby.ps1 $env:gem_bits
 
 environment:
   matrix:
-    - ruby_version: "193"
-    - ruby_version: "200"
-    - ruby_version: "200-x64"
-    - ruby_version: "21"
-    - ruby_version: "21-x64"
-    - ruby_version: "22"
-    - ruby_version: "22-x64"
-    - ruby_version: "23"
-    - ruby_version: "23-x64"
-    - ruby_version: "24"
-    - ruby_version: "24-x64"
-    - ruby_version: "25"
-    - ruby_version: "25-x64"
+    - gem_bits: 64
+    - gem_bits: 32

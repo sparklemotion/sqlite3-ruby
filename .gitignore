@@ -13,3 +13,9 @@ ports
 InstalledFiles
 Makefile
 Gemfile.lock
+
+# windows local build artifacts
+win_gem_test/shared/
+win_gem_test/test_logs/
+/Rakefile_wintest
+*.gem
