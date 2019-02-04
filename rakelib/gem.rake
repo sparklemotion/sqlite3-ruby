@@ -13,7 +13,7 @@ HOE = Hoe.spec 'sqlite3' do
   developer           'Luis Lavena', 'luislavena@gmail.com'
   developer           'Aaron Patterson', 'aaron@tenderlovemaking.com'
 
-  license             "BSD-3"
+  license             "BSD-3-Clause"
 
   self.readme_file   = 'README.rdoc'
   self.history_file  = 'CHANGELOG.rdoc'
