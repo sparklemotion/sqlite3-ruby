@@ -16,8 +16,8 @@ Make-Const url_repo  'https://github.com/sparklemotion/sqlite3-ruby.git'
 Make-Const ruby_vers_low 20
 
 #———————————————————————————————————————————————————————————————— SQLite package info
-$sql_vers = '3240000'
-$sql_year = '2018'
+$sql_vers = '3270100'
+$sql_year = '2019'
 
 $sql_url  = 'https://sqlite.org'
 $sql_pre  = 'sqlite-autoconf-'
