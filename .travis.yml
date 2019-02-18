@@ -1,9 +1,16 @@
 sudo: false
 language: ruby
 cache: bundler
+
 before_install:
-  - gem update --system
-  - gem install bundler
+  # rubygems 2.7.8 and greater include bundler, also with Ruby 2.6
+  - |
+    rv="$(ruby -e 'STDOUT.write RUBY_VERSION')";
+    if   [ "$rv" \< "2.3" ]; then gem update --system 2.7.8 --no-document
+    elif [ "$rv" \< "2.6" ]; then gem update --system --no-document --conservative
+    fi
+  # - gem install bundler
+
 addons:
   apt:
     packages:
