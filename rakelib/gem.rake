@@ -19,7 +19,7 @@ HOE = Hoe.spec 'sqlite3' do
   self.history_file  = 'CHANGELOG.rdoc'
   self.extra_rdoc_files  = FileList['*.rdoc', 'ext/**/*.c']
 
-  require_ruby_version ">= 1.8.7"
+  require_ruby_version ">= 1.9.2"
   require_rubygems_version ">= 1.3.5"
 
   spec_extras[:extensions] = ["ext/sqlite3/extconf.rb"]
