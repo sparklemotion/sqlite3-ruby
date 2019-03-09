@@ -6,7 +6,7 @@ before_install:
   # rubygems 2.7.8 and greater include bundler, also with Ruby 2.6
   - |
     rv="$(ruby -e 'STDOUT.write RUBY_VERSION')";
-    if   [ "$rv" \< "2.3" ]; then gem update --system 2.7.8 --no-document
+    if   [ "$rv" \< "2.3" ]; then gem update --system 2.7.9 --no-document
     elif [ "$rv" \< "2.6" ]; then gem update --system --no-document --conservative
     fi
   # - gem install bundler
