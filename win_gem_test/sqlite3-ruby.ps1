@@ -43,7 +43,7 @@ function Pre-Compile {
   # For 32 bit, needed to separately compile for versions <= 2.3 (DevKit), and
   # > 2.3 (RI2 / MSYS2).
 
-  $new_path = "$dir_gem\tmp\$r_arch\ports"
+  $new_path = "$dir_gem\tmp\ports"
   
   # only compile first RI2 if 64 bit
   if ( (!$is64 -And $ruby -eq '23') -Or $ruby -eq $rubies[0] ){
@@ -69,10 +69,10 @@ function Pre-Compile {
 
     Push-Location $new_path
     if ($is64) {
-      bash Configure CFLAGS="-O2 -DSQLITE_ENABLE_COLUMN_METADATA -fPIC" --disable-shared
+      bash Configure CFLAGS="-O2 -DSQLITE_ENABLE_COLUMN_METADATA -fPIC" LDFLAGS="-static-libgcc" --disable-shared
       make -j2
     } else {
-      bash Configure CFLAGS="-O2 -DSQLITE_ENABLE_COLUMN_METADATA" --disable-shared
+      bash Configure CFLAGS="-O2 -DSQLITE_ENABLE_COLUMN_METADATA" LDFLAGS="-static-libgcc" --disable-shared
       make
     }
     Pop-Location
