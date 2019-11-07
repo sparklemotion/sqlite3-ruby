@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version = "1.3.13.20180326210955"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.5".freeze) if s.respond_to? :required_rubygems_version=
-  s.metadata = { "msys2_mingw_dependencies" => "sqlite3" } if s.respond_to? :metadata=
+  s.metadata = { "msys2_mingw_dependencies" => "sqlite3 dlfcn" } if s.respond_to? :metadata=
   s.require_paths = ["lib".freeze]
   s.authors = ["Jamis Buck".freeze, "Luis Lavena".freeze, "Aaron Patterson".freeze]
   s.date = "2018-03-26"
