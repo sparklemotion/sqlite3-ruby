@@ -213,16 +213,16 @@ VALUE sqlite3val2rb(sqlite3_value * val)
       return rb_float_new(sqlite3_value_double(val));
       break;
     case SQLITE_TEXT:
-      return rb_tainted_str_new2((const char *)sqlite3_value_text(val));
+      return rb_str_new2((const char *)sqlite3_value_text(val));
       break;
     case SQLITE_BLOB: {
       /* Sqlite warns calling sqlite3_value_bytes may invalidate pointer from sqlite3_value_blob,
          so we explicitly get the length before getting blob pointer.
-         Note that rb_str_new and rb_tainted_str_new apparently create string with ASCII-8BIT (BINARY) encoding,
+         Note that rb_str_new apparently create string with ASCII-8BIT (BINARY) encoding,
          which is what we want, as blobs are binary
        */
       int len = sqlite3_value_bytes(val);
-      return rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
+      return rb_str_new((const char *)sqlite3_value_blob(val), len);
       break;
     }
     case SQLITE_NULL:

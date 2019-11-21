@@ -105,23 +105,6 @@ class TC_ResultSet < SQLite3::TestCase
     assert_equal hash[1], "foo"
   end
 
-  def test_tainted_results_as_hash
-    @db.results_as_hash = true
-    @result.reset( 1 )
-    row = @result.next
-    row.each do |_, v|
-      assert(v.tainted?) if String === v
-    end
-  end
-
-  def test_tainted_row_values
-    @result.reset( 1 )
-    row = @result.next
-    row.each do |v|
-      assert(v.tainted?) if String === v
-    end
-  end
-
   def test_each
     called = 0
     @result.reset( 1, 2 )
