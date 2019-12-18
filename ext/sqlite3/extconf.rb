@@ -47,6 +47,10 @@ if RbConfig::CONFIG["host_os"] =~ /mswin/
   $CFLAGS << ' -W3'
 end
 
+if RUBY_VERSION < '2.7'
+  $CFLAGS << ' -DTAINTING_SUPPORT'
+end
+
 def asplode missing
   if RUBY_PLATFORM =~ /mingw|mswin/
     abort "#{missing} is missing. Install SQLite3 from " +
