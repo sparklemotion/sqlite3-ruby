@@ -1,3 +1,15 @@
+=== 1.4.2
+
+* Travis: Drop unused setting "sudo: false"
+* The taint mechanism will be deprecated in Ruby 2.7
+* Fix Ruby 2.7 rb_check_safe_obj warnings
+* Update travis config
+
+=== 1.4.1
+
+* Don't mandate dl functions for the extention build
+* bumping version
+
 === 1.4.0
 
 * Enhancements
