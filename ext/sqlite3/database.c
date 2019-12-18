@@ -40,11 +40,13 @@ static VALUE rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
+#if defined TAINTING_SUPPORT
 #if defined StringValueCStr
   StringValuePtr(file);
   rb_check_safe_obj(file);
 #else
   Check_SafeStr(file);
+#endif
 #endif
 
       status = sqlite3_open_v2(
@@ -761,11 +763,13 @@ static VALUE rb_sqlite3_open16(VALUE self, VALUE file)
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
+#if defined TAINTING_SUPPORT
 #if defined StringValueCStr
   StringValuePtr(file);
   rb_check_safe_obj(file);
 #else
   Check_SafeStr(file);
+#endif
 #endif
 
   status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
