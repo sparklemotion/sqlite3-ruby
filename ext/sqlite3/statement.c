@@ -151,7 +151,7 @@ static VALUE step(VALUE self)
               break;
             case SQLITE_TEXT:
               {
-                VALUE str = rb_tainted_str_new(
+                VALUE str = rb_str_new(
                     (const char *)sqlite3_column_text(stmt, i),
                     (long)sqlite3_column_bytes(stmt, i)
                 );
@@ -163,7 +163,7 @@ static VALUE step(VALUE self)
               break;
             case SQLITE_BLOB:
               {
-                VALUE str = rb_tainted_str_new(
+                VALUE str = rb_str_new(
                     (const char *)sqlite3_column_blob(stmt, i),
                     (long)sqlite3_column_bytes(stmt, i)
                 );

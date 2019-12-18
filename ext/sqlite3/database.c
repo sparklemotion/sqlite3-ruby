@@ -40,11 +40,13 @@ static VALUE rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
+#if defined TAINTING_SUPPORT
 #if defined StringValueCStr
   StringValuePtr(file);
   rb_check_safe_obj(file);
 #else
   Check_SafeStr(file);
+#endif
 #endif
 
       status = sqlite3_open_v2(
@@ -213,16 +215,16 @@ VALUE sqlite3val2rb(sqlite3_value * val)
       return rb_float_new(sqlite3_value_double(val));
       break;
     case SQLITE_TEXT:
-      return rb_tainted_str_new2((const char *)sqlite3_value_text(val));
+      return rb_str_new2((const char *)sqlite3_value_text(val));
       break;
     case SQLITE_BLOB: {
       /* Sqlite warns calling sqlite3_value_bytes may invalidate pointer from sqlite3_value_blob,
          so we explicitly get the length before getting blob pointer.
-         Note that rb_str_new and rb_tainted_str_new apparently create string with ASCII-8BIT (BINARY) encoding,
+         Note that rb_str_new apparently create string with ASCII-8BIT (BINARY) encoding,
          which is what we want, as blobs are binary
        */
       int len = sqlite3_value_bytes(val);
-      return rb_tainted_str_new((const char *)sqlite3_value_blob(val), len);
+      return rb_str_new((const char *)sqlite3_value_blob(val), len);
       break;
     }
     case SQLITE_NULL:
@@ -761,11 +763,13 @@ static VALUE rb_sqlite3_open16(VALUE self, VALUE file)
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
+#if defined TAINTING_SUPPORT
 #if defined StringValueCStr
   StringValuePtr(file);
   rb_check_safe_obj(file);
 #else
   Check_SafeStr(file);
+#endif
 #endif
 
   status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
