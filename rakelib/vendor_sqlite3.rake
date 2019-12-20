@@ -37,6 +37,17 @@ if RUBY_PLATFORM =~ /mingw/
   # also prepend DevKit into compilation phase
   Rake::Task["compile"].prerequisites.unshift "devkit", "ports:sqlite3:#{RUBY_PLATFORM}"
   Rake::Task["native"].prerequisites.unshift "devkit", "ports:sqlite3:#{RUBY_PLATFORM}"
+
+  namespace "compile" do
+    desc "Build using MSYS2 sqlite package"
+    task :msys2 do
+      RUBY_EXTENSION.config_options.pop
+      t = Rake::Task["compile"]
+      t.prerequisites.clear
+      t.prerequisites << "devkit" << "compile:#{RUBY_PLATFORM}"
+      t.invoke
+    end
+  end
 end
 
 # trick to test local compilation of sqlite3
