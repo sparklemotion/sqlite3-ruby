@@ -1,0 +1,27 @@
+name: windows
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: [ '9.9.x', '2.6.x', '2.5.x', '2.4.x' ]
+    steps:
+      - uses: actions/checkout@master
+      - name: Load Ruby, update gcc
+        uses: MSP-Greg/actions-ruby@master
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          base: update
+          mingw: sqlite3
+      - name: Install dependencies
+        run: |
+          gem update --system --no-document --conservative
+          bundle install --jobs 4 --retry 3
+      - name: compile
+        run:  rake compile:msys2
+      - name: test
+        run:  rake test

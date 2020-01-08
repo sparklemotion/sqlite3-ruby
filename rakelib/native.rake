@@ -51,6 +51,9 @@ RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
 end
 
 # ensure things are compiled prior testing
-task :test => [:compile]
-
+if RUBY_PLATFORM =~ /mingw/ then
+  task :test => ["compile:msys2"]
+else
+  task :test => [:compile]
+end
 # vim: syntax=ruby
