@@ -1,6 +1,13 @@
 require 'sqlite3'
 require 'minitest/autorun'
 
+if ENV['GITHUB_ACTIONS'] == 'true' || ENV['CI']
+  $VERBOSE = nil
+  puts "\nSQLite3 Version: #{SQLite3::SQLITE_VERSION}   $VERBOSE = nil", ""
+else
+  puts "\nSQLite3 Version: #{SQLite3::SQLITE_VERSION}", ""
+end
+
 unless RUBY_VERSION >= "1.9"
   require 'iconv'
 end
