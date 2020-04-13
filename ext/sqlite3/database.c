@@ -1,6 +1,11 @@
 #include <sqlite3_ruby.h>
 #include <aggregator.h>
 
+#if _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4028 )
+#endif
+
 #define REQUIRE_OPEN_DB(_ctxt) \
   if(!_ctxt->db) \
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
@@ -825,3 +830,7 @@ void init_sqlite3_database()
 
   rb_sqlite3_aggregator_init();
 }
+
+#if _MSC_VER
+#pragma warning( pop )
+#endif
