@@ -1,0 +1,54 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  CI:
+    timeout-minutes: 10
+    name: >-
+      CI ${{ matrix.os }} ${{ matrix.ruby }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos ]
+        ruby: [ head, 2.7, 2.6, 2.5, 2.4, 2.3, 2.2 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: load Ruby and dependencies
+        uses: MSP-Greg/setup-ruby-pkgs@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          apt-get: libsqlite3-dev
+
+      - name: install
+        run:  bundle install --jobs 4 --retry 3
+      - name: compile
+        run:  bundle exec rake compile
+      - name: test
+        run:  bundle exec rake test
+
+  Win:
+    timeout-minutes: 10
+    name: >-
+      CI ${{ matrix.os }} ${{ matrix.ruby }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows ]
+        ruby: [ mingw, 2.7, 2.6, 2.5, 2.4 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: load Ruby and sqlite3
+        uses: MSP-Greg/setup-ruby-pkgs@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          mingw: sqlite3
+
+      - name: install
+        run:  bundle install --jobs 4 --retry 3
+      - name: compile msys2
+        run:  bundle exec rake compile:msys2
+      - name: test
+        run:  bundle exec rake test
