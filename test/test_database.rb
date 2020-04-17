@@ -47,12 +47,12 @@ module SQLite3
 
 
     def test_filename_to_path
-      assert_equal '', @db.filename
-      pn = Pathname(Tempfile.new('thing').path)
-      @db = SQLite3::Database.new pn
-      assert_equal pn.expand_path.to_s, File.expand_path(@db.filename)
+      tf = Tempfile.new 'thing'
+      pn = Pathname tf.path
+      db = SQLite3::Database.new pn
+      assert_equal pn.expand_path.to_s, File.expand_path(db.filename)
     ensure
-      pn.unlink if pn.exist?
+      tf.close! if tf
     end
 
 
