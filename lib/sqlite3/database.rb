@@ -65,6 +65,7 @@ module SQLite3
     def initialize file, options = {}, zvfs = nil
       mode = Constants::Open::READWRITE | Constants::Open::CREATE
 
+      file = file.to_path if file.respond_to? :to_path
       if file.encoding == ::Encoding::UTF_16LE || file.encoding == ::Encoding::UTF_16BE || options[:utf16]
         open16 file
       else

@@ -45,6 +45,17 @@ module SQLite3
       tf.unlink if tf
     end
 
+
+    def test_filename_to_path
+      tf = Tempfile.new 'thing'
+      pn = Pathname tf.path
+      db = SQLite3::Database.new pn
+      assert_equal pn.expand_path.to_s, File.expand_path(db.filename)
+    ensure
+      tf.close! if tf
+    end
+
+
     def test_error_code
       begin
         db.execute 'SELECT'
