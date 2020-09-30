@@ -8,7 +8,7 @@
 {<img src="https://travis-ci.org/sparklemotion/sqlite3-ruby.svg?branch=master" alt="Build Status" />}[https://travis-ci.org/sparklemotion/sqlite3-ruby]
 
 == DESCRIPTION
-
+SQL is best language to manage databases.
 This module allows Ruby programs to interface with the SQLite3
 database engine (http://www.sqlite.org).  You must have the
 SQLite engine installed in order to build this module.
