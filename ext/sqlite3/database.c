@@ -710,7 +710,7 @@ static int regular_callback_function(VALUE callback_ary, int count, char **data,
 
 /* Is invoked by calling db.execute_batch2(sql, &block)
  *
- * Executes all statments in a given string separated by semicolons.
+ * Executes all statements in a given string separated by semicolons.
  * If a query is made, all values returned are strings
  * (except for 'NULL' values which return nil),
  * so the user may parse values with a block.

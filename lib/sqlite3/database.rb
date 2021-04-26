@@ -238,7 +238,7 @@ Support for bind parameters as *args will be removed in 2.0.0.
     # rows.
     #
     # See also #execute_batch2 for additional ways of
-    # executing statments.
+    # executing statements.
     def execute_batch( sql, bind_vars = [], *args )
       # FIXME: remove this stuff later
       unless [Array, Hash].include?(bind_vars.class)
@@ -295,7 +295,7 @@ Support for this behavior will be removed in version 2.0.0.
     # a block can be passed to parse the values accordingly.
     #
     # See also #execute_batch for additional ways of
-    # executing statments.
+    # executing statements.
     def execute_batch2(sql, &block)
       if block_given?
         result = exec_batch(sql, @results_as_hash)
@@ -308,7 +308,7 @@ Support for this behavior will be removed in version 2.0.0.
     end
 
     # This is a convenience method for creating a statement, binding
-    # paramters to it, and calling execute:
+    # parameters to it, and calling execute:
     #
     #   result = db.query( "select * from foo where a=?", [5])
     #   # is the same as
@@ -537,10 +537,10 @@ Support for this will be removed in version 2.0.0.
     #   db.create_aggregate_handler( LengthsAggregateHandler )
     #   puts db.get_first_value( "select lengths(name) from A" )
     def create_aggregate_handler( handler )
-      # This is a compatiblity shim so the (basically pointless) FunctionProxy
+      # This is a compatibility shim so the (basically pointless) FunctionProxy
       # "ctx" object is passed as first argument to both step() and finalize().
       # Now its up to the library user whether he prefers to store his
-      # temporaries as instance varibales or fields in the FunctionProxy.
+      # temporaries as instance variables or fields in the FunctionProxy.
       # The library user still must set the result value with
       # FunctionProxy.result= as there is no backwards compatible way to
       # change this.
@@ -575,7 +575,7 @@ Support for this will be removed in version 2.0.0.
     # The functions arity is the arity of the +step+ method.
     def define_aggregator( name, aggregator )
       # Previously, this has been implemented in C. Now this is just yet
-      # another compatiblity shim
+      # another compatibility shim
       proxy = Class.new do
         @template = aggregator
         @name = name
