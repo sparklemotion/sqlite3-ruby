@@ -128,7 +128,7 @@
     Where _n_ is an integer, and _word_ is an alpha-numeric identifier (or
     number). When the placeholder is associated with a number, that number
     identifies the index of the bind variable to replace it with. When it
-    is an identifier, it identifies the name of the correponding bind
+    is an identifier, it identifies the name of the corresponding bind
     variable. (In the instance of the first format--a single question
     mark--the placeholder is assigned a number one greater than the last
     index used, or 1 if it is the first.)

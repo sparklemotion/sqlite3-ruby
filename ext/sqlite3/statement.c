@@ -290,7 +290,7 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
 /* call-seq: stmt.reset!
  *
  * Resets the statement. This is typically done internally, though it might
- * occassionally be necessary to manually reset the statement.
+ * occasionally be necessary to manually reset the statement.
  */
 static VALUE reset_bang(VALUE self)
 {
@@ -309,7 +309,7 @@ static VALUE reset_bang(VALUE self)
 /* call-seq: stmt.clear_bindings!
  *
  * Resets the statement. This is typically done internally, though it might
- * occassionally be necessary to manually reset the statement.
+ * occasionally be necessary to manually reset the statement.
  */
 static VALUE clear_bindings_bang(VALUE self)
 {

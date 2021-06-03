@@ -37,7 +37,7 @@ module SQLite3 ; module Constants
     EMPTY      = 16   # (Internal Only) Database table is empty
     SCHEMA     = 17   # The database schema changed
     TOOBIG     = 18   # Too much data for one row of a table
-    CONSTRAINT = 19   # Abort due to contraint violation
+    CONSTRAINT = 19   # Abort due to constraint violation
     MISMATCH   = 20   # Data type mismatch
     MISUSE     = 21   # Library used incorrectly
     NOLFS      = 22   # Uses OS features not supported on host

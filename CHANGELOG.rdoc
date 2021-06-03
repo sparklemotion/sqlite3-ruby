@@ -134,7 +134,7 @@
     installed anymore
 
 * Bugfixes
-  * Backup API is conditionaly required so that older libsqlite3 can be used.
+  * Backup API is conditionally required so that older libsqlite3 can be used.
     Thanks Hongli Lai.
   * Fixed segmentation fault when nil is passed to SQLite3::Statement.new
   * Fix extconf's hardcoded path that affected installation on certain systems.

@@ -42,11 +42,11 @@ module SQLite3
     # Requests the given pragma (and parameters), and if the block is given,
     # each row of the result set will be yielded to it. Otherwise, the results
     # are returned as an array.
-    def get_query_pragma( name, *parms, &block ) # :yields: row
-      if parms.empty?
+    def get_query_pragma( name, *params, &block ) # :yields: row
+      if params.empty?
         execute( "PRAGMA #{name}", &block )
       else
-        args = "'" + parms.join("','") + "'"
+        args = "'" + params.join("','") + "'"
         execute( "PRAGMA #{name}( #{args} )", &block )
       end
     end

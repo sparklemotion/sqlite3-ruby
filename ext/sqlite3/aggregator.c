@@ -10,13 +10,13 @@
  *                 in-flight for this aggregator. */
 static VALUE cAggregatorWrapper;
 
-/* wraps a intance of the "handler" class. Loses its reference at the end of
+/* wraps a instance of the "handler" class. Loses its reference at the end of
  * the xFinal callback.
  *
- * An AggregatorInstance holds the following instnace variables:
+ * An AggregatorInstance holds the following instance variables:
  * -handler_instance: the instance to call `step` and `finalize` on.
  * -exc_status:       status returned by rb_protect.
- *                    != 0 if an exception occurred. If an exception occured
+ *                    != 0 if an exception occurred. If an exception occurred
  *                    `step` and `finalize` won't be called any more. */
 static VALUE cAggregatorInstance;
 
@@ -48,7 +48,7 @@ rb_sqlite3_protected_funcall(VALUE self, ID method, int argc, VALUE *params,
 }
 
 /* called in rb_sqlite3_aggregator_step and rb_sqlite3_aggregator_final. It
- * checks if the exection context already has an associated instance. If it
+ * checks if the execution context already has an associated instance. If it
  * has one, it returns it. If there is no instance yet, it creates one and
  * associates it with the context. */
 static VALUE
@@ -165,8 +165,8 @@ rb_sqlite3_aggregator_final(sqlite3_context * ctx)
   if (exc_status) {
     /* the user should never see this, as Statement.step() will pick up the
      * outstanding exception and raise it instead of generating a new one
-     * for SQLITE_ERROR with message "Ruby Exception occured" */
-    sqlite3_result_error(ctx, "Ruby Exception occured", -1);
+     * for SQLITE_ERROR with message "Ruby Exception occurred" */
+    sqlite3_result_error(ctx, "Ruby Exception occurred", -1);
   }
 
   rb_sqlite3_aggregate_instance_destroy(ctx);

@@ -43,7 +43,7 @@ Built in translators are deprecated and will be removed in version 2.0.0
     end
 
     # Translate the given string value to a value of the given type. In the
-    # absense of an installed translator block for the given type, the value
+    # absence of an installed translator block for the given type, the value
     # itself is always returned. Further, +nil+ values are never translated,
     # and are always passed straight through regardless of the type parameter.
     def translate( type, value )
