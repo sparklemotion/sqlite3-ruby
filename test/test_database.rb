@@ -284,7 +284,7 @@ module SQLite3
         "name"       => "a",
         "pk"         => 1,
         "notnull"    => 0,
-        "type"       => "integer",
+        "type"       => "INTEGER",
         "dflt_value" => nil,
         "cid"        => 0
       },
@@ -292,7 +292,7 @@ module SQLite3
         "name"       => "b",
         "pk"         => 0,
         "notnull"    => 0,
-        "type"       => "text",
+        "type"       => "TEXT",
         "dflt_value" => nil,
         "cid"        => 1
       }]

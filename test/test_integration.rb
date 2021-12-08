@@ -36,9 +36,9 @@ class TC_Database_Integration < SQLite3::TestCase
     @db.transaction do
       @db.execute "create table no_defaults_test ( a integer default 1, b integer )"
       data = @db.table_info( "no_defaults_test" )
-      assert_equal({"name" => "a", "type" => "integer", "dflt_value" => "1", "notnull" => 0, "cid" => 0, "pk" => 0},
+      assert_equal({"name" => "a", "type" => "INTEGER", "dflt_value" => "1", "notnull" => 0, "cid" => 0, "pk" => 0},
         data[0])
-      assert_equal({"name" => "b", "type" => "integer", "dflt_value" => nil, "notnull" => 0, "cid" => 1, "pk" => 0},
+      assert_equal({"name" => "b", "type" => "INTEGER", "dflt_value" => nil, "notnull" => 0, "cid" => 1, "pk" => 0},
         data[1])
     end
   end
