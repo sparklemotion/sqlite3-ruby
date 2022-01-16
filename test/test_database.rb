@@ -281,20 +281,20 @@ module SQLite3
       db = SQLite3::Database.new(':memory:', :results_as_hash => true)
       db.execute("create table foo ( a integer primary key, b text )")
       info = [{
+        "cid"        => 0,
         "name"       => "a",
-        "pk"         => 1,
+        "type"       => "INTEGER",
         "notnull"    => 0,
-        "type"       => "integer",
         "dflt_value" => nil,
-        "cid"        => 0
+        "pk"         => 1
       },
       {
+        "cid"        => 1,
         "name"       => "b",
-        "pk"         => 0,
+        "type"       => "TEXT",
         "notnull"    => 0,
-        "type"       => "text",
         "dflt_value" => nil,
-        "cid"        => 1
+        "pk"         => 0
       }]
       assert_equal info, db.table_info('foo')
     end
