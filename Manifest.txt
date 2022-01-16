@@ -1,5 +1,4 @@
 .gemtest
-.travis.yml
 API_CHANGES.rdoc
 CHANGELOG.rdoc
 ChangeLog.cvs
