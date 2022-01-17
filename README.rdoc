@@ -5,7 +5,7 @@
 * http://rubygems.org/gems/sqlite3
 * http://www.rubydoc.info/gems/sqlite3/frames
 
-{<img src="https://travis-ci.org/sparklemotion/sqlite3-ruby.svg?branch=master" alt="Build Status" />}[https://travis-ci.org/sparklemotion/sqlite3-ruby]
+{<img src="https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/sqlite3-ruby.yml/badge.svg" alt="Build Status" />}[https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/sqlite3-ruby.yml]
 
 == DESCRIPTION
 
