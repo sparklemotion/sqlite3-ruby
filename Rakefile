@@ -17,7 +17,7 @@ Hoe.spec 'sqlite3-ruby' do
 
 #######################################################
 
-Hello! The sqlite3-ruby gem has changed it's name to just sqlite3.  Rather than
+Hello! The sqlite3-ruby gem has changed its name to just sqlite3.  Rather than
 installing `sqlite3-ruby`, you should install `sqlite3`.  Please update your
 dependencies accordingly.
 
