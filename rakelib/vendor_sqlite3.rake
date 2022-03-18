@@ -1,6 +1,6 @@
 require "rake/clean"
 require "rake/extensioncompiler"
-require "mini_portile"
+require "mini_portile2"
 
 CLOBBER.include("ports")
 
@@ -8,7 +8,7 @@ directory "ports"
 
 def define_sqlite_task(platform, host)
   recipe = MiniPortile.new "sqlite3", BINARY_VERSION
-  recipe.files << "http://sqlite.org#{URL_PATH}/sqlite-autoconf-#{URL_VERSION}.tar.gz"
+  recipe.files = ["http://sqlite.org#{URL_PATH}/sqlite-autoconf-#{URL_VERSION}.tar.gz"]
   recipe.host = host
 
   desc "Compile sqlite3 for #{platform} (#{host})"
