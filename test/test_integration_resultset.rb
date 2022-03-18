@@ -118,7 +118,7 @@ class TC_ResultSet < SQLite3::TestCase
   end
 
   def test_types
-    assert_equal [ "integer", "text" ], @result.types
+    assert_equal [ "integer", "text" ], @result.types.map { |t| t.downcase }
   end
 
   def test_columns

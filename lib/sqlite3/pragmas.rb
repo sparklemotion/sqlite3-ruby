@@ -543,6 +543,13 @@ module SQLite3
 
         tweak_default(new_row) if needs_tweak_default
 
+        # Ensure the type value is downcased.  On Mac and Windows
+        # platforms this value is now being returned as all upper
+        # case.
+        if new_row['type']
+          new_row['type'] = new_row['type'].downcase
+        end
+
         if block_given?
           yield new_row
         else
