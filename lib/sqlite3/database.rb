@@ -88,6 +88,10 @@ module SQLite3
         end
 
         open_v2 file.encode("utf-8"), mode, zvfs
+
+        if options[:strict]
+          disable_quirk_mode
+        end
       end
 
       @tracefunc        = nil
