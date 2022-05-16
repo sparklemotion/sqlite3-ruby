@@ -127,7 +127,7 @@ module SQLite3
       row = @db.execute('select * from foo')
 
       assert_equal ['hello'], row.first
-      assert_equal row.first.types, ['BLOB']
+      assert_equal ['blob'], row.first.types
     end
 
     def test_bind_64
