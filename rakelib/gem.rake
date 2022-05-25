@@ -25,10 +25,10 @@ HOE = Hoe.spec 'sqlite3' do
   spec_extras[:extensions] = ["ext/sqlite3/extconf.rb"]
   spec_extras[:metadata] = {'msys2_mingw_dependencies' => 'sqlite3'}
 
-  extra_dev_deps << ['rake-compiler', "~> 1.0"]
-  extra_dev_deps << ['rake-compiler-dock', "~> 0.6.0"]
-  extra_dev_deps << ["mini_portile2", "~> 2.0"]
-  extra_dev_deps << ["minitest", "~> 5.0"]
+  extra_dev_deps << ['rake-compiler', "~> 1.2.0"]
+  extra_dev_deps << ['rake-compiler-dock', "~> 1.2.1"]
+  extra_dev_deps << ["mini_portile2", "~> 2.8.0"]
+  extra_dev_deps << ["minitest", "~> 5.15"]
   extra_dev_deps << ["hoe-bundler", "~> 1.0"]
   extra_dev_deps << ["hoe-gemspec", "~> 1.0"]
 

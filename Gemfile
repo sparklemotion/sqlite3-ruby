@@ -5,16 +5,13 @@
 source "https://rubygems.org/"
 
 
-gem "minitest", "~>5.11", :group => [:development, :test]
-gem "rake-compiler", "~>1.0", :group => [:development, :test]
-gem "rake-compiler-dock", "~>0.6.0", :group => [:development, :test]
-gem "mini_portile2", "~>2.0", :group => [:development, :test]
+gem "minitest", "~>5.15", :group => [:development, :test]
+gem "rake-compiler", "~>1.2.0", :group => [:development, :test]
+gem "rake-compiler-dock", "~>1.2.1", :group => [:development, :test]
+gem "mini_portile2", "~>2.8.0", :group => [:development, :test]
 gem "hoe-bundler", "~>1.0", :group => [:development, :test]
 gem "hoe-gemspec", "~>1.0", :group => [:development, :test]
-gem "rdoc", ">=4.0", "<6", :group => [:development, :test]
-
-# hoe versions >= 3.19.0 are incompatible with Ruby 2.0 and earlier,
-# but the gemspec does not indicate so...
-gem "hoe", (RUBY_VERSION < "2.1" ? "3.18.1" : "~>3.20"), :group => [:development, :test]
+gem "rdoc", ">=4.0", "<7", :group => [:development, :test]
+gem "hoe", "~>3.23", :group => [:development, :test]
 
 # vim: syntax=ruby
