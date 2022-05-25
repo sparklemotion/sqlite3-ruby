@@ -1,6 +1,19 @@
 name: CI
-
-on: [push, pull_request]
+concurrency:
+  group: "${{github.workflow}}-${{github.ref}}"
+  cancel-in-progress: true
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - v*.*.x
+    tags:
+      - v*.*.*
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - '*'
 
 jobs:
   CI:
@@ -14,15 +27,14 @@ jobs:
         os: [ubuntu, macos ]
         ruby: [ head, 3.1, '3.0', 2.7, 2.6, 2.5, 2.4, 2.3, 2.2, truffleruby-head ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: load Ruby and dependencies
         uses: MSP-Greg/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           apt-get: libsqlite3-dev
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
-      - name: install
-        run:  bundle install --jobs 4 --retry 3
       - name: compile
         run:  bundle exec rake compile
       - name: test
@@ -39,15 +51,14 @@ jobs:
         os: [windows ]
         ruby: [ mingw, 3.1, '3.0', 2.7, 2.6, 2.5, 2.4 ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: load Ruby and sqlite3
         uses: MSP-Greg/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           mingw: sqlite3
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
-      - name: install
-        run:  bundle install --jobs 4 --retry 3
       - name: compile msys2
         run:  bundle exec rake compile:msys2
       - name: test
