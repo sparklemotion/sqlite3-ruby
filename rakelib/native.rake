@@ -18,7 +18,7 @@ task :devkit do
 end
 
 # build sqlite3_native C extension
-RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', HOE.spec) do |ext|
+RUBY_EXTENSION = Rake::ExtensionTask.new('sqlite3_native', SQLITE3_SPEC) do |ext|
   # where to locate the extension
   ext.ext_dir = 'ext/sqlite3'
 

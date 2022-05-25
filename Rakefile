@@ -3,6 +3,5 @@
 # Add your customizations inside tasks directory.
 # Thank You.
 #
-
-
-# vim: syntax=ruby
+require "bundler"
+SQLITE3_SPEC = Bundler.load_gemspec("sqlite3.gemspec")
