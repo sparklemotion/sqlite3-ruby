@@ -16,48 +16,29 @@ on:
       - '*'
 
 jobs:
-  CI:
-    timeout-minutes: 10
-    name: >-
-      CI ${{ matrix.os }} ${{ matrix.ruby }}
-    runs-on: ${{ matrix.os }}-latest
+  test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macos ]
-        ruby: [ head, 3.1, '3.0', 2.7, 2.6, 2.5, 2.4, 2.3, 2.2, truffleruby-head ]
+        os: ["ubuntu-latest", "macos-latest", "windows-2022"]
+        ruby: ["3.1", "3.0", "2.7", "2.6", "2.5"]
+        include:
+          - os: "ubuntu-latest"
+            ruby: "truffleruby-head"
+          - os: "ubuntu-latest"
+            ruby: "head"
+          - os: "windows-2022"
+            ruby: "mingw"
+    runs-on: ${{matrix.os}}
     steps:
       - uses: actions/checkout@v3
-      - name: load Ruby and dependencies
-        uses: MSP-Greg/setup-ruby-pkgs@v1
+      - uses: MSP-Greg/setup-ruby-pkgs@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
-          apt-get: libsqlite3-dev
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-
-      - name: compile
-        run:  bundle exec rake compile
-      - name: test
-        run:  bundle exec rake test
-
-  Win:
-    timeout-minutes: 10
-    name: >-
-      CI ${{ matrix.os }} ${{ matrix.ruby }}
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows ]
-        ruby: [ mingw, 3.1, '3.0', 2.7, 2.6, 2.5, 2.4 ]
-    steps:
-      - uses: actions/checkout@v3
-      - name: load Ruby and sqlite3
-        uses: MSP-Greg/setup-ruby-pkgs@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: ${{matrix.ruby}}
+          bundler-cache: true
+          apt-get: "libsqlite3-dev"
+          brew: "sqlite3"
           mingw: sqlite3
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: compile msys2
         run:  bundle exec rake compile:msys2
