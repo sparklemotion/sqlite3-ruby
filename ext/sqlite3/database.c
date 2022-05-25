@@ -66,6 +66,23 @@ static VALUE rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
   return self;
 }
 
+static VALUE rb_sqlite3_disable_quirk_mode(VALUE self)
+{
+#if defined SQLITE_DBCONFIG_DQS_DDL
+  sqlite3RubyPtr ctx;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+
+  if(!ctx->db) return Qfalse;
+
+  sqlite3_db_config(ctx->db, SQLITE_DBCONFIG_DQS_DDL, 0, (void*)0);
+  sqlite3_db_config(ctx->db, SQLITE_DBCONFIG_DQS_DML, 0, (void*)0);
+
+  return Qtrue;
+#else
+  return Qfalse
+#endif
+}
+
 /* call-seq: db.close
  *
  * Closes this database.
@@ -805,6 +822,7 @@ void init_sqlite3_database()
   /* public "define_aggregator" is now a shim around define_aggregator2
    * implemented in Ruby */
   rb_define_private_method(cSqlite3Database, "define_aggregator2", rb_sqlite3_define_aggregator2, 2);
+  rb_define_private_method(cSqlite3Database, "disable_quirk_mode", rb_sqlite3_disable_quirk_mode, 0);
   rb_define_method(cSqlite3Database, "interrupt", interrupt, 0);
   rb_define_method(cSqlite3Database, "errmsg", errmsg, 0);
   rb_define_method(cSqlite3Database, "errcode", errcode_, 0);

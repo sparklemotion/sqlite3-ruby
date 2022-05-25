@@ -510,5 +510,18 @@ module SQLite3
     def test_execute_with_named_bind_params
       assert_equal [['foo']], @db.execute("select :n", {'n' => 'foo'})
     end
+
+    def test_strict_mode
+      db = SQLite3::Database.new(':memory:')
+      db.execute('create table numbers (val int);')
+      db.execute('create index index_numbers_nope ON numbers ("nope");') # nothing raised
+
+      db = SQLite3::Database.new(':memory:', :strict => true)
+      db.execute('create table numbers (val int);')
+      error = assert_raises SQLite3::SQLException do
+        db.execute('create index index_numbers_nope ON numbers ("nope");')
+      end
+      assert_includes error.message, "no such column: nope"
+    end
   end
 end
