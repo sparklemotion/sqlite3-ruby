@@ -137,7 +137,8 @@ module SQLite3
         column_name column
       end
       @types = Array.new(column_count) do |column|
-        column_decltype column
+        val = column_decltype(column)
+        val.nil? ? nil : val.downcase
       end
     end
   end
