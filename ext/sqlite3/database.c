@@ -1,7 +1,7 @@
 #include <sqlite3_ruby.h>
 #include <aggregator.h>
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4028 )
 #endif
@@ -849,6 +849,6 @@ void init_sqlite3_database()
   rb_sqlite3_aggregator_init();
 }
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #pragma warning( pop )
 #endif
