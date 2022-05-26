@@ -1,55 +1,85 @@
-ENV['RC_ARCHS'] = '' if RUBY_PLATFORM =~ /darwin/
+require "mkmf"
+require "mini_portile2"
 
-require 'mkmf'
+package_root_dir = File.expand_path(File.join(File.dirname(__FILE__), "..", ".."))
 
-# :stopdoc:
+RbConfig::CONFIG["CC"] = RbConfig::MAKEFILE_CONFIG["CC"] = ENV["CC"] if ENV["CC"]
+ENV["CC"] = RbConfig::CONFIG["CC"]
 
-RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
+cross_build_p = enable_config("cross-build")
 
-ldflags = cppflags = nil
-if RbConfig::CONFIG["host_os"] =~ /darwin/
-  begin
-    if with_config('sqlcipher')
-      brew_prefix = `brew --prefix sqlcipher`.chomp
-      ldflags   = "#{brew_prefix}/lib"
-      cppflags  = "#{brew_prefix}/include/sqlcipher"
-      pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
-    else
-      brew_prefix = `brew --prefix sqlite3`.chomp
-      ldflags   = "#{brew_prefix}/lib"
-      cppflags  = "#{brew_prefix}/include"
-      pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
-    end
-
-    # pkg_config should be less error prone than parsing compiler
-    # commandline options, but we need to set default ldflags and cpp flags
-    # in case the user doesn't have pkg-config installed
-    ENV['PKG_CONFIG_PATH'] ||= pkg_conf
-  rescue
+MiniPortile.new("sqlite3", "3.38.5").tap do |recipe|
+  # checksum verified by first checking the published sha3(256) checksum:
+  #
+  #   $ sha3sum -a 256 sqlite-autoconf-3380500.tar.gz
+  #   ab649fea76f49a6ec7f907f001d87b8bd76dec0679c783e3992284c5a882a98c  sqlite-autoconf-3380500.tar.gz
+  #   $ sha256sum sqlite-autoconf-3380500.tar.gz 
+  #   5af07de982ba658fd91a03170c945f99c971f6955bc79df3266544373e39869c  sqlite-autoconf-3380500.tar.gz
+  #
+  recipe.files = [{
+    url: "https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz",
+    sha256: "5af07de982ba658fd91a03170c945f99c971f6955bc79df3266544373e39869c",
+  }]
+  recipe.target = File.join(package_root_dir, "ports")
+  
+  recipe.configure_options += ["--enable-shared=no", "--enable-static=yes"]
+  ENV.to_h.tap do |env|
+    env["CFLAGS"] = [env["CFLAGS"], "-fPIC"].join(" ") # needed for linking the static library into a shared library
+    recipe.configure_options += env.map { |key, value| "#{key}=#{value.strip}" }
   end
+
+  unless File.exist?(File.join(recipe.target, recipe.host, recipe.name, recipe.version))
+    recipe.cook
+  end
+  recipe.activate
+
+  pkg_config(File.join(recipe.path, "lib", "pkgconfig", "sqlite3.pc"))
+  have_library("dl") # sqlite3.pc has this in Libs.private, but see https://bugs.ruby-lang.org/issues/18490
+  have_library("pthread") # sqlite3.pc has this in Libs.private, but see https://bugs.ruby-lang.org/issues/18490
 end
 
-if with_config('sqlcipher')
-  pkg_config("sqlcipher")
-else
-  pkg_config("sqlite3")
-end
+# ldflags = cppflags = nil
+# if RbConfig::CONFIG["host_os"] =~ /darwin/
+#   begin
+#     if with_config('sqlcipher')
+#       brew_prefix = `brew --prefix sqlcipher`.chomp
+#       ldflags   = "#{brew_prefix}/lib"
+#       cppflags  = "#{brew_prefix}/include/sqlcipher"
+#       pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
+#     else
+#       brew_prefix = `brew --prefix sqlite3`.chomp
+#       ldflags   = "#{brew_prefix}/lib"
+#       cppflags  = "#{brew_prefix}/include"
+#       pkg_conf  = "#{brew_prefix}/lib/pkgconfig"
+#     end
 
-# --with-sqlite3-{dir,include,lib}
-if with_config('sqlcipher')
-  $CFLAGS << ' -DUSING_SQLCIPHER'
-  dir_config("sqlcipher", cppflags, ldflags)
-else
-  dir_config("sqlite3", cppflags, ldflags)
-end
+#     # pkg_config should be less error prone than parsing compiler
+#     # commandline options, but we need to set default ldflags and cpp flags
+#     # in case the user doesn't have pkg-config installed
+#     ENV['PKG_CONFIG_PATH'] ||= pkg_conf
+#   rescue
+#   end
+# end
 
-if RbConfig::CONFIG["host_os"] =~ /mswin/
-  $CFLAGS << ' -W3'
-end
+# if with_config('sqlcipher')
+#   pkg_config("sqlcipher")
+# else
+#   pkg_config("sqlite3")
+# end
 
-if RUBY_VERSION < '2.7'
-  $CFLAGS << ' -DTAINTING_SUPPORT'
-end
+# # --with-sqlite3-{dir,include,lib}
+# if with_config('sqlcipher')
+#   $CFLAGS << ' -DUSING_SQLCIPHER'
+#   dir_config("sqlcipher", cppflags, ldflags)
+# else
+#   dir_config("sqlite3", cppflags, ldflags)
+# end
+
+# if RbConfig::CONFIG["host_os"] =~ /mswin/
+#   $CFLAGS << ' -W3'
+# end
+
+append_cflags("-DTAINTING_SUPPORT") if Gem::Requirement.new("< 2.7").satisfied_by?(Gem::Version.new(RUBY_VERSION))
 
 def asplode missing
   if RUBY_PLATFORM =~ /mingw|mswin/
@@ -66,15 +96,13 @@ location where your sqlite3 shared library is located).
 end
 
 asplode('sqlite3.h')  unless find_header  'sqlite3.h'
-find_library 'pthread', 'pthread_create' # 1.8 support. *shrug*
 
-have_library 'dl' # for static builds
-
-if with_config('sqlcipher')
-  asplode('sqlcipher') unless find_library 'sqlcipher', 'sqlite3_libversion_number'
-else
-  asplode('sqlite3') unless find_library 'sqlite3', 'sqlite3_libversion_number'
-end
+# TODO sqlcipher support
+# if with_config('sqlcipher')
+#   asplode('sqlcipher') unless find_library 'sqlcipher', 'sqlite3_libversion_number'
+# else
+  asplode('sqlite3') unless find_library("sqlite3", "sqlite3_libversion_number", "sqlite3.h")
+# end
 
 # Functions defined in 1.9 but not 1.8
 have_func('rb_proc_arity')
