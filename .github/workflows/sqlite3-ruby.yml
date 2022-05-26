@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: load Ruby and dependencies
-        uses: MSP-Greg/setup-ruby-pkgs@v1
+        uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           apt-get: libsqlite3-dev
@@ -49,17 +49,25 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows ]
-        ruby: [ mingw, 3.1, '3.0', 2.7, 2.6, 2.5, 2.4 ]
+        ruby: [ mswin, mingw, 3.1, '3.0', 2.7, 2.6, 2.5, 2.4 ]
     steps:
       - uses: actions/checkout@v3
       - name: load Ruby and sqlite3
-        uses: MSP-Greg/setup-ruby-pkgs@v1
+        uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           mingw: sqlite3
+          vcpkg: sqlite3
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
-      - name: compile msys2
-        run:  bundle exec rake compile:msys2
+      - name: compile
+        run:  |
+          if ("${{ matrix.ruby }}" -eq "mswin") {
+            echo 'bundle exec rake compile'
+            bundle exec rake compile
+          } else {
+            echo 'bundle exec rake compile:msys2'
+            bundle exec rake compile:msys2
+          }
       - name: test
         run:  bundle exec rake test
