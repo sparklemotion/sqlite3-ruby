@@ -33,9 +33,15 @@ MiniPortile.new("sqlite3", "3.38.5").tap do |recipe|
   end
   recipe.activate
 
-  pkg_config(File.join(recipe.path, "lib", "pkgconfig", "sqlite3.pc"))
-  have_library("dl") # sqlite3.pc has this in Libs.private, but see https://bugs.ruby-lang.org/issues/18490
-  have_library("pthread") # sqlite3.pc has this in Libs.private, but see https://bugs.ruby-lang.org/issues/18490
+  ENV["PKG_CONFIG_ALLOW_SYSTEM_CFLAGS"] = "t" # on macos, pkg-config will not return --cflags without this
+  pcfile = File.join(recipe.path, "lib", "pkgconfig", "sqlite3.pc")
+  if pkg_config(pcfile)
+    # see https://bugs.ruby-lang.org/issues/18490
+    libs = xpopen(["pkg-config", "--libs", "--static", pcfile], err: [:child, :out], &:read)
+    libs.split.each { |lib| append_ldflags(lib) } if $?.success?
+  else
+    message("Please install either the `pkg-config` utility or the `pkg-config` rubygem.\n")
+  end
 end
 
 # ldflags = cppflags = nil
