@@ -40,18 +40,17 @@ static VALUE sqlite3_rb_close(VALUE self);
 static VALUE rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 {
   sqlite3RubyPtr ctx;
-  VALUE flags;
   int status;
 
   Data_Get_Struct(self, sqlite3Ruby, ctx);
 
 #if defined TAINTING_SUPPORT
-#if defined StringValueCStr
+#  if defined StringValueCStr
   StringValuePtr(file);
   rb_check_safe_obj(file);
-#else
+#  else
   Check_SafeStr(file);
-#endif
+#  endif
 #endif
 
       status = sqlite3_open_v2(
@@ -745,9 +744,9 @@ static VALUE exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
   REQUIRE_OPEN_DB(ctx);
 
   if(results_as_hash == Qtrue) {
-    status = sqlite3_exec(ctx->db, StringValuePtr(sql), hash_callback_function, callback_ary, &errMsg);
+    status = sqlite3_exec(ctx->db, StringValuePtr(sql), (sqlite3_callback)hash_callback_function, (void*)callback_ary, &errMsg);
   } else {
-    status = sqlite3_exec(ctx->db, StringValuePtr(sql), regular_callback_function, callback_ary, &errMsg);
+    status = sqlite3_exec(ctx->db, StringValuePtr(sql), (sqlite3_callback)regular_callback_function, (void*)callback_ary, &errMsg);
   }
 
   if (status != SQLITE_OK)
