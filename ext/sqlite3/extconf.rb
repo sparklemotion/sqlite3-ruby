@@ -25,7 +25,9 @@ MiniPortile.new("sqlite3", "3.38.5").tap do |recipe|
   recipe.configure_options += ["--enable-shared=no", "--enable-static=yes"]
   ENV.to_h.tap do |env|
     env["CFLAGS"] = [env["CFLAGS"], "-fPIC"].join(" ") # needed for linking the static library into a shared library
-    recipe.configure_options += env.map { |key, value| "#{key}=#{value.strip}" }
+    recipe.configure_options += env
+      .select { |k,v| ["CC", "CFLAGS", "LDFLAGS", "LIBS", "CPPFLAGS", "LT_SYS_LIBRARY_PATH", "CPP"].include?(k) }
+      .map { |key, value| "#{key}=#{value.strip}" }
   end
 
   unless File.exist?(File.join(recipe.target, recipe.host, recipe.name, recipe.version))
