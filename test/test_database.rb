@@ -360,7 +360,10 @@ module SQLite3
         nil
       end
       @db.execute("select hello(2.2, 'foo', NULL)")
-      assert_equal [2.2, 'foo', nil], called_with
+
+      assert_in_delta(2.2, called_with[0], 0.0001)
+      assert_equal("foo", called_with[1])
+      assert_nil(called_with[2])
     end
 
     def test_define_varargs
@@ -370,7 +373,10 @@ module SQLite3
         nil
       end
       @db.execute("select hello(2.2, 'foo', NULL)")
-      assert_equal [2.2, 'foo', nil], called_with
+
+      assert_in_delta(2.2, called_with[0], 0.0001)
+      assert_equal("foo", called_with[1])
+      assert_nil(called_with[2])
     end
 
     def test_call_func_blob
