@@ -21,6 +21,7 @@ MiniPortile.new("sqlite3", "3.38.5").tap do |recipe|
     sha256: "5af07de982ba658fd91a03170c945f99c971f6955bc79df3266544373e39869c",
   }]
   recipe.target = File.join(package_root_dir, "ports")
+  recipe.patch_files = Dir[File.join(package_root_dir, "patches", "*.patch")].sort
   
   recipe.configure_options += ["--enable-shared=no", "--enable-static=yes"]
   ENV.to_h.tap do |env|

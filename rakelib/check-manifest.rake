@@ -10,6 +10,7 @@ task :check_manifest do
     .git
     .github
     gems
+    patches
     pkg
     ports
     rakelib

@@ -31,6 +31,11 @@ jobs:
             ruby: "mingw"
     runs-on: ${{matrix.os}}
     steps:
+      - if: matrix.os == 'windows-2022'
+        name: configure git crlf
+        run: |
+          git config --system core.autocrlf false
+          git config --system core.eol lf
       - uses: actions/checkout@v3
       - uses: MSP-Greg/setup-ruby-pkgs@v1
         with:
