@@ -16,12 +16,13 @@ on:
       - '*'
 
 jobs:
-  test:
+  sqlite3:
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-2022"]
         ruby: ["3.1", "3.0", "2.7", "2.6", "2.5"]
+        lib: ["system", "packaged"]
         include:
           - os: "ubuntu-latest"
             ruby: "truffleruby-head"
@@ -29,6 +30,14 @@ jobs:
             ruby: "head"
           - os: "windows-2022"
             ruby: "mingw"
+            sys: "enable"
+          - os: "windows-2022"
+            ruby: "mingw"
+            sys: "disable"
+          - lib: "system"
+            sys: "enable"
+          - lib: "packaged"
+            sys: "disable"
     runs-on: ${{matrix.os}}
     steps:
       - if: matrix.os == 'windows-2022'
@@ -43,19 +52,16 @@ jobs:
           bundler-cache: true
           apt-get: "libsqlite3-dev"
           brew: "sqlite3"
-          mingw: sqlite3
+          mingw: "sqlite3"
+      - run: bundle exec rake compile -- --${{matrix.sys}}-system-libraries
+      - run: bundle exec rake test
 
-      - name: compile msys2
-        run:  bundle exec rake compile:msys2
-      - name: test
-        run:  bundle exec rake test
-
-  ubuntu:
+  old_sqlite3:
     runs-on: ubuntu-latest
     container:
       image: ruby:2.7.5-buster # old enough to not support SQLITE_DBCONFIG_DQS_DDL
     steps:
       - uses: actions/checkout@v3
       - run: bundle install
-      - run: bundle exec rake compile
+      - run: bundle exec rake compile -- --enable-system-libraries
       - run: bundle exec rake test
