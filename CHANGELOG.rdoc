@@ -1,4 +1,13 @@
-=== 1.4.2
+=== 1.4.3 (2022-05-25)
+
+* Enhancements
+  * Disable non-standard support for double-quoted string literals via the `:strict` option. [#317] (Thank you, @casperisfine!)
+  * Column type names are now explicitly downcased on platforms where they may have been in shoutcaps. [#315] (Thank you, @petergoldstein!)
+  * Support File or Pathname arguments to `Database.new`. [#283] (Thank you, @yb66!)
+  * Support building on MSVC. [#285] (Thank you, @jmarrec!)
+
+
+=== 1.4.2 (2019-12-18)
 
 * Travis: Drop unused setting "sudo: false"
 * The taint mechanism will be deprecated in Ruby 2.7
