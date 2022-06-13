@@ -79,7 +79,7 @@ static VALUE rb_sqlite3_disable_quirk_mode(VALUE self)
 
   return Qtrue;
 #else
-  return Qfalse
+  return Qfalse;
 #endif
 }
 
