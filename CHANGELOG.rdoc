@@ -1,4 +1,4 @@
-=== 1.4.4 (unreleased)
+=== 1.4.4 (2022-06-14)
 
 * Fixes
   * Compilation no longer fails against SQLite3 versions < 3.29.0. This issue was introduced in v1.4.3. [#324] (Thank you, @r6e!)
