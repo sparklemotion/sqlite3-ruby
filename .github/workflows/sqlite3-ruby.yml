@@ -63,3 +63,13 @@ jobs:
         run:  bundle exec rake compile:msys2
       - name: test
         run:  bundle exec rake test
+
+  ubuntu:
+    runs-on: ubuntu-latest
+    container:
+      image: ruby:2.7.5-buster # old enough to not support SQLITE_DBCONFIG_DQS_DDL
+    steps:
+      - uses: actions/checkout@v3
+      - run: bundle install
+      - run: bundle exec rake compile
+      - run: bundle exec rake test
