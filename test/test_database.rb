@@ -512,6 +512,10 @@ module SQLite3
     end
 
     def test_strict_mode
+      unless Gem::Requirement.new(">= 3.29.0").satisfied_by?(Gem::Version.new(SQLite3::SQLITE_VERSION))
+        skip("strict mode feature not available in #{SQLite3::SQLITE_VERSION}")
+      end
+
       db = SQLite3::Database.new(':memory:')
       db.execute('create table numbers (val int);')
       db.execute('create index index_numbers_nope ON numbers ("nope");') # nothing raised
