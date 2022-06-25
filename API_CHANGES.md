@@ -1,4 +1,4 @@
-= API Changes
+# API Changes
 
 * SQLite3::Database#execute only accepts an array for bind parameters.
 
@@ -8,7 +8,7 @@
   sometimes important change in behavior.
 
   83882d2208ed189361617d5ab8532a325aaf729d
-  
+
 * SQLite3::Database#trace now takes either a block or an object that responds
   to "call".  The previous implementation passed around a VALUE that was cast
   to a void *.  This is dangerous because the value could get garbage collected
@@ -30,7 +30,7 @@
 * test/test_tc_database.rb was removed because we no longer use the Driver
   design pattern.
 
-= Garbage Collection Strategy
+# Garbage Collection Strategy
 
 All statements keep pointers back to their respective database connections.
 The @connection instance variable on the Statement handle keeps the database
@@ -47,4 +47,3 @@ collected.  So, it is possible that a connection and a statement are up for
 garbage collection.  If the database connection were to be free'd before the
 statement, then boom.  Instead we'll be conservative and free unclosed
 statements when the connection is terminated.
-

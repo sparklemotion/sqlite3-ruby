@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
     "homepage_uri" => "https://github.com/sparklemotion/sqlite3-ruby",
     "bug_tracker_uri" => "https://github.com/sparklemotion/sqlite3-ruby/issues",
     "documentation_uri" => "https://www.rubydoc.info/gems/sqlite3",
-    "changelog_uri" => "https://github.com/sparklemotion/sqlite3-ruby/blob/master/CHANGELOG.rdoc",
+    "changelog_uri" => "https://github.com/sparklemotion/sqlite3-ruby/blob/master/CHANGELOG.md",
     "source_code_uri" => "https://github.com/sparklemotion/sqlite3-ruby",
 
     # https://github.com/oneclick/rubyinstaller2/wiki/For-gem-developers#msys2-library-dependency
@@ -32,12 +32,12 @@ Gem::Specification.new do |s|
 
   s.files = [
     ".gemtest",
-    "API_CHANGES.rdoc",
-    "CHANGELOG.rdoc",
+    "API_CHANGES.md",
+    "CHANGELOG.md",
     "ChangeLog.cvs",
     "Gemfile",
     "LICENSE",
-    "README.rdoc",
+    "README.md",
     "ext/sqlite3/aggregator.c",
     "ext/sqlite3/aggregator.h",
     "ext/sqlite3/backup.c",
@@ -86,9 +86,9 @@ Gem::Specification.new do |s|
   ]
 
   s.extra_rdoc_files = [
-    "API_CHANGES.rdoc",
-    "CHANGELOG.rdoc",
-    "README.rdoc",
+    "API_CHANGES.md",
+    "CHANGELOG.md",
+    "README.md",
     "ext/sqlite3/aggregator.c",
     "ext/sqlite3/backup.c",
     "ext/sqlite3/database.c",
@@ -96,7 +96,7 @@ Gem::Specification.new do |s|
     "ext/sqlite3/sqlite3.c",
     "ext/sqlite3/statement.c"
   ]
-  s.rdoc_options = ["--main", "README.rdoc"]
+  s.rdoc_options = ["--main", "README.md"]
 
   s.add_dependency("mini_portile2", "~> 2.8.0")
 
