@@ -84,7 +84,7 @@ have_func('sqlite3_column_database_name')
 have_func('sqlite3_enable_load_extension')
 have_func('sqlite3_load_extension')
 
-unless have_func('sqlite3_open_v2')
+unless have_func('sqlite3_open_v2') # https://www.sqlite.org/releaselog/3_5_0.html
   abort "Please use a newer version of SQLite3"
 end
 
