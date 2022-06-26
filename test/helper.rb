@@ -6,6 +6,9 @@ if ENV['GITHUB_ACTIONS'] == 'true' || ENV['CI']
 end
 
 puts "info: sqlite3 version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
+puts "info: sqlcipher?: #{SQLite3.sqlcipher?}"
+puts "info: threadsafe?: #{SQLite3.threadsafe?}"
+
 unless RUBY_VERSION >= "1.9"
   require 'iconv'
 end

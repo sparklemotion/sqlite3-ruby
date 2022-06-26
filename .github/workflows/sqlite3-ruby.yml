@@ -69,3 +69,36 @@ jobs:
       - run: bundle install
       - run: bundle exec rake compile -- --enable-system-libraries
       - run: bundle exec rake test
+
+  sqlcipher:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-2022"]
+        ruby: ["3.1", "2.5"] # oldest and newest
+        include:
+          - os: "windows-2022"
+            ruby: "mingw"
+          # # I'm struggling to build against sqlcipher on mswin.
+          # # find_header can't find sqlite3.h
+          # # patches welcome from anyone who needs this functionality and can make it work.
+          # - os: "windows-2022"
+          #   ruby: "mswin"
+    runs-on: ${{matrix.os}}
+    steps:
+      - if: matrix.os == 'windows-2022'
+        name: configure git crlf
+        run: |
+          git config --system core.autocrlf false
+          git config --system core.eol lf
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: ${{matrix.ruby}}
+          bundler-cache: true
+          apt-get: "libsqlcipher-dev"
+          brew: "sqlcipher"
+          mingw: "sqlcipher"
+          # vcpkg: "sqlcipher" # see above
+      - run: bundle exec rake compile -- --with-sqlcipher
+      - run: bundle exec rake test

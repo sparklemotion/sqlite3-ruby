@@ -7,17 +7,19 @@ RbConfig::CONFIG["CC"] = RbConfig::MAKEFILE_CONFIG["CC"] = ENV["CC"] if ENV["CC"
 ENV["CC"] = RbConfig::CONFIG["CC"]
 
 cross_build_p = enable_config("cross-build")
-system_libraries_p = enable_config("system-libraries")
 sqlcipher_p = with_config("sqlcipher")
+system_libraries_p = sqlcipher_p || enable_config("system-libraries")
+libname = sqlcipher_p ? "sqlcipher" : "sqlite3"
+
+def abort_could_not_find(missing)
+  abort("Could not find #{missing}. Please visit https://github.com/sparklemotion/sqlite3-ruby for installation instructions.")
+end
 
 if system_libraries_p
-  # if sqlcipher_p # TODO test and document this
-  #   message "Building sqlite3-ruby using system sqlcipher.\n"
-  #   pkg_config("sqlcipher") # TODO test and document this
-  # else
-    message "Building sqlite3-ruby using system sqlite3.\n"
-    pkg_config("sqlite3") # TODO document
-  # end
+  message "Building sqlite3-ruby using system #{libname}.\n"
+  pkg_config(libname)
+  append_cflags("-DUSING_SQLCIPHER") if sqlcipher_p
+
 else
   message "Building sqlite3-ruby using packaged sqlite3.\n"
   MiniPortile.new("sqlite3", "3.38.5").tap do |recipe|
@@ -66,29 +68,8 @@ end
 
 append_cflags("-DTAINTING_SUPPORT") if Gem::Requirement.new("< 2.7").satisfied_by?(Gem::Version.new(RUBY_VERSION))
 
-def abort_could_not_find_library(missing)
-  if RUBY_PLATFORM =~ /mingw|mswin/
-    abort "#{missing} is missing. Install SQLite3 from " +
-          "http://www.sqlite.org/ first."
-  else
-    abort <<-error
-#{missing} is missing. Try 'brew install sqlite3',
-'yum install sqlite-devel' or 'apt-get install libsqlite3-dev'
-and check your shared library search path (the
-location where your sqlite3 shared library is located).
-    error
-  end
-end
-
-abort_could_not_find_library('sqlite3.h')  unless find_header  'sqlite3.h'
-
-# TODO sqlcipher support
-# if with_config('sqlcipher')
-#   append_cflags("-DUSING_SQLCIPHER")
-#   abort_could_not_find_library('sqlcipher') unless find_library 'sqlcipher', 'sqlite3_libversion_number'
-# else
-  abort_could_not_find_library('sqlite3') unless find_library("sqlite3", "sqlite3_libversion_number", "sqlite3.h")
-# end
+abort_could_not_find("sqlite3.h") unless find_header("sqlite3.h")
+abort_could_not_find(libname) unless find_library(libname, "sqlite3_libversion_number", "sqlite3.h")
 
 # Functions defined in 1.9 but not 1.8
 have_func('rb_proc_arity')
