@@ -57,6 +57,11 @@ jobs:
           brew: "sqlite3"
           mingw: "sqlite3"
           vcpkg: "sqlite3"
+      - if: matrix.lib == 'packaged'
+        uses: actions/cache@v2
+        with:
+          path: ports
+          key: ports-${{matrix.os}}-${{hashFiles('ext/sqlite3/extconf.rb')}}
       - run: bundle exec rake compile -- --${{matrix.sys}}-system-libraries
       - run: bundle exec rake test
 
