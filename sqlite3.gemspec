@@ -1,10 +1,14 @@
 # -*- encoding: utf-8 -*-
 
-require_relative "lib/sqlite3/version"
+begin
+  require_relative "lib/sqlite3/version"
+rescue LoadError
+  puts "WARNING: could not load Sqlite3::VERSION"
+end
 
 Gem::Specification.new do |s|
   s.name = "sqlite3"
-  s.version = SQLite3::VERSION
+  s.version = defined?(SQLite3::VERSION) ? SQLite3::VERSION : "0.0.0"
 
   s.summary = "This module allows Ruby programs to interface with the SQLite3 database engine (http://www.sqlite.org)"
   s.description = "This module allows Ruby programs to interface with the SQLite3\ndatabase engine (http://www.sqlite.org).  You must have the\nSQLite engine installed in order to build this module.\n\nNote that this module is only compatible with SQLite 3.6.16 or newer."
