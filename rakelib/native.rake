@@ -7,12 +7,12 @@ require "rake_compiler_dock"
 
 cross_rubies = ["3.1.0", "3.0.0", "2.7.0", "2.6.0", "2.5.0"]
 cross_platforms = [
-  # "aarch64-linux",
-  # "arm-linux",
-  # "arm64-darwin",
+  "aarch64-linux",
+  "arm-linux",
+  "arm64-darwin",
   "x64-mingw-ucrt",
   "x64-mingw32",
-  # "x86-linux",
+  "x86-linux",
   "x86_64-darwin",
   "x86_64-linux",
 ]
@@ -65,7 +65,7 @@ task "set-version-to-timestamp" do
   # to test building, packaging, and installing a precompiled gem
   version_constant_re = /^\s*VERSION\s*=\s*["'](.*)["']$/
 
-  version_file_path = File.join(__dir__, "lib/sqlite3/version.rb")
+  version_file_path = File.join(__dir__, "../lib/sqlite3/version.rb")
   version_file_contents = File.read(version_file_path)
 
   current_version_string = version_constant_re.match(version_file_contents)[1]

@@ -9,6 +9,7 @@ task :check_manifest do
     .DS_Store
     .git
     .github
+    bin
     gems
     patches
     pkg
