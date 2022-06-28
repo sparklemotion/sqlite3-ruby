@@ -5,7 +5,7 @@ require "rubygems/package_task"
 require "rake/extensiontask"
 require "rake_compiler_dock"
 
-cross_rubies = ["3.1.0", "3.0.0", "2.7.0", "2.6.0", "2.5.0"]
+cross_rubies = ["3.1.0", "3.0.0", "2.7.0", "2.6.0"]
 cross_platforms = [
   "aarch64-linux",
   "arm-linux",

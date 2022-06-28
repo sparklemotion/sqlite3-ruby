@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-2022"]
-        ruby: ["3.1", "3.0", "2.7", "2.6", "2.5"]
+        ruby: ["3.1", "3.0", "2.7", "2.6"]
         lib: ["system", "packaged"]
         include:
           - os: "ubuntu-latest"
@@ -80,7 +80,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-2022"]
-        ruby: ["3.1", "2.5"] # oldest and newest
+        ruby: ["3.1", "2.6"] # oldest and newest
         include:
           - os: "windows-2022"
             ruby: "mingw"
