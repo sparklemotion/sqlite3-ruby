@@ -1,4 +1,4 @@
-name: CI
+name: test suite
 concurrency:
   group: "${{github.workflow}}-${{github.ref}}"
   cancel-in-progress: true

@@ -42,6 +42,7 @@ Gem::Specification.new do |s|
     "ChangeLog.cvs",
     "Gemfile",
     "LICENSE",
+    "LICENSE-DEPENDENCIES",
     "README.md",
     "ext/sqlite3/aggregator.c",
     "ext/sqlite3/aggregator.h",
