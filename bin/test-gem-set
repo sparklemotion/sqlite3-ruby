@@ -1,0 +1,37 @@
+#! /usr/bin/env bash
+#
+#  script to test a set of gem files
+#
+set -o errexit
+set -o nounset
+set -o pipefail
+
+gems=$*
+gem_platform_local=`ruby -e "puts Gem::Platform.local.to_s"`
+
+function remove_all_sqlite3s {
+  yes | gem uninstall --force sqlite3 || true
+}
+
+function test_installation {
+  gem=$1
+  remove_all_sqlite3s
+  gem install --local $gem
+  ruby -r sqlite3 -e 'pp SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION'
+
+  if [[ $gem =~ sqlite3-[^-]*\.gem ]] ; then
+    remove_all_sqlite3s
+    gem install --local $gem -- --enable-system-libraries
+    ruby -r sqlite3 -e 'pp SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION'
+  fi
+}
+
+for gem in $gems ; do
+  ./bin/test-gem-file-contents $gem
+done
+
+for gem in $gems ; do
+  if [[ $gem =~ sqlite3-[^-]+(-${gem_platform_local})?\.gem$ ]] ; then
+    test_installation $gem
+  fi
+done
