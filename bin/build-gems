@@ -1,0 +1,31 @@
+#! /usr/bin/env bash
+#
+#  script to build gems for all relevant platforms
+#
+set -o errexit
+set -o nounset
+set -x
+
+rm -rf tmp pkg gems
+mkdir -p gems
+
+# prelude: vendor dependencies
+bundle update
+bundle package
+
+# safety check: let's check that things work
+bundle exec rake clean clobber
+bundle exec rake compile test
+
+# package the gems, including precompiled native
+bundle exec rake clean clobber
+bundle exec rake gem:all
+cp -v pkg/sqlite3*.gem gems
+
+# test those gem files!
+bin/test-gem-set gems/*.gem
+
+# checksums should be included in the release notes
+pushd gems
+  ls *.gem | sort | xargs sha256sum
+popd

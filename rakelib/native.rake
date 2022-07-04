@@ -21,6 +21,33 @@ ENV["RUBY_CC_VERSION"] = cross_rubies.join(":")
 Gem::PackageTask.new(SQLITE3_SPEC).define # packaged_tarball version of the gem for platform=ruby
 task "package" => cross_platforms.map { |p| "gem:#{p}" } # "package" task for all the native platforms
 
+def gem_build_path
+  File.join("pkg", SQLITE3_SPEC.full_name)
+end
+
+def add_file_to_gem(relative_source_path)
+  if relative_source_path.nil? || !File.exist?(relative_source_path)
+    raise "Cannot find file '#{relative_source_path}'"
+  end
+
+  dest_path = File.join(gem_build_path, relative_source_path)
+  dest_dir = File.dirname(dest_path)
+
+  mkdir_p(dest_dir) unless Dir.exist?(dest_dir)
+  rm_f(dest_path) if File.exist?(dest_path)
+  safe_ln(relative_source_path, dest_path)
+
+  SQLITE3_SPEC.files << relative_source_path
+end
+
+task gem_build_path do
+  archive = Dir.glob(File.join("ports", "archives", "sqlite-autoconf-*.tar.gz")).first
+  add_file_to_gem(archive)
+
+  patches = %x(#{["git", "ls-files", "patches"].shelljoin}).split("\n").grep(/\.patch\z/)
+  patches.each { |patch| add_file_to_gem patch }
+end
+
 Rake::ExtensionTask.new("sqlite3_native", SQLITE3_SPEC) do |ext|
   ext.ext_dir = "ext/sqlite3"
   ext.lib_dir = "lib/sqlite3"
@@ -29,7 +56,7 @@ Rake::ExtensionTask.new("sqlite3_native", SQLITE3_SPEC) do |ext|
   ext.cross_config_options << "--enable-cross-build" # so extconf.rb knows we're cross-compiling
   ext.cross_compiling do |spec|
     # remove things not needed for precompiled gems
-    spec.files.reject! { |file| File.fnmatch?("*.tar.gz", file) } # TODO check
+    spec.dependencies.reject! { |dep| dep.name == "mini_portile2" }
     spec.metadata.delete('msys2_mingw_dependencies')
   end
 end
@@ -56,7 +83,7 @@ namespace "gem" do
   end
 
   desc "build native gem for all platforms"
-  multitask "all" => [cross_platforms, "gem"].flatten
+  task "all" => [cross_platforms, "gem"].flatten
 end
 
 desc "Temporarily set VERSION to a unique timestamp"

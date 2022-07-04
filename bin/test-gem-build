@@ -26,9 +26,8 @@ else
   bundle exec rake gem:${BUILD_NATIVE_GEM}:buildit
 fi
 
+./bin/test-gem-file-contents pkg/*.gem
+
 mkdir -p ${OUTPUT_DIR}
 cp -v pkg/*.gem ${OUTPUT_DIR}
 ls -l ${OUTPUT_DIR}/*
-
-# make sure github actions cache can read the file
-chmod 666 ports/archives/*

@@ -38,6 +38,7 @@ Gem::Specification.new do |s|
     ".gemtest",
     "API_CHANGES.md",
     "CHANGELOG.md",
+    "CONTRIBUTING.md",
     "ChangeLog.cvs",
     "Gemfile",
     "LICENSE",
