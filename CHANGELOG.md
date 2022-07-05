@@ -4,17 +4,32 @@
 
 ### Packaging
 
-Native (precompiled) gems are available for the following platforms:
+#### Faster, more reliable installation
+
+Native (precompiled) gems are available for Ruby 2.6, 2.7, 3.0, and 3.1 on all these platforms:
 
 - `aarch64-linux`
 - `arm-linux`
 - `arm64-darwin`
-- `x64-mingw32` / `x64-mingw-ucrt`
+- `x64-mingw32` and `x64-mingw-ucrt`
 - `x86-linux`
 - `x86_64-darwin`
 - `x86_64-linux`
 
+If you are using one of these Ruby versions on one of these platforms, the native gem is the recommended way to install sqlite3-ruby.
+
 See [the README](https://github.com/sparklemotion/sqlite3-ruby#native-gems-recommended) for more information.
+
+
+#### More consistent developer experience
+
+Both the native (precompiled) gems and the vanilla "ruby platform" (source) gem include sqlite v3.39.0 by default.
+
+Defaulting to a consistent version of sqlite across all systems means that your development environment behaves exactly like your production environment, and you have access to the latest and greatest features of sqlite.
+
+You can opt-out of the packaged version of sqlite (and use your system-installed library as in versions < 1.5.0). See [the README](https://github.com/sparklemotion/sqlite3-ruby#avoiding-the-precompiled-native-gem) for more information.
+
+[Release notes for this version of sqlite](https://sqlite.org/releaselog/3_39_0.html)
 
 
 ### Rubies and Platforms

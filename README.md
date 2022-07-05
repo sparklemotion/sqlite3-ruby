@@ -111,7 +111,7 @@ If you're on a platform that supports a native gem but you want to avoid using i
   - version 2.0 or earlier, then you'll need to run `bundle config force_ruby_platform true`
 
 
-### Compiling the Native Extension
+### Compiling the source gem
 
 If you are on a platform or version of Ruby that is not covered by the Native Gems, then the vanilla "ruby platform" (non-native) gem will be installed by the `gem install` or `bundle` commands.
 
