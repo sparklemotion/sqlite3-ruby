@@ -1,5 +1,33 @@
 # sqlite3-ruby Changelog
 
+## 1.5.0 / unreleased
+
+### Packaging
+
+Native (precompiled) gems are available for the following platforms:
+
+- `aarch64-linux`
+- `arm-linux`
+- `arm64-darwin`
+- `x64-mingw32` / `x64-mingw-ucrt`
+- `x86-linux`
+- `x86_64-darwin`
+- `x86_64-linux`
+
+See [the README](https://github.com/sparklemotion/sqlite3-ruby#native-gems-recommended) for more information.
+
+
+### Rubies and Platforms
+
+* TruffleRuby is supported.
+* Apple Silicon is supported (M1, arm64-darwin).
+
+
+### Added
+
+* `SQLite3::SQLITE_LOADED_VERSION` contains the version string of the sqlite3 library that is dynamically loaded (compare to `SQLite3::SQLITE_VERSION` which is the version at compile-time).
+
+
 ## 1.4.4 / 2022-06-14
 
 ### Fixes
