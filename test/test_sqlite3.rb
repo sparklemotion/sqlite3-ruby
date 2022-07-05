@@ -19,6 +19,7 @@ module SQLite3
     end
 
     def test_version_strings
+      skip if SQLite3::VERSION.include?("test") # see set-version-to-timestamp rake task
       assert_equal(SQLite3::VERSION, SQLite3::VersionProxy::STRING)
     end
   end
