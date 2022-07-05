@@ -20,7 +20,7 @@ module SQLite3
       assert_equal '', @db.filename('main')
       tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
-      assert_equal File.expand_path(tf.path), File.expand_path(@db.filename('main'))
+      assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename('main'))
     ensure
       tf.unlink if tf
     end
@@ -30,7 +30,7 @@ module SQLite3
       assert_equal '', @db.filename
       tf = Tempfile.new 'thing'
       @db = SQLite3::Database.new tf.path
-      assert_equal File.expand_path(tf.path), File.expand_path(@db.filename)
+      assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename)
     ensure
       tf.unlink if tf
     end
@@ -40,7 +40,8 @@ module SQLite3
       assert_equal '', @db.filename
       tf = Tempfile.new 'thing'
       @db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"
-      assert_equal File.expand_path(tf.path), File.expand_path(@db.filename('testing'))
+
+      assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename('testing'))
     ensure
       tf.unlink if tf
     end
@@ -50,7 +51,7 @@ module SQLite3
       tf = Tempfile.new 'thing'
       pn = Pathname tf.path
       db = SQLite3::Database.new pn
-      assert_equal pn.expand_path.to_s, File.expand_path(db.filename)
+      assert_equal pn.realdirpath.to_s, File.realdirpath(db.filename)
     ensure
       tf.close! if tf
     end

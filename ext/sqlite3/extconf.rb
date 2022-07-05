@@ -102,7 +102,7 @@ module Sqlite3
 
       def minimal_recipe
         MiniPortile.new(libname, sqlite3_config[:version]).tap do |recipe|
-          recipe.files = sqlite3_config[:files]    
+          recipe.files = sqlite3_config[:files]
           recipe.target = File.join(package_root_dir, "ports")
           recipe.patch_files = Dir[File.join(package_root_dir, "patches", "*.patch")].sort
         end
@@ -121,15 +121,16 @@ module Sqlite3
           sqlite3: {
             # checksum verified by first checking the published sha3(256) checksum:
             #
-            #   $ sha3sum -a 256 sqlite-autoconf-3380500.tar.gz
-            #   ab649fea76f49a6ec7f907f001d87b8bd76dec0679c783e3992284c5a882a98c  sqlite-autoconf-3380500.tar.gz
-            #   $ sha256sum sqlite-autoconf-3380500.tar.gz
-            #   5af07de982ba658fd91a03170c945f99c971f6955bc79df3266544373e39869c  sqlite-autoconf-3380500.tar.gz
+            #   $ sha3sum -a 256 sqlite-autoconf-3390000.tar.gz
+            #   b8e5b3265992350d40c4ad31efc2e6dec6256813f1d5acc8f0ea805e9f33ca2a  sqlite-autoconf-3390000.tar.gz
             #
-            version: "3.38.5",
+            #   $ sha256sum sqlite-autoconf-3390000.tar.gz
+            #   e90bcaef6dd5813fcdee4e867f6b65f3c9bfd0aec0f1017f9f3bbce1e4ed09e2  sqlite-autoconf-3390000.tar.gz
+            #
+            version: "3.39.0",
             files: [{
-                      url: "https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz",
-                      sha256: "5af07de982ba658fd91a03170c945f99c971f6955bc79df3266544373e39869c",
+                      url: "https://www.sqlite.org/2022/sqlite-autoconf-3390000.tar.gz",
+                      sha256: "e90bcaef6dd5813fcdee4e867f6b65f3c9bfd0aec0f1017f9f3bbce1e4ed09e2",
                     }],
           }
         }
