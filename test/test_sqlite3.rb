@@ -17,5 +17,9 @@ module SQLite3
         refute SQLite3.threadsafe?
       end
     end
+
+    def test_version_strings
+      assert_equal(SQLite3::VERSION, SQLite3::VersionProxy::STRING)
+    end
   end
 end
