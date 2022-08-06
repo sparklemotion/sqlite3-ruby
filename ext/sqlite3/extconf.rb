@@ -150,8 +150,87 @@ module Sqlite3
       def download
         minimal_recipe.download
       end
+
+      def print_help
+        print(<<~TEXT)
+          USAGE: ruby #{$PROGRAM_NAME} [options]
+
+            Flags that are always valid:
+
+                --disable-system-libraries
+                    Use the packaged libraries, and ignore the system libraries.
+                    (This is the default behavior.)
+
+                --enable-system-libraries
+                    Use system libraries instead of building and using the packaged libraries.
+
+                --with-sqlcipher
+                    Use libsqlcipher instead of libsqlite3.
+                    (Implies `--enable-system-libraries`.)
+
+                --help
+                    Display this message.
+
+
+            Flags only used when using system libraries:
+
+                General (applying to all system libraries):
+
+                    --with-opt-dir=DIRECTORY
+                        Look for headers and libraries in DIRECTORY.
+
+                    --with-opt-lib=DIRECTORY
+                        Look for libraries in DIRECTORY.
+
+                    --with-opt-include=DIRECTORY
+                        Look for headers in DIRECTORY.
+
+                Related to sqlcipher:
+
+                    --with-sqlcipher-dir=DIRECTORY
+                        Look for sqlcipher headers and library in DIRECTORY.
+                        (Implies `--with-sqlcipher` and `--enable-system-libraries`.)
+
+                    --with-sqlcipher-lib=DIRECTORY
+                        Look for sqlcipher library in DIRECTORY.
+                        (Implies `--with-sqlcipher` and `--enable-system-libraries`.)
+
+                    --with-sqlcipher-include=DIRECTORY
+                        Look for sqlcipher headers in DIRECTORY.
+                        (Implies `--with-sqlcipher` and `--enable-system-libraries`.)
+
+
+            Flags only used when building and using the packaged libraries:
+
+                --enable-cross-build
+                    Enable cross-build mode. (You probably do not want to set this manually.)
+
+
+            Environment variables used for compiling the C extension:
+
+                CC
+                    Use this path to invoke the compiler instead of `RbConfig::CONFIG['CC']`
+
+
+            Environment variables passed through to the compilation of packaged libraries:
+
+                CC
+                CPPFLAGS
+                CFLAGS
+                LDFLAGS
+                LIBS
+                LT_SYS_LIBRARY_PATH
+                CPP
+
+        TEXT
+      end
     end
   end
+end
+
+if arg_config("--help")
+  Sqlite3::ExtConf.print_help
+  exit!(0)
 end
 
 if arg_config("--download-dependencies")
