@@ -36,7 +36,10 @@ module Sqlite3
       end
 
       def sqlcipher?
-        with_config("sqlcipher")
+        with_config("sqlcipher") ||
+          with_config("sqlcipher-dir") ||
+          with_config("sqlcipher-include") ||
+          with_config("sqlcipher-lib")
       end
 
       def configure_system_libraries
