@@ -84,11 +84,8 @@ jobs:
         include:
           - os: "windows-2022"
             ruby: "mingw"
-          # # I'm struggling to build against sqlcipher on mswin.
-          # # find_header can't find sqlite3.h
-          # # patches welcome from anyone who needs this functionality and can make it work.
-          # - os: "windows-2022"
-          #   ruby: "mswin"
+          - os: "windows-2022"
+            ruby: "mswin"
     runs-on: ${{matrix.os}}
     steps:
       - if: matrix.os == 'windows-2022'
@@ -104,6 +101,6 @@ jobs:
           apt-get: "libsqlcipher-dev"
           brew: "sqlcipher"
           mingw: "sqlcipher"
-          # vcpkg: "sqlcipher" # see above
+          vcpkg: "sqlcipher"
       - run: bundle exec rake compile -- --with-sqlcipher
       - run: bundle exec rake test

@@ -21,8 +21,11 @@
 #define SQLITE3_UTF8_STR_NEW2(_obj) \
     (rb_enc_associate_index(rb_str_new2(_obj), rb_utf8_encindex()))
 
-
-#include <sqlite3.h>
+#ifdef USING_SQLCIPHER_INC_SUBDIR
+#  include <sqlcipher/sqlite3.h>
+#else
+#  include <sqlite3.h>
+#endif
 
 #ifndef HAVE_TYPE_SQLITE3_INT64
 typedef sqlite_int64 sqlite3_int64;
