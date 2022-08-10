@@ -44,7 +44,7 @@ module Sqlite3
 
       def configure_system_libraries
         pkg_config(libname)
-        append_cflags("-DUSING_SQLCIPHER") if sqlcipher?
+        append_cppflags("-DUSING_SQLCIPHER") if sqlcipher?
       end
 
       def configure_packaged_libraries
@@ -75,10 +75,17 @@ module Sqlite3
 
       def configure_extension
         if Gem::Requirement.new("< 2.7").satisfied_by?(Gem::Version.new(RUBY_VERSION))
-          append_cflags("-DTAINTING_SUPPORT")
+          append_cppflags("-DTAINTING_SUPPORT")
         end
 
-        abort_could_not_find("sqlite3.h") unless find_header("sqlite3.h")
+        if find_header("sqlite3.h")
+          # noop
+        elsif sqlcipher? && find_header("sqlcipher/sqlite3.h")
+          append_cppflags("-DUSING_SQLCIPHER_INC_SUBDIR")
+        else
+          abort_could_not_find("sqlite3.h")
+        end
+
         abort_could_not_find(libname) unless find_library(libname, "sqlite3_libversion_number", "sqlite3.h")
 
         # Functions defined in 1.9 but not 1.8
