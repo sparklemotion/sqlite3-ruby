@@ -26,21 +26,24 @@ jobs:
         include:
           - os: "ubuntu-latest"
             ruby: "truffleruby-head"
-          - os: "ubuntu-latest"
+            lib: "packaged"
+
+          - os: "ubuntu-22.04"
             ruby: "head"
+            lib: "packaged"
+
+          - os: "ubuntu-22.04"
+            ruby: "head"
+            lib: "system"
+
           - os: "windows-2022"
-            ruby: "mingw"
-            sys: "enable"
-          - os: "windows-2022"
-            ruby: "mingw"
-            sys: "disable"
+            ruby: "ucrt"
+            lib: "system"
+
           - os: "windows-2022"
             ruby: "mswin"
-            sys: "enable"
-          - lib: "system"
-            sys: "enable"
-          - lib: "packaged"
-            sys: "disable"
+            lib: "system"
+
     runs-on: ${{matrix.os}}
     steps:
       - if: matrix.os == 'windows-2022'
@@ -62,7 +65,16 @@ jobs:
         with:
           path: ports
           key: ports-${{matrix.os}}-${{hashFiles('ext/sqlite3/extconf.rb')}}
-      - run: bundle exec rake compile -- --${{matrix.sys}}-system-libraries
+      
+      - run: bundle exec rake compile -- --disable-system-libraries
+        if: matrix.lib == 'packaged'
+
+      - run: bundle exec rake compile -- --enable-system-libraries
+        if: matrix.lib == 'system' && !startsWith(matrix.os, 'macos')
+
+      - run: bundle exec rake compile -- --enable-system-libraries --with-opt-dir=$(brew --prefix sqlite3)
+        if: matrix.lib == 'system' && startsWith(matrix.os, 'macos')
+
       - run: bundle exec rake test
 
   old_sqlite3:
