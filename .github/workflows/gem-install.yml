@@ -87,7 +87,10 @@ jobs:
         with:
           name: cruby-gem
           path: gems
-      - run: ./bin/test-gem-install gems --${{matrix.sys}}-system-libraries
+      - if: matrix.sys == 'enable'
+        run: ./bin/test-gem-install gems --enable-system-libraries --with-opt-dir=$(brew --prefix sqlite3)
+      - if: matrix.sys == 'disable'
+        run: ./bin/test-gem-install gems --disable-system-libraries
 
   cruby-windows-install:
     needs: ["cruby-package"]
