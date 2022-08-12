@@ -23,7 +23,7 @@ See [the README](https://github.com/sparklemotion/sqlite3-ruby#native-gems-recom
 
 #### More consistent developer experience
 
-Both the native (precompiled) gems and the vanilla "ruby platform" (source) gem include sqlite v3.39.0 by default.
+Both the native (precompiled) gems and the vanilla "ruby platform" (source) gem include sqlite v3.39.2 by default.
 
 Defaulting to a consistent version of sqlite across all systems means that your development environment behaves exactly like your production environment, and you have access to the latest and greatest features of sqlite.
 
@@ -36,6 +36,7 @@ You can opt-out of the packaged version of sqlite (and use your system-installed
 
 * TruffleRuby is supported.
 * Apple Silicon is supported (M1, arm64-darwin).
+* vcpkg system libraries supported. [#332] (Thanks, @MSP-Greg!)
 
 
 ### Added
