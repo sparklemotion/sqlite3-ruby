@@ -1,3 +1,5 @@
+# for Actions OS info, see https://github.com/actions/runner-images#available-images
+
 name: test suite
 concurrency:
   group: "${{github.workflow}}-${{github.ref}}"
@@ -20,29 +22,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-2022"]
+        os: [ubuntu-latest, macos-latest, windows-2022]
+        # use quotes for versions, otherwise "3.0" -> "3", "2.10" -> "2.1"
         ruby: ["3.1", "3.0", "2.7", "2.6"]
-        lib: ["system", "packaged"]
+        lib: [system, packaged]
         include:
-          - os: "ubuntu-latest"
-            ruby: "truffleruby-head"
-            lib: "packaged"
-
-          - os: "ubuntu-22.04"
-            ruby: "head"
-            lib: "packaged"
-
-          - os: "ubuntu-22.04"
-            ruby: "head"
-            lib: "system"
-
-          - os: "windows-2022"
-            ruby: "ucrt"
-            lib: "system"
-
-          - os: "windows-2022"
-            ruby: "mswin"
-            lib: "system"
+          - { os: ubuntu-latest, ruby: truffleruby-head, lib: packaged }
+          - { os: ubuntu-22.04 , ruby: head            , lib: packaged }
+          - { os: ubuntu-22.04 , ruby: head            , lib: system   }
+          - { os: windows-2022 , ruby: ucrt            , lib: system   }
+          - { os: windows-2022 , ruby: mswin           , lib: system   }
 
     runs-on: ${{matrix.os}}
     steps:
@@ -56,10 +45,10 @@ jobs:
         with:
           ruby-version: ${{matrix.ruby}}
           bundler-cache: true
-          apt-get: "libsqlite3-dev"
-          brew: "sqlite3"
-          mingw: "sqlite3"
-          vcpkg: "sqlite3"
+          apt-get: libsqlite3-dev
+          brew: sqlite3
+          mingw: sqlite3
+          vcpkg: sqlite3
       - if: matrix.lib == 'packaged'
         uses: actions/cache@v3
         with:
@@ -91,13 +80,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-2022"]
+        os: [ubuntu-latest, macos-latest, windows-2022]
+        # use quotes for versions, otherwise "3.0" -> "3", "2.10" -> "2.1"
         ruby: ["3.1", "2.6"] # oldest and newest
         include:
-          - os: "windows-2022"
-            ruby: "mingw"
-          - os: "windows-2022"
-            ruby: "mswin"
+          - { os: windows-2022, ruby: mingw }
+          - { os: windows-2022, ruby: mswin }
     runs-on: ${{matrix.os}}
     steps:
       - if: matrix.os == 'windows-2022'
@@ -110,9 +98,9 @@ jobs:
         with:
           ruby-version: ${{matrix.ruby}}
           bundler-cache: true
-          apt-get: "libsqlcipher-dev"
-          brew: "sqlcipher"
-          mingw: "sqlcipher"
-          vcpkg: "sqlcipher"
+          apt-get: libsqlcipher-dev
+          brew: sqlcipher
+          mingw: sqlcipher
+          vcpkg: sqlcipher
       - run: bundle exec rake compile -- --with-sqlcipher
       - run: bundle exec rake test
