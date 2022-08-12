@@ -31,7 +31,7 @@ static char *
 utf16_string_value_ptr(VALUE str)
 {
   StringValue(str);
-  rb_str_buf_cat(str, "\x00", 1L);
+  rb_str_buf_cat(str, "\x00\x00", 2L);
   return RSTRING_PTR(str);
 }
 
