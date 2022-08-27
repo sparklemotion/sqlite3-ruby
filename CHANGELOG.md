@@ -44,6 +44,11 @@ You can opt-out of the packaged version of sqlite (and use your system-installed
 * `SQLite3::SQLITE_LOADED_VERSION` contains the version string of the sqlite3 library that is dynamically loaded (compare to `SQLite3::SQLITE_VERSION` which is the version at compile-time).
 
 
+### Fixed
+
+* `SQLite3::Database#load_extensions` now raises a `TypeError` unless a String is passed as the file path. Previously it was possible to pass a non-string and cause a segfault. [#339]
+
+
 ## 1.4.4 / 2022-06-14
 
 ### Fixes

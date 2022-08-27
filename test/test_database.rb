@@ -534,5 +534,12 @@ module SQLite3
       end
       assert_includes error.message, "no such column: nope"
     end
+
+    def test_load_extension_with_nonstring_argument
+      db = SQLite3::Database.new(':memory:')
+      skip("extensions are not enabled") unless db.respond_to?(:load_extension)
+      assert_raises(TypeError) { db.load_extension(1) }
+      assert_raises(TypeError) { db.load_extension(Pathname.new("foo.so")) }
+    end
   end
 end
