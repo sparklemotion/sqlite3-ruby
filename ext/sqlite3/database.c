@@ -603,7 +603,7 @@ static VALUE load_extension(VALUE self, VALUE file)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  status = sqlite3_load_extension(ctx->db, RSTRING_PTR(file), 0, &errMsg);
+  status = sqlite3_load_extension(ctx->db, StringValuePtr(file), 0, &errMsg);
   if (status != SQLITE_OK)
   {
     errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
