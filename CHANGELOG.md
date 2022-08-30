@@ -29,7 +29,7 @@ Defaulting to a consistent version of sqlite across all systems means that your 
 
 You can opt-out of the packaged version of sqlite (and use your system-installed library as in versions < 1.5.0). See [the README](https://github.com/sparklemotion/sqlite3-ruby#avoiding-the-precompiled-native-gem) for more information.
 
-[Release notes for this version of sqlite](https://sqlite.org/releaselog/3_39_0.html)
+[Release notes for this version of sqlite](https://sqlite.org/releaselog/3_39_2.html)
 
 
 ### Rubies and Platforms
