@@ -51,7 +51,11 @@ module Sqlite3
         minimal_recipe.tap do |recipe|
           recipe.configure_options += ["--enable-shared=no", "--enable-static=yes"]
           ENV.to_h.tap do |env|
-            env["CFLAGS"] = [env["CFLAGS"], "-fPIC"].join(" ") # needed for linking the static library into a shared library
+            additional_cflags = [
+              "-fPIC", # needed for linking the static library into a shared library
+              "-O2", # see https://github.com/sparklemotion/sqlite3-ruby/issues/335 for some benchmarks
+            ]
+            env["CFLAGS"] = [env["CFLAGS"], additional_cflags].flatten.join(" ")
             recipe.configure_options += env.select { |k,v| ENV_ALLOWLIST.include?(k) }
                                            .map { |key, value| "#{key}=#{value.strip}" }
           end
