@@ -118,7 +118,7 @@ If you are on a platform or version of Ruby that is not covered by the Native Ge
 
 #### Packaged libsqlite3
 
-By default, as of v1.5.0 of this library, libsqlite3 v3.38.5 is packaged with the gem and will be compiled and used automatically. This takes a bit longer than the native gem, but will provide a modern, well-supported version of libsqlite3.
+By default, as of v1.5.0 of this library, the latest available version of libsqlite3 is packaged with the gem and will be compiled and used automatically. This takes a bit longer than the native gem, but will provide a modern, well-supported version of libsqlite3.
 
 For example, on a linux system running Ruby 2.5:
 
