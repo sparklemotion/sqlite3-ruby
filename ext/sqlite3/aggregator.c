@@ -269,6 +269,6 @@ rb_sqlite3_aggregator_init(void)
   cAggregatorWrapper = rb_funcall(rb_cClass, rb_intern("new"), 0);
   cAggregatorInstance = rb_funcall(rb_cClass, rb_intern("new"), 0);
 
-  rb_gc_register_address(&cAggregatorWrapper);
-  rb_gc_register_address(&cAggregatorInstance);
+  rb_gc_register_mark_object(cAggregatorWrapper);
+  rb_gc_register_mark_object(cAggregatorInstance);
 }
