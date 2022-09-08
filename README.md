@@ -107,7 +107,8 @@ If you're on a platform that supports a native gem but you want to avoid using i
 
 - If you're not using Bundler, then run `gem install sqlite3 --platform=ruby`
 - If you are using Bundler
-  - version 2.1 or later, then you'll need to run `bundle config set force_ruby_platform true`,
+  - version 2.3.18 or later, you can specify [`gem "sqlite3", force_ruby_platform: true`](https://bundler.io/v2.3/man/gemfile.5.html#FORCE_RUBY_PLATFORM)
+  - version 2.1 or later, then you'll need to run `bundle config set force_ruby_platform true`
   - version 2.0 or earlier, then you'll need to run `bundle config force_ruby_platform true`
 
 
@@ -143,6 +144,7 @@ If you would prefer to build the sqlite3-ruby gem against your system libsqlite3
 
 PLEASE NOTE:
 
+- you must avoid installing a precompiled native gem (see [previous section](#avoiding-the-precompiled-native-gem))
 - only versions of libsqlite3 `>= 3.5.0` are supported,
 - and some library features may depend on how your libsqlite3 was compiled.
 
