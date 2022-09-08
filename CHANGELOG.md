@@ -1,6 +1,6 @@
 # sqlite3-ruby Changelog
 
-## 1.5.0 / unreleased
+## 1.5.0 / 2022-09-08
 
 ### Packaging
 

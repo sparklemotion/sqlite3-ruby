@@ -1,16 +1,14 @@
 module SQLite3
 
-  VERSION = "1.5.0.rc2"
+  VERSION = "1.5.0"
 
   module VersionProxy
-
     MAJOR = 1
     MINOR = 5
     TINY  = 0
-    BUILD = "rc2"
+    BUILD = nil
 
     STRING = [ MAJOR, MINOR, TINY, BUILD ].compact.join( "." )
-    #:beta-tag:
 
     VERSION = ::SQLite3::VERSION
   end
