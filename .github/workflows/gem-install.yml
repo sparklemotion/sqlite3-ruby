@@ -24,7 +24,7 @@ jobs:
         with:
           path: ports/archives
           key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.1"
           bundler-cache: true
@@ -39,7 +39,7 @@ jobs:
         with:
           path: ports/archives
           key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.1"
           bundler-cache: true
@@ -56,11 +56,11 @@ jobs:
       fail-fast: false
       matrix:
         sys: ["enable", "disable"]
-        ruby: ["2.6", "2.7", "3.0", "3.1", "head"]
+        ruby: ["2.6", "2.7", "3.0", "3.1", "head", "truffleruby-head"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: MSP-Greg/setup-ruby-pkgs@v1
+      - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "${{matrix.ruby}}"
           apt-get: "libsqlite3-dev pkg-config"
@@ -76,11 +76,11 @@ jobs:
       fail-fast: false
       matrix:
         sys: ["enable", "disable"]
-        ruby: ["3.1"]
+        ruby: ["3.1", "truffleruby-head"]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{matrix.ruby}}"
       - uses: actions/download-artifact@v3
@@ -102,7 +102,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: MSP-Greg/setup-ruby-pkgs@v1
+      - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "3.0"
           mingw: "sqlite3"
@@ -125,7 +125,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v3
-      - uses: MSP-Greg/setup-ruby-pkgs@v1
+      - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "3.1"
           mingw: "sqlite3"
@@ -222,7 +222,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v3
-      - uses: MSP-Greg/setup-ruby-pkgs@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{matrix.ruby}}"
       - uses: actions/download-artifact@v3
