@@ -1,10 +1,24 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 1.5.1 / 2022-09-29
 
 ### Dependencies
 
 * Vendored sqlite is updated to [v3.39.4](https://sqlite.org/releaselog/3_39_4.html).
+
+### Security
+
+The vendored version of sqlite, v3.39.4, should be considered to be a security release. From the release notes:
+
+> Version 3.39.4 is a minimal patch against the prior release that addresses issues found since the
+> prior release. In particular, a potential vulnerability in the FTS3 extension has been fixed, so
+> this should be considered a security update.
+>
+> In order to exploit the vulnerability, an attacker must have full SQL access and must be able to
+> construct a corrupt database with over 2GB of FTS3 content. The problem arises from a 32-bit
+> signed integer overflow.
+
+For more information please see [GHSA-mgvv-5mxp-xq67](https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-mgvv-5mxp-xq67).
 
 
 ## 1.5.0 / 2022-09-08
