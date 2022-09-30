@@ -1,5 +1,6 @@
 require "mkmf"
 require "mini_portile2"
+require "yaml"
 
 module Sqlite3
   module ExtConf
@@ -131,23 +132,8 @@ module Sqlite3
       end
 
       def mini_portile_config
-        {
-          sqlite3: {
-            # checksum verified by first checking the published sha3(256) checksum against https://sqlite.org/download.html:
-            #
-            # $ sha3sum -a 256 ports/archives/sqlite-autoconf-3390400.tar.gz
-            # 431328e30d12c551da9ba7ef2122b269076058512014afa799caaf62ca567090  ports/archives/sqlite-autoconf-3390400.tar.gz
-            #
-            # $ sha256sum ports/archives/sqlite-autoconf-3390400.tar.gz
-            # f31d445b48e67e284cf206717cc170ab63cbe4fd7f79a82793b772285e78fdbb  ports/archives/sqlite-autoconf-3390400.tar.gz
-            #
-            version: "3.39.4",
-            files: [{
-                      url: "https://sqlite.org/2022/sqlite-autoconf-3390400.tar.gz",
-                      sha256: "f31d445b48e67e284cf206717cc170ab63cbe4fd7f79a82793b772285e78fdbb",
-                    }],
-          }
-        }
+        # TODO: once Ruby 2.7 is no longer supported, use symbolize_names: true
+        YAML.load_file(File.join(package_root_dir, "dependencies.yml"))
       end
 
       def abort_could_not_find(missing)
