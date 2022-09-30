@@ -23,7 +23,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ports/archives
-          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb')}}
+          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "3.1"
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ports/archives
-          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb')}}
+          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "3.1"
@@ -158,7 +158,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ports/archives
-          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb')}}
+          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
       - run: |
           docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 \
             larskanis/rake-compiler-dock-mri-${{matrix.plat}}:1.2.1 \

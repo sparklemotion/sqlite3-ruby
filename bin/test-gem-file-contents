@@ -117,9 +117,12 @@ describe File.basename(gemfile) do
     end
 
     it "contains the port files" do
+      # TODO: once Ruby 2.7 is no longer supported, use symbolize_names: true
+      dependencies = YAML.load_file(File.join(__dir__, "..", "dependencies.yml"))
+      sqlite_tarball = File.basename(dependencies[:sqlite3][:files].first[:url])
       actual_ports = gemfile_contents.grep(%r{^ports/})
-      assert_equal(1, actual_ports.count { |f| File.fnmatch?("ports/archives/sqlite-autoconf-*.tar.gz", f) })
-      assert_equal(1, actual_ports.length)
+
+      assert_equal(["ports/archives/#{sqlite_tarball}"], actual_ports)
     end
 
     it "contains the patch files" do

@@ -44,6 +44,7 @@ Gem::Specification.new do |s|
     "LICENSE",
     "LICENSE-DEPENDENCIES",
     "README.md",
+    "dependencies.yml",
     "ext/sqlite3/aggregator.c",
     "ext/sqlite3/aggregator.h",
     "ext/sqlite3/backup.c",

@@ -4,6 +4,7 @@ require "bundler/gem_tasks"
 require "rubygems/package_task"
 require "rake/extensiontask"
 require "rake_compiler_dock"
+require "yaml"
 
 cross_rubies = ["3.1.0", "3.0.0", "2.7.0", "2.6.0"]
 cross_platforms = [
@@ -41,7 +42,10 @@ def add_file_to_gem(relative_source_path)
 end
 
 task gem_build_path do
-  archive = Dir.glob(File.join("ports", "archives", "sqlite-autoconf-*.tar.gz")).first
+  # TODO: once Ruby 2.7 is no longer supported, use symbolize_names: true
+  dependencies = YAML.load_file(File.join(__dir__, "..", "dependencies.yml"))
+  sqlite_tarball = File.basename(dependencies[:sqlite3][:files].first[:url])
+  archive = Dir.glob(File.join("ports", "archives", sqlite_tarball)).first
   add_file_to_gem(archive)
 
   patches = %x(#{["git", "ls-files", "patches"].shelljoin}).split("\n").grep(/\.patch\z/)
