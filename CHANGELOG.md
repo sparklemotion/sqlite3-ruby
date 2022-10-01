@@ -1,5 +1,14 @@
 # sqlite3-ruby Changelog
 
+## 1.5.2 / 2022-10-01
+
+### Packaging
+
+This version correctly vendors the tarball for sqlite v3.39.4 in the vanilla "ruby" platform gem package, so that users will not require network access at installation.
+
+v1.5.0 and v1.5.1 mistakenly packaged the tarball for sqlite v3.38.5 in the vanilla "ruby" platform gem, resulting in downloading the intended tarball over the network at installation time (or, if the network was not available, failure to install). Note that the precompiled native gems were not affected by this issue. [#352]
+
+
 ## 1.5.1 / 2022-09-29
 
 ### Dependencies
