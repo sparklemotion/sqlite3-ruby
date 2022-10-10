@@ -76,6 +76,21 @@ jobs:
       - run: bundle exec rake compile -- --enable-system-libraries
       - run: bundle exec rake test
 
+  # reported at https://github.com/sparklemotion/sqlite3-ruby/issues/354
+  # TODO remove once https://github.com/flavorjones/mini_portile/issues/118 is fixed
+  fedora:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:35
+    steps:
+      - run: |
+          dnf group install -y "C Development Tools and Libraries"
+          dnf install -y ruby ruby-devel
+      - uses: actions/checkout@v3
+      - run: bundle install
+      - run: bundle exec rake compile -- --disable-system-libraries
+      - run: bundle exec rake test
+
   sqlcipher:
     strategy:
       fail-fast: false
