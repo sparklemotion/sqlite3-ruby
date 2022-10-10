@@ -66,15 +66,24 @@ module Sqlite3
           end
           recipe.activate
 
-          ENV["PKG_CONFIG_ALLOW_SYSTEM_CFLAGS"] = "t" # on macos, pkg-config will not return --cflags without this
-          pcfile = File.join(recipe.path, "lib", "pkgconfig", "sqlite3.pc")
-          if pkg_config(pcfile)
-            # see https://bugs.ruby-lang.org/issues/18490
-            libs = xpopen(["pkg-config", "--libs", "--static", pcfile], err: [:child, :out], &:read)
-            libs.split.each { |lib| append_ldflags(lib) } if $?.success?
-          else
-            abort("\nCould not configure the build properly. Please install either the `pkg-config` utility or the `pkg-config` rubygem.\n\n")
+          # on macos, pkg-config will not return --cflags without this
+          ENV["PKG_CONFIG_ALLOW_SYSTEM_CFLAGS"] = "t"
+
+          lib_path = File.join(recipe.path, "lib")
+          pcfile = File.join(lib_path, "pkgconfig", "sqlite3.pc")
+          abort_pkg_config("pkg_config") unless pkg_config(pcfile)
+
+          # see https://bugs.ruby-lang.org/issues/18490
+          flags = xpopen(["pkg-config", "--libs", "--static", pcfile], err: [:child, :out], &:read)
+          abort_pkg_config("xpopen") unless $?.success?
+          flags = flags.split
+
+          # see https://github.com/flavorjones/mini_portile/issues/118
+          "-L#{lib_path}".tap do |lib_path_flag|
+            flags.prepend(lib_path_flag) unless flags.include?(lib_path_flag)
           end
+
+          flags.each { |flag| append_ldflags(flag) }
         end
       end
 
@@ -138,6 +147,10 @@ module Sqlite3
 
       def abort_could_not_find(missing)
         abort("\nCould not find #{missing}.\nPlease visit https://github.com/sparklemotion/sqlite3-ruby for installation instructions.\n\n")
+      end
+
+      def abort_pkg_config(id)
+        abort("\nCould not configure the build properly (#{id}). Please install either the `pkg-config` utility or the `pkg-config` rubygem.\n\n")
       end
 
       def cross_build?
