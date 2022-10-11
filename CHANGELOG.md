@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## 1.5.3 / 2022-10-11
+
+### Fixed
+
+* Fixed installation of the "ruby" platform gem when building from source on Fedora. In v1.5.0..v1.5.2, installation failed on some systems due to the behavior of Fedora's pkg-config implementation. [#355]
+
+
 ## 1.5.2 / 2022-10-01
 
 ### Packaging
