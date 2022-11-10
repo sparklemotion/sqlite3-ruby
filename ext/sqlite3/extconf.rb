@@ -126,9 +126,13 @@ module Sqlite3
 
       def minimal_recipe
         MiniPortile.new(libname, sqlite3_config[:version]).tap do |recipe|
-          recipe.files = sqlite3_config[:files]
-          recipe.target = File.join(package_root_dir, "ports")
-          recipe.patch_files = Dir[File.join(package_root_dir, "patches", "*.patch")].sort
+          if sqlite_source_dir
+            recipe.source_directory = sqlite_source_dir
+          else
+            recipe.files = sqlite3_config[:files]
+            recipe.target = File.join(package_root_dir, "ports")
+            recipe.patch_files = Dir[File.join(package_root_dir, "patches", "*.patch")].sort
+          end
         end
       end
 
@@ -157,6 +161,10 @@ module Sqlite3
         enable_config("cross-build")
       end
 
+      def sqlite_source_dir
+        arg_config("--with-sqlite-source-dir")
+      end
+
       def download
         minimal_recipe.download
       end
@@ -177,6 +185,9 @@ module Sqlite3
                 --with-sqlcipher
                     Use libsqlcipher instead of libsqlite3.
                     (Implies `--enable-system-libraries`.)
+
+                --with-sqlite-source-dir=DIRECTORY
+                    (dev only) Build sqlite from the source code in DIRECTORY
 
                 --help
                     Display this message.
