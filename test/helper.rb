@@ -9,6 +9,7 @@ puts "info: gem version: #{SQLite3::VERSION}"
 puts "info: sqlite version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
 puts "info: sqlcipher?: #{SQLite3.sqlcipher?}"
 puts "info: threadsafe?: #{SQLite3.threadsafe?}"
+puts "info: ractor_safe?: #{SQLite3.ractor_safe?}"
 
 module SQLite3
   class TestCase < Minitest::Test

@@ -83,6 +83,7 @@ Gem::Specification.new do |s|
     "test/test_integration_aggregate.rb",
     "test/test_integration_open_close.rb",
     "test/test_integration_pending.rb",
+    "test/test_integration_ractor.rb",
     "test/test_integration_resultset.rb",
     "test/test_integration_statement.rb",
     "test/test_pragmas.rb",
