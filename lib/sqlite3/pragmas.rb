@@ -11,7 +11,7 @@ module SQLite3
 
     # Returns +true+ or +false+ depending on the value of the named pragma.
     def get_boolean_pragma( name )
-      get_first_value( "PRAGMA #{name}" ) != "0"
+      get_first_value( "PRAGMA #{name}" ) != 0
     end
 
     # Sets the given pragma to the given boolean value. The value itself
@@ -260,7 +260,7 @@ module SQLite3
     def full_column_names=( mode )
       set_boolean_pragma "full_column_names", mode
     end
-  
+
     def fullfsync
       get_boolean_pragma "fullfsync"
     end
@@ -356,7 +356,7 @@ module SQLite3
     def parser_trace=( mode )
       set_boolean_pragma "parser_trace", mode
     end
-  
+
     def query_only
       get_boolean_pragma "query_only"
     end
