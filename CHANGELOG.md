@@ -2,6 +2,13 @@
 
 ## next / unreleased
 
+### Ruby
+
+This release introduces native gem support for Ruby 3.2.
+
+This release ends native gem support for Ruby 2.6, for which [upstream support ended 2022-04-12](https://www.ruby-lang.org/en/downloads/branches/).
+
+
 ### Dependencies
 
 * Vendored sqlite3 is updated to [v3.40.1](https://sqlite.org/releaselog/3_40_1.html).
