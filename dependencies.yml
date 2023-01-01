@@ -2,13 +2,14 @@
 :sqlite3:
   # checksum verified by first checking the published sha3(256) checksum against https://sqlite.org/download.html:
   #
-  # $ sha3sum -a 256 ports/archives/sqlite-autoconf-3400000.tar.gz
-  # 7ee8f02b21edb4489df5082b5cf5b7ef47bcebcdb0e209bf14240db69633c878  ports/archives/sqlite-autoconf-3400000.tar.gz
+  # $ sha3sum -a 256 ports/archives/sqlite-autoconf-3400100.tar.gz
+  # 3136db4bcd9e9e1e485c291380a3d86f0f21cae0eff9f714c0ef4821e2e5cdf7  ports/archives/sqlite-autoconf-3400100.tar.gz
   #
-  # $ sha256sum ports/archives/sqlite-autoconf-3400000.tar.gz
-  # 0333552076d2700c75352256e91c78bf5cd62491589ba0c69aed0a81868980e7  ports/archives/sqlite-autoconf-3400000.tar.gz
+  # juno in sqlite3-ruby on  flavorjones-update-sqlite-3.40.1 [$!?] via 💎 v3.1.2
+  # $ sha256sum ports/archives/sqlite-autoconf-3400100.tar.gz
+  # 2c5dea207fa508d765af1ef620b637dcb06572afa6f01f0815bd5bbf864b33d9  ports/archives/sqlite-autoconf-3400100.tar.gz
   #
-  :version: "3.40.0"
+  :version: "3.40.1"
   :files:
-    - :url: "https://sqlite.org/2022/sqlite-autoconf-3400000.tar.gz"
-      :sha256: "0333552076d2700c75352256e91c78bf5cd62491589ba0c69aed0a81868980e7"
+    - :url: "https://sqlite.org/2022/sqlite-autoconf-3400100.tar.gz"
+      :sha256: "2c5dea207fa508d765af1ef620b637dcb06572afa6f01f0815bd5bbf864b33d9"
