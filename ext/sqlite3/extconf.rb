@@ -69,6 +69,9 @@ module Sqlite3
           # on macos, pkg-config will not return --cflags without this
           ENV["PKG_CONFIG_ALLOW_SYSTEM_CFLAGS"] = "t"
 
+          # only needed for Ruby 3.1.3, see https://bugs.ruby-lang.org/issues/19233
+          RbConfig::CONFIG["PKG_CONFIG"] = config_string("PKG_CONFIG") || "pkg-config"
+
           lib_path = File.join(recipe.path, "lib")
           pcfile = File.join(lib_path, "pkgconfig", "sqlite3.pc")
           abort_pkg_config("pkg_config") unless pkg_config(pcfile)
