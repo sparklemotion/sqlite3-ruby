@@ -86,6 +86,7 @@ Gem::Specification.new do |s|
     "test/test_integration_pending.rb",
     "test/test_integration_resultset.rb",
     "test/test_integration_statement.rb",
+    "test/test_pragmas.rb",
     "test/test_result_set.rb",
     "test/test_sqlite3.rb",
     "test/test_statement.rb",
