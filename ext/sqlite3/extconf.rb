@@ -69,21 +69,29 @@ module Sqlite3
           # on macos, pkg-config will not return --cflags without this
           ENV["PKG_CONFIG_ALLOW_SYSTEM_CFLAGS"] = "t"
 
+          # only needed for Ruby 3.1.3, see https://bugs.ruby-lang.org/issues/19233
+          RbConfig::CONFIG["PKG_CONFIG"] = config_string("PKG_CONFIG") || "pkg-config"
+
           lib_path = File.join(recipe.path, "lib")
           pcfile = File.join(lib_path, "pkgconfig", "sqlite3.pc")
           abort_pkg_config("pkg_config") unless pkg_config(pcfile)
 
           # see https://bugs.ruby-lang.org/issues/18490
-          flags = xpopen(["pkg-config", "--libs", "--static", pcfile], err: [:child, :out], &:read)
+          ldflags = xpopen(["pkg-config", "--libs", "--static", pcfile], err: [:child, :out], &:read)
           abort_pkg_config("xpopen") unless $?.success?
-          flags = flags.split
+          ldflags = ldflags.split
 
-          # see https://github.com/flavorjones/mini_portile/issues/118
-          "-L#{lib_path}".tap do |lib_path_flag|
-            flags.prepend(lib_path_flag) unless flags.include?(lib_path_flag)
+          if needs_darwin_linker_hack
+            ldflags.delete("-lsqlite3")
+            ldflags.prepend("-Wl,-flat_namespace", "-Wl,-hidden-lsqlite3")
+          else
+            # see https://github.com/flavorjones/mini_portile/issues/118
+            "-L#{lib_path}".tap do |lib_path_flag|
+              ldflags.prepend(lib_path_flag) unless ldflags.include?(lib_path_flag)
+            end
           end
 
-          flags.each { |flag| append_ldflags(flag) }
+          ldflags.each { |ldflag| append_ldflags(ldflag) }
         end
       end
 
@@ -167,6 +175,17 @@ module Sqlite3
 
       def download
         minimal_recipe.download
+      end
+
+      def needs_darwin_linker_hack
+        # See https://github.com/rake-compiler/rake-compiler-dock/issues/87 for more info.
+        cross_build? &&
+          darwin? &&
+          RbConfig::CONFIG["ruby_version"] >= "3.2"
+      end
+
+      def darwin?
+        RbConfig::CONFIG["target_os"].include?("darwin")
       end
 
       def print_help
