@@ -71,7 +71,7 @@ end
 
 ### Native Gems (recommended)
 
-As of v1.5.0 of this library, native (precompiled) gems are available for Ruby 2.6, 2.7, 3.0, and 3.1 on all these platforms:
+In v1.5.0 and later, native (precompiled) gems are available for recent Ruby versions on these platforms:
 
 - `aarch64-linux`
 - `arm-linux`

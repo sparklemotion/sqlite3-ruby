@@ -1,6 +1,6 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 1.6.0 / unreleased
 
 ### Ruby
 
@@ -12,6 +12,11 @@ This release ends native gem support for Ruby 2.6, for which [upstream support e
 ### Dependencies
 
 * Vendored sqlite3 is updated to [v3.40.1](https://sqlite.org/releaselog/3_40_1.html).
+
+
+### Fixes
+
+* `get_boolean_pragma` now returns the correct value. Previously, it always returned true. [#275] (Thank you, @Edouard-chin!)
 
 
 ## 1.5.4 / 2022-11-18
