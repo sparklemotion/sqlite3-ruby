@@ -55,6 +55,7 @@ module Sqlite3
             additional_cflags = [
               "-fPIC", # needed for linking the static library into a shared library
               "-O2", # see https://github.com/sparklemotion/sqlite3-ruby/issues/335 for some benchmarks
+              "-fvisibility=hidden", # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
             ]
             env["CFLAGS"] = [env["CFLAGS"], additional_cflags].flatten.join(" ")
             recipe.configure_options += env.select { |k,v| ENV_ALLOWLIST.include?(k) }
@@ -81,14 +82,9 @@ module Sqlite3
           abort_pkg_config("xpopen") unless $?.success?
           ldflags = ldflags.split
 
-          if needs_darwin_linker_hack
-            ldflags.delete("-lsqlite3")
-            ldflags.prepend("-Wl,-flat_namespace", "-Wl,-hidden-lsqlite3")
-          else
-            # see https://github.com/flavorjones/mini_portile/issues/118
-            "-L#{lib_path}".tap do |lib_path_flag|
-              ldflags.prepend(lib_path_flag) unless ldflags.include?(lib_path_flag)
-            end
+          # see https://github.com/flavorjones/mini_portile/issues/118
+          "-L#{lib_path}".tap do |lib_path_flag|
+            ldflags.prepend(lib_path_flag) unless ldflags.include?(lib_path_flag)
           end
 
           ldflags.each { |ldflag| append_ldflags(ldflag) }
@@ -99,6 +95,8 @@ module Sqlite3
         if Gem::Requirement.new("< 2.7").satisfied_by?(Gem::Version.new(RUBY_VERSION))
           append_cppflags("-DTAINTING_SUPPORT")
         end
+
+        append_cflags("-fvisibility=hidden") # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
 
         if find_header("sqlite3.h")
           # noop
@@ -175,13 +173,6 @@ module Sqlite3
 
       def download
         minimal_recipe.download
-      end
-
-      def needs_darwin_linker_hack
-        # See https://github.com/rake-compiler/rake-compiler-dock/issues/87 for more info.
-        cross_build? &&
-          darwin? &&
-          RbConfig::CONFIG["ruby_version"] >= "3.2"
       end
 
       def darwin?

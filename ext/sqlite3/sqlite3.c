@@ -127,6 +127,7 @@ void init_sqlite3_constants()
 #endif
 }
 
+RUBY_FUNC_EXPORTED
 void Init_sqlite3_native()
 {
   /*
