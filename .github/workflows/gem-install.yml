@@ -16,8 +16,10 @@ on:
       - '*'
 
 jobs:
-  cache-tarball:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      rcd_image_version: ${{steps.rcd_image_version.outputs.rcd_image_version}}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -29,9 +31,11 @@ jobs:
           ruby-version: "3.1"
           bundler-cache: true
       - run: bundle exec ruby ./ext/sqlite3/extconf.rb --download-dependencies
+      - id: rcd_image_version
+        run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
 
   cruby-package:
-    needs: ["cache-tarball"]
+    needs: ["setup"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -139,7 +143,7 @@ jobs:
           ruby -rsqlite3 -e 'puts SQLite3::SQLITE_LOADED_VERSION'
 
   cruby-native-package:
-    needs: ["cache-tarball"]
+    needs: ["setup"]
     strategy:
       fail-fast: false
       matrix:
@@ -160,8 +164,7 @@ jobs:
           path: ports/archives
           key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
       - env:
-          # DOCKER_IMAGE: "larskanis/rake-compiler-dock-mri-${{matrix.plat}}:1.2.1"
-          DOCKER_IMAGE: "ghcr.io/rake-compiler/rake-compiler-dock-snapshot:${{matrix.plat}}"
+          DOCKER_IMAGE: "ghcr.io/rake-compiler/rake-compiler-dock-image:${{needs.setup.outputs.rcd_image_version}}-mri-${{matrix.plat}}"
         run: |
           docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 ${DOCKER_IMAGE} \
             ./bin/test-gem-build gems ${{matrix.plat}}

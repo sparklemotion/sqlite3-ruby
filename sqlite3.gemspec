@@ -110,7 +110,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency("minitest", "~> 5.15")
   s.add_development_dependency("rake-compiler", "~> 1.2.0")
-  s.add_development_dependency("rake-compiler-dock", "~> 1.2.1")
+  s.add_development_dependency("rake-compiler-dock", "1.3.0")
   s.add_development_dependency("rdoc", ">= 4.0", "< 7")
   s.add_development_dependency("psych", "~> 4.0") # psych 5 doesn't build on some CI platforms yet
 
