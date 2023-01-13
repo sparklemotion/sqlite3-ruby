@@ -69,7 +69,6 @@ namespace "gem" do
   cross_platforms.each do |platform|
     desc "build native gem for #{platform}"
     task platform do
-      ENV["RCD_IMAGE"] = "ghcr.io/rake-compiler/rake-compiler-dock-snapshot:#{platform}"
       RakeCompilerDock.sh(<<~EOF, platform: platform, verbose: true)
         gem install bundler --no-document &&
         bundle &&

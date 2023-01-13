@@ -1,6 +1,6 @@
 # sqlite3-ruby Changelog
 
-## 1.6.0 / unreleased
+## 1.6.0 / 2023-01-13
 
 ### Ruby
 
