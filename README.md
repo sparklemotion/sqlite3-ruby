@@ -73,13 +73,13 @@ end
 
 In v1.5.0 and later, native (precompiled) gems are available for recent Ruby versions on these platforms:
 
-- `aarch64-linux`
-- `arm-linux`
+- `aarch64-linux` (requires: glibc >= 2.29)
+- `arm-linux` (requires: glibc >= 2.29)
 - `arm64-darwin`
 - `x64-mingw32` / `x64-mingw-ucrt`
-- `x86-linux`
+- `x86-linux` (requires: glibc >= 2.17)
 - `x86_64-darwin`
-- `x86_64-linux`
+- `x86_64-linux` (requires: glibc >= 2.17)
 
 If you are using one of these Ruby versions on one of these platforms, the native gem is the recommended way to install sqlite3-ruby.
 
