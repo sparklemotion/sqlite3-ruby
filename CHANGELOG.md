@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Dependencies
+
+* Vendored sqlite is updated to [v3.41.0](https://sqlite.org/releaselog/3_41_0.html).
+
+
 ## 1.6.0 / 2023-01-13
 
 ### Ruby
