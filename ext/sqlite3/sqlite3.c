@@ -82,7 +82,7 @@ static VALUE threadsafe_p(VALUE UNUSED(klass))
   return INT2NUM(sqlite3_threadsafe());
 }
 
-void init_sqlite3_constants()
+void init_sqlite3_constants(void)
 {
   VALUE mSqlite3Constants;
   VALUE mSqlite3Open;
@@ -128,7 +128,7 @@ void init_sqlite3_constants()
 }
 
 RUBY_FUNC_EXPORTED
-void Init_sqlite3_native()
+void Init_sqlite3_native(void)
 {
   /*
    * SQLite3 is a wrapper around the popular database
