@@ -12,6 +12,15 @@ As a prerequisite please make sure you have `docker` correctly installed, so tha
 Run `bin/build-gems` which will package gems for all supported platforms, and run some basic sanity tests on those packages using `bin/test-gem-set` and `bin/test-gem-file-contents`.
 
 
+## Updating the version of libsqlite3
+
+Update `/dependencies.yml` to reflect:
+
+- the version of libsqlite3
+- the URL from which to download
+- the checksum of the file, which will need to be verified manually (see comments in that file)
+
+
 ## Making a release
 
 A quick checklist:
