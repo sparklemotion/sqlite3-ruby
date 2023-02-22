@@ -150,7 +150,7 @@ static VALUE pagecount(VALUE self)
   return INT2NUM(sqlite3_backup_pagecount(ctx->p));
 }
 
-void init_sqlite3_backup()
+void init_sqlite3_backup(void)
 {
 #if 0
   VALUE mSqlite3 = rb_define_module("SQLite3");

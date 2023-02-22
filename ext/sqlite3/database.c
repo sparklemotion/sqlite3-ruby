@@ -800,7 +800,7 @@ static VALUE rb_sqlite3_open16(VALUE self, VALUE file)
   return INT2NUM(status);
 }
 
-void init_sqlite3_database()
+void init_sqlite3_database(void)
 {
 #if 0
   VALUE mSqlite3 = rb_define_module("SQLite3");

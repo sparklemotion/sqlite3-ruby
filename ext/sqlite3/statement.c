@@ -418,7 +418,7 @@ static VALUE database_name(VALUE self, VALUE index)
 
 #endif
 
-void init_sqlite3_statement()
+void init_sqlite3_statement(void)
 {
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
 
