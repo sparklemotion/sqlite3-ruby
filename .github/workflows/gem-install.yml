@@ -84,9 +84,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "${{matrix.ruby}}"
+          brew: sqlite3 pkg-config
       - uses: actions/download-artifact@v3
         with:
           name: cruby-gem

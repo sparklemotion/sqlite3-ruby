@@ -45,7 +45,7 @@ jobs:
           ruby-version: ${{matrix.ruby}}
           bundler-cache: true
           apt-get: libsqlite3-dev
-          brew: sqlite3
+          brew: sqlite3 pkg-config
           mingw: sqlite3
           vcpkg: sqlite3
       - if: matrix.lib == 'packaged'
@@ -112,7 +112,7 @@ jobs:
           ruby-version: ${{matrix.ruby}}
           bundler-cache: true
           apt-get: libsqlcipher-dev
-          brew: sqlcipher
+          brew: sqlcipher pkg-config
           mingw: sqlcipher
           vcpkg: sqlcipher
       - run: bundle exec rake compile -- --with-sqlcipher
