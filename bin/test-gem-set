@@ -9,19 +9,33 @@ set -o pipefail
 gems=$*
 gem_platform_local=`ruby -e "puts Gem::Platform.local.to_s"`
 
-function remove_all_sqlite3s {
-  yes | gem uninstall --force sqlite3 || true
+function remove_all {
+  gem uninstall --all --force $1
 }
 
 function test_installation {
   gem=$1
-  remove_all_sqlite3s
-  gem install --local $gem
+
+  # test installation
+  remove_all sqlite3
+  gem install $gem
   ruby -r sqlite3 -e 'pp SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION'
 
   if [[ $gem =~ sqlite3-[^-]*\.gem ]] ; then
-    remove_all_sqlite3s
-    gem install --local $gem -- --enable-system-libraries
+    # test installation against system libs without mini_portile, linux distro repackagers
+    # (note that we don't care about running the gem in this case, just building it)
+    # see https://github.com/sparklemotion/sqlite3-ruby/pull/381 for background
+    remove_all sqlite3
+    remove_all mini_portile2
+    gem install --local --force $gem -- --enable-system-libraries
+    if gem list -i mini_portile2 ; then
+      echo "FAIL: should not have installed mini_portile2"
+      exit 1
+    fi
+
+    # test installation against system libs
+    remove_all sqlite3
+    gem install $gem -- --enable-system-libraries
     ruby -r sqlite3 -e 'pp SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION'
   fi
 }
