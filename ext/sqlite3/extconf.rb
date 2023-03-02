@@ -1,5 +1,4 @@
 require "mkmf"
-require "mini_portile2"
 require "yaml"
 
 module Sqlite3
@@ -131,6 +130,8 @@ module Sqlite3
       end
 
       def minimal_recipe
+        require "mini_portile2"
+
         MiniPortile.new(libname, sqlite3_config[:version]).tap do |recipe|
           if sqlite_source_dir
             recipe.source_directory = sqlite_source_dir
