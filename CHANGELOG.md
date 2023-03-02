@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Packaging
+
+* Allow compilation against system libraries without the presence of `mini_portile2`, primarily for the convenience of linux distro repackagers. [#381] (Thank you, @voxik!)
+
+
 ## 1.6.1 / 2023-02-22
 
 ### Dependencies
