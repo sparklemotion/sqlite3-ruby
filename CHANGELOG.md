@@ -2,6 +2,11 @@
 
 ## next / unreleased
 
+### Dependencies
+
+Vendored sqlite is updated from v3.41.0 to [v3.41.2](https://sqlite.org/releaselog/3_41_2.html).
+
+
 ### Packaging
 
 * Allow compilation against system libraries without the presence of `mini_portile2`, primarily for the convenience of linux distro repackagers. [#381] (Thank you, @voxik!)
