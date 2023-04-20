@@ -36,6 +36,7 @@ utf16_string_value_ptr(VALUE str)
 }
 
 static VALUE sqlite3_rb_close(VALUE self);
+static VALUE sqlite3_rb_close_v2(VALUE self);
 
 static VALUE rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 {
@@ -95,6 +96,26 @@ static VALUE sqlite3_rb_close(VALUE self)
 
   db = ctx->db;
   CHECK(db, sqlite3_close(ctx->db));
+
+  ctx->db = NULL;
+
+  rb_iv_set(self, "-aggregators", Qnil);
+
+  return self;
+}
+
+/* call-seq: db.close
+ *
+ * Closes this database.
+ */
+static VALUE sqlite3_rb_close_v2(VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  sqlite3 * db;
+  Data_Get_Struct(self, sqlite3Ruby, ctx);
+
+  db = ctx->db;
+  CHECK(db, sqlite3_close_v2(ctx->db));
 
   ctx->db = NULL;
 
@@ -813,6 +834,7 @@ void init_sqlite3_database()
   rb_define_private_method(cSqlite3Database, "open16", rb_sqlite3_open16, 1);
   rb_define_method(cSqlite3Database, "collation", collation, 2);
   rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
+  rb_define_method(cSqlite3Database, "close_v2", sqlite3_rb_close_v2, 0);
   rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);
   rb_define_method(cSqlite3Database, "trace", trace, -1);
