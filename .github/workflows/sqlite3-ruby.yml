@@ -119,3 +119,16 @@ jobs:
           vcpkg: sqlcipher
       - run: bundle exec rake compile -- --with-sqlcipher
       - run: bundle exec rake test
+
+  valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          apt-get: libsqlite3-dev valgrind
+      - run: bundle install
+      - run: bundle exec rake compile
+      - run: bundle exec rake test:valgrind
