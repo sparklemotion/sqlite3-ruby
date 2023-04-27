@@ -1,10 +1,10 @@
 # -*- encoding: utf-8 -*-
-# stub: sqlite3 1.3.13.20180326210955 ruby lib
+# stub: sqlite3 1.4.4 ruby lib
 # stub: ext/sqlite3/extconf.rb
 
 Gem::Specification.new do |s|
   s.name = "sqlite3".freeze
-  s.version = "1.3.13.20180326210955"
+  s.version = "1.4.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.5".freeze) if s.respond_to? :required_rubygems_version=
   s.metadata = { "msys2_mingw_dependencies" => "sqlite3" } if s.respond_to? :metadata=
