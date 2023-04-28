@@ -11,6 +11,10 @@ module SQLite3
       @db.execute(@create);
     end
 
+    def teardown
+      @db.close
+    end
+
     def test_select_encoding_on_utf_16
       str = "foo"
       utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
@@ -24,6 +28,7 @@ module SQLite3
         assert_equal 1, stmt.to_a.length
         stmt.reset!
       end
+      stmt.close
     end
 
     def test_insert_encoding
@@ -39,6 +44,7 @@ module SQLite3
         stmt.to_a
         stmt.reset!
       end
+      stmt.close
 
       db.execute('select data from ex').flatten.each do |s|
         assert_equal str, s
@@ -55,6 +61,7 @@ module SQLite3
       stmt = @db.prepare('insert into ex(data) values (?)')
       stmt.bind_param 1, str
       stmt.step
+      stmt.close
 
       Encoding.default_internal = 'EUC-JP'
       string = @db.execute('select data from ex').first.first
@@ -73,6 +80,7 @@ module SQLite3
       stmt = @db.prepare('insert into foo(data) values (?)')
       stmt.bind_param(1, SQLite3::Blob.new(str))
       stmt.step
+      stmt.close
 
       string = @db.execute('select data from foo').first.first
       assert_equal Encoding.find('ASCII-8BIT'), string.encoding
@@ -85,6 +93,7 @@ module SQLite3
       stmt = @db.prepare('insert into foo(data) values (?)')
       stmt.bind_param(1, str.dup.force_encoding("ASCII-8BIT"))
       stmt.step
+      stmt.close
 
       string = @db.execute('select data from foo').first.first
       assert_equal Encoding.find('ASCII-8BIT'), string.encoding
@@ -97,6 +106,7 @@ module SQLite3
       stmt = @db.prepare('insert into foo(data) values (?)')
       stmt.bind_param(1, SQLite3::Blob.new(str))
       stmt.step
+      stmt.close
 
       string = @db.execute('select data from foo').first.first
       assert_equal Encoding.find('ASCII-8BIT'), string.encoding

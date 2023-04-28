@@ -8,6 +8,10 @@ module SQLite3
         "CREATE TABLE items (id integer PRIMARY KEY, number integer)")
     end
 
+    def teardown
+      @db.close
+    end
+
     def test_execute_insert
       ps = @db.prepare("INSERT INTO items (number) VALUES (:n)")
       ps.execute('n'=>10)

@@ -11,6 +11,10 @@ module SQLite3
       super
     end
 
+    def teardown
+      @db.close unless @db.closed?
+    end
+
     def test_segv
       assert_raises { SQLite3::Database.new 1 }
     end
@@ -54,6 +58,7 @@ module SQLite3
       assert_equal pn.realdirpath.to_s, File.realdirpath(db.filename)
     ensure
       tf.close! if tf
+      db.close if db
     end
 
 
@@ -189,6 +194,8 @@ module SQLite3
     def test_new
       db = SQLite3::Database.new(':memory:')
       assert db
+    ensure
+      db.close if db
     end
 
     def test_new_yields_self
@@ -210,6 +217,8 @@ module SQLite3
                                    :utf16 => true)
       end
       assert db
+    ensure
+      db.close if db
     end
 
     def test_close
@@ -243,6 +252,8 @@ module SQLite3
       db = SQLite3::Database.new(':memory:')
       stmt = db.prepare('select "hello world"')
       assert_instance_of(SQLite3::Statement, stmt)
+    ensure
+      stmt.close if stmt
     end
 
     def test_block_prepare_does_not_double_close
@@ -459,15 +470,19 @@ module SQLite3
     end
 
     def test_authorizer_ok
+      statements = []
+
       @db.authorizer = Class.new {
         def call action, a, b, c, d; true end
       }.new
-      @db.prepare("select 'fooooo'")
+      statements << @db.prepare("select 'fooooo'")
 
       @db.authorizer = Class.new {
         def call action, a, b, c, d; 0 end
       }.new
-      @db.prepare("select 'fooooo'")
+      statements << @db.prepare("select 'fooooo'")
+    ensure
+      statements.each(&:close)
     end
 
     def test_authorizer_ignore
@@ -476,6 +491,8 @@ module SQLite3
       }.new
       stmt = @db.prepare("select 'fooooo'")
       assert_nil stmt.step
+    ensure
+      stmt.close if stmt
     end
 
     def test_authorizer_fail
@@ -496,14 +513,18 @@ module SQLite3
       end
 
       @db.authorizer = nil
-      @db.prepare("select 'fooooo'")
+      s = @db.prepare("select 'fooooo'")
+    ensure
+      s.close if s
     end
 
     def test_close_with_open_statements
-      @db.prepare("select 'foo'")
+      s = @db.prepare("select 'foo'")
       assert_raises(SQLite3::BusyException) do
         @db.close
       end
+    ensure
+      s.close if s
     end
 
     def test_execute_with_empty_bind_params
@@ -511,7 +532,10 @@ module SQLite3
     end
 
     def test_query_with_named_bind_params
-      assert_equal [['foo']], @db.query("select :n", {'n' => 'foo'}).to_a
+      resultset = @db.query("select :n", {'n' => 'foo'})
+      assert_equal [['foo']], resultset.to_a
+    ensure
+      resultset.close if resultset
     end
 
     def test_execute_with_named_bind_params

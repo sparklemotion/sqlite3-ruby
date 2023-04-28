@@ -2,8 +2,6 @@ require 'helper'
 
 module SQLite3
   class TestDeprecated < SQLite3::TestCase
-    attr_reader :db
-
     def setup
       super
       @warn_before = $-w
@@ -15,10 +13,13 @@ module SQLite3
     def teardown
       super
       $-w = @warn_before
+      @db.close
     end
 
     def test_query_with_many_bind_params_not_nil
-      assert_equal [[1, 2]], db.query('select ?, ?', 1, 2).to_a
+      rs = @db.query('select ?, ?', 1, 2)
+      assert_equal [[1, 2]], rs.to_a
+      rs.close
     end
 
     def test_execute_with_many_bind_params_not_nil
@@ -26,11 +27,15 @@ module SQLite3
     end
 
     def test_query_with_many_bind_params
-      assert_equal [[nil, 1]], @db.query("select ?, ?", nil, 1).to_a
+      rs = @db.query("select ?, ?", nil, 1)
+      assert_equal [[nil, 1]], rs.to_a
+      rs.close
     end
 
     def test_query_with_nil_bind_params
-      assert_equal [['foo']], @db.query("select 'foo'", nil).to_a
+      rs = @db.query("select 'foo'", nil)
+      assert_equal [['foo']], rs.to_a
+      rs.close
     end
 
     def test_execute_with_many_bind_params
