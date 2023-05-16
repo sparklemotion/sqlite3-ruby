@@ -1,5 +1,18 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Dependencies
+
+Vendored sqlite is updated to [v3.42.0](https://sqlite.org/releaselog/3_42_0.html).
+
+From the release announcement:
+
+> This is a regular enhancement release.  The main new features are:
+> * SQLite will now parse and understand JSON5, though it is careful to generate only pure, canonical JSON.
+> * The secure-delete option has been added to the FTS5 extension.
+
+
 ## 1.6.2 / 2023-03-27
 
 ### Dependencies
