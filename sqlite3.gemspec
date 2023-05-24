@@ -42,6 +42,7 @@ Gem::Specification.new do |s|
     "ChangeLog.cvs",
     "FAQ.md",
     "Gemfile",
+    "INSTALLATION.md",
     "LICENSE",
     "LICENSE-DEPENDENCIES",
     "README.md",
