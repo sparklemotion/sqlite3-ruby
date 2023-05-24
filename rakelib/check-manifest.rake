@@ -10,7 +10,9 @@ task :check_manifest do
     .git
     .github
     bin
+    doc
     gems
+    issues
     patches
     pkg
     ports
@@ -21,6 +23,7 @@ task :check_manifest do
   }
   ignore_files = %w[
     .gitignore
+    .rdoc_options
     Gemfile?*
     Rakefile
     [a-z]*.{log,out}

@@ -8,7 +8,9 @@ test/test.db
 
 Gemfile.lock
 
+doc/
 gems/
+issues/
 pkg/
 ports/
 tmp/

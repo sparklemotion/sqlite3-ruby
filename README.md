@@ -1,5 +1,11 @@
 # Ruby Interface for SQLite3
 
+## Overview
+
+This library allows Ruby programs to use the SQLite3 database engine (http://www.sqlite.org).
+
+Note that this module is only compatible with SQLite 3.6.16 or newer.
+
 * Source code: https://github.com/sparklemotion/sqlite3-ruby
 * Mailing list: http://groups.google.com/group/sqlite3-ruby
 * Download: http://rubygems.org/gems/sqlite3
@@ -9,14 +15,18 @@
 [![Native packages](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/gem-install.yml/badge.svg)](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/gem-install.yml)
 
 
-## Description
+## Quick start
 
-This library allows Ruby programs to use the SQLite3 database engine (http://www.sqlite.org).
+For help understanding the SQLite3 Ruby API, please read the [FAQ](./FAQ.md) and the [full API documentation](https://rubydoc.info/gems/sqlite3).
 
-Note that this module is only compatible with SQLite 3.6.16 or newer.
+A few key classes whose APIs are often-used are:
 
+- SQLite3::Database ([rdoc](https://rubydoc.info/gems/sqlite3/SQLite3/Database))
+- SQLite3::Statement ([rdoc](https://rubydoc.info/gems/sqlite3/SQLite3/Statement))
+- SQLite3::ResultSet ([rdoc](https://rubydoc.info/gems/sqlite3/SQLite3/ResultSet))
 
-## Synopsis
+If you have any questions that you feel should be addressed in the FAQ, please send them to [the mailing list](http://groups.google.com/group/sqlite3-ruby) or open a [discussion thread](https://github.com/sparklemotion/sqlite3-ruby/discussions/categories/q-a).
+
 
 ``` ruby
 require "sqlite3"
@@ -67,157 +77,22 @@ end
 # => ["Jane", "me@janedoe.com", "A", "http://blog.janedoe.com"]
 ```
 
-## Installation
-
-### Native Gems (recommended)
-
-In v1.5.0 and later, native (precompiled) gems are available for recent Ruby versions on these platforms:
-
-- `aarch64-linux` (requires: glibc >= 2.29)
-- `arm-linux` (requires: glibc >= 2.29)
-- `arm64-darwin`
-- `x64-mingw32` / `x64-mingw-ucrt`
-- `x86-linux` (requires: glibc >= 2.17)
-- `x86_64-darwin`
-- `x86_64-linux` (requires: glibc >= 2.17)
-
-If you are using one of these Ruby versions on one of these platforms, the native gem is the recommended way to install sqlite3-ruby.
-
-For example, on a linux system running Ruby 3.1:
-
-``` text
-$ ruby -v
-ruby 3.1.2p20 (2022-04-12 revision 4491bb740a) [x86_64-linux]
-
-$ time gem install sqlite3
-Fetching sqlite3-1.5.0-x86_64-linux.gem
-Successfully installed sqlite3-1.5.0-x86_64-linux
-1 gem installed
-
-real    0m4.274s
-user    0m0.734s
-sys     0m0.165s
-```
-
-#### Avoiding the precompiled native gem
-
-The maintainers strongly urge you to use a native gem if at all possible. It will be a better experience for you and allow us to focus our efforts on improving functionality rather than diagnosing installation issues.
-
-If you're on a platform that supports a native gem but you want to avoid using it in your project, do one of the following:
-
-- If you're not using Bundler, then run `gem install sqlite3 --platform=ruby`
-- If you are using Bundler
-  - version 2.3.18 or later, you can specify [`gem "sqlite3", force_ruby_platform: true`](https://bundler.io/v2.3/man/gemfile.5.html#FORCE_RUBY_PLATFORM)
-  - version 2.1 or later, then you'll need to run `bundle config set force_ruby_platform true`
-  - version 2.0 or earlier, then you'll need to run `bundle config force_ruby_platform true`
-
-
-### Compiling the source gem
-
-If you are on a platform or version of Ruby that is not covered by the Native Gems, then the vanilla "ruby platform" (non-native) gem will be installed by the `gem install` or `bundle` commands.
-
-
-#### Packaged libsqlite3
-
-By default, as of v1.5.0 of this library, the latest available version of libsqlite3 is packaged with the gem and will be compiled and used automatically. This takes a bit longer than the native gem, but will provide a modern, well-supported version of libsqlite3.
-
-For example, on a linux system running Ruby 2.5:
-
-``` text
-$ ruby -v
-ruby 2.5.9p229 (2021-04-05 revision 67939) [x86_64-linux]
-
-$ time gem install sqlite3
-Building native extensions. This could take a while...
-Successfully installed sqlite3-1.5.0
-1 gem installed
-
-real    0m20.620s
-user    0m23.361s
-sys     0m5.839s
-```
-
-
-#### System libsqlite3
-
-If you would prefer to build the sqlite3-ruby gem against your system libsqlite3, which requires that you install libsqlite3 and its development files yourself, you may do so by using the `--enable-system-libraries` flag at gem install time.
-
-PLEASE NOTE:
-
-- you must avoid installing a precompiled native gem (see [previous section](#avoiding-the-precompiled-native-gem))
-- only versions of libsqlite3 `>= 3.5.0` are supported,
-- and some library features may depend on how your libsqlite3 was compiled.
-
-For example, on a linux system running Ruby 2.5:
-
-``` text
-$ time gem install sqlite3 -- --enable-system-libraries
-Building native extensions with: '--enable-system-libraries'
-This could take a while...
-Successfully installed sqlite3-1.5.0
-1 gem installed
-
-real    0m4.234s
-user    0m3.809s
-sys     0m0.912s
-```
-
-If you're using bundler, you can opt into system libraries like this:
-
-``` sh
-bundle config build.sqlite3 --enable-system-libraries
-```
-
-If you have sqlite3 installed in a non-standard location, you may need to specify the location of the include and lib files by using `--with-sqlite-include` and `--with-sqlite-lib` options (or a `--with-sqlite-dir` option, see [MakeMakefile#dir_config](https://ruby-doc.org/stdlib-3.1.1/libdoc/mkmf/rdoc/MakeMakefile.html#method-i-dir_config)). If you have pkg-config installed and configured properly, this may not be necessary.
-
-``` sh
-gem install sqlite3 -- \
-  --enable-system-libraries \
-  --with-sqlite3-include=/opt/local/include \
-  --with-sqlite3-lib=/opt/local/lib
-```
-
-
-#### System libsqlcipher
-
-If you'd like to link against a system-installed libsqlcipher, you may do so by using the `--with-sqlcipher` flag:
-
-``` text
-$ time gem install sqlite3 -- --with-sqlcipher
-Building native extensions with: '--with-sqlcipher'
-This could take a while...
-Successfully installed sqlite3-1.5.0
-1 gem installed
-
-real    0m4.772s
-user    0m3.906s
-sys     0m0.896s
-```
-
-If you have sqlcipher installed in a non-standard location, you may need to specify the location of the include and lib files by using `--with-sqlite-include` and `--with-sqlite-lib` options (or a `--with-sqlite-dir` option, see [MakeMakefile#dir_config](https://ruby-doc.org/stdlib-3.1.1/libdoc/mkmf/rdoc/MakeMakefile.html#method-i-dir_config)). If you have pkg-config installed and configured properly, this may not be necessary.
-
-
 ## Support
 
-### Something has gone wrong! Where do I get help?
+### Installation or database extensions
 
-You can ask for help or support from the
-[sqlite3-ruby mailing list](http://groups.google.com/group/sqlite3-ruby) which
-can be found here:
+If you're having trouble with installation, please first read [`INSTALLATION.md`](./INSTALLATION.md).
 
-> http://groups.google.com/group/sqlite3-ruby
+### General help requests
 
+You can ask for help or support:
 
-### I've found a bug! How do I report it?
+* by emailing the [sqlite3-ruby mailing list](http://groups.google.com/group/sqlite3-ruby)
+* by opening a [discussion thread](https://github.com/sparklemotion/sqlite3-ruby/discussions/categories/q-a) on Github
 
-After contacting the mailing list, you've found that you've uncovered a bug. You can file the bug at the [github issues page](https://github.com/sparklemotion/sqlite3-ruby/issues) which can be found here:
+### Bug reports
 
-> https://github.com/sparklemotion/sqlite3-ruby/issues
-
-
-## Usage
-
-For help figuring out the SQLite3/Ruby interface, check out the SYNOPSIS as well as the RDoc. It includes examples of usage. If you have any questions that you feel should be addressed in the FAQ, please send them to [the mailing list](http://groups.google.com/group/sqlite3-ruby).
+You can file the bug at the [github issues page](https://github.com/sparklemotion/sqlite3-ruby/issues).
 
 
 ## Contributing
