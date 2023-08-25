@@ -77,10 +77,10 @@ class TC_Statement < SQLite3::TestCase
   def test_bind_param_with_various_types
     @db.transaction do
       @db.execute "create table all_types ( a integer primary key, b float, c string, d integer )"
-      @db.execute "insert into all_types ( b, c, d ) values ( 1.4, 'hello', 68719476735 )"
+      @db.execute "insert into all_types ( b, c, d ) values ( 1.5, 'hello', 68719476735 )"
     end
 
-    assert_equal 1, @db.execute( "select * from all_types where b = ?", 1.4 ).length
+    assert_equal 1, @db.execute( "select * from all_types where b = ?", 1.5 ).length
     assert_equal 1, @db.execute( "select * from all_types where c = ?", 'hello').length
     assert_equal 1, @db.execute( "select * from all_types where d = ?", 68719476735).length
   end
