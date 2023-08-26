@@ -1,5 +1,33 @@
 # sqlite3-ruby Changelog
 
+## 1.6.4 / 2023-08-26
+
+### Dependencies
+
+Vendored sqlite is updated to [v3.43.0](https://sqlite.org/releaselog/3_43_0.html).
+
+Upstream release notes:
+
+> SQLite Release 3.43.0 On 2023-08-24
+> * Add support for Contentless-Delete FTS5 Indexes. This is a variety of FTS5 full-text search index that omits storing the content that is being indexed while also allowing records to be deleted.
+> * Enhancements to the date and time functions:
+>   * Added new time shift modifiers of the form ±YYYY-MM-DD HH:MM:SS.SSS.
+>   * Added the timediff() SQL function.
+> * Added the octet_length(X) SQL function.
+> * Added the sqlite3_stmt_explain() API.
+> * Query planner enhancements:
+>   * Generalize the LEFT JOIN strength reduction optimization so that it works for RIGHT and FULL JOINs as well. Rename it to OUTER JOIN strength reduction.
+>   * Enhance the theorem prover in the OUTER JOIN strength reduction optimization so that it returns fewer false-negatives.
+> * Enhancements to the decimal extension:
+>   * New function decimal_pow2(N) returns the N-th power of 2 for integer N between -20000 and +20000.
+>   * New function decimal_exp(X) works like decimal(X) except that it returns the result in exponential notation - with a "e+NN" at the end.
+>   * If X is a floating-point value, then the decimal(X) function now does a full expansion of that value into its exact decimal equivalent.
+> * Performance enhancements to JSON processing results in a 2x performance improvement for some kinds of processing on large JSON strings.
+> * New makefile target "verify-source" checks to ensure that there are no unintentional changes in the source tree. (Works for canonical source code only - not for precompiled amalgamation tarballs.)
+> * Added the SQLITE_USE_SEH compile-time option that enables Structured Exception Handling on Windows while working with the memory-mapped shm file that is part of WAL mode processing. This option is enabled by default when building on Windows using Makefile.msc.
+> * The VFS for unix now assumes that the nanosleep() system call is available unless compiled with -DHAVE_NANOSLEEP=0.
+
+
 ## 1.6.3 / 2023-05-16
 
 ### Dependencies
