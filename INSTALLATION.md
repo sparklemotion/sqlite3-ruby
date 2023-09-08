@@ -167,14 +167,14 @@ db.load_extension("/path/to/sqlite/spellfix.o")
 db.execute("CREATE VIRTUAL TABLE demo USING spellfix1;")
 ```
 
-### How do I use an alternative sqlite3 implementation?
+### How do I use my own sqlite3 shared library?
 
-Some packages, like pSQLite Encryption Extension ("SEE"), are intended to be ABI-compatible drop-in replacements for the sqlite3 shared object.
+Some folks have strong opinions about what features they want compiled into sqlite3; or may be using a package like SQLite Encryption Extension ("SEE"). This section will explain how to get your Ruby application to load that specific shared library.
 
 If you've installed your alternative as an autotools-style installation, the directory structure will look like this:
 
 ```
-/opt/see
+/opt/sqlite3
 ├── bin
 │   └── sqlite3
 ├── include
@@ -199,7 +199,7 @@ You can build this gem against that library like this:
 ```
 gem install sqlite3 --platform=ruby -- \
   --enable-system-libraries \
-  --with-opt-dir=/opt/see
+  --with-opt-dir=/opt/sqlite
 ```
 
 Explanation:
