@@ -51,12 +51,13 @@ module Sqlite3
         minimal_recipe.tap do |recipe|
           recipe.configure_options += ["--enable-shared=no", "--enable-static=yes"]
           ENV.to_h.tap do |env|
-            additional_cflags = [
+            user_cflags = with_config("sqlite-cflags")
+            more_cflags = [
               "-fPIC", # needed for linking the static library into a shared library
               "-O2", # see https://github.com/sparklemotion/sqlite3-ruby/issues/335 for some benchmarks
               "-fvisibility=hidden", # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
             ]
-            env["CFLAGS"] = [env["CFLAGS"], additional_cflags].flatten.join(" ")
+            env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
             recipe.configure_options += env.select { |k,v| ENV_ALLOWLIST.include?(k) }
                                            .map { |key, value| "#{key}=#{value.strip}" }
           end
@@ -234,17 +235,23 @@ module Sqlite3
 
             Flags only used when building and using the packaged libraries:
 
+                --with-sqlite-cflags=CFLAGS
+                    Explicitly pass compiler flags to the sqlite library build. These flags will
+                    appear on the commandline before any flags set in the CFLAGS environment
+                    variable. This is useful for setting compilation options in your project's
+                    bundler config. See INSTALLATION.md for more information.
+
                 --enable-cross-build
                     Enable cross-build mode. (You probably do not want to set this manually.)
 
 
-            Environment variables used for compiling the C extension:
+            Environment variables used for compiling the gem's C extension:
 
                 CC
                     Use this path to invoke the compiler instead of `RbConfig::CONFIG['CC']`
 
 
-            Environment variables passed through to the compilation of packaged libraries:
+            Environment variables passed through to the compilation of sqlite:
 
                 CC
                 CPPFLAGS

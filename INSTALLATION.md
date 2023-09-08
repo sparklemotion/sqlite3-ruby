@@ -73,6 +73,45 @@ user    0m23.361s
 sys     0m5.839s
 ```
 
+##### Controlling compilation flags for sqlite
+
+Upstream sqlite allows for the setting of some parameters at compile time. If you're an expert and would like to set these, you may do so at gem install time in two different ways ...
+
+**If you're installing the gem using `gem install`** then you can pass in these compile-time flags like this:
+
+``` sh
+gem install sqlite3 --platform=ruby -- \
+  --with-sqlite-cflags="-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444"
+```
+
+or the equivalent:
+
+``` sh
+CFLAGS="-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444" \
+  gem install sqlite3 --platform=ruby
+```
+
+**If you're installing the gem using `bundler`** then you should first pin the gem to the "ruby" platform gem, so that you are compiling from source:
+
+``` ruby
+# Gemfile
+gem "sqlite3", force_ruby_platform: true # requires bundler >= 2.3.18
+```
+
+and then set up a bundler config parameter for `build.sqlite3`:
+
+``` sh
+bundle config set build.sqlite3 \
+  "--with-sqlite-cflags='-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444'"
+```
+
+NOTE the use of single quotes within the double-quoted string to ensure the space between compiler flags is interpreted correctly. The contents of your `.bundle/config` file should look like:
+
+``` yaml
+---
+BUNDLE_BUILD__SQLITE3: "--with-sqlite-cflags='-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444'"
+```
+
 
 #### System libsqlite3
 
