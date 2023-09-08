@@ -73,6 +73,45 @@ user    0m23.361s
 sys     0m5.839s
 ```
 
+##### Controlling compilation flags for sqlite
+
+Upstream sqlite allows for the setting of some parameters at compile time. If you're an expert and would like to set these, you may do so at gem install time in two different ways ...
+
+**If you're installing the gem using `gem install`** then you can pass in these compile-time flags like this:
+
+``` sh
+gem install sqlite3 --platform=ruby -- \
+  --with-sqlite-cflags="-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444"
+```
+
+or the equivalent:
+
+``` sh
+CFLAGS="-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444" \
+  gem install sqlite3 --platform=ruby
+```
+
+**If you're installing the gem using `bundler`** then you should first pin the gem to the "ruby" platform gem, so that you are compiling from source:
+
+``` ruby
+# Gemfile
+gem "sqlite3", force_ruby_platform: true # requires bundler >= 2.3.18
+```
+
+and then set up a bundler config parameter for `build.sqlite3`:
+
+``` sh
+bundle config set build.sqlite3 \
+  "--with-sqlite-cflags='-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444'"
+```
+
+NOTE the use of single quotes within the double-quoted string to ensure the space between compiler flags is interpreted correctly. The contents of your `.bundle/config` file should look like:
+
+``` yaml
+---
+BUNDLE_BUILD__SQLITE3: "--with-sqlite-cflags='-DSQLITE_DEFAULT_CACHE_SIZE=9999 -DSQLITE_DEFAULT_PAGE_SIZE=4444'"
+```
+
 
 #### System libsqlite3
 
@@ -167,14 +206,14 @@ db.load_extension("/path/to/sqlite/spellfix.o")
 db.execute("CREATE VIRTUAL TABLE demo USING spellfix1;")
 ```
 
-### How do I use an alternative sqlite3 implementation?
+### How do I use my own sqlite3 shared library?
 
-Some packages, like pSQLite Encryption Extension ("SEE"), are intended to be ABI-compatible drop-in replacements for the sqlite3 shared object.
+Some folks have strong opinions about what features they want compiled into sqlite3; or may be using a package like SQLite Encryption Extension ("SEE"). This section will explain how to get your Ruby application to load that specific shared library.
 
 If you've installed your alternative as an autotools-style installation, the directory structure will look like this:
 
 ```
-/opt/see
+/opt/sqlite3
 ├── bin
 │   └── sqlite3
 ├── include
@@ -199,7 +238,7 @@ You can build this gem against that library like this:
 ```
 gem install sqlite3 --platform=ruby -- \
   --enable-system-libraries \
-  --with-opt-dir=/opt/see
+  --with-opt-dir=/opt/sqlite
 ```
 
 Explanation:
