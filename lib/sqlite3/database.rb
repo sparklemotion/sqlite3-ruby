@@ -116,9 +116,7 @@ module SQLite3
 
     def type_translation= value # :nodoc:
       warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling SQLite3::Database#type_translation=
-SQLite3::Database#type_translation= is deprecated and will be removed
-in version 2.0.0.
+#{caller[0]} is calling `SQLite3::Database#type_translation=` which is deprecated and will be removed in version 2.0.0.
       eowarn
       @type_translator  = make_type_translator value
       @type_translation = value
@@ -189,9 +187,7 @@ in version 2.0.0.
         end
 
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling SQLite3::Database#execute with nil or multiple bind params
-without using an array.  Please switch to passing bind parameters as an array.
-Support for bind parameters as *args will be removed in 2.0.0.
+#{caller[0]} is calling `SQLite3::Database#execute` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for bind parameters as *args will be removed in 2.0.0.
         eowarn
       end
 
@@ -248,9 +244,7 @@ Support for bind parameters as *args will be removed in 2.0.0.
       unless [Array, Hash].include?(bind_vars.class)
         bind_vars = [bind_vars]
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling SQLite3::Database#execute_batch with bind parameters
-that are not a list of a hash.  Please switch to passing bind parameters as an
-array or hash. Support for this behavior will be removed in version 2.0.0.
+#{caller[0]} is calling `SQLite3::Database#execute_batch` with bind parameters that are not a list of a hash.  Please switch to passing bind parameters as an array or hash. Support for this behavior will be removed in version 2.0.0.
         eowarn
       end
 
@@ -263,9 +257,7 @@ array or hash. Support for this behavior will be removed in version 2.0.0.
         end
 
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling SQLite3::Database#execute_batch with nil or multiple bind params
-without using an array.  Please switch to passing bind parameters as an array.
-Support for this behavior will be removed in version 2.0.0.
+#{caller[0]} is calling `SQLite3::Database#execute_batch` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this behavior will be removed in version 2.0.0.
         eowarn
       end
 
@@ -332,9 +324,7 @@ Support for this behavior will be removed in version 2.0.0.
         end
 
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling SQLite3::Database#query with nil or multiple bind params
-without using an array.  Please switch to passing bind parameters as an array.
-Support for this will be removed in version 2.0.0.
+#{caller[0]} is calling `SQLite3::Database#query` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this will be removed in version 2.0.0.
         eowarn
       end
 

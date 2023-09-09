@@ -20,18 +20,14 @@ module SQLite3
 
       def types
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling #{self.class}#types.  This method will be removed in
-sqlite3 version 2.0.0, please call the `types` method on the SQLite3::ResultSet
-object that created this object
+#{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @types
       end
 
       def fields
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling #{self.class}#fields.  This method will be removed in
-sqlite3 version 2.0.0, please call the `columns` method on the SQLite3::ResultSet
-object that created this object
+#{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @fields
       end
@@ -45,18 +41,14 @@ object that created this object
 
       def types
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling #{self.class}#types.  This method will be removed in
-sqlite3 version 2.0.0, please call the `types` method on the SQLite3::ResultSet
-object that created this object
+#{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @types
       end
 
       def fields
         warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling #{self.class}#fields.  This method will be removed in
-sqlite3 version 2.0.0, please call the `columns` method on the SQLite3::ResultSet
-object that created this object
+#{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @fields
       end
