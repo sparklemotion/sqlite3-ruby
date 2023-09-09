@@ -1,10 +1,10 @@
 # sqlite3-ruby Changelog
 
-## 1.6.5.rc1 / 2023-09-08
+## 1.6.5 / 2023-09-08
 
 ### Packaging
 
-* Allow setting compiler flags for the sqlite library via a `--with-sqlite-cflags` argument to `extconf.rb`. See `INSTALLATION.md` for more information. [#401, #402] (@flavorjones)
+* Allow setting compiler flags for the sqlite library via a `--with-sqlite-cflags` argument to `extconf.rb`. See [`INSTALLATION.md`](https://github.com/sparklemotion/sqlite3-ruby/blob/master/INSTALLATION.md#controlling-compilation-flags-for-sqlite) for more information. [#401, #402] (@flavorjones)
 
 
 ## 1.6.4 / 2023-08-26
