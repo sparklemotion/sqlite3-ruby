@@ -8,4 +8,4 @@ gem("rake-compiler-dock", "1.3.0")
 gem("rdoc", ">= 4.0", "< 7")
 gem("psych", "~> 4.0") # psych 5 doesn't build on some CI platforms yet
 
-gem("ruby_memcheck") if Gem::Platform.local.os == "linux"
+gem("ruby_memcheck", "2.1.2") if Gem::Platform.local.os == "linux"
