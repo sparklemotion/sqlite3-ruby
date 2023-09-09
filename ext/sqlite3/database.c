@@ -127,7 +127,7 @@ static VALUE total_changes(VALUE self)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  return INT2NUM((long)sqlite3_total_changes(ctx->db));
+  return INT2NUM(sqlite3_total_changes(ctx->db));
 }
 
 static void tracefunc(void * data, const char *sql)
@@ -168,7 +168,7 @@ static int rb_sqlite3_busy_handler(void * ctx, int count)
 {
   VALUE self = (VALUE)(ctx);
   VALUE handle = rb_iv_get(self, "@busy_handler");
-  VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM((long)count));
+  VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM(count));
 
   if(Qfalse == result) return 0;
 
@@ -413,7 +413,7 @@ static VALUE errcode_(VALUE self)
   Data_Get_Struct(self, sqlite3Ruby, ctx);
   REQUIRE_OPEN_DB(ctx);
 
-  return INT2NUM((long)sqlite3_errcode(ctx->db));
+  return INT2NUM(sqlite3_errcode(ctx->db));
 }
 
 /* call-seq: complete?(sql)
