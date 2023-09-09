@@ -2,10 +2,10 @@ source "https://rubygems.org"
 
 gemspec
 
-gem("minitest", "~> 5.15")
-gem("rake-compiler", "~> 1.2.0")
+gem("minitest", "5.20.0")
+gem("rake-compiler", "1.2.5")
 gem("rake-compiler-dock", "1.3.0")
-gem("rdoc", ">= 4.0", "< 7")
-gem("psych", "~> 4.0") # psych 5 doesn't build on some CI platforms yet
+gem("rdoc", "6.5.0")
+gem("psych", "5.1.0")
 
 gem("ruby_memcheck", "2.1.2") if Gem::Platform.local.os == "linux"
