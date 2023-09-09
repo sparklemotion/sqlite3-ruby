@@ -10,8 +10,6 @@ Rake::TestTask.new(:test, &test_config)
 begin
   require "ruby_memcheck"
 
-  RubyMemcheck.config(binary_name: "sqlite3_native")
-
   namespace :test do
     RubyMemcheck::TestTask.new(:valgrind, &test_config)
   end

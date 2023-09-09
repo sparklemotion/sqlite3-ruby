@@ -101,15 +101,20 @@ module SQLite3
 
     def test_get_first_row_with_type_translation_and_hash_results
       @db.results_as_hash = true
-      @db.type_translation = true
-      assert_equal({"1"=>1}, @db.get_first_row('SELECT 1'))
+      capture_io do # hush translation deprecation warnings
+        @db.type_translation = true
+        assert_equal({"1"=>1}, @db.get_first_row('SELECT 1'))
+      end
     end
 
     def test_execute_with_type_translation_and_hash
-      @db.results_as_hash = true
-      @db.type_translation = true
       rows = []
-      @db.execute('SELECT 1') { |row| rows << row }
+      @db.results_as_hash = true
+
+      capture_io do # hush translation deprecation warnings
+        @db.type_translation = true
+        @db.execute('SELECT 1') { |row| rows << row }
+      end
 
       assert_equal({"1"=>1}, rows.first)
     end

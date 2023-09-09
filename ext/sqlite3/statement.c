@@ -348,7 +348,7 @@ static VALUE column_count(VALUE self)
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
-  return INT2NUM((long)sqlite3_column_count(ctx->st));
+  return INT2NUM(sqlite3_column_count(ctx->st));
 }
 
 /* call-seq: stmt.column_name(index)
@@ -397,7 +397,7 @@ static VALUE bind_parameter_count(VALUE self)
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
-  return INT2NUM((long)sqlite3_bind_parameter_count(ctx->st));
+  return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
 }
 
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME

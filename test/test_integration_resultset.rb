@@ -101,8 +101,8 @@ class TC_ResultSet < SQLite3::TestCase
     hash = @result.next
     assert_equal( { "a" => 1, "b" => "foo" },
       hash )
-    assert_equal hash[0], 1
-    assert_equal hash[1], "foo"
+    assert_equal hash[@result.columns[0]], 1
+    assert_equal hash[@result.columns[1]], "foo"
   end
 
   def test_each

@@ -140,7 +140,9 @@ module SQLite3
       stmt.close
 
       assert_equal ['hello'], row.first
-      assert_equal ['blob'], row.first.types
+      capture_io do # hush deprecation warning
+        assert_equal ['blob'], row.first.types
+      end
     end
 
     def test_bind_64
