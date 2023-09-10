@@ -13,13 +13,20 @@ function remove_all {
   gem uninstall --all --force $1
 }
 
+function assert_sqlite_version_matches {
+  ruby -r sqlite3 -e '\
+    puts "compiled #{SQLite3::SQLITE_VERSION} / loaded #{SQLite3::SQLITE_LOADED_VERSION}"; \
+    raise("sqlite version mismatch") unless SQLite3::SQLITE_VERSION == SQLite3::SQLITE_LOADED_VERSION; \
+  '
+}
+
 function test_installation {
   gem=$1
 
   # test installation
   remove_all sqlite3
   gem install $gem
-  ruby -r sqlite3 -e 'pp SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION'
+  assert_sqlite_version_matches
 
   if [[ $gem =~ sqlite3-[^-]*\.gem ]] ; then
     # test installation against system libs without mini_portile, linux distro repackagers
@@ -36,7 +43,7 @@ function test_installation {
     # test installation against system libs
     remove_all sqlite3
     gem install $gem -- --enable-system-libraries
-    ruby -r sqlite3 -e 'pp SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION'
+    assert_sqlite_version_matches
   fi
 }
 
