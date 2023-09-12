@@ -570,5 +570,16 @@ module SQLite3
       assert_raises(TypeError) { db.load_extension(1) }
       assert_raises(TypeError) { db.load_extension(Pathname.new("foo.so")) }
     end
+
+    def test_raw_float_infinity
+      # https://github.com/sparklemotion/sqlite3-ruby/issues/396
+      skip if SQLite3::SQLITE_LOADED_VERSION >= "3.43.0"
+
+      db = SQLite3::Database.new ":memory:"
+      db.execute("create table foo (temperature float)")
+      db.execute("insert into foo values (?)", 37.5)
+      db.execute("insert into foo values (?)", Float::INFINITY)
+      assert_equal Float::INFINITY, db.execute("select avg(temperature) from foo").first.first
+    end
   end
 end
