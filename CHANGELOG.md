@@ -1,5 +1,19 @@
 # sqlite3-ruby Changelog
 
+## 1.6.6 / 2023-09-12
+
+### Dependencies
+
+Vendored sqlite is updated to [v3.43.1](https://sqlite.org/releaselog/3_43_1.html).
+
+Upstream release notes:
+
+> - Fix a regression in the way that the [sum()](https://sqlite.org/lang_aggfunc.html#sumunc), [avg()](https://sqlite.org/lang_aggfunc.html#avg), and [total()](https://sqlite.org/lang_aggfunc.html#sumunc) aggregate functions handle infinities.
+> - Fix a bug in the [json_array_length()](https://sqlite.org/json1.html#jarraylen) function that occurs when the argument comes directly from [json_remove()](https://sqlite.org/json1.html#jrm).
+> - Fix the omit-unused-subquery-columns optimization (introduced in in version 3.42.0) so that it works correctly if the subquery is a compound where one arm is DISTINCT and the other is not.
+> - Other minor fixes.
+
+
 ## 1.6.5 / 2023-09-08
 
 ### Packaging
