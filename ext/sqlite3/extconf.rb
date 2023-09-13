@@ -45,6 +45,16 @@ module Sqlite3
       def configure_system_libraries
         pkg_config(libname)
         append_cppflags("-DUSING_SQLCIPHER") if sqlcipher?
+
+        if find_header("sqlite3.h")
+          # noop
+        elsif sqlcipher? && find_header("sqlcipher/sqlite3.h")
+          append_cppflags("-DUSING_SQLCIPHER_INC_SUBDIR")
+        else
+          abort_could_not_find("sqlite3.h")
+        end
+
+        abort_could_not_find(libname) unless find_library(libname, "sqlite3_libversion_number", "sqlite3.h")
       end
 
       def configure_packaged_libraries
@@ -65,29 +75,9 @@ module Sqlite3
           unless File.exist?(File.join(recipe.target, recipe.host, recipe.name, recipe.version))
             recipe.cook
           end
-          recipe.activate
 
-          # on macos, pkg-config will not return --cflags without this
-          ENV["PKG_CONFIG_ALLOW_SYSTEM_CFLAGS"] = "t"
-
-          # only needed for Ruby 3.1.3, see https://bugs.ruby-lang.org/issues/19233
-          RbConfig::CONFIG["PKG_CONFIG"] = config_string("PKG_CONFIG") || "pkg-config"
-
-          lib_path = File.join(recipe.path, "lib")
-          pcfile = File.join(lib_path, "pkgconfig", "sqlite3.pc")
-          abort_pkg_config("pkg_config") unless pkg_config(pcfile)
-
-          # see https://bugs.ruby-lang.org/issues/18490
-          ldflags = xpopen(["pkg-config", "--libs", "--static", pcfile], err: [:child, :out], &:read)
-          abort_pkg_config("xpopen") unless $?.success?
-          ldflags = ldflags.split
-
-          # see https://github.com/flavorjones/mini_portile/issues/118
-          "-L#{lib_path}".tap do |lib_path_flag|
-            ldflags.prepend(lib_path_flag) unless ldflags.include?(lib_path_flag)
-          end
-
-          ldflags.each { |ldflag| append_ldflags(ldflag) }
+          recipe.mkmf_config(pkg: libname, static: libname)
+          have_func("sqlite3_libversion_number", "sqlite3.h") || abort_could_not_find(libname)
         end
       end
 
@@ -97,16 +87,6 @@ module Sqlite3
         end
 
         append_cflags("-fvisibility=hidden") # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
-
-        if find_header("sqlite3.h")
-          # noop
-        elsif sqlcipher? && find_header("sqlcipher/sqlite3.h")
-          append_cppflags("-DUSING_SQLCIPHER_INC_SUBDIR")
-        else
-          abort_could_not_find("sqlite3.h")
-        end
-
-        abort_could_not_find(libname) unless find_library(libname, "sqlite3_libversion_number", "sqlite3.h")
 
         # Functions defined in 1.9 but not 1.8
         have_func('rb_proc_arity')
@@ -131,6 +111,8 @@ module Sqlite3
       end
 
       def minimal_recipe
+        require "rubygems"
+        gem "mini_portile2", "2.8.5.rc2" # gemspec is not respected at install time
         require "mini_portile2"
 
         MiniPortile.new(libname, sqlite3_config[:version]).tap do |recipe|
