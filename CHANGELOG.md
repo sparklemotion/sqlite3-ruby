@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Added
+
+* Compile packaged sqlite3 with additional flags to explicitly enable FTS5, and set synchronous mode to normal when in WAL mode. [#408] (@flavorjones)
+
+
 ## 1.6.6 / 2023-09-12
 
 ### Dependencies
