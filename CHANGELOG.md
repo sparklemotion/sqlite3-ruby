@@ -1,6 +1,17 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 1.6.7 / 2023-10-10
+
+### Dependencies
+
+Vendored sqlite is updated to [v3.43.2](https://sqlite.org/releaselog/3_43_2.html).
+
+Upstream release notes:
+
+> - Fix a couple of obscure UAF errors and an obscure memory leak.
+> - Omit the use of the sprintf() function from the standard library in the [CLI](https://sqlite.org/cli.html), as this now generates warnings on some platforms.
+> - Avoid conversion of a double into unsigned long long integer, as some platforms do not do such conversions correctly.
+
 
 ### Added
 
