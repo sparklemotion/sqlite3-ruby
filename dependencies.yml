@@ -1,15 +1,14 @@
 # TODO: stop using symbols here once we no longer support Ruby 2.7 and can rely on symbolize_names
 :sqlite3:
   # checksum verified by first checking the published sha3(256) checksum against https://sqlite.org/download.html:
-  # a7463a45ed58849200858e514b79f7e5f5d69850047897c5b659a78a0bc75cc1
+  # 6869046465eae886f1a9f2c8debeeba44d34328693aa77a5bd4a3cfed93d6556
   #
-  # $ sha3sum -a 256 ports/archives/sqlite-autoconf-3430200.tar.gz
-  # a7463a45ed58849200858e514b79f7e5f5d69850047897c5b659a78a0bc75cc1  ports/archives/sqlite-autoconf-3430200.tar.gz
+  # $ sha3sum -a 256 ports/archives/sqlite-autoconf-3440000.tar.gz
+  # 6869046465eae886f1a9f2c8debeeba44d34328693aa77a5bd4a3cfed93d6556  ports/archives/sqlite-autoconf-3440000.tar.gz
   #
-  # $ sha256sum ports/archives/sqlite-autoconf-3430200.tar.gz
-  # 6d422b6f62c4de2ca80d61860e3a3fb693554d2f75bb1aaca743ccc4d6f609f0  ports/archives/sqlite-autoconf-3430200.tar.gz
-  #
-  :version: "3.43.2"
+  # $ sha256sum ports/archives/sqlite-autoconf-3440000.tar.gz
+  # b9cd386e7cd22af6e0d2a0f06d0404951e1bef109e42ea06cc0450e10cd15550  ports/archives/sqlite-autoconf-3440000.tar.gz
+  :version: "3.44.0"
   :files:
-    - :url: "https://sqlite.org/2023/sqlite-autoconf-3430200.tar.gz"
-      :sha256: "6d422b6f62c4de2ca80d61860e3a3fb693554d2f75bb1aaca743ccc4d6f609f0"
+    - :url: "https://sqlite.org/2023/sqlite-autoconf-3440000.tar.gz"
+      :sha256: "b9cd386e7cd22af6e0d2a0f06d0404951e1bef109e42ea06cc0450e10cd15550"
