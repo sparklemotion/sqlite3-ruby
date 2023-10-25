@@ -18,7 +18,7 @@ module SQLite3
   #     end
   #   end
   #
-  # It wraps the lower-level methods provides by the selected driver, and
+  # It wraps the lower-level methods provided by the selected driver, and
   # includes the Pragmas module for access to various pragma convenience
   # methods.
   #
