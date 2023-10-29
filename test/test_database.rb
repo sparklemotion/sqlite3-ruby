@@ -198,14 +198,36 @@ module SQLite3
 
     def test_new
       db = SQLite3::Database.new(':memory:')
-      assert db
+      assert_instance_of(SQLite3::Database, db)
     ensure
       db.close if db
+    end
+
+    def test_open
+      db = SQLite3::Database.open(':memory:')
+      assert_instance_of(SQLite3::Database, db)
+    ensure
+      db.close if db
+    end
+
+    def test_open_returns_block_result
+      result = SQLite3::Database.open(':memory:') do |db|
+        :foo
+      end
+      assert_equal :foo, result
     end
 
     def test_new_yields_self
       thing = nil
       SQLite3::Database.new(':memory:') do |db|
+        thing = db
+      end
+      assert_instance_of(SQLite3::Database, thing)
+    end
+
+    def test_open_yields_self
+      thing = nil
+      SQLite3::Database.open(':memory:') do |db|
         thing = db
       end
       assert_instance_of(SQLite3::Database, thing)
@@ -221,7 +243,7 @@ module SQLite3
         db = SQLite3::Database.new(Iconv.conv(utf16, 'UTF-8', ':memory:'),
                                    :utf16 => true)
       end
-      assert db
+      assert_instance_of(SQLite3::Database, db)
     ensure
       db.close if db
     end
@@ -241,10 +263,31 @@ module SQLite3
       assert thing.closed?
     end
 
+    def test_open_with_block_closes_self
+      thing = nil
+      SQLite3::Database.open(':memory:') do |db|
+        thing = db
+        assert !thing.closed?
+      end
+      assert thing.closed?
+    end
+
     def test_block_closes_self_even_raised
       thing = nil
       begin
         SQLite3::Database.new(':memory:') do |db|
+          thing = db
+          raise
+        end
+      rescue
+      end
+      assert thing.closed?
+    end
+
+    def test_open_with_block_closes_self_even_raised
+      thing = nil
+      begin
+        SQLite3::Database.open(':memory:') do |db|
           thing = db
           raise
         end

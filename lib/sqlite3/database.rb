@@ -39,7 +39,22 @@ module SQLite3
 
     class << self
 
-      alias :open :new
+      # Without block works exactly as new.
+      # With block, like new closes the database at the end, but unlike new
+      # returns the result of the block instead of the database instance.
+      def open( *args )
+        database = new(*args)
+
+        if block_given?
+          begin
+            yield database
+          ensure
+            database.close
+          end
+        else
+          database
+        end
+      end
 
       # Quotes the given string, making it safe to use in an SQL statement.
       # It replaces all instances of the single-quote character with two
