@@ -1,5 +1,19 @@
 # sqlite3-ruby Changelog
 
+## 1.6.8 / 2023-11-01
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.44.0](https://sqlite.org/releaselog/3_44_0.html). @flavorjones
+- rake-compiler-dock updated to v1.3.1 for precompiled native gems. @flavorjones
+
+
+### Added
+
+- `SQLite3::Database.open` now returns the block result. Previously this returned the Database object. [#415] @toy
+- Documentation improvement in `lib/sqlite3/database.rb`. [#421] @szTheory
+
+
 ## 1.6.7 / 2023-10-10
 
 ### Dependencies
