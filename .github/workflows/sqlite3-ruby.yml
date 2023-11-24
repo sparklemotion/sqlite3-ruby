@@ -28,9 +28,7 @@ jobs:
         ruby: ["3.2", "3.1", "3.0", "2.7"]
         lib: [system, packaged]
         include:
-          - { os: ubuntu-latest,  ruby: truffleruby-head, lib: packaged }
-          - { os: ubuntu-latest,  ruby: head,             lib: packaged }
-          - { os: ubuntu-latest,  ruby: head,             lib: system   }
+          - { os: ubuntu-latest,  ruby: truffleruby,      lib: packaged }
           - { os: windows-latest, ruby: ucrt,             lib: system   }
           - { os: windows-latest, ruby: mswin,            lib: system   }
 
