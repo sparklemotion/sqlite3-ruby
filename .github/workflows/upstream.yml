@@ -6,6 +6,12 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 8 * * 3" # At 08:00 on Wednesday # https://crontab.guru/#0_8_*_*_3
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - '*'
+    paths:
+      - .github/workflows/upstream.yml # this file
 
 jobs:
   sqlite-head:
@@ -20,4 +26,36 @@ jobs:
           ruby-version: "3.1"
           bundler-cache: true
       - run: bundle exec rake compile -- --with-sqlite-source-dir=${GITHUB_WORKSPACE}/sqlite
+      - run: bundle exec rake test
+
+  ruby-head:
+    name: ${{matrix.ruby}}-${{matrix.lib}}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  ruby: truffleruby-head, lib: packaged }
+          - { os: ubuntu-latest,  ruby: head,             lib: packaged }
+          - { os: ubuntu-latest,  ruby: head,             lib: system   }
+
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: ${{matrix.ruby}}
+          bundler-cache: true
+          apt-get: libsqlite3-dev
+      - if: matrix.lib == 'packaged'
+        uses: actions/cache@v3
+        with:
+          path: ports
+          key: ports-${{matrix.os}}-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
+
+      - run: bundle exec rake compile -- --disable-system-libraries
+        if: matrix.lib == 'packaged'
+
+      - run: bundle exec rake compile -- --enable-system-libraries
+        if: matrix.lib == 'system'
+
       - run: bundle exec rake test
