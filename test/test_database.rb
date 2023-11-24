@@ -624,5 +624,45 @@ module SQLite3
       db.execute("insert into foo values (?)", Float::INFINITY)
       assert_equal Float::INFINITY, db.execute("select avg(temperature) from foo").first.first
     end
+
+    def test_default_transaction_mode
+      tf = Tempfile.new 'database_default_transaction_mode'
+      SQLite3::Database.new(tf.path) do |db|
+        db.execute("create table foo (score int)")
+        db.execute("insert into foo values (?)", 1)
+      end
+
+      test_cases = [
+        {mode: nil, read: true, write: true},
+        {mode: :deferred, read: true, write: true},
+        {mode: :immediate, read: true, write: false},
+        {mode: :exclusive, read: false, write: false},
+      ]
+
+      test_cases.each do |item|
+        db = SQLite3::Database.new tf.path, default_transaction_mode: item[:mode]
+        db2 = SQLite3::Database.new tf.path
+        db.transaction do
+          sql_for_read_test = "select * from foo"
+          if item[:read]
+            assert_nothing_raised{ db2.execute(sql_for_read_test) }
+          else
+            assert_raises(SQLite3::BusyException){ db2.execute(sql_for_read_test) }
+          end
+
+          sql_for_write_test = "insert into foo values (2)"
+          if item[:write]
+            assert_nothing_raised{ db2.execute(sql_for_write_test) }
+          else
+            assert_raises(SQLite3::BusyException){ db2.execute(sql_for_write_test) }
+          end
+        end
+      ensure
+        db.close if db && !db.closed?
+        db2.close if db2 && !db2.closed?
+      end
+    ensure
+      tf.unlink if tf
+    end
   end
 end

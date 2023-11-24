@@ -119,6 +119,7 @@ module SQLite3
       @type_translation = options[:type_translation]
       @type_translator  = make_type_translator @type_translation
       @readonly         = mode & Constants::Open::READONLY != 0
+      @default_transaction_mode = options[:default_transaction_mode] || :deferred
 
       if block_given?
         begin
@@ -622,8 +623,10 @@ module SQLite3
     # by SQLite, so attempting to nest a transaction will result in a runtime
     # exception.
     #
-    # The +mode+ parameter may be either <tt>:deferred</tt> (the default),
+    # The +mode+ parameter may be either <tt>:deferred</tt>,
     # <tt>:immediate</tt>, or <tt>:exclusive</tt>.
+    # If `nil` is specified, the default transaction mode, which was
+    # passed to #initialize, is used.
     #
     # If a block is given, the database instance is yielded to it, and the
     # transaction is committed when the block terminates. If the block
@@ -634,7 +637,8 @@ module SQLite3
     # If a block is not given, it is the caller's responsibility to end the
     # transaction explicitly, either by calling #commit, or by calling
     # #rollback.
-    def transaction( mode = :deferred )
+    def transaction( mode = nil )
+      mode = @default_transaction_mode if mode.nil?
       execute "begin #{mode.to_s} transaction"
 
       if block_given?
