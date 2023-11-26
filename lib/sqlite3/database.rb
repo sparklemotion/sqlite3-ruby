@@ -71,12 +71,23 @@ module SQLite3
 
     # call-seq: SQLite3::Database.new(file, options = {})
     #
-    # Create a new Database object that opens the given file. If utf16
-    # is +true+, the filename is interpreted as a UTF-16 encoded string.
+    # Create a new Database object that opens the given file.
     #
-    # By default, the new database will return result rows as arrays
-    # (#results_as_hash) and has type translation disabled (#type_translation=).
-
+    # Supported permissions +options+:
+    # - the default mode is <tt>READWRITE | CREATE</tt>
+    # - +:readonly+: boolean (default false), true to set the mode to +READONLY+
+    # - +:readwrite+: boolean (default false), true to set the mode to +READWRITE+
+    # - +:flags+: set the mode to a combination of SQLite3::Constants::Open flags.
+    #
+    # Supported encoding +options+:
+    # - +:utf16+: boolean (default false), is the filename's encoding UTF-16 (only needed if the filename encoding is not UTF_16LE or BE)
+    #
+    # Other supported +options+:
+    # - +:strict+: boolean (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
+    # - +:results_as_hash+: boolean (default false), return rows as hashes instead of arrays
+    # - +:type_translation+: boolean (default false), enable type translation
+    # - +:default_transaction_mode+: one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
+    #
     def initialize file, options = {}, zvfs = nil
       mode = Constants::Open::READWRITE | Constants::Open::CREATE
 
@@ -119,6 +130,7 @@ module SQLite3
       @type_translation = options[:type_translation]
       @type_translator  = make_type_translator @type_translation
       @readonly         = mode & Constants::Open::READONLY != 0
+      @default_transaction_mode = options[:default_transaction_mode] || :deferred
 
       if block_given?
         begin
@@ -622,8 +634,10 @@ module SQLite3
     # by SQLite, so attempting to nest a transaction will result in a runtime
     # exception.
     #
-    # The +mode+ parameter may be either <tt>:deferred</tt> (the default),
+    # The +mode+ parameter may be either <tt>:deferred</tt>,
     # <tt>:immediate</tt>, or <tt>:exclusive</tt>.
+    # If `nil` is specified, the default transaction mode, which was
+    # passed to #initialize, is used.
     #
     # If a block is given, the database instance is yielded to it, and the
     # transaction is committed when the block terminates. If the block
@@ -634,7 +648,8 @@ module SQLite3
     # If a block is not given, it is the caller's responsibility to end the
     # transaction explicitly, either by calling #commit, or by calling
     # #rollback.
-    def transaction( mode = :deferred )
+    def transaction( mode = nil )
+      mode = @default_transaction_mode if mode.nil?
       execute "begin #{mode.to_s} transaction"
 
       if block_given?
