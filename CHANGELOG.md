@@ -1,6 +1,6 @@
 # sqlite3-ruby Changelog
 
-## 1.6.next / unreleased
+## 1.6.9 / 2023-11-26
 
 ### Dependencies
 
