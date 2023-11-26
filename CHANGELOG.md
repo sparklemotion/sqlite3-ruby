@@ -6,6 +6,10 @@
 
 - Vendored sqlite is update to [v3.44.2](https://sqlite.org/releaselog/3_44_2.html). @flavorjones
 
+### Added
+
+- `Database.new` now accepts a `:default_transaction_mode` option (defaulting to `:deferred`), and `Database#transaction` no longer requires a transaction mode to be specified. This should allow higher-level adapters to more easily choose a transaction mode for a database connection. [#426] @masamitsu-murase
+
 
 ## 1.6.8 / 2023-11-01
 
