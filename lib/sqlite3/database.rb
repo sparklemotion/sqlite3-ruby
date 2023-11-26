@@ -71,12 +71,23 @@ module SQLite3
 
     # call-seq: SQLite3::Database.new(file, options = {})
     #
-    # Create a new Database object that opens the given file. If utf16
-    # is +true+, the filename is interpreted as a UTF-16 encoded string.
+    # Create a new Database object that opens the given file.
     #
-    # By default, the new database will return result rows as arrays
-    # (#results_as_hash) and has type translation disabled (#type_translation=).
-
+    # Supported permissions +options+:
+    # - the default mode is <tt>READWRITE | CREATE</tt>
+    # - +:readonly+: boolean (default false), true to set the mode to +READONLY+
+    # - +:readwrite+: boolean (default false), true to set the mode to +READWRITE+
+    # - +:flags+: set the mode to a combination of SQLite3::Constants::Open flags.
+    #
+    # Supported encoding +options+:
+    # - +:utf16+: boolean (default false), is the filename's encoding UTF-16 (only needed if the filename encoding is not UTF_16LE or BE)
+    #
+    # Other supported +options+:
+    # - +:strict+: boolean (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
+    # - +:results_as_hash+: boolean (default false), return rows as hashes instead of arrays
+    # - +:type_translation+: boolean (default false), enable type translation
+    # - +:default_transaction_mode+: one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
+    #
     def initialize file, options = {}, zvfs = nil
       mode = Constants::Open::READWRITE | Constants::Open::CREATE
 
