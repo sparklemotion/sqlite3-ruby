@@ -6,7 +6,7 @@
 
 This release introduces native gem support for Ruby 3.3.
 
-This release ends native gem support for Ruby 2.7, for which [upstream support ended 2022-04-12](https://www.ruby-lang.org/en/downloads/branches/). Ruby 2.7 is still generally supported, but will not be shipped in the native gems.
+This release ends native gem support for Ruby 2.7, for which [upstream support ended 2023-03-31](https://www.ruby-lang.org/en/downloads/branches/). Ruby 2.7 is still generally supported, but will not be shipped in the native gems.
 
 This release ends support for Ruby 1.9.3, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, and 2.6.
 
