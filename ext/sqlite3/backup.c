@@ -76,8 +76,8 @@ static VALUE initialize(VALUE self, VALUE dstdb, VALUE dstname, VALUE srcdb, VAL
   sqlite3_backup *pBackup;
 
   TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
-  Data_Get_Struct(dstdb, sqlite3Ruby, ddb_ctx);
-  Data_Get_Struct(srcdb, sqlite3Ruby, sdb_ctx);
+  ddb_ctx = sqlite3_database_unwrap(dstdb);
+  sdb_ctx = sqlite3_database_unwrap(srcdb);
 
   if(!sdb_ctx->db)
     rb_raise(rb_eArgError, "cannot backup from a closed database");

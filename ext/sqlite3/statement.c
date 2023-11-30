@@ -30,14 +30,13 @@ static VALUE allocate(VALUE klass)
  */
 static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 {
-  sqlite3RubyPtr db_ctx;
+  sqlite3RubyPtr db_ctx = sqlite3_database_unwrap(db);
   sqlite3StmtRubyPtr ctx;
   const char *tail = NULL;
   int status;
 
   StringValue(sql);
 
-  Data_Get_Struct(db, sqlite3Ruby, db_ctx);
   Data_Get_Struct(self, sqlite3StmtRuby, ctx);
 
   if(!db_ctx->db)
