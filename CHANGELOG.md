@@ -10,6 +10,10 @@ This release ends native gem support for Ruby 2.7, for which [upstream support e
 
 This release ends support for Ruby 1.9.3, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, and 2.6.
 
+### Improved
+
+- SQLite3::Statement, Database, and Backup objects have been converted to use the TypedData API. See https://bugs.ruby-lang.org/issues/19998 for more context. [#432] @casperisfine
+
 
 ## 1.6.9 / 2023-11-26
 
