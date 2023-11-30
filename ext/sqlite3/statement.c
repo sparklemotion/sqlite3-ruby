@@ -6,19 +6,29 @@
 
 VALUE cSqlite3Statement;
 
-static void deallocate(void * ctx)
+static size_t statement_memsize(const void *data)
 {
-  sqlite3StmtRubyPtr c = (sqlite3StmtRubyPtr)ctx;
-  xfree(c);
+  const sqlite3StmtRubyPtr s = (const sqlite3StmtRubyPtr)data;
+  // NB: can't account for s->st because the type is incomplete.
+  return sizeof(*s);
 }
+
+static const rb_data_type_t statement_type = {
+  "SQLite3::Backup",
+  {
+      NULL,
+      RUBY_TYPED_DEFAULT_FREE,
+      statement_memsize,
+  },
+  0,
+  0,
+  RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
+};
 
 static VALUE allocate(VALUE klass)
 {
-  sqlite3StmtRubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3StmtRuby));
-  ctx->st     = NULL;
-  ctx->done_p = 0;
-
-  return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
+  sqlite3StmtRubyPtr ctx;
+  return TypedData_Make_Struct(klass, sqlite3StmtRuby, &statement_type, ctx);
 }
 
 /* call-seq: SQLite3::Statement.new(db, sql)
@@ -37,7 +47,7 @@ static VALUE initialize(VALUE self, VALUE db, VALUE sql)
 
   StringValue(sql);
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
   if(!db_ctx->db)
     rb_raise(rb_eArgError, "prepare called on a closed database");
@@ -77,7 +87,7 @@ static VALUE sqlite3_rb_close(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
   REQUIRE_OPEN_STMT(ctx);
 
@@ -94,7 +104,7 @@ static VALUE sqlite3_rb_close(VALUE self)
 static VALUE closed_p(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
   if(!ctx->st) return Qtrue;
 
@@ -109,7 +119,7 @@ static VALUE step(VALUE self)
   VALUE list;
   rb_encoding * internal_encoding;
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
   REQUIRE_OPEN_STMT(ctx);
 
@@ -205,7 +215,7 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
   int status;
   int index;
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   switch(TYPE(key)) {
@@ -295,7 +305,7 @@ static VALUE reset_bang(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   sqlite3_reset(ctx->st);
@@ -314,7 +324,7 @@ static VALUE clear_bindings_bang(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   sqlite3_clear_bindings(ctx->st);
@@ -331,7 +341,7 @@ static VALUE clear_bindings_bang(VALUE self)
 static VALUE done_p(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
   if(ctx->done_p) return Qtrue;
   return Qfalse;
@@ -344,7 +354,7 @@ static VALUE done_p(VALUE self)
 static VALUE column_count(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   return INT2NUM(sqlite3_column_count(ctx->st));
@@ -359,7 +369,7 @@ static VALUE column_name(VALUE self, VALUE index)
   sqlite3StmtRubyPtr ctx;
   const char * name;
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
@@ -377,7 +387,7 @@ static VALUE column_decltype(VALUE self, VALUE index)
   sqlite3StmtRubyPtr ctx;
   const char * name;
 
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
@@ -393,7 +403,7 @@ static VALUE column_decltype(VALUE self, VALUE index)
 static VALUE bind_parameter_count(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
@@ -408,7 +418,7 @@ static VALUE bind_parameter_count(VALUE self)
 static VALUE database_name(VALUE self, VALUE index)
 {
   sqlite3StmtRubyPtr ctx;
-  Data_Get_Struct(self, sqlite3StmtRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
   REQUIRE_OPEN_STMT(ctx);
 
   return SQLITE3_UTF8_STR_NEW2(
