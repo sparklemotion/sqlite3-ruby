@@ -21,10 +21,29 @@ static void deallocate(void * ctx)
   xfree(c);
 }
 
+static size_t database_memsize(const void *ctx)
+{
+  const sqlite3RubyPtr c = (const sqlite3RubyPtr)ctx;
+  // NB: can't account for ctx->db because the type is incomplete.
+  return sizeof(*c);
+}
+
+static const rb_data_type_t database_type = {
+  "SQLite3::Backup",
+  {
+      NULL,
+      deallocate,
+      database_memsize,
+  },
+  0,
+  0,
+  RUBY_TYPED_WB_PROTECTED, // Not freed immediately because the dfree function do IOs.
+};
+
 static VALUE allocate(VALUE klass)
 {
-  sqlite3RubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3Ruby));
-  return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
+  sqlite3RubyPtr ctx;
+  return TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
 }
 
 static char *
@@ -37,12 +56,18 @@ utf16_string_value_ptr(VALUE str)
 
 static VALUE sqlite3_rb_close(VALUE self);
 
+sqlite3RubyPtr sqlite3_database_unwrap(VALUE database){
+  sqlite3RubyPtr ctx;
+  TypedData_Get_Struct(database, sqlite3Ruby, &database_type, ctx);
+  return ctx;
+}
+
 static VALUE rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 {
   sqlite3RubyPtr ctx;
   int status;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
 #if defined TAINTING_SUPPORT
 #  if defined StringValueCStr
@@ -69,7 +94,7 @@ static VALUE rb_sqlite3_disable_quirk_mode(VALUE self)
 {
 #if defined SQLITE_DBCONFIG_DQS_DDL
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
   if(!ctx->db) return Qfalse;
 
@@ -90,7 +115,7 @@ static VALUE sqlite3_rb_close(VALUE self)
 {
   sqlite3RubyPtr ctx;
   sqlite3 * db;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
   db = ctx->db;
   CHECK(db, sqlite3_close(ctx->db));
@@ -109,7 +134,7 @@ static VALUE sqlite3_rb_close(VALUE self)
 static VALUE closed_p(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
   if(!ctx->db) return Qtrue;
 
@@ -124,7 +149,7 @@ static VALUE closed_p(VALUE self)
 static VALUE total_changes(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   return INT2NUM(sqlite3_total_changes(ctx->db));
@@ -150,7 +175,7 @@ static VALUE trace(int argc, VALUE *argv, VALUE self)
   sqlite3RubyPtr ctx;
   VALUE block;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   rb_scan_args(argc, argv, "01", &block);
@@ -195,7 +220,7 @@ static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
   VALUE block;
   int status;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   rb_scan_args(argc, argv, "01", &block);
@@ -220,7 +245,7 @@ static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
 static VALUE last_insert_row_id(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   return LL2NUM(sqlite3_last_insert_rowid(ctx->db));
@@ -340,7 +365,7 @@ static VALUE define_function_with_flags(VALUE self, VALUE name, VALUE flags)
   VALUE block;
   int status;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   block = rb_block_proc();
@@ -380,7 +405,7 @@ static VALUE define_function(VALUE self, VALUE name)
 static VALUE interrupt(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   sqlite3_interrupt(ctx->db);
@@ -396,7 +421,7 @@ static VALUE interrupt(VALUE self)
 static VALUE errmsg(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   return rb_str_new2(sqlite3_errmsg(ctx->db));
@@ -410,7 +435,7 @@ static VALUE errmsg(VALUE self)
 static VALUE errcode_(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   return INT2NUM(sqlite3_errcode(ctx->db));
@@ -438,7 +463,7 @@ static VALUE complete_p(VALUE UNUSED(self), VALUE sql)
 static VALUE changes(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   return INT2NUM(sqlite3_changes(ctx->db));
@@ -483,7 +508,7 @@ static VALUE set_authorizer(VALUE self, VALUE authorizer)
   sqlite3RubyPtr ctx;
   int status;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   status = sqlite3_set_authorizer(
@@ -510,7 +535,7 @@ static VALUE set_authorizer(VALUE self, VALUE authorizer)
 static VALUE set_busy_timeout(VALUE self, VALUE timeout)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   CHECK(ctx->db, sqlite3_busy_timeout(ctx->db, (int)NUM2INT(timeout)));
@@ -526,7 +551,7 @@ static VALUE set_busy_timeout(VALUE self, VALUE timeout)
 static VALUE set_extended_result_codes(VALUE self, VALUE enable)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   CHECK(ctx->db, sqlite3_extended_result_codes(ctx->db, RTEST(enable) ? 1 : 0));
@@ -571,7 +596,7 @@ int rb_comparator_func(void * ctx, int a_len, const void * a, int b_len, const v
 static VALUE collation(VALUE self, VALUE name, VALUE comparator)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   CHECK(ctx->db, sqlite3_create_collation(
@@ -600,7 +625,7 @@ static VALUE load_extension(VALUE self, VALUE file)
   int status;
   char *errMsg;
   VALUE errexp;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   status = sqlite3_load_extension(ctx->db, StringValuePtr(file), 0, &errMsg);
@@ -624,7 +649,7 @@ static VALUE enable_load_extension(VALUE self, VALUE onoff)
 {
   sqlite3RubyPtr ctx;
   int onoffparam;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   if (Qtrue == onoff) {
@@ -661,7 +686,7 @@ static VALUE db_encoding(VALUE self)
   sqlite3RubyPtr ctx;
   VALUE enc;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   enc = rb_iv_get(self, "@encoding");
@@ -681,7 +706,7 @@ static VALUE db_encoding(VALUE self)
 static VALUE transaction_active_p(VALUE self)
 {
   sqlite3RubyPtr ctx;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
@@ -740,7 +765,7 @@ static VALUE exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
   char *errMsg;
   VALUE errexp;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   if(results_as_hash == Qtrue) {
@@ -768,7 +793,7 @@ static VALUE db_filename(VALUE self, VALUE db_name)
 {
   sqlite3RubyPtr ctx;
   const char * fname;
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
   REQUIRE_OPEN_DB(ctx);
 
   fname = sqlite3_db_filename(ctx->db, StringValueCStr(db_name));
@@ -782,7 +807,7 @@ static VALUE rb_sqlite3_open16(VALUE self, VALUE file)
   int status;
   sqlite3RubyPtr ctx;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
 #if defined TAINTING_SUPPORT
 #if defined StringValueCStr

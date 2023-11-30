@@ -206,12 +206,11 @@ VALUE
 rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
 {
   /* define_aggregator is added as a method to SQLite3::Database in database.c */
-  sqlite3RubyPtr ctx;
+  sqlite3RubyPtr ctx = sqlite3_database_unwrap(self);
   int arity, status;
   VALUE aw;
   VALUE aggregators;
 
-  Data_Get_Struct(self, sqlite3Ruby, ctx);
   if (!ctx->db) {
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
   }

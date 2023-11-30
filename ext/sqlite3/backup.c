@@ -8,16 +8,29 @@
 
 VALUE cSqlite3Backup;
 
-static void deallocate(void * ctx)
+static size_t backup_memsize(const void *data)
 {
-  sqlite3BackupRubyPtr c = (sqlite3BackupRubyPtr)ctx;
-  xfree(c);
+  sqlite3BackupRubyPtr ctx = (sqlite3BackupRubyPtr)data;
+  // NB: can't account for ctx->p because the type is incomplete.
+  return sizeof(*ctx);
 }
+
+static const rb_data_type_t backup_type = {
+    "SQLite3::Backup",
+    {
+        NULL,
+        RUBY_TYPED_DEFAULT_FREE,
+        backup_memsize,
+    },
+    0,
+    0,
+    RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
+};
 
 static VALUE allocate(VALUE klass)
 {
-  sqlite3BackupRubyPtr ctx = xcalloc((size_t)1, sizeof(sqlite3BackupRuby));
-  return Data_Wrap_Struct(klass, NULL, deallocate, ctx);
+  sqlite3BackupRubyPtr ctx;
+  return TypedData_Make_Struct(klass, sqlite3BackupRuby, &backup_type, ctx);
 }
 
 /* call-seq: SQLite3::Backup.new(dstdb, dstname, srcdb, srcname)
@@ -62,9 +75,9 @@ static VALUE initialize(VALUE self, VALUE dstdb, VALUE dstname, VALUE srcdb, VAL
   sqlite3RubyPtr ddb_ctx, sdb_ctx;
   sqlite3_backup *pBackup;
 
-  Data_Get_Struct(self, sqlite3BackupRuby, ctx);
-  Data_Get_Struct(dstdb, sqlite3Ruby, ddb_ctx);
-  Data_Get_Struct(srcdb, sqlite3Ruby, sdb_ctx);
+  TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
+  ddb_ctx = sqlite3_database_unwrap(dstdb);
+  sdb_ctx = sqlite3_database_unwrap(srcdb);
 
   if(!sdb_ctx->db)
     rb_raise(rb_eArgError, "cannot backup from a closed database");
@@ -97,7 +110,7 @@ static VALUE step(VALUE self, VALUE nPage)
   sqlite3BackupRubyPtr ctx;
   int status;
 
-  Data_Get_Struct(self, sqlite3BackupRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
   REQUIRE_OPEN_BACKUP(ctx);
   status = sqlite3_backup_step(ctx->p, NUM2INT(nPage));
   return INT2NUM(status);
@@ -111,7 +124,7 @@ static VALUE finish(VALUE self)
 {
   sqlite3BackupRubyPtr ctx;
 
-  Data_Get_Struct(self, sqlite3BackupRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
   REQUIRE_OPEN_BACKUP(ctx);
   (void)sqlite3_backup_finish(ctx->p);
   ctx->p = NULL;
@@ -129,7 +142,7 @@ static VALUE remaining(VALUE self)
 {
   sqlite3BackupRubyPtr ctx;
 
-  Data_Get_Struct(self, sqlite3BackupRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
   REQUIRE_OPEN_BACKUP(ctx);
   return INT2NUM(sqlite3_backup_remaining(ctx->p));
 }
@@ -145,7 +158,7 @@ static VALUE pagecount(VALUE self)
 {
   sqlite3BackupRubyPtr ctx;
 
-  Data_Get_Struct(self, sqlite3BackupRuby, ctx);
+  TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
   REQUIRE_OPEN_BACKUP(ctx);
   return INT2NUM(sqlite3_backup_pagecount(ctx->p));
 }
