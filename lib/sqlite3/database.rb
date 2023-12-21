@@ -691,6 +691,19 @@ module SQLite3
       @readonly
     end
 
+    def lock_wait_timeout=( milliseconds )
+      timeout_seconds = milliseconds.fdiv(1000)
+      retry_interval = 0.001 # 1 millisecond
+
+      busy_handler do |count|
+        @start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC) if count == 0
+
+        next sleep(retry_interval) unless (count % 100) == 0
+
+        (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @start_time) <= timeout_seconds
+      end
+    end
+
     # A helper class for dealing with custom functions (see #create_function,
     # #create_aggregate, and #create_aggregate_handler). It encapsulates the
     # opaque function object that represents the current invocation. It also

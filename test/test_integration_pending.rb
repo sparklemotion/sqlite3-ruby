@@ -112,4 +112,33 @@ class TC_Integration_Pending < SQLite3::TestCase
 
     assert time.real*1000 >= 1000
   end
+
+  def test_lock_wait_timeout
+    @db.lock_wait_timeout = 1000
+    busy = Mutex.new
+    busy.lock
+
+    t = Thread.new do
+      begin
+        db2 = SQLite3::Database.open( "test.db" )
+        db2.transaction( :exclusive ) do
+          busy.lock
+        end
+      ensure
+        db2.close if db2
+      end
+    end
+
+    sleep 1
+    time = Benchmark.measure do
+      assert_raise( SQLite3::BusyException ) do
+        @db.execute "insert into foo (b) values ( 'from 2' )"
+      end
+    end
+
+    busy.unlock
+    t.join
+
+    assert time.real*1000 >= 1000
+  end
 end
