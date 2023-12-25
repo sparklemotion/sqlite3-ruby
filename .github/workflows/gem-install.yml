@@ -50,7 +50,7 @@ jobs:
           ruby-version: "3.1"
           bundler-cache: true
       - run: ./bin/test-gem-build gems ruby
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: cruby-gem
           path: gems
@@ -171,7 +171,7 @@ jobs:
         run: |
           docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 ${DOCKER_IMAGE} \
             ./bin/test-gem-build gems ${{matrix.plat}}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: "cruby-${{matrix.plat}}-gem"
           path: gems
