@@ -70,7 +70,7 @@ jobs:
         with:
           ruby-version: "${{matrix.ruby}}"
           apt-get: "libsqlite3-dev pkg-config"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-gem
           path: gems
@@ -90,7 +90,7 @@ jobs:
         with:
           ruby-version: "${{matrix.ruby}}"
           brew: sqlite3 pkg-config
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-gem
           path: gems
@@ -113,7 +113,7 @@ jobs:
         with:
           ruby-version: "${{matrix.ruby}}"
           mingw: "sqlite3"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-gem
           path: gems
@@ -136,7 +136,7 @@ jobs:
         with:
           ruby-version: "${{matrix.ruby}}"
           mingw: "sqlite3"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-gem
           path: gems
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-aarch64-linux-gem
           path: gems
@@ -206,7 +206,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-arm-linux-gem
           path: gems
@@ -233,7 +233,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{matrix.ruby}}"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-x64-mingw-ucrt-gem
           path: gems
@@ -254,7 +254,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{matrix.ruby}}"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-x64-mingw32-gem
           path: gems
@@ -272,7 +272,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-x86-linux-gem
           path: gems
@@ -295,7 +295,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{matrix.ruby}}"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-x86_64-darwin-gem
           path: gems
@@ -313,7 +313,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{matrix.ruby}}"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-x86_64-linux-gem
           path: gems
@@ -334,7 +334,7 @@ jobs:
       image: ruby:${{matrix.ruby}}-${{matrix.flavor}}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-x86_64-linux-gem
           path: gems
