@@ -113,8 +113,8 @@ class TC_Integration_Pending < SQLite3::TestCase
     assert time.real*1000 >= 1000
   end
 
-  def test_lock_wait_timeout
-    @db.lock_wait_timeout = 1000
+  def test_busy_handler_timeout
+    @db.busy_handler_timeout = 1000
     busy = Mutex.new
     busy.lock
 
