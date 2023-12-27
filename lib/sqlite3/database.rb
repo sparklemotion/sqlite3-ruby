@@ -691,7 +691,7 @@ module SQLite3
       @readonly
     end
 
-    def lock_wait_timeout=( milliseconds )
+    def busy_handler_timeout=( milliseconds )
       timeout_seconds = milliseconds.fdiv(1000)
       retry_interval = 0.001 # 1 millisecond
 
