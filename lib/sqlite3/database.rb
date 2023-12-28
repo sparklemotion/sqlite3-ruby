@@ -691,16 +691,19 @@ module SQLite3
       @readonly
     end
 
+    # Sets a #busy_handler that releases the GVL between retries,
+    # but only retries up to the indicated number of +milliseconds+.
+    # This is an alternative to #busy_timeout, which holds the GVL
+    # while SQLite sleeps and retries.
     def busy_handler_timeout=( milliseconds )
       timeout_seconds = milliseconds.fdiv(1000)
       retry_interval = 0.001 # 1 millisecond
+      timeout_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout_seconds
 
       busy_handler do |count|
-        @start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC) if count == 0
+        next false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > timeout_deadline
 
-        next sleep(retry_interval) unless (count % 100) == 0
-
-        (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @start_time) <= timeout_seconds
+        sleep(retry_interval)
       end
     end
 
