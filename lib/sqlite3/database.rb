@@ -697,13 +697,12 @@ module SQLite3
     # while SQLite sleeps and retries.
     def busy_handler_timeout=( milliseconds )
       timeout_seconds = milliseconds.fdiv(1000)
-      retry_interval = 0.001 # 1 millisecond
       timeout_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout_seconds
 
       busy_handler do |count|
         next false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > timeout_deadline
 
-        sleep(retry_interval)
+        sleep(0.001)
       end
     end
 
