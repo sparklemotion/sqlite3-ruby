@@ -113,32 +113,68 @@ class TC_Integration_Pending < SQLite3::TestCase
     assert time.real*1000 >= 1000
   end
 
-  def test_busy_handler_timeout
-    @db.busy_handler_timeout = 1000
-    busy = Mutex.new
-    busy.lock
+  def test_busy_timeout_blocks_gvl
+    t1 = Thread.new do
+      begin
+        db1 = SQLite3::Database.open( "test.db" )
+        db1.transaction( :exclusive ) do
+          sleep 0.05
+        end
+      ensure
+        db1.close if db1
+      end
+    end
 
-    t = Thread.new do
+    t2 = Thread.new do
       begin
         db2 = SQLite3::Database.open( "test.db" )
+        db2.busy_timeout 1000
+        # db2.busy_handler do |count|
+        #   sleep 0.001
+        # end
         db2.transaction( :exclusive ) do
-          busy.lock
+          sleep 0.01
         end
       ensure
         db2.close if db2
       end
     end
 
-    sleep 1
     time = Benchmark.measure do
-      assert_raise( SQLite3::BusyException ) do
-        @db.execute "insert into foo (b) values ( 'from 2' )"
+      [t1, t2].each(&:join)
+    end
+
+    assert time.real >= 1
+  end
+
+  def test_busy_handler_timeout_releases_gvl
+    t1 = Thread.new do
+      begin
+        db1 = SQLite3::Database.open( "test.db" )
+        db1.transaction( :exclusive ) do
+          sleep 0.05
+        end
+      ensure
+        db1.close if db1
       end
     end
 
-    busy.unlock
-    t.join
+    t2 = Thread.new do
+      begin
+        db2 = SQLite3::Database.open( "test.db" )
+        db2.busy_handler_timeout = 1000
+        db2.transaction( :exclusive ) do
+          sleep 0.01
+        end
+      ensure
+        db2.close if db2
+      end
+    end
 
-    assert time.real*1000 >= 1000
+    time = Benchmark.measure do
+      [t1, t2].each(&:join)
+    end
+
+    assert time.real < 1
   end
 end
