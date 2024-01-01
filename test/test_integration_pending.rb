@@ -129,9 +129,6 @@ class TC_Integration_Pending < SQLite3::TestCase
       begin
         db2 = SQLite3::Database.open( "test.db" )
         db2.busy_timeout 1000
-        # db2.busy_handler do |count|
-        #   sleep 0.001
-        # end
         db2.transaction( :exclusive ) do
           sleep 0.01
         end
@@ -144,7 +141,7 @@ class TC_Integration_Pending < SQLite3::TestCase
       [t1, t2].each(&:join)
     end
 
-    assert time.real >= 1
+    assert_operator time.real, :>=, 1
   end
 
   def test_busy_handler_timeout_releases_gvl
@@ -175,6 +172,6 @@ class TC_Integration_Pending < SQLite3::TestCase
       [t1, t2].each(&:join)
     end
 
-    assert time.real < 1
+    assert_operator time.real, :<, 1
   end
 end
