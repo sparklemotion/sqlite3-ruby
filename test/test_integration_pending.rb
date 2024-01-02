@@ -116,12 +116,16 @@ class TC_Integration_Pending < SQLite3::TestCase
   def test_busy_timeout_blocks_gvl
     threads = [1, 2].map do
       Thread.new do
-        db = SQLite3::Database.new("test.db")
-        db.busy_timeout = 3000
-        db.transaction(:immediate) do
-          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
-          sleep 1
-          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+        begin
+          db = SQLite3::Database.new("test.db")
+          db.busy_timeout = 3000
+          db.transaction(:immediate) do
+            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+            sleep 1
+            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+          end
+        ensure
+          db.close if db
         end
       end
     end
@@ -134,12 +138,16 @@ class TC_Integration_Pending < SQLite3::TestCase
   def test_busy_handler_timeout_releases_gvl
     threads = [1, 2].map do
       Thread.new do
-        db = SQLite3::Database.new("test.db")
-        db.busy_handler_timeout = 3000
-        db.transaction(:immediate) do
-          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
-          sleep 1
-          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+        begin
+          db = SQLite3::Database.new("test.db")
+          db.busy_handler_timeout = 3000
+          db.transaction(:immediate) do
+            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+            sleep 1
+            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+          end
+        ensure
+          db.close if db
         end
       end
     end
