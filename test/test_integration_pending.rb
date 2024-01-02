@@ -114,64 +114,36 @@ class TC_Integration_Pending < SQLite3::TestCase
   end
 
   def test_busy_timeout_blocks_gvl
-    t1 = Thread.new do
-      begin
-        db1 = SQLite3::Database.open( "test.db" )
-        db1.transaction( :exclusive ) do
-          sleep 0.05
-        end
-      ensure
-        db1.close if db1
-      end
-    end
-
-    t2 = Thread.new do
-      begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.busy_timeout 1000
-        db2.transaction( :exclusive ) do
-          sleep 0.01
-        end
-      ensure
-        db2.close if db2
-      end
-    end
+    db2 = SQLite3::Database.open( "test.db" )
+    db2.busy_timeout 1000
 
     time = Benchmark.measure do
-      [t1, t2].each(&:join)
+      @db.transaction( :exclusive ) do
+        assert_raises( SQLite3::BusyException ) do
+          db2.transaction( :exclusive ) {}
+        end
+      end
     end
 
-    assert_operator time.real, :>=, 1
+    db2.close
+
+    assert_operator time.real, :>=, 2
   end
 
   def test_busy_handler_timeout_releases_gvl
-    t1 = Thread.new do
-      begin
-        db1 = SQLite3::Database.open( "test.db" )
-        db1.transaction( :exclusive ) do
-          sleep 0.05
-        end
-      ensure
-        db1.close if db1
-      end
-    end
-
-    t2 = Thread.new do
-      begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.busy_handler_timeout = 1000
-        db2.transaction( :exclusive ) do
-          sleep 0.01
-        end
-      ensure
-        db2.close if db2
-      end
-    end
+    db2 = SQLite3::Database.open( "test.db" )
+    db2.busy_handler_timeout = 1000
 
     time = Benchmark.measure do
-      [t1, t2].each(&:join)
+      @db.transaction( :exclusive ) do
+        assert_raises( SQLite3::BusyException ) do
+          db2.transaction( :exclusive ) {}
+        end
+      end
     end
 
-    assert_operator time.real, :<, 1
+    db2.close
+
+    assert_operator time.real, :>=, 1
   end
 end
