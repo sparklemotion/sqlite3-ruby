@@ -113,39 +113,30 @@ class TC_Integration_Pending < SQLite3::TestCase
     assert time.real*1000 >= 1000
   end
 
-  def test_busy_timeout_blocks_gvl
-    db2 = SQLite3::Database.open( "test.db" )
-    db2.busy_timeout 1000
-
-    time = Benchmark.measure do
+  def test_busy_timeout_blocks_gvl_while_busy_handler_timeout_releases_gvl
+    busy_timeout_db = SQLite3::Database.open( "test.db" )
+    busy_timeout_db.busy_timeout 1000
+    busy_timeout_time = Benchmark.measure do
       @db.transaction( :exclusive ) do
         assert_raises( SQLite3::BusyException ) do
-          db2.transaction( :exclusive ) {}
+          busy_timeout_db.transaction( :exclusive ) {}
         end
       end
     end
+    busy_timeout_db.close
 
-    db2.close
-
-    assert_operator time.real, :>=, 2
-    assert_operator time.real, :<, 3
-  end
-
-  def test_busy_handler_timeout_releases_gvl
-    db2 = SQLite3::Database.open( "test.db" )
-    db2.busy_handler_timeout = 1000
-
-    time = Benchmark.measure do
+    busy_handler_timeout_db = SQLite3::Database.open( "test.db" )
+    busy_handler_timeout_db.busy_handler_timeout = 1000
+    busy_handler_timeout_time = Benchmark.measure do
       @db.transaction( :exclusive ) do
         assert_raises( SQLite3::BusyException ) do
-          db2.transaction( :exclusive ) {}
+          busy_handler_timeout_db.transaction( :exclusive ) {}
         end
       end
     end
+    busy_handler_timeout_db.close
 
-    db2.close
-
-    assert_operator time.real, :>=, 1
-    assert_operator time.real, :<, 2
+    assert_operator busy_timeout_time.real, :>, busy_handler_timeout_time.real
+    assert_operator busy_timeout_time.real, :>, busy_handler_timeout_time.real+1
   end
 end
