@@ -131,6 +131,7 @@ module SQLite3
       @type_translator  = make_type_translator @type_translation
       @readonly         = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
+      @timeout_deadline = nil
 
       if block_given?
         begin
@@ -697,12 +698,16 @@ module SQLite3
     # while SQLite sleeps and retries.
     def busy_handler_timeout=( milliseconds )
       timeout_seconds = milliseconds.fdiv(1000)
-      timeout_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout_seconds
 
       busy_handler do |count|
-        next false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > timeout_deadline
-
-        sleep(0.001)
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        if count.zero?
+          @timeout_deadline = now + timeout_seconds
+        elsif now > @timeout_deadline
+          next false
+        else
+          sleep(0.001)
+        end
       end
     end
 

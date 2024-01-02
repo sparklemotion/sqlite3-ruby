@@ -113,30 +113,39 @@ class TC_Integration_Pending < SQLite3::TestCase
     assert time.real*1000 >= 1000
   end
 
-  def test_busy_timeout_blocks_gvl_while_busy_handler_timeout_releases_gvl
-    busy_timeout_db = SQLite3::Database.open( "test.db" )
-    busy_timeout_db.busy_timeout 1000
-    busy_timeout_time = Benchmark.measure do
-      @db.transaction( :exclusive ) do
-        assert_raises( SQLite3::BusyException ) do
-          busy_timeout_db.transaction( :exclusive ) {}
+  def test_busy_timeout_blocks_gvl
+    threads = [1, 2].map do
+      Thread.new do
+        db = SQLite3::Database.new("test.db")
+        db.busy_timeout = 3000
+        db.transaction(:immediate) do
+          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+          sleep 1
+          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
         end
       end
     end
-    busy_timeout_db.close
 
-    busy_handler_timeout_db = SQLite3::Database.open( "test.db" )
-    busy_handler_timeout_db.busy_handler_timeout = 1000
-    busy_handler_timeout_time = Benchmark.measure do
-      @db.transaction( :exclusive ) do
-        assert_raises( SQLite3::BusyException ) do
-          busy_handler_timeout_db.transaction( :exclusive ) {}
+    assert_raise( SQLite3::BusyException ) do
+      threads.each(&:join)
+    end
+  end
+
+  def test_busy_handler_timeout_releases_gvl
+    threads = [1, 2].map do
+      Thread.new do
+        db = SQLite3::Database.new("test.db")
+        db.busy_handler_timeout = 3000
+        db.transaction(:immediate) do
+          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
+          sleep 1
+          db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
         end
       end
     end
-    busy_handler_timeout_db.close
 
-    assert_operator busy_timeout_time.real, :>, busy_handler_timeout_time.real
-    assert_operator busy_timeout_time.real, :>, busy_handler_timeout_time.real+1
+    assert_nothing_raised do
+      threads.each(&:join)
+    end
   end
 end
