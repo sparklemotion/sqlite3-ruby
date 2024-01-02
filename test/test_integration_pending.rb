@@ -128,6 +128,7 @@ class TC_Integration_Pending < SQLite3::TestCase
     db2.close
 
     assert_operator time.real, :>=, 2
+    assert_operator time.real, :<, 3
   end
 
   def test_busy_handler_timeout_releases_gvl
@@ -145,5 +146,6 @@ class TC_Integration_Pending < SQLite3::TestCase
     db2.close
 
     assert_operator time.real, :>=, 1
+    assert_operator time.real, :<, 2
   end
 end
