@@ -666,38 +666,6 @@ static VALUE enable_load_extension(VALUE self, VALUE onoff)
 }
 #endif
 
-static int enc_cb(void * _self, int UNUSED(columns), char **data, char **UNUSED(names))
-{
-  VALUE self = (VALUE)_self;
-
-  int index = rb_enc_find_index(data[0]);
-  rb_encoding * e = rb_enc_from_index(index);
-  rb_iv_set(self, "@encoding", rb_enc_from_encoding(e));
-
-  return 0;
-}
-
-/* call-seq: db.encoding
- *
- * Fetch the encoding set on this database
- */
-static VALUE db_encoding(VALUE self)
-{
-  sqlite3RubyPtr ctx;
-  VALUE enc;
-
-  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
-  REQUIRE_OPEN_DB(ctx);
-
-  enc = rb_iv_get(self, "@encoding");
-
-  if(NIL_P(enc)) {
-    sqlite3_exec(ctx->db, "PRAGMA encoding", enc_cb, (void *)self, NULL);
-  }
-
-  return rb_iv_get(self, "@encoding");
-}
-
 /* call-seq: db.transaction_active?
  *
  * Returns +true+ if there is a transaction active, and +false+ otherwise.
@@ -867,8 +835,6 @@ void init_sqlite3_database(void)
 #ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
   rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
 #endif
-
-  rb_define_method(cSqlite3Database, "encoding", db_encoding, 0);
 
   rb_sqlite3_aggregator_init();
 }
