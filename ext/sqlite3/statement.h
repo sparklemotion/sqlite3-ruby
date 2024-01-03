@@ -4,12 +4,12 @@
 #include <sqlite3_ruby.h>
 
 struct _sqlite3StmtRuby {
-  sqlite3_stmt *st;
-  int done_p;
+    sqlite3_stmt *st;
+    int done_p;
 };
 
 typedef struct _sqlite3StmtRuby sqlite3StmtRuby;
-typedef sqlite3StmtRuby * sqlite3StmtRubyPtr;
+typedef sqlite3StmtRuby *sqlite3StmtRubyPtr;
 
 void init_sqlite3_statement();
 

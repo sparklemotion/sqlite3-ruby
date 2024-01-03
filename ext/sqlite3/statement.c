@@ -6,29 +6,31 @@
 
 VALUE cSqlite3Statement;
 
-static size_t statement_memsize(const void *data)
+static size_t
+statement_memsize(const void *data)
 {
-  const sqlite3StmtRubyPtr s = (const sqlite3StmtRubyPtr)data;
-  // NB: can't account for s->st because the type is incomplete.
-  return sizeof(*s);
+    const sqlite3StmtRubyPtr s = (const sqlite3StmtRubyPtr)data;
+    // NB: can't account for s->st because the type is incomplete.
+    return sizeof(*s);
 }
 
 static const rb_data_type_t statement_type = {
-  "SQLite3::Backup",
-  {
-      NULL,
-      RUBY_TYPED_DEFAULT_FREE,
-      statement_memsize,
-  },
-  0,
-  0,
-  RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
+    "SQLite3::Backup",
+    {
+        NULL,
+        RUBY_TYPED_DEFAULT_FREE,
+        statement_memsize,
+    },
+    0,
+    0,
+    RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
 };
 
-static VALUE allocate(VALUE klass)
+static VALUE
+allocate(VALUE klass)
 {
-  sqlite3StmtRubyPtr ctx;
-  return TypedData_Make_Struct(klass, sqlite3StmtRuby, &statement_type, ctx);
+    sqlite3StmtRubyPtr ctx;
+    return TypedData_Make_Struct(klass, sqlite3StmtRuby, &statement_type, ctx);
 }
 
 static VALUE
@@ -48,12 +50,12 @@ prepare(VALUE self, VALUE db, VALUE sql)
 #else
     status = sqlite3_prepare(
 #endif
-      db_ctx->db,
-      (const char *)StringValuePtr(sql),
-      (int)RSTRING_LEN(sql),
-      &ctx->st,
-      &tail
-    );
+                 db_ctx->db,
+                 (const char *)StringValuePtr(sql),
+                 (int)RSTRING_LEN(sql),
+                 &ctx->st,
+                 &tail
+             );
 
     CHECK(db_ctx->db, status);
 
@@ -65,118 +67,119 @@ prepare(VALUE self, VALUE db, VALUE sql)
  * Closes the statement by finalizing the underlying statement
  * handle. The statement must not be used after being closed.
  */
-static VALUE sqlite3_rb_close(VALUE self)
+static VALUE
+sqlite3_rb_close(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
+    sqlite3StmtRubyPtr ctx;
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
-  REQUIRE_OPEN_STMT(ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  sqlite3_finalize(ctx->st);
-  ctx->st = NULL;
+    sqlite3_finalize(ctx->st);
+    ctx->st = NULL;
 
-  return self;
+    return self;
 }
 
 /* call-seq: stmt.closed?
  *
  * Returns true if the statement has been closed.
  */
-static VALUE closed_p(VALUE self)
+static VALUE
+closed_p(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
-  if(!ctx->st) return Qtrue;
+    if (!ctx->st) { return Qtrue; }
 
-  return Qfalse;
+    return Qfalse;
 }
 
-static VALUE step(VALUE self)
+static VALUE
+step(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
-  sqlite3_stmt *stmt;
-  int value, length;
-  VALUE list;
-  rb_encoding * internal_encoding;
+    sqlite3StmtRubyPtr ctx;
+    sqlite3_stmt *stmt;
+    int value, length;
+    VALUE list;
+    rb_encoding *internal_encoding;
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
-  REQUIRE_OPEN_STMT(ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  if(ctx->done_p) return Qnil;
+    if (ctx->done_p) { return Qnil; }
 
-  internal_encoding = rb_default_internal_encoding();
+    internal_encoding = rb_default_internal_encoding();
 
-  stmt = ctx->st;
+    stmt = ctx->st;
 
-  value = sqlite3_step(stmt);
-  if (rb_errinfo() != Qnil) {
-    /* some user defined function was invoked as a callback during step and
-     * it raised an exception that has been suppressed until step returns.
-     * Now re-raise it. */
-    VALUE exception = rb_errinfo();
-    rb_set_errinfo(Qnil);
-    rb_exc_raise(exception);
-  }
+    value = sqlite3_step(stmt);
+    if (rb_errinfo() != Qnil) {
+        /* some user defined function was invoked as a callback during step and
+         * it raised an exception that has been suppressed until step returns.
+         * Now re-raise it. */
+        VALUE exception = rb_errinfo();
+        rb_set_errinfo(Qnil);
+        rb_exc_raise(exception);
+    }
 
-  length = sqlite3_column_count(stmt);
-  list = rb_ary_new2((long)length);
+    length = sqlite3_column_count(stmt);
+    list = rb_ary_new2((long)length);
 
-  switch(value) {
-    case SQLITE_ROW:
-      {
-        int i;
-        for(i = 0; i < length; i++) {
-          switch(sqlite3_column_type(stmt, i)) {
-            case SQLITE_INTEGER:
-              rb_ary_push(list, LL2NUM(sqlite3_column_int64(stmt, i)));
-              break;
-            case SQLITE_FLOAT:
-              rb_ary_push(list, rb_float_new(sqlite3_column_double(stmt, i)));
-              break;
-            case SQLITE_TEXT:
-              {
-                VALUE str = rb_str_new(
-                    (const char *)sqlite3_column_text(stmt, i),
-                    (long)sqlite3_column_bytes(stmt, i)
-                );
-                rb_enc_associate_index(str, rb_utf8_encindex());
-                if(internal_encoding)
-                  str = rb_str_export_to_enc(str, internal_encoding);
-                rb_ary_push(list, str);
-              }
-              break;
-            case SQLITE_BLOB:
-              {
-                VALUE str = rb_str_new(
-                    (const char *)sqlite3_column_blob(stmt, i),
-                    (long)sqlite3_column_bytes(stmt, i)
-                );
-                rb_ary_push(list, str);
-              }
-              break;
-            case SQLITE_NULL:
-              rb_ary_push(list, Qnil);
-              break;
-            default:
-              rb_raise(rb_eRuntimeError, "bad type");
-          }
+    switch (value) {
+        case SQLITE_ROW: {
+            int i;
+            for (i = 0; i < length; i++) {
+                switch (sqlite3_column_type(stmt, i)) {
+                    case SQLITE_INTEGER:
+                        rb_ary_push(list, LL2NUM(sqlite3_column_int64(stmt, i)));
+                        break;
+                    case SQLITE_FLOAT:
+                        rb_ary_push(list, rb_float_new(sqlite3_column_double(stmt, i)));
+                        break;
+                    case SQLITE_TEXT: {
+                        VALUE str = rb_str_new(
+                                        (const char *)sqlite3_column_text(stmt, i),
+                                        (long)sqlite3_column_bytes(stmt, i)
+                                    );
+                        rb_enc_associate_index(str, rb_utf8_encindex());
+                        if (internal_encoding) {
+                            str = rb_str_export_to_enc(str, internal_encoding);
+                        }
+                        rb_ary_push(list, str);
+                    }
+                    break;
+                    case SQLITE_BLOB: {
+                        VALUE str = rb_str_new(
+                                        (const char *)sqlite3_column_blob(stmt, i),
+                                        (long)sqlite3_column_bytes(stmt, i)
+                                    );
+                        rb_ary_push(list, str);
+                    }
+                    break;
+                    case SQLITE_NULL:
+                        rb_ary_push(list, Qnil);
+                        break;
+                    default:
+                        rb_raise(rb_eRuntimeError, "bad type");
+                }
+            }
         }
-      }
-      break;
-    case SQLITE_DONE:
-      ctx->done_p = 1;
-      return Qnil;
-      break;
-    default:
-      sqlite3_reset(stmt);
-      ctx->done_p = 0;
-      CHECK(sqlite3_db_handle(ctx->st), value);
-  }
+        break;
+        case SQLITE_DONE:
+            ctx->done_p = 1;
+            return Qnil;
+            break;
+        default:
+            sqlite3_reset(stmt);
+            ctx->done_p = 0;
+            CHECK(sqlite3_db_handle(ctx->st), value);
+    }
 
-  return list;
+    return list;
 }
 
 /* call-seq: stmt.bind_param(key, value)
@@ -187,91 +190,93 @@ static VALUE step(VALUE self)
  *
  * See also #bind_params.
  */
-static VALUE bind_param(VALUE self, VALUE key, VALUE value)
+static VALUE
+bind_param(VALUE self, VALUE key, VALUE value)
 {
-  sqlite3StmtRubyPtr ctx;
-  int status;
-  int index;
+    sqlite3StmtRubyPtr ctx;
+    int status;
+    int index;
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  switch(TYPE(key)) {
-    case T_SYMBOL:
-      key = rb_funcall(key, rb_intern("to_s"), 0);
-    case T_STRING:
-      if(RSTRING_PTR(key)[0] != ':') key = rb_str_plus(rb_str_new2(":"), key);
-      index = sqlite3_bind_parameter_index(ctx->st, StringValuePtr(key));
-      break;
-    default:
-      index = (int)NUM2INT(key);
-  }
-
-  if(index == 0)
-    rb_raise(rb_path2class("SQLite3::Exception"), "no such bind parameter");
-
-  switch(TYPE(value)) {
-    case T_STRING:
-      if(CLASS_OF(value) == cSqlite3Blob
-              || rb_enc_get_index(value) == rb_ascii8bit_encindex()
-        ) {
-        status = sqlite3_bind_blob(
-            ctx->st,
-            index,
-            (const char *)StringValuePtr(value),
-            (int)RSTRING_LEN(value),
-            SQLITE_TRANSIENT
-            );
-      } else {
-
-
-        if (UTF16_LE_P(value) || UTF16_BE_P(value)) {
-          status = sqlite3_bind_text16(
-              ctx->st,
-              index,
-              (const char *)StringValuePtr(value),
-              (int)RSTRING_LEN(value),
-              SQLITE_TRANSIENT
-              );
-        } else {
-          if (!UTF8_P(value) || !USASCII_P(value)) {
-              value = rb_str_encode(value, rb_enc_from_encoding(rb_utf8_encoding()), 0, Qnil);
-          }
-        status = sqlite3_bind_text(
-            ctx->st,
-            index,
-            (const char *)StringValuePtr(value),
-            (int)RSTRING_LEN(value),
-            SQLITE_TRANSIENT
-            );
-        }
-      }
-      break;
-    case T_BIGNUM: {
-      sqlite3_int64 num64;
-      if (bignum_to_int64(value, &num64)) {
-          status = sqlite3_bind_int64(ctx->st, index, num64);
-          break;
-      }
+    switch (TYPE(key)) {
+        case T_SYMBOL:
+            key = rb_funcall(key, rb_intern("to_s"), 0);
+        case T_STRING:
+            if (RSTRING_PTR(key)[0] != ':') { key = rb_str_plus(rb_str_new2(":"), key); }
+            index = sqlite3_bind_parameter_index(ctx->st, StringValuePtr(key));
+            break;
+        default:
+            index = (int)NUM2INT(key);
     }
-    case T_FLOAT:
-      status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
-      break;
-    case T_FIXNUM:
-      status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)FIX2LONG(value));
-      break;
-    case T_NIL:
-      status = sqlite3_bind_null(ctx->st, index);
-      break;
-    default:
-      rb_raise(rb_eRuntimeError, "can't prepare %s",
-          rb_class2name(CLASS_OF(value)));
-      break;
-  }
 
-  CHECK(sqlite3_db_handle(ctx->st), status);
+    if (index == 0) {
+        rb_raise(rb_path2class("SQLite3::Exception"), "no such bind parameter");
+    }
 
-  return self;
+    switch (TYPE(value)) {
+        case T_STRING:
+            if (CLASS_OF(value) == cSqlite3Blob
+                    || rb_enc_get_index(value) == rb_ascii8bit_encindex()
+               ) {
+                status = sqlite3_bind_blob(
+                             ctx->st,
+                             index,
+                             (const char *)StringValuePtr(value),
+                             (int)RSTRING_LEN(value),
+                             SQLITE_TRANSIENT
+                         );
+            } else {
+
+
+                if (UTF16_LE_P(value) || UTF16_BE_P(value)) {
+                    status = sqlite3_bind_text16(
+                                 ctx->st,
+                                 index,
+                                 (const char *)StringValuePtr(value),
+                                 (int)RSTRING_LEN(value),
+                                 SQLITE_TRANSIENT
+                             );
+                } else {
+                    if (!UTF8_P(value) || !USASCII_P(value)) {
+                        value = rb_str_encode(value, rb_enc_from_encoding(rb_utf8_encoding()), 0, Qnil);
+                    }
+                    status = sqlite3_bind_text(
+                                 ctx->st,
+                                 index,
+                                 (const char *)StringValuePtr(value),
+                                 (int)RSTRING_LEN(value),
+                                 SQLITE_TRANSIENT
+                             );
+                }
+            }
+            break;
+        case T_BIGNUM: {
+            sqlite3_int64 num64;
+            if (bignum_to_int64(value, &num64)) {
+                status = sqlite3_bind_int64(ctx->st, index, num64);
+                break;
+            }
+        }
+        case T_FLOAT:
+            status = sqlite3_bind_double(ctx->st, index, NUM2DBL(value));
+            break;
+        case T_FIXNUM:
+            status = sqlite3_bind_int64(ctx->st, index, (sqlite3_int64)FIX2LONG(value));
+            break;
+        case T_NIL:
+            status = sqlite3_bind_null(ctx->st, index);
+            break;
+        default:
+            rb_raise(rb_eRuntimeError, "can't prepare %s",
+                     rb_class2name(CLASS_OF(value)));
+            break;
+    }
+
+    CHECK(sqlite3_db_handle(ctx->st), status);
+
+    return self;
 }
 
 /* call-seq: stmt.reset!
@@ -279,18 +284,19 @@ static VALUE bind_param(VALUE self, VALUE key, VALUE value)
  * Resets the statement. This is typically done internally, though it might
  * occasionally be necessary to manually reset the statement.
  */
-static VALUE reset_bang(VALUE self)
+static VALUE
+reset_bang(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
+    sqlite3StmtRubyPtr ctx;
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  sqlite3_reset(ctx->st);
+    sqlite3_reset(ctx->st);
 
-  ctx->done_p = 0;
+    ctx->done_p = 0;
 
-  return self;
+    return self;
 }
 
 /* call-seq: stmt.clear_bindings!
@@ -298,93 +304,99 @@ static VALUE reset_bang(VALUE self)
  * Resets the statement. This is typically done internally, though it might
  * occasionally be necessary to manually reset the statement.
  */
-static VALUE clear_bindings_bang(VALUE self)
+static VALUE
+clear_bindings_bang(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
+    sqlite3StmtRubyPtr ctx;
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  sqlite3_clear_bindings(ctx->st);
+    sqlite3_clear_bindings(ctx->st);
 
-  ctx->done_p = 0;
+    ctx->done_p = 0;
 
-  return self;
+    return self;
 }
 
 /* call-seq: stmt.done?
  *
  * returns true if all rows have been returned.
  */
-static VALUE done_p(VALUE self)
+static VALUE
+done_p(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
-  if(ctx->done_p) return Qtrue;
-  return Qfalse;
+    if (ctx->done_p) { return Qtrue; }
+    return Qfalse;
 }
 
 /* call-seq: stmt.column_count
  *
  * Returns the number of columns to be returned for this statement
  */
-static VALUE column_count(VALUE self)
+static VALUE
+column_count(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  return INT2NUM(sqlite3_column_count(ctx->st));
+    return INT2NUM(sqlite3_column_count(ctx->st));
 }
 
 /* call-seq: stmt.column_name(index)
  *
  * Get the column name at +index+.  0 based.
  */
-static VALUE column_name(VALUE self, VALUE index)
+static VALUE
+column_name(VALUE self, VALUE index)
 {
-  sqlite3StmtRubyPtr ctx;
-  const char * name;
+    sqlite3StmtRubyPtr ctx;
+    const char *name;
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
+    name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
 
-  if(name) return SQLITE3_UTF8_STR_NEW2(name);
-  return Qnil;
+    if (name) { return SQLITE3_UTF8_STR_NEW2(name); }
+    return Qnil;
 }
 
 /* call-seq: stmt.column_decltype(index)
  *
  * Get the column type at +index+.  0 based.
  */
-static VALUE column_decltype(VALUE self, VALUE index)
+static VALUE
+column_decltype(VALUE self, VALUE index)
 {
-  sqlite3StmtRubyPtr ctx;
-  const char * name;
+    sqlite3StmtRubyPtr ctx;
+    const char *name;
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
+    name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
 
-  if(name) return rb_str_new2(name);
-  return Qnil;
+    if (name) { return rb_str_new2(name); }
+    return Qnil;
 }
 
 /* call-seq: stmt.bind_parameter_count
  *
  * Return the number of bind parameters
  */
-static VALUE bind_parameter_count(VALUE self)
+static VALUE
+bind_parameter_count(VALUE self)
 {
-  sqlite3StmtRubyPtr ctx;
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
+    return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
 }
 
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
@@ -393,37 +405,39 @@ static VALUE bind_parameter_count(VALUE self)
  *
  * Return the database name for the column at +column_index+
  */
-static VALUE database_name(VALUE self, VALUE index)
+static VALUE
+database_name(VALUE self, VALUE index)
 {
-  sqlite3StmtRubyPtr ctx;
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-  REQUIRE_OPEN_STMT(ctx);
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
 
-  return SQLITE3_UTF8_STR_NEW2(
-      sqlite3_column_database_name(ctx->st, NUM2INT(index)));
+    return SQLITE3_UTF8_STR_NEW2(
+               sqlite3_column_database_name(ctx->st, NUM2INT(index)));
 }
 
 #endif
 
-void init_sqlite3_statement(void)
+void
+init_sqlite3_statement(void)
 {
-  cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
+    cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
 
-  rb_define_alloc_func(cSqlite3Statement, allocate);
-  rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);
-  rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
-  rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
-  rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
-  rb_define_method(cSqlite3Statement, "clear_bindings!", clear_bindings_bang, 0);
-  rb_define_method(cSqlite3Statement, "step", step, 0);
-  rb_define_method(cSqlite3Statement, "done?", done_p, 0);
-  rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
-  rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
-  rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
-  rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
-  rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
+    rb_define_alloc_func(cSqlite3Statement, allocate);
+    rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);
+    rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
+    rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
+    rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
+    rb_define_method(cSqlite3Statement, "clear_bindings!", clear_bindings_bang, 0);
+    rb_define_method(cSqlite3Statement, "step", step, 0);
+    rb_define_method(cSqlite3Statement, "done?", done_p, 0);
+    rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
+    rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
+    rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
+    rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+    rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
 
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
-  rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
+    rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
 #endif
 }
