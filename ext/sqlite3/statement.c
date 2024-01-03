@@ -31,51 +31,33 @@ static VALUE allocate(VALUE klass)
   return TypedData_Make_Struct(klass, sqlite3StmtRuby, &statement_type, ctx);
 }
 
-/* call-seq: SQLite3::Statement.new(db, sql)
- *
- * Create a new statement attached to the given Database instance, and which
- * encapsulates the given SQL text. If the text contains more than one
- * statement (i.e., separated by semicolons), then the #remainder property
- * will be set to the trailing text.
- */
-static VALUE initialize(VALUE self, VALUE db, VALUE sql)
+static VALUE
+prepare(VALUE self, VALUE db, VALUE sql)
 {
-  sqlite3RubyPtr db_ctx = sqlite3_database_unwrap(db);
-  sqlite3StmtRubyPtr ctx;
-  const char *tail = NULL;
-  int status;
+    sqlite3RubyPtr db_ctx = sqlite3_database_unwrap(db);
+    sqlite3StmtRubyPtr ctx;
+    const char *tail = NULL;
+    int status;
 
-  StringValue(sql);
+    StringValue(sql);
 
-  TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-
-  if(!db_ctx->db)
-    rb_raise(rb_eArgError, "prepare called on a closed database");
-
-  if(!UTF8_P(sql)) {
-    sql               = rb_str_export_to_enc(sql, rb_utf8_encoding());
-  }
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
 #ifdef HAVE_SQLITE3_PREPARE_V2
-  status = sqlite3_prepare_v2(
+    status = sqlite3_prepare_v2(
 #else
-  status = sqlite3_prepare(
+    status = sqlite3_prepare(
 #endif
       db_ctx->db,
       (const char *)StringValuePtr(sql),
       (int)RSTRING_LEN(sql),
       &ctx->st,
       &tail
-  );
+    );
 
-  CHECK(db_ctx->db, status);
+    CHECK(db_ctx->db, status);
 
-  rb_iv_set(self, "@connection", db);
-  rb_iv_set(self, "@remainder", rb_str_new2(tail));
-  rb_iv_set(self, "@columns", Qnil);
-  rb_iv_set(self, "@types", Qnil);
-
-  return self;
+    return rb_str_new2(tail);
 }
 
 /* call-seq: stmt.close
@@ -432,7 +414,6 @@ void init_sqlite3_statement(void)
   cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
 
   rb_define_alloc_func(cSqlite3Statement, allocate);
-  rb_define_method(cSqlite3Statement, "initialize", initialize, 2);
   rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);
   rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
   rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
@@ -444,6 +425,7 @@ void init_sqlite3_statement(void)
   rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
   rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
   rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+  rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
 
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
   rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
