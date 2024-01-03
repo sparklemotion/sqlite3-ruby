@@ -97,10 +97,6 @@ module Sqlite3
       end
 
       def configure_extension
-        if Gem::Requirement.new("< 2.7").satisfied_by?(Gem::Version.new(RUBY_VERSION))
-          append_cppflags("-DTAINTING_SUPPORT")
-        end
-
         append_cflags("-fvisibility=hidden") # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
 
         if find_header("sqlite3.h")
@@ -158,8 +154,7 @@ module Sqlite3
       end
 
       def mini_portile_config
-        # TODO: once Ruby 2.7 is no longer supported, use symbolize_names: true
-        YAML.load_file(File.join(package_root_dir, "dependencies.yml"))
+        YAML.load_file(File.join(package_root_dir, "dependencies.yml"), symbolize_names: true)
       end
 
       def abort_could_not_find(missing)
