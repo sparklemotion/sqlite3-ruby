@@ -6,6 +6,18 @@
 
 VALUE cSqlite3Statement;
 
+static void
+statement_deallocate(void *data)
+{
+    sqlite3StmtRubyPtr s = (sqlite3StmtRubyPtr)data;
+
+    if (s->st) {
+        sqlite3_finalize(s->st);
+    }
+
+    xfree(data);
+}
+
 static size_t
 statement_memsize(const void *data)
 {
@@ -18,7 +30,7 @@ static const rb_data_type_t statement_type = {
     "SQLite3::Backup",
     {
         NULL,
-        RUBY_TYPED_DEFAULT_FREE,
+        statement_deallocate,
         statement_memsize,
     },
     0,
