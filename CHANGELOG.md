@@ -1,5 +1,19 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+(will be 2.0.0)
+
+### Ruby
+
+This release drops support for Ruby 2.7.
+
+
+### Removed
+
+- Remove `SQLite3::VersionProxy` which has been deprecated since v1.3.2.
+
+
 ## 1.7.0 / 2023-12-27
 
 ### Ruby
