@@ -107,11 +107,7 @@ static VALUE step(VALUE self)
 
   if(ctx->done_p) return Qnil;
 
-  {
-      VALUE db          = rb_iv_get(self, "@connection");
-      rb_funcall(db, rb_intern("encoding"), 0);
-      internal_encoding = rb_default_internal_encoding();
-  }
+  internal_encoding = rb_default_internal_encoding();
 
   stmt = ctx->st;
 
