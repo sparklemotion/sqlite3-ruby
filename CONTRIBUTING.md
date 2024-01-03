@@ -26,7 +26,7 @@ Update `/dependencies.yml` to reflect:
 A quick checklist:
 
 - [ ] make sure CI is green!
-- [ ] update `CHANGELOG.md` and `lib/sqlite3/version.rb` including `VersionProxy::{MINOR,TINY}`
+- [ ] update `CHANGELOG.md` and `lib/sqlite3/version.rb`
 - [ ] run `bin/build-gems` and make sure it completes and all the tests pass
 - [ ] create a git tag using a format that matches the pattern `v\d+\.\d+\.\d+`, e.g. `v1.3.13`
 - [ ] `git push && git push --tags`
