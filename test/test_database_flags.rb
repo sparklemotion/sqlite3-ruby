@@ -15,10 +15,22 @@ module SQLite3
     end
 
     def test_open_database_flags_constants
-      defined_to_date = [:READONLY, :READWRITE, :CREATE, :DELETEONCLOSE,
-                         :EXCLUSIVE, :MAIN_DB, :TEMP_DB, :TRANSIENT_DB,
-                         :MAIN_JOURNAL, :TEMP_JOURNAL, :SUBJOURNAL,
-                         :MASTER_JOURNAL, :NOMUTEX, :FULLMUTEX]
+      defined_to_date = [
+        :READONLY,
+        :READWRITE,
+        :CREATE,
+        :DELETEONCLOSE,
+        :EXCLUSIVE,
+        :MAIN_DB,
+        :TEMP_DB,
+        :TRANSIENT_DB,
+        :MAIN_JOURNAL,
+        :TEMP_JOURNAL,
+        :SUBJOURNAL,
+        :MASTER_JOURNAL,
+        :NOMUTEX,
+        :FULLMUTEX
+      ]
       if SQLite3::SQLITE_VERSION_NUMBER > 3007002
         defined_to_date += [:AUTOPROXY, :SHAREDCACHE, :PRIVATECACHE, :WAL]
       end

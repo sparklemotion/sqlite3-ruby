@@ -38,7 +38,7 @@ module SQLite3
       db.execute @create
       stmt = db.prepare @insert
 
-      ['US-ASCII', utf16, 'EUC-JP', 'UTF-8'].each_with_index do |enc,i|
+      ['US-ASCII', utf16, 'EUC-JP', 'UTF-8'].each_with_index do |enc, i|
         stmt.bind_param 1, i
         stmt.bind_param 2, str.encode(enc)
         stmt.to_a
@@ -160,6 +160,5 @@ module SQLite3
       assert_equal @db.encoding, row.first.first.encoding
       assert_equal str.encode('UTF-8'), row.first.first
     end
-
   end
 end

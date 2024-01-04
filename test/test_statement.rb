@@ -25,7 +25,7 @@ module SQLite3
 
     def test_raises_type_error
       assert_raises(TypeError) do
-        SQLite3::Statement.new( @db, nil )
+        SQLite3::Statement.new(@db, nil)
       end
     end
 
@@ -48,7 +48,7 @@ module SQLite3
     # This method may not exist depending on how sqlite3 was compiled
     def test_database_name
       @db.execute('create table foo(text BLOB)')
-      @db.execute('insert into foo(text) values (?)',SQLite3::Blob.new('hello'))
+      @db.execute('insert into foo(text) values (?)', SQLite3::Blob.new('hello'))
       stmt = @db.prepare('select text from foo')
       if stmt.respond_to?(:database_name)
         assert_equal 'main', stmt.database_name(0)
@@ -66,7 +66,7 @@ module SQLite3
 
     def test_select_blob
       @db.execute('create table foo(text BLOB)')
-      @db.execute('insert into foo(text) values (?)',SQLite3::Blob.new('hello'))
+      @db.execute('insert into foo(text) values (?)', SQLite3::Blob.new('hello'))
       assert_equal 'hello', @db.execute('select * from foo').first.first
     end
 
@@ -147,10 +147,10 @@ module SQLite3
 
     def test_bind_64
       stmt = SQLite3::Statement.new(@db, "select ?")
-      stmt.bind_param(1, 2 ** 31)
+      stmt.bind_param(1, 2**31)
       result = nil
       stmt.each { |x| result = x }
-      assert_equal [2 ** 31], result
+      assert_equal [2**31], result
       stmt.close
     end
 

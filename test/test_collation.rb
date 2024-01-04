@@ -6,6 +6,7 @@ module SQLite3
   class TestCollation < SQLite3::TestCase
     class Comparator
       attr_reader :calls
+
       def initialize
         @calls = []
       end
@@ -20,7 +21,7 @@ module SQLite3
       @db = SQLite3::Database.new(':memory:')
       @create = "create table ex(id int, data string)"
       @db.execute(@create);
-      [ [1, 'hello'], [2, 'world'] ].each do |vals|
+      [[1, 'hello'], [2, 'world']].each do |vals|
         @db.execute('insert into ex (id, data) VALUES (?, ?)', vals)
       end
     end

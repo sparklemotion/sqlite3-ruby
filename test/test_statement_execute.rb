@@ -3,7 +3,7 @@ require 'helper'
 module SQLite3
   class TestStatementExecute < SQLite3::TestCase
     def setup
-      @db   = SQLite3::Database.new(':memory:')
+      @db = SQLite3::Database.new(':memory:')
       @db.execute_batch(
         "CREATE TABLE items (id integer PRIMARY KEY, number integer)")
     end
@@ -14,7 +14,7 @@ module SQLite3
 
     def test_execute_insert
       ps = @db.prepare("INSERT INTO items (number) VALUES (:n)")
-      ps.execute('n'=>10)
+      ps.execute('n' => 10)
       assert_equal 1, @db.get_first_value("SELECT count(*) FROM items")
       ps.close
     end
@@ -23,7 +23,7 @@ module SQLite3
       @db.execute("INSERT INTO items (number) VALUES (?)", [10])
 
       ps = @db.prepare("UPDATE items SET number = :new WHERE number = :old")
-      ps.execute('old'=>10, 'new'=>20)
+      ps.execute('old' => 10, 'new' => 20)
       assert_equal 20, @db.get_first_value("SELECT number FROM items")
       ps.close
     end

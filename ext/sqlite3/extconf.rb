@@ -63,8 +63,8 @@ module Sqlite3
               "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
             ]
             env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
-            recipe.configure_options += env.select { |k,v| ENV_ALLOWLIST.include?(k) }
-                                           .map { |key, value| "#{key}=#{value.strip}" }
+            recipe.configure_options += env.select { |k, v| ENV_ALLOWLIST.include?(k) }
+              .map { |key, value| "#{key}=#{value.strip}" }
           end
 
           unless File.exist?(File.join(recipe.target, recipe.host, recipe.name, recipe.version))

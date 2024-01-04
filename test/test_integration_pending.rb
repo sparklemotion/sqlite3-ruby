@@ -16,7 +16,7 @@ class TC_Integration_Pending < SQLite3::TestCase
 
   def teardown
     @db.close
-    File.delete( "test.db" )
+    File.delete("test.db")
   end
 
   def test_busy_handler_impatient
@@ -26,8 +26,8 @@ class TC_Integration_Pending < SQLite3::TestCase
 
     t = Thread.new do
       begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.transaction( :exclusive ) do
+        db2 = SQLite3::Database.open("test.db")
+        db2.transaction(:exclusive) do
           busy.lock
         end
       ensure
@@ -41,7 +41,7 @@ class TC_Integration_Pending < SQLite3::TestCase
       false
     end
 
-    assert_raise( SQLite3::BusyException ) do
+    assert_raise(SQLite3::BusyException) do
       @db.execute "insert into foo (b) values ( 'from 2' )"
     end
 
@@ -58,8 +58,8 @@ class TC_Integration_Pending < SQLite3::TestCase
 
     t = Thread.new do
       begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.transaction( :exclusive ) do
+        db2 = SQLite3::Database.open("test.db")
+        db2.transaction(:exclusive) do
           busy.lock
         end
       ensure
@@ -69,7 +69,7 @@ class TC_Integration_Pending < SQLite3::TestCase
 
     sleep 1
     time = Benchmark.measure do
-      assert_raise( SQLite3::BusyException ) do
+      assert_raise(SQLite3::BusyException) do
         @db.execute "insert into foo (b) values ( 'from 2' )"
       end
     end
@@ -77,6 +77,6 @@ class TC_Integration_Pending < SQLite3::TestCase
     busy.unlock
     t.join
 
-    assert time.real*1000 >= 1000
+    assert time.real * 1000 >= 1000
   end
 end

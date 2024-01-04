@@ -2,7 +2,6 @@ require 'sqlite3/constants'
 require 'sqlite3/errors'
 
 module SQLite3
-
   # The ResultSet object encapsulates the enumerability of a query's output.
   # It is a simple cursor over the data that the query returns. It will
   # very rarely (if ever) be instantiated directly. Instead, clients should
@@ -19,15 +18,15 @@ module SQLite3
       attr_writer :fields
 
       def types
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
+        warn(<<~eowarn) if $VERBOSE
+          #{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @types
       end
 
       def fields
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
+        warn(<<~eowarn) if $VERBOSE
+          #{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @fields
       end
@@ -40,15 +39,15 @@ module SQLite3
       attr_writer :fields
 
       def types
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
+        warn(<<~eowarn) if $VERBOSE
+          #{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @types
       end
 
       def fields
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
+        warn(<<~eowarn) if $VERBOSE
+          #{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
         eowarn
         @fields
       end
@@ -68,9 +67,9 @@ module SQLite3
 
     # Reset the cursor, so that a result set which has reached end-of-file
     # can be rewound and reiterated.
-    def reset( *bind_params )
+    def reset(*bind_params)
       @stmt.reset!
-      @stmt.bind_params( *bind_params )
+      @stmt.bind_params(*bind_params)
       @eof = false
     end
 

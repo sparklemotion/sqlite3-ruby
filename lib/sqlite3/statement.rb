@@ -3,7 +3,7 @@ require 'sqlite3/resultset'
 
 class String
   def to_blob
-    SQLite3::Blob.new( self )
+    SQLite3::Blob.new(self)
   end
 end
 
@@ -49,7 +49,7 @@ module SQLite3
     #
     # See also #execute, #bind_param, Statement#bind_param, and
     # Statement#bind_params.
-    def bind_params( *bind_vars )
+    def bind_params(*bind_vars)
       index = 1
       bind_vars.flatten.each do |var|
         if Hash === var
@@ -75,7 +75,7 @@ module SQLite3
     #   end
     #
     # See also #bind_params, #execute!.
-    def execute( *bind_vars )
+    def execute(*bind_vars)
       reset! if active? || done?
 
       bind_params(*bind_vars) unless bind_vars.empty?
@@ -101,7 +101,7 @@ module SQLite3
     #   end
     #
     # See also #bind_params, #execute.
-    def execute!( *bind_vars, &block )
+    def execute!(*bind_vars, &block)
       execute(*bind_vars)
       block_given? ? each(&block) : to_a
     end
@@ -124,6 +124,7 @@ module SQLite3
       loop do
         val = step
         break self if done?
+
         yield val
       end
     end
@@ -146,6 +147,7 @@ module SQLite3
     end
 
     private
+
     # A convenience method for obtaining the metadata about the query. Note
     # that this will actually execute the SQL, which means it can be a
     # (potentially) expensive operation.

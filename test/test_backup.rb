@@ -6,7 +6,7 @@ module SQLite3
       @sdb = SQLite3::Database.new(':memory:')
       @ddb = SQLite3::Database.new(':memory:')
       @sdb.execute('CREATE TABLE foo (idx, val);');
-      @data = ('A'..'Z').map{|x|x * 40}
+      @data = ('A'..'Z').map { |x| x * 40 }
       @data.each_with_index do |v, i|
         @sdb.execute('INSERT INTO foo (idx, val) VALUES (?, ?);', [i, v])
       end
