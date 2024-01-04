@@ -131,7 +131,6 @@ module SQLite3
       @type_translator  = make_type_translator @type_translation
       @readonly         = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
-      @timeout_deadline = nil
 
       if block_given?
         begin
@@ -697,25 +696,6 @@ module SQLite3
     # A helper to check before performing any operation
     def readonly?
       @readonly
-    end
-
-    # Sets a #busy_handler that releases the GVL between retries,
-    # but only retries up to the indicated number of +milliseconds+.
-    # This is an alternative to #busy_timeout, which holds the GVL
-    # while SQLite sleeps and retries.
-    def busy_handler_timeout=( milliseconds )
-      timeout_seconds = milliseconds.fdiv(1000)
-
-      busy_handler do |count|
-        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        if count.zero?
-          @timeout_deadline = now + timeout_seconds
-        elsif now > @timeout_deadline
-          next false
-        else
-          sleep(0.001)
-        end
-      end
     end
 
     # A helper class for dealing with custom functions (see #create_function,
