@@ -127,6 +127,7 @@ class TC_Integration_Pending < SQLite3::TestCase
         work << '.'
       end
     end
+    sleep 1
 
     @db.busy_handler do |count|
       now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
