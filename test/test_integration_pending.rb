@@ -80,47 +80,86 @@ class TC_Integration_Pending < SQLite3::TestCase
     assert time.real*1000 >= 1000
   end
 
-  def test_busy_timeout_blocks_gvl
-    threads = [1, 2].map do
-      Thread.new do
-        begin
-          db = SQLite3::Database.new("test.db")
-          db.busy_timeout = 3000
-          db.transaction(:immediate) do
-            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
-            sleep 1
-            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
-          end
-        ensure
-          db.close if db
-        end
+  def test_busy_timeout_holds_gvl
+    work = []
+    Thread.new do
+      while true
+        sleep 0.1
+        work << '.'
       end
     end
+    sleep 1
 
-    assert_raise( SQLite3::BusyException ) do
-      threads.each(&:join)
+    @db.busy_timeout 1000
+    busy = Mutex.new
+    busy.lock
+
+    t = Thread.new do
+      begin
+        db2 = SQLite3::Database.open( "test.db" )
+        db2.transaction( :exclusive ) do
+          busy.lock
+        end
+      ensure
+        db2.close if db2
+      end
     end
+    sleep 1
+
+    assert_raises( SQLite3::BusyException ) do
+      work << '>'
+      @db.execute "insert into foo (b) values ( 'from 2' )"
+    end
+
+    busy.unlock
+    t.join
+
+    assert 2 == work.size - work.find_index(">")
   end
 
   def test_busy_handler_timeout_releases_gvl
-    threads = [1, 2].map do
-      Thread.new do
-        begin
-          db = SQLite3::Database.new("test.db")
-          db.busy_handler_timeout = 3000
-          db.transaction(:immediate) do
-            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
-            sleep 1
-            db.execute "insert into foo ( b ) values ( ? )", rand(1000).to_s
-          end
-        ensure
-          db.close if db
-        end
+    work = []
+
+    Thread.new do
+      while true
+        sleep 0.1
+        work << '.'
       end
     end
 
-    assert_nothing_raised do
-      threads.each(&:join)
+    @db.busy_handler do |count|
+      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      if count.zero?
+        @timeout_deadline = now + 1
+      elsif now > @timeout_deadline
+        next false
+      else
+        sleep(0.001)
+      end
     end
+    busy = Mutex.new
+    busy.lock
+
+    t = Thread.new do
+      begin
+        db2 = SQLite3::Database.open( "test.db" )
+        db2.transaction( :exclusive ) do
+          busy.lock
+        end
+      ensure
+        db2.close if db2
+      end
+    end
+    sleep 1
+
+    assert_raises( SQLite3::BusyException ) do
+      work << '>'
+      @db.execute "insert into foo (b) values ( 'from 2' )"
+    end
+
+    busy.unlock
+    t.join
+
+    assert 2 < work.size - work.find_index(">")
   end
 end
