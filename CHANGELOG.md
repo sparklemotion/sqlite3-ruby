@@ -12,6 +12,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 ### Added
 
 - `Database#busy_handler_timeout=` introduced as an alternative to `#busy_timeout=` that can be used when it's desired to release the GVL between retries. [#443] @fractaledmind
+- New constant `SQLite3::Constants::Open::SUPER_JOURNAL` which is an alias for the deprecated name `MASTER_JOURNAL`. [#464] @flavorjones
 
 
 ### Improved

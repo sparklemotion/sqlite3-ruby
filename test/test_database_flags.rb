@@ -27,7 +27,8 @@ module SQLite3
         :MAIN_JOURNAL,
         :TEMP_JOURNAL,
         :SUBJOURNAL,
-        :MASTER_JOURNAL,
+        :MASTER_JOURNAL, # rubocop:disable Naming/InclusiveLanguage
+        :SUPER_JOURNAL,
         :NOMUTEX,
         :FULLMUTEX
       ]
