@@ -887,7 +887,6 @@ init_sqlite3_database(void)
 #if 0
     VALUE mSqlite3 = rb_define_module("SQLite3");
 #endif
-
     cSqlite3Database = rb_define_class_under(mSqlite3, "Database", rb_cObject);
 
     rb_define_alloc_func(cSqlite3Database, allocate);
