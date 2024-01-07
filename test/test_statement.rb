@@ -286,5 +286,112 @@ module SQLite3
 
       stmt.close
     end
+
+    def test_fullscan_steps
+      @db.execute 'CREATE TABLE test1(a, b)'
+      @db.execute 'INSERT INTO test1 VALUES ("hello", "world")'
+
+      stmt = @db.prepare('select * from test1 where b like "%orld"')
+      p stmt.execute.to_a
+      assert_equal 3, stmt.fullscan_steps
+    ensure
+      stmt.close
+    end
+
+    def test_sorts
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1 order by a')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.sorts
+    ensure
+      stmt.close
+    end
+
+    def test_auto_indexes
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1 order by a')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.auto_indexes
+    ensure
+      stmt.close
+    end
+
+    def test_vm_steps
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1 order by a')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.vm_steps
+    ensure
+      stmt.close
+    end
+
+    def test_re_prepares
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1 order by a')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.re_prepares
+    ensure
+      stmt.close
+    end
+
+    def test_runs
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.runs
+    ensure
+      stmt.close
+    end
+
+    def test_filter_misses
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.filter_misses
+    ensure
+      stmt.close
+    end
+
+    def test_filter_hits
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.filter_hits
+    ensure
+      stmt.close
+    end
+
+    def test_memory_used
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
+
+      stmt = @db.prepare('select * from test1')
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.memory_used
+    ensure
+      stmt.close
+    end
   end
 end
