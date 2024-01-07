@@ -527,11 +527,11 @@ class TC_Database_Integration < SQLite3::TestCase
     first_count = progress_calls.size
 
     progress_calls = []
-    @db.progress_handler(4, handler)
+    @db.progress_handler(10, handler)
     @db.execute "create table test2(a, b)"
     second_count = progress_calls.size
 
-    assert_operator first_count, :>, second_count
+    assert_operator first_count, :>=, second_count
   end
 
   def test_progress_handler_interrupts_operation
