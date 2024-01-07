@@ -237,6 +237,51 @@ static VALUE busy_handler(int argc, VALUE *argv, VALUE self)
   return self;
 }
 
+static int
+rb_sqlite3_progress_handler(void *ctx)
+{
+  VALUE self = (VALUE)(ctx);
+  VALUE handle = rb_iv_get(self, "@progress_handler");
+  VALUE result = rb_funcall(handle, rb_intern("call"), 0);
+
+  if (Qfalse == result) return 1;
+
+  return 0;
+}
+
+/* call-seq:
+ *    progress_handler([n]) { ... }
+ *    progress_handler([n,] Class.new { def call; end }.new)
+ *
+ * Register a progress handler with this database instance.
+ * This handler will be invoked periodically during a long-running query or operation.
+ * If the handler returns +false+, the operation will be interrupted; otherwise, it continues.
+ * The parameter 'n' specifies the number of SQLite virtual machine instructions between invocations.
+ * If 'n' is not provided, the default value is 1.
+ */
+static VALUE
+progress_handler(int argc, VALUE *argv, VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  VALUE block, n_value;
+
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  rb_scan_args(argc, argv, "02", &n_value, &block);
+
+  int n = NIL_P(n_value) ? 1 : NUM2INT(n_value);
+  if(NIL_P(block) && rb_block_given_p()) block = rb_block_proc();
+
+  rb_iv_set(self, "@progress_handler", block);
+
+  sqlite3_progress_handler(
+      ctx->db, n, NIL_P(block) ? NULL : rb_sqlite3_progress_handler, (void *)self);
+
+  return self;
+}
+
+
 /* call-seq: last_insert_row_id
  *
  * Obtains the unique row ID of the last row to be inserted by this Database
@@ -854,6 +899,7 @@ void init_sqlite3_database(void)
   rb_define_method(cSqlite3Database, "changes", changes, 0);
   rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
   rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
+  rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
   rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
   rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
   rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
