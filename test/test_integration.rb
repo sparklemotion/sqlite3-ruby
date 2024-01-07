@@ -470,7 +470,7 @@ class TC_Database_Integration < SQLite3::TestCase
 
   def test_transaction_implicit_rollback
     assert !@db.transaction_active?
-    @db.transaction 
+    @db.transaction
     @db.execute('create table bar (x CHECK(1 = 0))')
     assert @db.transaction_active?
     assert_raises( SQLite3::ConstraintException ) do
@@ -503,5 +503,57 @@ class TC_Database_Integration < SQLite3::TestCase
     result = @db.get_first_value( "select b from foo where a=? and b=?",
       [ 1, "foo" ] )
     assert_equal "foo", result
+  end
+
+  def test_progress_handler_used
+    progress_calls = []
+    @db.progress_handler do
+      progress_calls << nil
+      true
+    end
+    @db.execute "create table test1(a, b)"
+
+    assert_operator 1, :<, progress_calls.size
+  end
+
+  def test_progress_handler_opcode_arg
+    progress_calls = []
+    handler = Proc.new do
+      progress_calls << nil
+      true
+    end
+    @db.progress_handler(1, handler)
+    @db.execute "create table test1(a, b)"
+    first_count = progress_calls.size
+
+    progress_calls = []
+    @db.progress_handler(2, handler)
+    @db.execute "create table test2(a, b)"
+    second_count = progress_calls.size
+
+    assert_operator first_count, :>, second_count
+  end
+
+  def test_progress_handler_interrupts_operation
+    @db.progress_handler do
+      false
+    end
+
+    assert_raises(SQLite3::InterruptException) do
+      @db.execute "create table test1(a, b)"
+    end
+  end
+
+  def test_clear_handler
+    progress_calls = []
+    @db.progress_handler do
+      progress_calls << nil
+      true
+    end
+    @db.progress_handler(nil)
+
+    @db.execute "create table test1(a, b)"
+
+    assert_equal 0, progress_calls.size
   end
 end
