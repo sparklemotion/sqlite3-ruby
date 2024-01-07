@@ -911,7 +911,9 @@ init_sqlite3_database(void)
     rb_define_method(cSqlite3Database, "changes", changes, 0);
     rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
     rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
+#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
     rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
+#endif
     rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
     rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
     rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
