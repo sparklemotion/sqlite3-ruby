@@ -142,6 +142,13 @@ module SQLite3
       end
     end
 
+    # call-seq: db.encoding
+    #
+    # Fetch the encoding set on this database
+    def encoding
+      @encoding ||= Encoding.find(execute("PRAGMA encoding").first.first)
+    end
+
     def type_translation= value # :nodoc:
       warn(<<-eowarn) if $VERBOSE
 #{caller[0]} is calling `SQLite3::Database#type_translation=` which is deprecated and will be removed in version 2.0.0.

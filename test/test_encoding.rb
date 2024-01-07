@@ -161,5 +161,5 @@ module SQLite3
       assert_equal str.encode('UTF-8'), row.first.first
     end
 
-  end if RUBY_VERSION >= '1.9.1'
+  end
 end

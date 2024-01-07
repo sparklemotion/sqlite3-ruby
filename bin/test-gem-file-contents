@@ -66,7 +66,7 @@ Minitest::Reporters.use!([Minitest::Reporters::SpecReporter.new])
 puts "Testing '#{gemfile}' (#{gemspec.platform})"
 describe File.basename(gemfile) do
   let(:all_supported_ruby_versions) {
-    ["2.7", "3.0", "3.1", "3.2", "3.3"]
+    ["3.0", "3.1", "3.2", "3.3"]
   }
   let(:native_supported_ruby_versions) { ["3.0", "3.1", "3.2", "3.3"] }
   let(:ucrt_supported_ruby_versions) { ["3.1", "3.2", "3.3"] }
@@ -119,8 +119,7 @@ describe File.basename(gemfile) do
     end
 
     it "contains the port files" do
-      # TODO: once Ruby 2.7 is no longer supported, use symbolize_names: true
-      dependencies = YAML.load_file(File.join(__dir__, "..", "dependencies.yml"))
+      dependencies = YAML.load_file(File.join(__dir__, "..", "dependencies.yml"), symbolize_names: true)
       sqlite_tarball = File.basename(dependencies[:sqlite3][:files].first[:url])
       actual_ports = gemfile_contents.grep(%r{^ports/})
 
