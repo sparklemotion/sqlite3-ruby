@@ -527,7 +527,7 @@ class TC_Database_Integration < SQLite3::TestCase
     first_count = progress_calls.size
 
     progress_calls = []
-    @db.progress_handler(2, handler)
+    @db.progress_handler(4, handler)
     @db.execute "create table test2(a, b)"
     second_count = progress_calls.size
 
