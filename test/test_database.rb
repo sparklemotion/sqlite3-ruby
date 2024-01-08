@@ -659,5 +659,20 @@ module SQLite3
     ensure
       tf.unlink if tf
     end
+
+    def test_cache_misses
+      db = SQLite3::Database.new('test.db')
+      db.execute("PRAGMA cache_size = -1;")
+      db.execute "CREATE TABLE example_table (id INTEGER PRIMARY KEY, data TEXT);"
+      10.times do |i|
+        db.execute 'INSERT INTO example_table (data) SELECT randomblob(1000);'
+      end
+      db.execute("SELECT * FROM example_table WHERE id BETWEEN 5000 AND 6000;")
+
+      assert_equal 28, db.cache_misses
+    ensure
+      db.close if db
+      File.delete( "test.db" )
+    end
   end
 end
