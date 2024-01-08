@@ -191,4 +191,20 @@ class TC_Statement < SQLite3::TestCase
     end
     assert called
   end
+
+  def test_long_running_statements_get_interrupted_when_statement_timeout_set
+    @db.statement_timeout = 100
+    assert_raises(SQLite3::InterruptException) do
+      @db.execute <<~SQL
+        WITH RECURSIVE r(i) AS (
+          VALUES(0)
+          UNION ALL
+          SELECT i FROM r
+          LIMIT 10000000
+        )
+        SELECT i FROM r ORDER BY i LIMIT 1;
+      SQL
+    end
+    @db.statement_timeout = nil
+  end
 end
