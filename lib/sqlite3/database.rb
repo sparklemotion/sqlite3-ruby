@@ -749,6 +749,21 @@ module SQLite3
       @type_translator.call types, row
     end
 
+    def statement_timeout=( milliseconds )
+      timeout_seconds = milliseconds.fdiv(1000)
+
+      progress_handler do
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        if @statement_timeout_deadline.nil?
+          @statement_timeout_deadline = now + timeout_seconds
+        elsif now > @statement_timeout_deadline
+          next false
+        else
+          true
+        end
+      end
+    end
+
     private
 
     NULL_TRANSLATOR = lambda { |_, row| row }
