@@ -91,16 +91,7 @@ class TC_Integration_Pending < SQLite3::TestCase
     end
     sleep 1
 
-    @db.busy_handler do |count|
-      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      if count.zero?
-        @timeout_deadline = now + 1
-      elsif now > @timeout_deadline
-        next false
-      else
-        sleep(0.001)
-      end
-    end
+    @db.busy_handler_timeout = 1000
     busy = Mutex.new
     busy.lock
 
