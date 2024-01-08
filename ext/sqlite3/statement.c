@@ -435,11 +435,11 @@ static VALUE sorts(VALUE self)
   return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_SORT, 0));
 }
 
-/* call-seq: stmt.auto_indexes
+/* call-seq: stmt.autoindexes
  *
  * Return the number of rows inserted into transient indices that were created automatically in order to help joins run faster
  */
-static VALUE auto_indexes(VALUE self)
+static VALUE autoindexes(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
   TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
@@ -448,7 +448,7 @@ static VALUE auto_indexes(VALUE self)
   return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_AUTOINDEX, 0));
 }
 
-/* call-seq: stmt.auto_indexes
+/* call-seq: stmt.vm_steps
  *
  * Return the number of virtual machine operations executed by the prepared statement
  */
@@ -461,11 +461,11 @@ static VALUE vm_steps(VALUE self)
   return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_VM_STEP, 0));
 }
 
-/* call-seq: stmt.auto_indexes
+/* call-seq: stmt.reprepares
  *
  * Return the number of times that the prepare statement has been automatically regenerated due to schema changes or changes to bound parameters that might affect the query plan.
  */
-static VALUE re_prepares(VALUE self)
+static VALUE reprepares(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
   TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
@@ -517,7 +517,7 @@ static VALUE filter_hits(VALUE self)
  *
  * Return the approximate number of bytes of heap memory used to store the prepared statement
  */
-static VALUE memory_used(VALUE self)
+static VALUE memused(VALUE self)
 {
   sqlite3StmtRubyPtr ctx;
   TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
@@ -563,13 +563,13 @@ void init_sqlite3_statement(void)
   rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
   rb_define_method(cSqlite3Statement, "fullscan_steps", fullscan_steps, 0);
   rb_define_method(cSqlite3Statement, "sorts", sorts, 0);
-  rb_define_method(cSqlite3Statement, "auto_indexes", auto_indexes, 0);
+  rb_define_method(cSqlite3Statement, "autoindexes", autoindexes, 0);
   rb_define_method(cSqlite3Statement, "vm_steps", vm_steps, 0);
-  rb_define_method(cSqlite3Statement, "re_prepares", re_prepares, 0);
+  rb_define_method(cSqlite3Statement, "reprepares", reprepares, 0);
   rb_define_method(cSqlite3Statement, "runs", runs, 0);
   rb_define_method(cSqlite3Statement, "filter_misses", filter_misses, 0);
   rb_define_method(cSqlite3Statement, "filter_hits", filter_hits, 0);
-  rb_define_method(cSqlite3Statement, "memory_used", memory_used, 0);
+  rb_define_method(cSqlite3Statement, "memused", memused, 0);
 
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
   rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
