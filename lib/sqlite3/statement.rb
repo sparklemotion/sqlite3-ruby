@@ -19,6 +19,23 @@ module SQLite3
     # this will be the empty string.
     attr_reader :remainder
 
+    # call-seq: SQLite3::Statement.new(db, sql)
+    #
+    # Create a new statement attached to the given Database instance, and which
+    # encapsulates the given SQL text. If the text contains more than one
+    # statement (i.e., separated by semicolons), then the #remainder property
+    # will be set to the trailing text.
+    def initialize(db, sql)
+      raise ArgumentError, "pepare called on a closed database" if db.closed?
+
+      sql = sql.encode(Encoding::UTF_8) if sql && sql.encoding != Encoding::UTF_8
+
+      @connection = db
+      @columns = nil
+      @types = nil
+      @remainder = prepare db, sql
+    end
+
     # Binds the given variables to the corresponding placeholders in the SQL
     # text.
     #

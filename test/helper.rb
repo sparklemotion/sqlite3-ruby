@@ -5,14 +5,10 @@ if ENV['GITHUB_ACTIONS'] == 'true' || ENV['CI']
   $VERBOSE = nil
 end
 
-puts "info: sqlite3-ruby version: #{SQLite3::VERSION}/#{SQLite3::VersionProxy::STRING}"
-puts "info: sqlite3 version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
+puts "info: gem version: #{SQLite3::VERSION}"
+puts "info: sqlite version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
 puts "info: sqlcipher?: #{SQLite3.sqlcipher?}"
 puts "info: threadsafe?: #{SQLite3.threadsafe?}"
-
-unless RUBY_VERSION >= "1.9"
-  require 'iconv'
-end
 
 module SQLite3
   class TestCase < Minitest::Test

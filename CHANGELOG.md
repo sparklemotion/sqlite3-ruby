@@ -2,6 +2,31 @@
 
 ## next / unreleased
 
+(will be 2.0.0)
+
+### Ruby
+
+This release drops support for Ruby 2.7. [#453] @flavorjones
+
+
+### Added
+
+- `Database#busy_handler_timeout=` introduced as an alternative to `#busy_timeout=` that can be used when it's desired to release the GVL between retries. [#443] @fractaledmind
+
+
+### Improved
+
+- Avoid leaking memory for statements that are not closed properly. [#392] @haileys
+- Moved some C code into Ruby. [#451, #455] @tenderlove
+
+
+### Removed
+
+- Remove `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
+
+
+## 1.7.0 / 2023-12-27
+
 ### Ruby
 
 This release introduces native gem support for Ruby 3.3.

@@ -47,36 +47,34 @@ module SQLite3
       end
     end
 
-    if RUBY_VERSION >= '1.9.1'
-      def test_encoding
-        comparator = Comparator.new
-        @db.collation 'foo', comparator
-        @db.execute('select data from ex order by 1 collate foo')
+    def test_encoding
+      comparator = Comparator.new
+      @db.collation 'foo', comparator
+      @db.execute('select data from ex order by 1 collate foo')
 
-        a, b = *comparator.calls.first
+      a, b = *comparator.calls.first
 
-        assert_equal Encoding.find('UTF-8'), a.encoding
-        assert_equal Encoding.find('UTF-8'), b.encoding
-      end
+      assert_equal Encoding.find('UTF-8'), a.encoding
+      assert_equal Encoding.find('UTF-8'), b.encoding
+    end
 
-      def test_encoding_default_internal
-        warn_before = $-w
-        $-w = false
-        before_enc = Encoding.default_internal
+    def test_encoding_default_internal
+      warn_before = $-w
+      $-w = false
+      before_enc = Encoding.default_internal
 
-        Encoding.default_internal = 'EUC-JP'
-        comparator = Comparator.new
-        @db.collation 'foo', comparator
-        @db.execute('select data from ex order by 1 collate foo')
+      Encoding.default_internal = 'EUC-JP'
+      comparator = Comparator.new
+      @db.collation 'foo', comparator
+      @db.execute('select data from ex order by 1 collate foo')
 
-        a, b = *comparator.calls.first
+      a, b = *comparator.calls.first
 
-        assert_equal Encoding.find('EUC-JP'), a.encoding
-        assert_equal Encoding.find('EUC-JP'), b.encoding
-      ensure
-        Encoding.default_internal = before_enc
-        $-w = warn_before
-      end
+      assert_equal Encoding.find('EUC-JP'), a.encoding
+      assert_equal Encoding.find('EUC-JP'), b.encoding
+    ensure
+      Encoding.default_internal = before_enc
+      $-w = warn_before
     end
   end
 end
