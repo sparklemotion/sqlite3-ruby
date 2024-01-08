@@ -751,6 +751,8 @@ module SQLite3
     end
 
     def statement_timeout=( milliseconds )
+      progress_handler(nil) and return if milliseconds.nil?
+
       timeout_seconds = milliseconds.fdiv(1000)
 
       progress_handler do
