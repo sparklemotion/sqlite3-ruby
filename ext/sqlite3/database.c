@@ -13,6 +13,13 @@
 VALUE cSqlite3Database;
 
 static void
+database_mark(void *ctx)
+{
+    sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
+    rb_gc_mark_movable(c->progress_handler);
+}
+
+static void
 deallocate(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
@@ -30,16 +37,22 @@ database_memsize(const void *ctx)
     return sizeof(*c);
 }
 
+static void
+database_update_references(void *ctx)
+{
+    sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
+    c->progress_handler = rb_gc_location(c->progress_handler);
+}
+
 static const rb_data_type_t database_type = {
-    "SQLite3::Backup",
-    {
-        NULL,
-        deallocate,
-        database_memsize,
+    .wrap_struct_name = "SQLite3::Backup",
+    .function = {
+        .dmark = database_mark,
+        .dfree = deallocate,
+        .dsize = database_memsize,
+        .dcompact = database_update_references,
     },
-    0,
-    0,
-    RUBY_TYPED_WB_PROTECTED, // Not freed immediately because the dfree function do IOs.
+    .flags = RUBY_TYPED_WB_PROTECTED, // Not freed immediately because the dfree function do IOs.
 };
 
 static VALUE
@@ -256,10 +269,12 @@ busy_handler(int argc, VALUE *argv, VALUE self)
 
 #ifdef HAVE_SQLITE3_PROGRESS_HANDLER
 static int
-rb_sqlite3_progress_handler(void *ctx)
+rb_sqlite3_progress_handler(void *context)
 {
-  VALUE self = (VALUE)(ctx);
-  VALUE result = rb_funcall(ctx->progress_handler, rb_intern("call"), 0);
+  sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+
+  VALUE handle = ctx->progress_handler;
+  VALUE result = rb_funcall(handle, rb_intern("call"), 0);
 
   if (Qfalse == result) return 1;
 
@@ -293,7 +308,11 @@ progress_handler(int argc, VALUE *argv, VALUE self)
   ctx->progress_handler = block;
 
   sqlite3_progress_handler(
-      ctx->db, n, NIL_P(block) ? NULL : rb_sqlite3_progress_handler, (void *)self);
+    ctx->db,
+    n,
+    NIL_P(block) ? NULL : rb_sqlite3_progress_handler,
+    (void *)ctx
+  );
 
   return self;
 }
