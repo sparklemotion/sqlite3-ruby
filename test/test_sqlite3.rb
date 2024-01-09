@@ -1,4 +1,4 @@
-require 'helper'
+require "helper"
 
 module SQLite3
   class TestSQLite3 < SQLite3::TestCase

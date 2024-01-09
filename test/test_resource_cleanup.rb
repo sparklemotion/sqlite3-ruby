@@ -5,15 +5,15 @@ module SQLite3
   class TestResourceCleanup < SQLite3::TestCase
     def test_cleanup_unclosed_database_object
       100.times do
-        SQLite3::Database.new(':memory:')
+        SQLite3::Database.new(":memory:")
       end
     end
 
     def test_cleanup_unclosed_statement_object
       100.times do
-        db = SQLite3::Database.new(':memory:')
-        db.execute('create table foo(text BLOB)')
-        db.prepare('select * from foo')
+        db = SQLite3::Database.new(":memory:")
+        db.execute("create table foo(text BLOB)")
+        db.prepare("select * from foo")
       end
     end
 

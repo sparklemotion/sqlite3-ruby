@@ -15,7 +15,7 @@ cross_platforms = [
   "x64-mingw32",
   "x86-linux",
   "x86_64-darwin",
-  "x86_64-linux",
+  "x86_64-linux"
 ]
 ENV["RUBY_CC_VERSION"] = cross_rubies.join(":")
 
@@ -47,7 +47,7 @@ task gem_build_path do
   archive = Dir.glob(File.join("ports", "archives", sqlite_tarball)).first
   add_file_to_gem(archive)
 
-  patches = %x(#{["git", "ls-files", "patches"].shelljoin}).split("\n").grep(/\.patch\z/)
+  patches = `#{["git", "ls-files", "patches"].shelljoin}`.split("\n").grep(/\.patch\z/)
   patches.each { |patch| add_file_to_gem patch }
 end
 
@@ -60,7 +60,7 @@ Rake::ExtensionTask.new("sqlite3_native", SQLITE3_SPEC) do |ext|
   ext.cross_compiling do |spec|
     # remove things not needed for precompiled gems
     spec.dependencies.reject! { |dep| dep.name == "mini_portile2" }
-    spec.metadata.delete('msys2_mingw_dependencies')
+    spec.metadata.delete("msys2_mingw_dependencies")
   end
 end
 
@@ -107,7 +107,7 @@ task "set-version-to-timestamp" do
     raise("Could not hack the VERSION constant")
   end
 
-  File.open(version_file_path, "w") { |f| f.write(version_file_contents) }
+  File.write(version_file_path, version_file_contents)
 
   puts "NOTE: wrote version as \"#{fake_version}\""
 end

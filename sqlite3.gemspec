@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 begin
   require_relative "lib/sqlite3/version"
 rescue LoadError
@@ -34,7 +32,7 @@ Gem::Specification.new do |s|
     "msys2_mingw_dependencies" => "sqlite3",
 
     # https://guides.rubygems.org/mfa-requirement-opt-in/
-    "rubygems_mfa_required" => "true",
+    "rubygems_mfa_required" => "true"
   }
 
   s.files = [
@@ -93,7 +91,7 @@ Gem::Specification.new do |s|
     "test/test_result_set.rb",
     "test/test_sqlite3.rb",
     "test/test_statement.rb",
-    "test/test_statement_execute.rb",
+    "test/test_statement_execute.rb"
   ]
 
   s.extra_rdoc_files = [
