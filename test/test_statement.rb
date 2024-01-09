@@ -339,14 +339,14 @@ module SQLite3
     end
 
     def test_reprepares
-      stmt = @db.prepare("SELECT * FROM test_table WHERE name LIKE ?")
-
-      skip("reprepares not defined") unless stmt.respond_to?(:reprepares)
-
       @db.execute 'CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);'
       10.times do |i|
         @db.execute 'INSERT INTO test_table (name) VALUES (?)', "name_#{i}"
       end
+      stmt = @db.prepare("SELECT * FROM test_table WHERE name LIKE ?")
+
+      skip("reprepares not defined") unless stmt.respond_to?(:reprepares)
+
       stmt.execute('name%').to_a
 
       assert_equal 1, stmt.reprepares
@@ -355,12 +355,12 @@ module SQLite3
     end
 
     def test_runs
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
       stmt = @db.prepare('select * from test1')
 
       skip("runs not defined") unless stmt.respond_to?(:runs)
 
-      @db.execute 'CREATE TABLE test1(a)'
-      @db.execute 'INSERT INTO test1 VALUES (1)'
       stmt.execute.to_a
 
       assert_equal 1, stmt.runs
@@ -369,16 +369,16 @@ module SQLite3
     end
 
     def test_filter_misses
-      stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c;")
-
-      skip("filter_misses not defined") unless stmt.respond_to?(:filter_misses)
-
       @db.execute "CREATE TABLE t1(a,b);"
       @db.execute "CREATE TABLE t2(c,d);"
       10.times do |i|
         @db.execute 'INSERT INTO t1 (a, b) VALUES (?, ?)', [i, i.to_s]
         @db.execute 'INSERT INTO t2 (c, d) VALUES (?, ?)', [i, i.to_s]
       end
+      stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c;")
+
+      skip("filter_misses not defined") unless stmt.respond_to?(:filter_misses)
+
       stmt.execute.to_a
 
       assert_equal 10, stmt.filter_misses
@@ -387,16 +387,16 @@ module SQLite3
     end
 
     def test_filter_hits
-      stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c AND b = '1' AND d = '1';")
-
-      skip("filter_hits not defined") unless stmt.respond_to?(:filter_hits)
-
       @db.execute "CREATE TABLE t1(a,b);"
       @db.execute "CREATE TABLE t2(c,d);"
       10.times do |i|
         @db.execute 'INSERT INTO t1 (a, b) VALUES (?, ?)', [i, i.to_s]
         @db.execute 'INSERT INTO t2 (c, d) VALUES (?, ?)', [i+1, i.to_s]
       end
+      stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c AND b = '1' AND d = '1';")
+
+      skip("filter_hits not defined") unless stmt.respond_to?(:filter_hits)
+
       stmt.execute.to_a
 
       assert_equal 1, stmt.filter_hits
@@ -405,12 +405,12 @@ module SQLite3
     end
 
     def test_memused
+      @db.execute 'CREATE TABLE test1(a)'
+      @db.execute 'INSERT INTO test1 VALUES (1)'
       stmt = @db.prepare('select * from test1')
 
       skip("memused not defined") unless stmt.respond_to?(:memused)
 
-      @db.execute 'CREATE TABLE test1(a)'
-      @db.execute 'INSERT INTO test1 VALUES (1)'
       stmt.execute.to_a
 
       assert_operator stmt.memused, :>, 0
