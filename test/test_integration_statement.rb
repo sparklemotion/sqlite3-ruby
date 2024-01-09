@@ -166,7 +166,7 @@ class IntegrationStatementTestCase < SQLite3::TestCase
 
   def test_close
     stmt = @db.prepare("select * from foo")
-    assert !stmt.closed?
+    refute_predicate stmt, :closed?
     stmt.close
     assert_predicate stmt, :closed?
     assert_raise(SQLite3::Exception) { stmt.execute }

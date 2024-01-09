@@ -221,12 +221,12 @@ module SQLite3
 
     def test_step_twice
       assert_not_nil @stmt.step
-      assert !@stmt.done?
+      refute_predicate @stmt, :done?
       assert_nil @stmt.step
       assert_predicate @stmt, :done?
 
       @stmt.reset!
-      assert !@stmt.done?
+      refute_predicate @stmt, :done?
     end
 
     def test_step_never_moves_past_done

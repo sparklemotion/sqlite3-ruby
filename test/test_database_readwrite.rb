@@ -16,7 +16,7 @@ module SQLite3
 
     def test_open_readwrite_database
       @db = SQLite3::Database.new("test-readwrite.db", readwrite: true)
-      assert !@db.readonly?
+      refute_predicate @db, :readonly?
     end
 
     def test_open_readwrite_readonly_database

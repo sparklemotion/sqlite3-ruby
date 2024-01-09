@@ -44,7 +44,7 @@ class IntegrationTestCase < SQLite3::TestCase
   end
 
   def test_complete_fail
-    assert !@db.complete?("select * from foo")
+    refute @db.complete?("select * from foo")
   end
 
   def test_complete_success
@@ -144,7 +144,7 @@ class IntegrationTestCase < SQLite3::TestCase
     @db.execute("select * from foo where a > 100") do |row|
       called = true
     end
-    assert !called
+    refute called
   end
 
   def test_execute_no_block_with_bind_no_match
@@ -157,7 +157,7 @@ class IntegrationTestCase < SQLite3::TestCase
     @db.execute("select * from foo where a > ?", 100) do |row|
       called = true
     end
-    assert !called
+    refute called
   end
 
   def test_execute_no_block_no_bind_with_match
@@ -462,22 +462,22 @@ class IntegrationTestCase < SQLite3::TestCase
   end
 
   def test_transaction_active
-    assert !@db.transaction_active?
+    refute_predicate @db, :transaction_active?
     @db.transaction
     assert_predicate @db, :transaction_active?
     @db.commit
-    assert !@db.transaction_active?
+    refute_predicate @db, :transaction_active?
   end
 
   def test_transaction_implicit_rollback
-    assert !@db.transaction_active?
+    refute_predicate @db, :transaction_active?
     @db.transaction
     @db.execute("create table bar (x CHECK(1 = 0))")
     assert_predicate @db, :transaction_active?
     assert_raises(SQLite3::ConstraintException) do
       @db.execute("insert or rollback into bar (x) VALUES ('x')")
     end
-    assert !@db.transaction_active?
+    refute_predicate @db, :transaction_active?
   end
 
   def test_interrupt

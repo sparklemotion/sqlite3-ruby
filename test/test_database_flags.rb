@@ -50,7 +50,7 @@ module SQLite3
 
     def test_open_database_readwrite_flags
       @db = SQLite3::Database.new("test-flags.db", flags: SQLite3::Constants::Open::READWRITE)
-      assert !@db.readonly?
+      refute_predicate @db, :readonly?
     end
 
     def test_open_database_readonly_flags_cant_open

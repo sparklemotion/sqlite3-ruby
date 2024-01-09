@@ -37,7 +37,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
 
   def test_eof_inner
     @result.reset(1)
-    assert !@result.eof?
+    refute_predicate @result, :eof?
   end
 
   def test_eof_edge
@@ -128,7 +128,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
   def test_close
     stmt = @db.prepare("select * from foo")
     result = stmt.execute
-    assert !result.closed?
+    refute_predicate result, :closed?
     result.close
     assert_predicate result, :closed?
     assert_predicate stmt, :closed?

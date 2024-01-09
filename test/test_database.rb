@@ -253,7 +253,7 @@ module SQLite3
       thing = nil
       SQLite3::Database.new(":memory:") do |db|
         thing = db
-        assert !thing.closed?
+        refute_predicate thing, :closed?
       end
       assert_predicate thing, :closed?
     end
@@ -262,7 +262,7 @@ module SQLite3
       thing = nil
       SQLite3::Database.open(":memory:") do |db|
         thing = db
-        assert !thing.closed?
+        refute_predicate thing, :closed?
       end
       assert_predicate thing, :closed?
     end
