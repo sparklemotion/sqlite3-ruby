@@ -505,7 +505,11 @@ class TC_Database_Integration < SQLite3::TestCase
     assert_equal "foo", result
   end
 
+  ###
+  # The `progress_handler` method may not exist depending on how sqlite3 was compiled
   def test_progress_handler_used
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
     progress_calls = []
     @db.progress_handler do
       progress_calls << nil
@@ -517,6 +521,8 @@ class TC_Database_Integration < SQLite3::TestCase
   end
 
   def test_progress_handler_opcode_arg
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
     progress_calls = []
     handler = Proc.new do
       progress_calls << nil
@@ -535,6 +541,8 @@ class TC_Database_Integration < SQLite3::TestCase
   end
 
   def test_progress_handler_interrupts_operation
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
     @db.progress_handler do
       false
     end
@@ -545,6 +553,8 @@ class TC_Database_Integration < SQLite3::TestCase
   end
 
   def test_clear_handler
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
     progress_calls = []
     @db.progress_handler do
       progress_calls << nil
