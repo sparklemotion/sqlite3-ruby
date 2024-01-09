@@ -112,8 +112,6 @@ task "set-version-to-timestamp" do
   puts "NOTE: wrote version as \"#{fake_version}\""
 end
 
-task default: [:clobber, :compile, :test]
-
 CLEAN.add("{ext,lib}/**/*.{o,so}", "pkg")
 CLOBBER.add("ports/*").exclude(%r{ports/archives$})
 

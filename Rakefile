@@ -5,3 +5,5 @@
 #
 require "bundler"
 SQLITE3_SPEC = Bundler.load_gemspec("sqlite3.gemspec")
+
+task default: [:rubocop, :compile, :test]
