@@ -121,7 +121,7 @@ module SQLite3
     # Required by the Enumerable mixin. Provides an internal iterator over the
     # rows of the result set.
     def each
-      while node = self.next
+      while (node = self.next)
         yield node
       end
     end
@@ -129,7 +129,7 @@ module SQLite3
     # Provides an internal iterator over the rows of the result set where
     # each row is yielded as a hash.
     def each_hash
-      while node = next_hash
+      while (node = next_hash)
         yield node
       end
     end

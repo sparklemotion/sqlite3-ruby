@@ -35,7 +35,7 @@ module SQLite3
 
       rs = @db.prepare("select * from foo").execute
       rows = []
-      while row = rs.next_hash
+      while (row = rs.next_hash)
         rows << row
       end
       rows.each do |hash|

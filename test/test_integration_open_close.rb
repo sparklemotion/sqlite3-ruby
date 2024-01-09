@@ -1,6 +1,6 @@
 require "helper"
 
-class TC_OpenClose < SQLite3::TestCase
+class IntegrationOpenCloseTestCase < SQLite3::TestCase
   def test_create_close
     db = SQLite3::Database.new("test-create.db")
     assert File.exist?("test-create.db")

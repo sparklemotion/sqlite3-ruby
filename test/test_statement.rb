@@ -284,7 +284,7 @@ module SQLite3
       # the clear_bindings! method and assert that nil is returned
       stmt.clear_bindings!
 
-      while x = stmt.step
+      while (x = stmt.step)
         assert_equal [nil, nil], x
       end
 
