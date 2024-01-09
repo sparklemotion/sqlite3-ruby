@@ -16,7 +16,8 @@ static void
 database_mark(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
-    rb_gc_mark_movable(c->progress_handler);
+    rb_gc_mark(c->busy_handler);
+    rb_gc_mark(c->progress_handler);
 }
 
 static void
@@ -37,20 +38,12 @@ database_memsize(const void *ctx)
     return sizeof(*c);
 }
 
-static void
-database_update_references(void *ctx)
-{
-    sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
-    c->progress_handler = rb_gc_location(c->progress_handler);
-}
-
 static const rb_data_type_t database_type = {
     .wrap_struct_name = "SQLite3::Backup",
     .function = {
         .dmark = database_mark,
         .dfree = deallocate,
         .dsize = database_memsize,
-        .dcompact = database_update_references,
     },
     .flags = RUBY_TYPED_WB_PROTECTED, // Not freed immediately because the dfree function do IOs.
 };
@@ -216,10 +209,11 @@ trace(int argc, VALUE *argv, VALUE self)
 }
 
 static int
-rb_sqlite3_busy_handler(void *ctx, int count)
+rb_sqlite3_busy_handler(void *context, int count)
 {
-    VALUE self = (VALUE)(ctx);
-    VALUE handle = rb_iv_get(self, "@busy_handler");
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+
+    VALUE handle = ctx->busy_handler;
     VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM(count));
 
     if (Qfalse == result) { return 0; }
@@ -254,11 +248,13 @@ busy_handler(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "01", &block);
 
     if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
-
-    rb_iv_set(self, "@busy_handler", block);
+    ctx->busy_handler = block;
 
     status = sqlite3_busy_handler(
-                 ctx->db, NIL_P(block) ? NULL : rb_sqlite3_busy_handler, (void *)self);
+        ctx->db,
+        NIL_P(block) ? NULL : rb_sqlite3_busy_handler,
+        (void *)ctx
+    );
 
     CHECK(ctx->db, status);
 
@@ -274,7 +270,7 @@ rb_sqlite3_progress_handler(void *context)
   VALUE handle = ctx->progress_handler;
   VALUE result = rb_funcall(handle, rb_intern("call"), 0);
 
-  if (Qfalse == result) return 1;
+  if (Qfalse == result) { return 1; }
 
   return 0;
 }
@@ -301,15 +297,14 @@ progress_handler(int argc, VALUE *argv, VALUE self)
   rb_scan_args(argc, argv, "02", &n_value, &block);
 
   int n = NIL_P(n_value) ? 1 : NUM2INT(n_value);
-  if(NIL_P(block) && rb_block_given_p()) block = rb_block_proc();
-
+  if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
   ctx->progress_handler = block;
 
   sqlite3_progress_handler(
-    ctx->db,
-    n,
-    NIL_P(block) ? NULL : rb_sqlite3_progress_handler,
-    (void *)ctx
+      ctx->db,
+      n,
+      NIL_P(block) ? NULL : rb_sqlite3_progress_handler,
+      (void *)ctx
   );
 
   return self;
@@ -932,9 +927,6 @@ init_sqlite3_database(void)
     rb_define_method(cSqlite3Database, "changes", changes, 0);
     rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
     rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
-#ifndef HAVE_SQLITE3_PROGRESS_HANDLER
-    rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
-#endif
     rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
     rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
     rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
@@ -947,6 +939,10 @@ init_sqlite3_database(void)
 
 #ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
     rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
+#endif
+
+#ifndef HAVE_SQLITE3_PROGRESS_HANDLER
+    rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
 #endif
 
     rb_sqlite3_aggregator_init();
