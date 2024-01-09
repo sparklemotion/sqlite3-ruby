@@ -97,6 +97,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
 
   def test_next_results_as_hash
     @db.results_as_hash = true
+    @result = @stmt.execute
     @result.reset(1)
     hash = @result.next
     assert_equal({"a" => 1, "b" => "foo"},
