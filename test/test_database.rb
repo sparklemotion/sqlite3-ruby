@@ -16,7 +16,7 @@ module SQLite3
     end
 
     def test_segv
-      assert_raises { SQLite3::Database.new 1 }
+      assert_raises { SQLite3::Database.new 1 } # rubocop:disable Minitest/UnspecifiedException
     end
 
     def test_db_filename
