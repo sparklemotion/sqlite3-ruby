@@ -46,6 +46,9 @@ static VALUE
 allocate(VALUE klass)
 {
     sqlite3RubyPtr ctx;
+    ctx->progress_handler = Qnil;
+
+
     return TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
 }
 
@@ -256,8 +259,7 @@ static int
 rb_sqlite3_progress_handler(void *ctx)
 {
   VALUE self = (VALUE)(ctx);
-  VALUE handle = rb_iv_get(self, "@progress_handler");
-  VALUE result = rb_funcall(handle, rb_intern("call"), 0);
+  VALUE result = rb_funcall(ctx->progress_handler, rb_intern("call"), 0);
 
   if (Qfalse == result) return 1;
 
@@ -288,7 +290,7 @@ progress_handler(int argc, VALUE *argv, VALUE self)
   int n = NIL_P(n_value) ? 1 : NUM2INT(n_value);
   if(NIL_P(block) && rb_block_given_p()) block = rb_block_proc();
 
-  rb_iv_set(self, "@progress_handler", block);
+  ctx->progress_handler = block;
 
   sqlite3_progress_handler(
       ctx->db, n, NIL_P(block) ? NULL : rb_sqlite3_progress_handler, (void *)self);
