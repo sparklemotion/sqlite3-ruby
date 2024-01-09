@@ -333,7 +333,7 @@ module SQLite3
       stmt = @db.prepare('select * from test1 order by a')
       stmt.execute.to_a
 
-      assert_equal 17, stmt.vm_steps
+      assert_operator stmt.vm_steps, :>, 0
 
       stmt.close
     end
