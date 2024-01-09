@@ -14,4 +14,5 @@ group :development do
 
   gem "rubocop", require: false
   gem "standardrb", require: false
+  gem "rubocop-minitest", require: false
 end

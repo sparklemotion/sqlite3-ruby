@@ -94,7 +94,7 @@ module SQLite3
 
     def test_close
       @stmt.close
-      assert @stmt.closed?
+      assert_predicate @stmt, :closed?
     end
 
     def test_double_close
@@ -223,7 +223,7 @@ module SQLite3
       assert_not_nil @stmt.step
       assert !@stmt.done?
       assert_nil @stmt.step
-      assert @stmt.done?
+      assert_predicate @stmt, :done?
 
       @stmt.reset!
       assert !@stmt.done?

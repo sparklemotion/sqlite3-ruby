@@ -28,7 +28,7 @@ module SQLite3
       if SQLite3::SQLITE_VERSION_NUMBER > 3007013
         defined_to_date += [:MEMORY]
       end
-      assert defined_to_date.sort == SQLite3::Constants::Open.constants.sort
+      assert_equal defined_to_date.sort, SQLite3::Constants::Open.constants.sort
     end
 
     def test_open_database_flags_conflicts_with_readonly
@@ -45,7 +45,7 @@ module SQLite3
 
     def test_open_database_readonly_flags
       @db = SQLite3::Database.new("test-flags.db", flags: SQLite3::Constants::Open::READONLY)
-      assert @db.readonly?
+      assert_predicate @db, :readonly?
     end
 
     def test_open_database_readwrite_flags
@@ -81,7 +81,7 @@ module SQLite3
         db.execute("CREATE TABLE foos (id integer)")
         db.execute("INSERT INTO foos (id) VALUES (12)")
       end
-      assert File.exist?("test-flags.db")
+      assert_path_exists "test-flags.db"
     end
 
     def test_open_database_exotic_flags
@@ -89,7 +89,7 @@ module SQLite3
       exotic_flags = SQLite3::Constants::Open::NOMUTEX | SQLite3::Constants::Open::TEMP_DB
       @db = SQLite3::Database.new("test-flags.db", flags: flags | exotic_flags)
       @db.execute("INSERT INTO foos (id) VALUES (12)")
-      assert @db.changes == 1
+      assert_equal 1, @db.changes
     end
   end
 end

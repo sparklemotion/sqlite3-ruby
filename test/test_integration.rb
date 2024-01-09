@@ -98,7 +98,7 @@ class IntegrationTestCase < SQLite3::TestCase
   def test_authorizer_silent
     @db.authorizer { |type, a, b, c, d| 2 }
     rows = @db.execute "select * from foo"
-    assert rows.empty?
+    assert_empty rows
   end
 
   def test_prepare_invalid_syntax
@@ -121,7 +121,7 @@ class IntegrationTestCase < SQLite3::TestCase
 
   def test_prepare_no_block
     stmt = @db.prepare "select * from foo"
-    assert stmt.respond_to?(:execute)
+    assert_respond_to stmt, :execute
     stmt.close
   end
 
@@ -129,14 +129,14 @@ class IntegrationTestCase < SQLite3::TestCase
     called = false
     @db.prepare "select * from foo" do |stmt|
       called = true
-      assert stmt.respond_to?(:execute)
+      assert_respond_to stmt, :execute
     end
     assert called
   end
 
   def test_execute_no_block_no_bind_no_match
     rows = @db.execute("select * from foo where a > 100")
-    assert rows.empty?
+    assert_empty rows
   end
 
   def test_execute_with_block_no_bind_no_match
@@ -149,7 +149,7 @@ class IntegrationTestCase < SQLite3::TestCase
 
   def test_execute_no_block_with_bind_no_match
     rows = @db.execute("select * from foo where a > ?", 100)
-    assert rows.empty?
+    assert_empty rows
   end
 
   def test_execute_with_block_with_bind_no_match
@@ -188,7 +188,7 @@ class IntegrationTestCase < SQLite3::TestCase
 
   def test_execute2_no_block_no_bind_no_match
     columns, *rows = @db.execute2("select * from foo where a > 100")
-    assert rows.empty?
+    assert_empty rows
     assert_equal ["a", "b"], columns
   end
 
@@ -203,7 +203,7 @@ class IntegrationTestCase < SQLite3::TestCase
 
   def test_execute2_no_block_with_bind_no_match
     columns, *rows = @db.execute2("select * from foo where a > ?", 100)
-    assert rows.empty?
+    assert_empty rows
     assert_equal ["a", "b"], columns
   end
 
@@ -285,7 +285,7 @@ class IntegrationTestCase < SQLite3::TestCase
       assert_nil result.next
       r = result
     end
-    assert r.closed?
+    assert_predicate r, :closed?
   end
 
   def test_query_no_block_with_bind_no_match
@@ -300,7 +300,7 @@ class IntegrationTestCase < SQLite3::TestCase
       assert_nil result.next
       r = result
     end
-    assert r.closed?
+    assert_predicate r, :closed?
   end
 
   def test_query_no_block_no_bind_with_match
@@ -317,7 +317,7 @@ class IntegrationTestCase < SQLite3::TestCase
       assert_nil result.next
       r = result
     end
-    assert r.closed?
+    assert_predicate r, :closed?
   end
 
   def test_query_no_block_with_bind_with_match
@@ -334,7 +334,7 @@ class IntegrationTestCase < SQLite3::TestCase
       assert_nil result.next
       r = result
     end
-    assert r.closed?
+    assert_predicate r, :closed?
   end
 
   def test_get_first_row_no_bind_no_match
@@ -464,7 +464,7 @@ class IntegrationTestCase < SQLite3::TestCase
   def test_transaction_active
     assert !@db.transaction_active?
     @db.transaction
-    assert @db.transaction_active?
+    assert_predicate @db, :transaction_active?
     @db.commit
     assert !@db.transaction_active?
   end
@@ -473,7 +473,7 @@ class IntegrationTestCase < SQLite3::TestCase
     assert !@db.transaction_active?
     @db.transaction
     @db.execute("create table bar (x CHECK(1 = 0))")
-    assert @db.transaction_active?
+    assert_predicate @db, :transaction_active?
     assert_raises(SQLite3::ConstraintException) do
       @db.execute("insert or rollback into bar (x) VALUES ('x')")
     end

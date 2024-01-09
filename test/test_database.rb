@@ -150,16 +150,16 @@ module SQLite3
         INSERT INTO items (name) VALUES ("bar");
         SELECT * FROM items;
       EOSQL
-      assert_equal return_value, [{"id" => "1", "name" => "foo"}, {"id" => "2", "name" => "bar"}]
+      assert_equal [{"id" => "1", "name" => "foo"}, {"id" => "2", "name" => "bar"}], return_value
 
       return_value = @db.execute_batch2("SELECT * FROM items;") do |result|
         result["id"] = result["id"].to_i
         result
       end
-      assert_equal return_value, [{"id" => 1, "name" => "foo"}, {"id" => 2, "name" => "bar"}]
+      assert_equal [{"id" => 1, "name" => "foo"}, {"id" => 2, "name" => "bar"}], return_value
 
       return_value = @db.execute_batch2('INSERT INTO items (name) VALUES ("oof")')
-      assert_equal return_value, []
+      assert_empty return_value
 
       return_value = @db.execute_batch2(
         'CREATE TABLE employees (id integer PRIMARY KEY AUTOINCREMENT, name string, age integer(3));
@@ -171,10 +171,10 @@ module SQLite3
         result["age"] = result["age"].to_i
         result
       end
-      assert_equal return_value, [{"age" => 30}, {"age" => 40}, {"age" => 20}]
+      assert_equal [{"age" => 30}, {"age" => 40}, {"age" => 20}], return_value
 
       return_value = @db.execute_batch2("SELECT name FROM employees")
-      assert_equal return_value, [{"name" => nil}, {"name" => nil}, {"name" => nil}]
+      assert_equal [{"name" => nil}, {"name" => nil}, {"name" => nil}], return_value
 
       @db.results_as_hash = false
       return_value = @db.execute_batch2(
@@ -188,7 +188,7 @@ module SQLite3
         end
         result
       end
-      assert_equal return_value, [[1, 50], [2, 60]]
+      assert_equal [[1, 50], [2, 60]], return_value
 
       assert_raises(RuntimeError) do
         # "names" is not a valid column
@@ -246,7 +246,7 @@ module SQLite3
     def test_close
       db = SQLite3::Database.new(":memory:")
       db.close
-      assert db.closed?
+      assert_predicate db, :closed?
     end
 
     def test_block_closes_self
@@ -255,7 +255,7 @@ module SQLite3
         thing = db
         assert !thing.closed?
       end
-      assert thing.closed?
+      assert_predicate thing, :closed?
     end
 
     def test_open_with_block_closes_self
@@ -264,7 +264,7 @@ module SQLite3
         thing = db
         assert !thing.closed?
       end
-      assert thing.closed?
+      assert_predicate thing, :closed?
     end
 
     def test_block_closes_self_even_raised
@@ -276,7 +276,7 @@ module SQLite3
         end
       rescue
       end
-      assert thing.closed?
+      assert_predicate thing, :closed?
     end
 
     def test_open_with_block_closes_self_even_raised
@@ -288,7 +288,7 @@ module SQLite3
         end
       rescue
       end
-      assert thing.closed?
+      assert_predicate thing, :closed?
     end
 
     def test_prepare

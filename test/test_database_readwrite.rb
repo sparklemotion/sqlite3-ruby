@@ -35,7 +35,7 @@ module SQLite3
     def test_insert_readwrite_database
       @db = SQLite3::Database.new("test-readwrite.db", readwrite: true)
       @db.execute("INSERT INTO foos (id) VALUES (12)")
-      assert @db.changes == 1
+      assert_equal 1, @db.changes
     end
   end
 end

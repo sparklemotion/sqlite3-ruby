@@ -72,6 +72,6 @@ class IntegrationPendingTestCase < SQLite3::TestCase
     busy.unlock
     t.join
 
-    assert time.real * 1000 >= 1000
+    assert_operator time.real * 1000, :>=, 1000
   end
 end

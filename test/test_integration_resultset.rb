@@ -20,13 +20,13 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
 
   def test_reset_unused
     assert_nothing_raised { @result.reset }
-    assert @result.to_a.empty?
+    assert_empty @result.to_a
   end
 
   def test_reset_used
     @result.to_a
     assert_nothing_raised { @result.reset }
-    assert @result.to_a.empty?
+    assert_empty @result.to_a
   end
 
   def test_reset_with_bind
@@ -44,7 +44,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     @result.reset(1)
     @result.next # to first row
     @result.next # to end of result set
-    assert @result.eof?
+    assert_predicate @result, :eof?
   end
 
   def test_next_eof
@@ -101,8 +101,8 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     hash = @result.next
     assert_equal({"a" => 1, "b" => "foo"},
       hash)
-    assert_equal hash[@result.columns[0]], 1
-    assert_equal hash[@result.columns[1]], "foo"
+    assert_equal 1, hash[@result.columns[0]]
+    assert_equal "foo", hash[@result.columns[1]]
   end
 
   def test_each
@@ -130,8 +130,8 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     result = stmt.execute
     assert !result.closed?
     result.close
-    assert result.closed?
-    assert stmt.closed?
+    assert_predicate result, :closed?
+    assert_predicate stmt, :closed?
     assert_raise(SQLite3::Exception) { result.reset }
     assert_raise(SQLite3::Exception) { result.next }
     assert_raise(SQLite3::Exception) { result.each }

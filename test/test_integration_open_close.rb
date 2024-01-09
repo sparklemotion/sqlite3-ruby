@@ -3,7 +3,7 @@ require "helper"
 class IntegrationOpenCloseTestCase < SQLite3::TestCase
   def test_create_close
     db = SQLite3::Database.new("test-create.db")
-    assert File.exist?("test-create.db")
+    assert_path_exists "test-create.db"
     assert_nothing_raised { db.close }
   ensure
     begin
@@ -15,7 +15,7 @@ class IntegrationOpenCloseTestCase < SQLite3::TestCase
 
   def test_open_close
     File.open("test-open.db", "w") { |f| }
-    assert File.exist?("test-open.db")
+    assert_path_exists "test-open.db"
     db = SQLite3::Database.new("test-open.db")
     assert_nothing_raised { db.close }
   ensure

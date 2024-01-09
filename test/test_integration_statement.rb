@@ -32,7 +32,7 @@ class IntegrationStatementTestCase < SQLite3::TestCase
 
   def test_bind_params_empty
     assert_nothing_raised { @stmt.bind_params }
-    assert @stmt.execute!.empty?
+    assert_empty @stmt.execute!
   end
 
   def test_bind_params_array
@@ -113,7 +113,7 @@ class IntegrationStatementTestCase < SQLite3::TestCase
   end
 
   def test_execute_bang_no_bind_no_block
-    assert @stmt.execute!.empty?
+    assert_empty @stmt.execute!
   end
 
   def test_execute_bang_with_bind_no_block
@@ -168,7 +168,7 @@ class IntegrationStatementTestCase < SQLite3::TestCase
     stmt = @db.prepare("select * from foo")
     assert !stmt.closed?
     stmt.close
-    assert stmt.closed?
+    assert_predicate stmt, :closed?
     assert_raise(SQLite3::Exception) { stmt.execute }
     assert_raise(SQLite3::Exception) { stmt.execute! }
     assert_raise(SQLite3::Exception) { stmt.close }

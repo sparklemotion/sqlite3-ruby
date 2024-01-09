@@ -16,7 +16,7 @@ module SQLite3
 
     def test_open_readonly_database
       @db = SQLite3::Database.new("test-readonly.db", readonly: true)
-      assert @db.readonly?
+      assert_predicate @db, :readonly?
     end
 
     def test_open_readonly_not_exists_database
