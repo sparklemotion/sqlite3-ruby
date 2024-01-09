@@ -174,7 +174,7 @@ class TC_Integration_Aggregate < SQLite3::TestCase
     end
   end
 
-  class CustomException < Exception
+  class CustomException < RuntimeError
   end
 
   def test_create_aggregate_with_exception_in_step

@@ -26,7 +26,7 @@ module SQLite3
       @db = SQLite3::Database.new tf.path
       assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename("main"))
     ensure
-      tf.unlink if tf
+      tf&.unlink
     end
 
     def test_filename
@@ -36,7 +36,7 @@ module SQLite3
       @db = SQLite3::Database.new tf.path
       assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename)
     ensure
-      tf.unlink if tf
+      tf&.unlink
     end
 
     def test_filename_with_attachment
@@ -47,7 +47,7 @@ module SQLite3
 
       assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename("testing"))
     ensure
-      tf.unlink if tf
+      tf&.unlink
     end
 
     def test_filename_to_path
@@ -56,8 +56,8 @@ module SQLite3
       db = SQLite3::Database.new pn
       assert_equal pn.realdirpath.to_s, File.realdirpath(db.filename)
     ensure
-      tf.close! if tf
-      db.close if db
+      tf&.close!
+      db&.close
     end
 
     def test_error_code
@@ -200,14 +200,14 @@ module SQLite3
       db = SQLite3::Database.new(":memory:")
       assert_instance_of(SQLite3::Database, db)
     ensure
-      db.close if db
+      db&.close
     end
 
     def test_open
       db = SQLite3::Database.open(":memory:")
       assert_instance_of(SQLite3::Database, db)
     ensure
-      db.close if db
+      db&.close
     end
 
     def test_open_returns_block_result
@@ -240,7 +240,7 @@ module SQLite3
       db = SQLite3::Database.new(":memory:".encode(utf16), utf16: true)
       assert_instance_of(SQLite3::Database, db)
     ensure
-      db.close if db
+      db&.close
     end
 
     def test_close
@@ -296,7 +296,7 @@ module SQLite3
       stmt = db.prepare('select "hello world"')
       assert_instance_of(SQLite3::Statement, stmt)
     ensure
-      stmt.close if stmt
+      stmt&.close
     end
 
     def test_block_prepare_does_not_double_close
@@ -543,7 +543,7 @@ module SQLite3
       stmt = @db.prepare("select 'fooooo'")
       assert_nil stmt.step
     ensure
-      stmt.close if stmt
+      stmt&.close
     end
 
     def test_authorizer_fail
@@ -570,7 +570,7 @@ module SQLite3
       @db.authorizer = nil
       s = @db.prepare("select 'fooooo'")
     ensure
-      s.close if s
+      s&.close
     end
 
     def test_close_with_open_statements
@@ -579,7 +579,7 @@ module SQLite3
         @db.close
       end
     ensure
-      s.close if s
+      s&.close
     end
 
     def test_execute_with_empty_bind_params
@@ -590,7 +590,7 @@ module SQLite3
       resultset = @db.query("select :n", {"n" => "foo"})
       assert_equal [["foo"]], resultset.to_a
     ensure
-      resultset.close if resultset
+      resultset&.close
     end
 
     def test_execute_with_named_bind_params
@@ -669,7 +669,7 @@ module SQLite3
         db2.close if db2 && !db2.closed?
       end
     ensure
-      tf.unlink if tf
+      tf&.unlink
     end
   end
 end

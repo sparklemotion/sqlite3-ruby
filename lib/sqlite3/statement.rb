@@ -81,7 +81,7 @@ module SQLite3
       bind_params(*bind_vars) unless bind_vars.empty?
       @results = ResultSet.new(@connection, self)
 
-      step if 0 == column_count
+      step if column_count == 0
 
       yield @results if block_given?
       @results
@@ -156,7 +156,7 @@ module SQLite3
       end
       @types = Array.new(column_count) do |column|
         val = column_decltype(column)
-        val.nil? ? nil : val.downcase
+        val&.downcase
       end
     end
   end

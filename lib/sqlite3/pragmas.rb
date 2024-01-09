@@ -22,7 +22,7 @@ module SQLite3
         when "on", "yes", "true", "y", "t" then mode = "'ON'"
         when "off", "no", "false", "n", "f" then mode = "'OFF'"
         else
-          raise Exception,
+          raise StandardError,
             "unrecognized pragma parameter #{mode.inspect}"
         end
       when true, 1
@@ -30,7 +30,7 @@ module SQLite3
       when false, 0, nil
         mode = "OFF"
       else
-        raise Exception,
+        raise StandardError,
           "unrecognized pragma parameter #{mode.inspect}"
       end
 
@@ -62,7 +62,7 @@ module SQLite3
     def set_enum_pragma(name, mode, enums)
       match = enums.find { |p| p.find { |i| i.to_s.downcase == mode.to_s.downcase } }
       unless match
-        raise Exception,
+        raise StandardError,
           "unrecognized #{name} #{mode.inspect}"
       end
       execute("PRAGMA #{name}='#{match.first.upcase}'")
@@ -533,7 +533,7 @@ module SQLite3
 
       result = [] unless block_given?
       stmt.each do |row|
-        new_row = Hash[columns.zip(row)]
+        new_row = columns.zip(row).to_h
 
         # FIXME: This should be removed but is required for older versions
         # of rails

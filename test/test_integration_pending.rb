@@ -1,6 +1,5 @@
 require "helper"
 
-require "thread"
 require "benchmark"
 
 class TC_Integration_Pending < SQLite3::TestCase
@@ -30,7 +29,7 @@ class TC_Integration_Pending < SQLite3::TestCase
         busy.lock
       end
     ensure
-      db2.close if db2
+      db2&.close
     end
     sleep 1
 
@@ -60,7 +59,7 @@ class TC_Integration_Pending < SQLite3::TestCase
         busy.lock
       end
     ensure
-      db2.close if db2
+      db2&.close
     end
 
     sleep 1
