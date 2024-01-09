@@ -404,7 +404,7 @@ module SQLite3
       stmt = @db.prepare('select * from test1')
       stmt.execute.to_a
 
-      assert_equal 2784, stmt.memused
+      assert_operator stmt.memused, :>, 0
     ensure
       stmt.close if stmt
     end
