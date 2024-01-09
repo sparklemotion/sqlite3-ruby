@@ -251,6 +251,7 @@ busy_handler(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
+#ifdef HAVE_SQLITE3_PROGRESS_HANDLER
 static int
 rb_sqlite3_progress_handler(void *ctx)
 {
@@ -294,6 +295,7 @@ progress_handler(int argc, VALUE *argv, VALUE self)
 
   return self;
 }
+#endif
 
 
 /* call-seq: last_insert_row_id
@@ -911,7 +913,7 @@ init_sqlite3_database(void)
     rb_define_method(cSqlite3Database, "changes", changes, 0);
     rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
     rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
-#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
+#ifndef HAVE_SQLITE3_PROGRESS_HANDLER
     rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
 #endif
     rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);

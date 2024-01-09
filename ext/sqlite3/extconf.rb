@@ -121,6 +121,7 @@ module Sqlite3
         have_func('sqlite3_column_database_name')
         have_func('sqlite3_enable_load_extension')
         have_func('sqlite3_load_extension')
+        have_func('sqlite3_progress_handler')
 
         unless have_func('sqlite3_open_v2') # https://www.sqlite.org/releaselog/3_5_0.html
           abort("\nPlease use a version of SQLite3 >= 3.5.0\n\n")
