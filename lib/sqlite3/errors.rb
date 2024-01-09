@@ -1,4 +1,4 @@
-require 'sqlite3/constants'
+require "sqlite3/constants"
 
 module SQLite3
   class Exception < ::StandardError
@@ -7,29 +7,54 @@ module SQLite3
   end
 
   class SQLException < Exception; end
+
   class InternalException < Exception; end
+
   class PermissionException < Exception; end
+
   class AbortException < Exception; end
+
   class BusyException < Exception; end
+
   class LockedException < Exception; end
+
   class MemoryException < Exception; end
+
   class ReadOnlyException < Exception; end
+
   class InterruptException < Exception; end
+
   class IOException < Exception; end
+
   class CorruptException < Exception; end
+
   class NotFoundException < Exception; end
+
   class FullException < Exception; end
+
   class CantOpenException < Exception; end
+
   class ProtocolException < Exception; end
+
   class EmptyException < Exception; end
+
   class SchemaChangedException < Exception; end
+
   class TooBigException < Exception; end
+
   class ConstraintException < Exception; end
+
   class MismatchException < Exception; end
+
   class MisuseException < Exception; end
+
   class UnsupportedException < Exception; end
+
   class AuthorizationException < Exception; end
+
   class FormatException < Exception; end
+
   class RangeException < Exception; end
+
   class NotADatabaseException < Exception; end
 end

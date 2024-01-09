@@ -1,8 +1,7 @@
-require 'sqlite3/constants'
-require 'sqlite3/errors'
+require "sqlite3/constants"
+require "sqlite3/errors"
 
 module SQLite3
-
   # The ResultSet object encapsulates the enumerability of a query's output.
   # It is a simple cursor over the data that the query returns. It will
   # very rarely (if ever) be instantiated directly. Instead, clients should
@@ -19,16 +18,16 @@ module SQLite3
       attr_writer :fields
 
       def types
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
+        EOWARN
         @types
       end
 
       def fields
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
+        EOWARN
         @fields
       end
     end
@@ -40,37 +39,37 @@ module SQLite3
       attr_writer :fields
 
       def types
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
+        EOWARN
         @types
       end
 
       def fields
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
+        EOWARN
         @fields
       end
 
       def [] key
         key = fields[key] if key.is_a? Numeric
-        super key
+        super(key)
       end
     end
 
     # Create a new ResultSet attached to the given database, using the
     # given sql text.
     def initialize db, stmt
-      @db   = db
+      @db = db
       @stmt = stmt
     end
 
     # Reset the cursor, so that a result set which has reached end-of-file
     # can be rewound and reiterated.
-    def reset( *bind_params )
+    def reset(*bind_params)
       @stmt.reset!
-      @stmt.bind_params( *bind_params )
+      @stmt.bind_params(*bind_params)
       @eof = false
     end
 
@@ -102,16 +101,16 @@ module SQLite3
 
       row = @db.translate_from_db @stmt.types, row
 
-      if row.respond_to?(:fields)
+      row = if row.respond_to?(:fields)
         # FIXME: this can only happen if the translator returns something
         # that responds to `fields`.  Since we're removing the translator
         # in 2.0, we can remove this branch in 2.0.
-        row = ArrayWithTypes.new(row)
+        ArrayWithTypes.new(row)
       else
         # FIXME: the `fields` and `types` methods are deprecated on this
         # object for version 2.0, so we can safely remove this branch
         # as well.
-        row = ArrayWithTypesAndFields.new(row)
+        ArrayWithTypesAndFields.new(row)
       end
 
       row.fields = @stmt.columns
@@ -122,7 +121,7 @@ module SQLite3
     # Required by the Enumerable mixin. Provides an internal iterator over the
     # rows of the result set.
     def each
-      while node = self.next
+      while (node = self.next)
         yield node
       end
     end
@@ -130,7 +129,7 @@ module SQLite3
     # Provides an internal iterator over the rows of the result set where
     # each row is yielded as a hash.
     def each_hash
-      while node = next_hash
+      while (node = next_hash)
         yield node
       end
     end

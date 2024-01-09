@@ -1,7 +1,7 @@
-require 'sqlite3'
-require 'minitest/autorun'
+require "sqlite3"
+require "minitest/autorun"
 
-if ENV['GITHUB_ACTIONS'] == 'true' || ENV['CI']
+if ENV["GITHUB_ACTIONS"] == "true" || ENV["CI"]
   $VERBOSE = nil
 end
 
@@ -12,9 +12,9 @@ puts "info: threadsafe?: #{SQLite3.threadsafe?}"
 
 module SQLite3
   class TestCase < Minitest::Test
-    alias :assert_not_equal :refute_equal
-    alias :assert_not_nil   :refute_nil
-    alias :assert_raise     :assert_raises
+    alias_method :assert_not_equal, :refute_equal
+    alias_method :assert_not_nil, :refute_nil
+    alias_method :assert_raise, :assert_raises
 
     def assert_nothing_raised
       yield

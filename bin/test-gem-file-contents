@@ -36,7 +36,7 @@ gemfile_contents = Dir.mktmpdir do |dir|
       raise "could not unpack gem #{gemfile}"
     end
 
-    %x(tar -ztf data.tar.gz).split("\n")
+    `tar -ztf data.tar.gz`.split("\n")
   end
 end
 
@@ -46,7 +46,7 @@ gemspec = Dir.mktmpdir do |dir|
       raise "could not unpack gem #{gemfile}"
     end
 
-    YAML.unsafe_load(%x(gunzip -c metadata.gz))
+    YAML.unsafe_load(`gunzip -c metadata.gz`)
   end
 end
 
@@ -96,7 +96,7 @@ describe File.basename(gemfile) do
   describe "all platforms" do
     ["lib", "test"].each do |dir|
       it "contains every ruby file in #{dir}/" do
-        expected = %x(git ls-files #{dir}).split("\n").grep(/\.rb$/).sort
+        expected = `git ls-files #{dir}`.split("\n").grep(/\.rb$/).sort
         skip "looks like this isn't a git repository" if expected.empty?
         actual = gemfile_contents.select { |f| f.start_with?("#{dir}/") }.grep(/\.rb$/).sort
         assert_equal(expected, actual)
@@ -104,109 +104,113 @@ describe File.basename(gemfile) do
     end
   end
 
-  describe "ruby platform" do
-    it "depends on mini_portile2" do
-      assert(gemspec.dependencies.find { |d| d.name == "mini_portile2" })
-    end
-
-    it "contains extension C and header files" do
-      assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
-      assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
-    end
-
-    it "includes C files in extra_rdoc_files" do
-      assert_equal(6, gemspec.extra_rdoc_files.count { |f| File.fnmatch?("ext/**/*.c", f) })
-    end
-
-    it "contains the port files" do
-      dependencies = YAML.load_file(File.join(__dir__, "..", "dependencies.yml"), symbolize_names: true)
-      sqlite_tarball = File.basename(dependencies[:sqlite3][:files].first[:url])
-      actual_ports = gemfile_contents.grep(%r{^ports/})
-
-      assert_equal(["ports/archives/#{sqlite_tarball}"], actual_ports)
-    end
-
-    it "contains the patch files" do
-      assert_equal(Dir.glob("patches/*.patch").length, gemfile_contents.count { |f| File.fnmatch?("patches/*", f) })
-    end
-
-    it "sets metadata for msys2" do
-      refute_nil(gemspec.metadata["msys2_mingw_dependencies"])
-    end
-
-    it "sets required_ruby_version appropriately" do
-      all_supported_ruby_versions.each do |v|
-        assert(
-          gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
-          "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}",
-        )
+  if gemspec.platform == Gem::Platform::RUBY
+    describe "ruby platform" do
+      it "depends on mini_portile2" do
+        assert(gemspec.dependencies.find { |d| d.name == "mini_portile2" })
       end
-    end
-  end if gemspec.platform == Gem::Platform::RUBY
 
-  describe "native platform" do
-    it "does not depend on mini_portile2" do
-      refute(gemspec.dependencies.find { |d| d.name == "mini_portile2" })
-    end
+      it "contains extension C and header files" do
+        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
+        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
+      end
 
-    it "contains extension C and header files" do
-      assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
-      assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
-    end
+      it "includes C files in extra_rdoc_files" do
+        assert_equal(6, gemspec.extra_rdoc_files.count { |f| File.fnmatch?("ext/**/*.c", f) })
+      end
 
-    it "includes C files in extra_rdoc_files" do
-      assert_equal(6, gemspec.extra_rdoc_files.count { |f| File.fnmatch?("ext/**/*.c", f) })
-    end
+      it "contains the port files" do
+        dependencies = YAML.load_file(File.join(__dir__, "..", "dependencies.yml"), symbolize_names: true)
+        sqlite_tarball = File.basename(dependencies[:sqlite3][:files].first[:url])
+        actual_ports = gemfile_contents.grep(%r{^ports/})
 
-    it "does not contain the port files" do
-      assert_empty(gemfile_contents.grep(%r{^ports/}))
-    end
+        assert_equal(["ports/archives/#{sqlite_tarball}"], actual_ports)
+      end
 
-    it "does not contain the patch files" do
-      assert_empty(gemfile_contents.grep(%r{^patches/}))
-    end
+      it "contains the patch files" do
+        assert_equal(Dir.glob("patches/*.patch").length, gemfile_contents.count { |f| File.fnmatch?("patches/*", f) })
+      end
 
-    it "contains expected shared library files " do
-      platform_supported_ruby_versions.each do |version|
-        actual = gemfile_contents.find do |p|
-          File.fnmatch?("lib/sqlite3/#{version}/sqlite3_native.{so,bundle}", p, File::FNM_EXTGLOB)
+      it "sets metadata for msys2" do
+        refute_nil(gemspec.metadata["msys2_mingw_dependencies"])
+      end
+
+      it "sets required_ruby_version appropriately" do
+        all_supported_ruby_versions.each do |v|
+          assert(
+            gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
+            "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}"
+          )
         end
-        assert(actual, "expected to find shared library file for ruby #{version}")
       end
-
-      actual = gemfile_contents.find do |p|
-        File.fnmatch?("lib/sqlite3/sqlite3_native.{so,bundle}", p, File::FNM_EXTGLOB)
-      end
-      refute(actual, "did not expect to find shared library file in lib/sqlite3")
-
-      actual = gemfile_contents.find_all do |p|
-        File.fnmatch?("lib/sqlite3/**/*.{so,bundle}", p, File::FNM_EXTGLOB)
-      end
-      assert_equal(
-        platform_supported_ruby_versions.length,
-        actual.length,
-        "did not expect extra shared library files",
-      )
     end
+  end
 
-    it "sets required_ruby_version appropriately" do
-      unsupported_versions = all_supported_ruby_versions - platform_supported_ruby_versions
-      platform_supported_ruby_versions.each do |v|
-        assert(
-          gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
-          "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}",
+  if gemspec.platform.is_a?(Gem::Platform) && gemspec.platform.cpu
+    describe "native platform" do
+      it "does not depend on mini_portile2" do
+        refute(gemspec.dependencies.find { |d| d.name == "mini_portile2" })
+      end
+
+      it "contains extension C and header files" do
+        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
+        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
+      end
+
+      it "includes C files in extra_rdoc_files" do
+        assert_equal(6, gemspec.extra_rdoc_files.count { |f| File.fnmatch?("ext/**/*.c", f) })
+      end
+
+      it "does not contain the port files" do
+        assert_empty(gemfile_contents.grep(%r{^ports/}))
+      end
+
+      it "does not contain the patch files" do
+        assert_empty(gemfile_contents.grep(%r{^patches/}))
+      end
+
+      it "contains expected shared library files " do
+        platform_supported_ruby_versions.each do |version|
+          actual = gemfile_contents.find do |p|
+            File.fnmatch?("lib/sqlite3/#{version}/sqlite3_native.{so,bundle}", p, File::FNM_EXTGLOB)
+          end
+          assert(actual, "expected to find shared library file for ruby #{version}")
+        end
+
+        actual = gemfile_contents.find do |p|
+          File.fnmatch?("lib/sqlite3/sqlite3_native.{so,bundle}", p, File::FNM_EXTGLOB)
+        end
+        refute(actual, "did not expect to find shared library file in lib/sqlite3")
+
+        actual = gemfile_contents.find_all do |p|
+          File.fnmatch?("lib/sqlite3/**/*.{so,bundle}", p, File::FNM_EXTGLOB)
+        end
+        assert_equal(
+          platform_supported_ruby_versions.length,
+          actual.length,
+          "did not expect extra shared library files"
         )
       end
-      unsupported_versions.each do |v|
-        refute(
-          gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
-          "required_ruby_version='#{gemspec.required_ruby_version}' should not support ruby #{v}",
-        )
+
+      it "sets required_ruby_version appropriately" do
+        unsupported_versions = all_supported_ruby_versions - platform_supported_ruby_versions
+        platform_supported_ruby_versions.each do |v|
+          assert(
+            gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
+            "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}"
+          )
+        end
+        unsupported_versions.each do |v|
+          refute(
+            gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
+            "required_ruby_version='#{gemspec.required_ruby_version}' should not support ruby #{v}"
+          )
+        end
+      end
+
+      it "does not set metadata for msys2" do
+        assert_nil(gemspec.metadata["msys2_mingw_dependencies"])
       end
     end
-
-    it "does not set metadata for msys2" do
-      assert_nil(gemspec.metadata["msys2_mingw_dependencies"])
-    end
-  end if gemspec.platform.is_a?(Gem::Platform) && gemspec.platform.cpu
+  end
 end
