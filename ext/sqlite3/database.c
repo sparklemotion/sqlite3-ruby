@@ -59,8 +59,6 @@ static VALUE
 allocate(VALUE klass)
 {
     sqlite3RubyPtr ctx;
-    ctx->progress_handler = Qnil;
-
 
     return TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
 }
