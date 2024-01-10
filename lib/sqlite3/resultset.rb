@@ -9,51 +9,6 @@ module SQLite3
   class ResultSet
     include Enumerable
 
-    class ArrayWithTypesAndFields < Array # :nodoc:
-      attr_writer :types
-      attr_writer :fields
-
-      def types
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
-        EOWARN
-        @types
-      end
-
-      def fields
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
-        EOWARN
-        @fields
-      end
-    end
-
-    # The class of which we return an object in case we want a Hash as
-    # result.
-    class HashWithTypesAndFields < Hash # :nodoc:
-      attr_writer :types
-      attr_writer :fields
-
-      def types
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `#{self.class}#types` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `types` method on the SQLite3::ResultSet object that created this object.
-        EOWARN
-        @types
-      end
-
-      def fields
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `#{self.class}#fields` which is deprecated and will be removed in sqlite3 version 2.0.0. Please call the `columns` method on the SQLite3::ResultSet object that created this object.
-        EOWARN
-        @fields
-      end
-
-      def [] key
-        key = fields[key] if key.is_a? Numeric
-        super(key)
-      end
-    end
-
     # Create a new ResultSet attached to the given database, using the
     # given sql text.
     def initialize db, stmt
@@ -85,17 +40,7 @@ module SQLite3
     # For hashes, the column names are the keys of the hash, and the column
     # types are accessible via the +types+ property.
     def next
-      row = @stmt.step
-      return nil if @stmt.done?
-
-      # FIXME: the `fields` and `types` methods are deprecated on this
-      # object for version 2.0, so we can safely remove this branch
-      # as well.
-      row = ArrayWithTypesAndFields.new(row)
-
-      row.fields = @stmt.columns
-      row.types = @stmt.types
-      row
+      @stmt.step
     end
 
     # Required by the Enumerable mixin. Provides an internal iterator over the
@@ -141,14 +86,7 @@ module SQLite3
       row = @stmt.step
       return nil if @stmt.done?
 
-      # FIXME: this can be switched to a regular hash in 2.0
-      row = HashWithTypesAndFields[*@stmt.columns.zip(row).flatten]
-
-      # FIXME: these methods are deprecated for version 2.0, so we can remove
-      # this code in 2.0
-      row.fields = @stmt.columns
-      row.types = @stmt.types
-      row
+      Hash[*@stmt.columns.zip(row).flatten]
     end
   end
 

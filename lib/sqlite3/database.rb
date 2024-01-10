@@ -676,7 +676,7 @@ module SQLite3
     # but only retries up to the indicated number of +milliseconds+.
     # This is an alternative to #busy_timeout, which holds the GVL
     # while SQLite sleeps and retries.
-    def busy_handler_timeout=( milliseconds )
+    def busy_handler_timeout=(milliseconds)
       timeout_seconds = milliseconds.fdiv(1000)
 
       busy_handler do |count|

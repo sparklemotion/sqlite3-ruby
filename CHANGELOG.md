@@ -69,6 +69,22 @@ db.prepare("SELECT * FROM items") do |stmt|
 end
 ```
 
+- Removed `types` and `fields` readers on row objects.
+  Deprecated code looks like this:
+
+```ruby
+row = @db.execute("select * from foo")
+assert_equal ["blob"], row.first.types
+```
+
+  If you would like to access the "types" associated with a returned query,
+  use a prepared statement like this:
+
+```ruby
+@db.prepare("select * from foo") do |v|
+  assert_equal ["blob"], v.types
+end
+```
 
 ## 1.7.0 / 2023-12-27
 
