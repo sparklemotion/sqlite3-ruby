@@ -22,33 +22,26 @@ class IntegrationRactorTestCase < SQLite3::TestCase
   def test_ractor_share_database
     skip("Requires Ruby with Ractors") unless SQLite3.ractor_safe?
 
-    db_receiver = Ractor.new do
-      db = Ractor.receive
-      Ractor.yield db.object_id
-      begin
-        db.execute("create table test_table ( b integer primary key)")
-        raise "Should have raised an exception in db.execute()"
-      rescue => e
-        Ractor.yield e
+    db = SQLite3::Database.open(":memory:")
+
+    if RUBY_VERSION >= "3.3"
+      # after ruby/ruby@ce47ee00
+      ractor = Ractor.new do
+        Ractor.receive
       end
+
+      assert_raises(Ractor::Error) { ractor.send(db) }
+    else
+      # before ruby/ruby@ce47ee00 T_DATA objects could be copied
+      ractor = Ractor.new do
+        local_db = Ractor.receive
+        Ractor.yield local_db.object_id
+      end
+      ractor.send(db)
+      copy_id = ractor.take
+
+      assert_not_equal db.object_id, copy_id
     end
-    db_creator = Ractor.new(db_receiver) do |db_receiver|
-      db = SQLite3::Database.open(":memory:")
-      Ractor.yield db.object_id
-      db_receiver.send(db)
-      sleep 0.1
-      db.execute("create table test_table ( a integer primary key)")
-    end
-    first_oid = db_creator.take
-    second_oid = db_receiver.take
-    assert_not_equal first_oid, second_oid
-    ex = db_receiver.take
-    # For now, let's assert that you can't pass database connections around
-    # between different Ractors. Letting a live DB connection exist in two
-    # threads that are running concurrently might expose us to footguns and
-    # lead to data corruption, so we should avoid this possibility and wait
-    # until connections can be given away using `yield` or `send`.
-    assert_equal "prepare called on a closed database", ex.message
   end
 
   def test_ractor_stress
