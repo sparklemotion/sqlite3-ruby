@@ -224,7 +224,7 @@ module SQLite3
 
       prepare(sql) do |stmt|
         stmt.bind_params(bind_vars)
-        stmt = ResultSet.new self, stmt
+        stmt = build_result_set stmt
 
         if block
           stmt.each do |row|
@@ -744,6 +744,17 @@ module SQLite3
     # Translates a +row+ of data from the database with the given +types+
     def translate_from_db types, row
       @type_translator.call types, row
+    end
+
+    # Given a statement, return a result set.
+    # This is not intended for general consumption
+    # :nodoc:
+    def build_result_set stmt
+      if results_as_hash
+        HashResultSet.new(self, stmt)
+      else
+        ResultSet.new(self, stmt)
+      end
     end
 
     private

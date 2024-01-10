@@ -91,10 +91,6 @@ module SQLite3
     # For hashes, the column names are the keys of the hash, and the column
     # types are accessible via the +types+ property.
     def next
-      if @db.results_as_hash
-        return next_hash
-      end
-
       row = @stmt.step
       return nil if @stmt.done?
 
@@ -173,5 +169,9 @@ module SQLite3
       row.types = @stmt.types
       row
     end
+  end
+
+  class HashResultSet < ResultSet # :nodoc:
+    alias :next :next_hash
   end
 end

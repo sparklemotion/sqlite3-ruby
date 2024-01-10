@@ -79,12 +79,12 @@ module SQLite3
       reset! if active? || done?
 
       bind_params(*bind_vars) unless bind_vars.empty?
-      @results = ResultSet.new(@connection, self)
+      results = @connection.build_result_set self
 
       step if column_count == 0
 
-      yield @results if block_given?
-      @results
+      yield results if block_given?
+      results
     end
 
     # Execute the statement. If no block was given, this returns an array of
