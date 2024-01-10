@@ -2,7 +2,6 @@ require "sqlite3/constants"
 require "sqlite3/errors"
 require "sqlite3/pragmas"
 require "sqlite3/statement"
-require "sqlite3/translator"
 require "sqlite3/value"
 
 module SQLite3
@@ -82,7 +81,6 @@ module SQLite3
     # Other supported +options+:
     # - +:strict+: boolean (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
     # - +:results_as_hash+: boolean (default false), return rows as hashes instead of arrays
-    # - +:type_translation+: boolean (default false), enable type translation
     # - +:default_transaction_mode+: one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
     #
     def initialize file, options = {}, zvfs = nil
@@ -124,8 +122,6 @@ module SQLite3
       @collations = {}
       @functions = {}
       @results_as_hash = options[:results_as_hash]
-      @type_translation = options[:type_translation]
-      @type_translator = make_type_translator @type_translation
       @readonly = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
 
@@ -143,25 +139,6 @@ module SQLite3
     # Fetch the encoding set on this database
     def encoding
       @encoding ||= Encoding.find(execute("PRAGMA encoding").first.first)
-    end
-
-    def type_translation= value # :nodoc:
-      warn(<<~EOWARN) if $VERBOSE
-        #{caller(1..1).first} is calling `SQLite3::Database#type_translation=` which is deprecated and will be removed in version 2.0.0.
-      EOWARN
-      @type_translator = make_type_translator value
-      @type_translation = value
-    end
-    attr_reader :type_translation # :nodoc:
-
-    # Return the type translator employed by this database instance. Each
-    # database instance has its own type translator; this allows for different
-    # type handlers to be installed in each instance without affecting other
-    # instances. Furthermore, the translators are instantiated lazily, so that
-    # if a database does not use type translation, it will not be burdened by
-    # the overhead of a useless type translator. (See the Translator class.)
-    def translator
-      @translator ||= Translator.new
     end
 
     # Installs (or removes) a block that will be invoked for every access
@@ -741,11 +718,6 @@ module SQLite3
       end
     end
 
-    # Translates a +row+ of data from the database with the given +types+
-    def translate_from_db types, row
-      @type_translator.call types, row
-    end
-
     # Given a statement, return a result set.
     # This is not intended for general consumption
     # :nodoc:
@@ -754,22 +726,6 @@ module SQLite3
         HashResultSet.new(self, stmt)
       else
         ResultSet.new(self, stmt)
-      end
-    end
-
-    private
-
-    NULL_TRANSLATOR = lambda { |_, row| row }
-
-    def make_type_translator should_translate
-      if should_translate
-        lambda { |types, row|
-          types.zip(row).map do |type, value|
-            translator.translate(type, value)
-          end
-        }
-      else
-        NULL_TRANSLATOR
       end
     end
   end

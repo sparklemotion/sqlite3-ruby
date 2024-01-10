@@ -9,10 +9,6 @@ module SQLite3
   class ResultSet
     include Enumerable
 
-    class ArrayWithTypes < Array # :nodoc:
-      attr_accessor :types
-    end
-
     class ArrayWithTypesAndFields < Array # :nodoc:
       attr_writer :types
       attr_writer :fields
@@ -78,9 +74,7 @@ module SQLite3
     end
 
     # Obtain the next row from the cursor. If there are no more rows to be
-    # had, this will return +nil+. If type translation is active on the
-    # corresponding database, the values in the row will be translated
-    # according to their types.
+    # had, this will return +nil+.
     #
     # The returned value will be an array, unless Database#results_as_hash has
     # been set to +true+, in which case the returned value will be a hash.
@@ -94,19 +88,10 @@ module SQLite3
       row = @stmt.step
       return nil if @stmt.done?
 
-      row = @db.translate_from_db @stmt.types, row
-
-      row = if row.respond_to?(:fields)
-        # FIXME: this can only happen if the translator returns something
-        # that responds to `fields`.  Since we're removing the translator
-        # in 2.0, we can remove this branch in 2.0.
-        ArrayWithTypes.new(row)
-      else
-        # FIXME: the `fields` and `types` methods are deprecated on this
-        # object for version 2.0, so we can safely remove this branch
-        # as well.
-        ArrayWithTypesAndFields.new(row)
-      end
+      # FIXME: the `fields` and `types` methods are deprecated on this
+      # object for version 2.0, so we can safely remove this branch
+      # as well.
+      row = ArrayWithTypesAndFields.new(row)
 
       row.fields = @stmt.columns
       row.types = @stmt.types
@@ -156,10 +141,6 @@ module SQLite3
       row = @stmt.step
       return nil if @stmt.done?
 
-      # FIXME: type translation is deprecated, so this can be removed
-      # in 2.0
-      row = @db.translate_from_db @stmt.types, row
-
       # FIXME: this can be switched to a regular hash in 2.0
       row = HashWithTypesAndFields[*@stmt.columns.zip(row).flatten]
 
@@ -172,6 +153,6 @@ module SQLite3
   end
 
   class HashResultSet < ResultSet # :nodoc:
-    alias :next :next_hash
+    alias_method :next, :next_hash
   end
 end
