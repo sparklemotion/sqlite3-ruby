@@ -136,12 +136,10 @@ module SQLite3
       stmt = SQLite3::Statement.new(@db, "insert into foo(text) values (?)")
       stmt.bind_param(1, SQLite3::Blob.new("hello"))
       stmt.execute
-      row = @db.execute("select * from foo")
       stmt.close
-
-      assert_equal ["hello"], row.first
-      capture_io do # hush deprecation warning
-        assert_equal ["blob"], row.first.types
+      @db.prepare("select * from foo") do |v|
+        assert_equal ["hello"], v.first
+        assert_equal ["blob"], v.types
       end
     end
 

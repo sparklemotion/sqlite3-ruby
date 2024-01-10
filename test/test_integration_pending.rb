@@ -79,9 +79,9 @@ class IntegrationPendingTestCase < SQLite3::TestCase
     work = []
 
     Thread.new do
-      while true
+      loop do
         sleep 0.1
-        work << '.'
+        work << "."
       end
     end
     sleep 1
@@ -91,25 +91,23 @@ class IntegrationPendingTestCase < SQLite3::TestCase
     busy.lock
 
     t = Thread.new do
-      begin
-        db2 = SQLite3::Database.open( "test.db" )
-        db2.transaction( :exclusive ) do
-          busy.lock
-        end
-      ensure
-        db2.close if db2
+      db2 = SQLite3::Database.open("test.db")
+      db2.transaction(:exclusive) do
+        busy.lock
       end
+    ensure
+      db2&.close
     end
     sleep 1
 
-    assert_raises( SQLite3::BusyException ) do
-      work << '|'
+    work << "|"
+    assert_raises(SQLite3::BusyException) do
       @db.execute "insert into foo (b) values ( 'from 2' )"
     end
 
     busy.unlock
     t.join
 
-    assert work.size - work.find_index('|') > 3
+    assert_operator work.size - work.find_index("|"), :>, 3
   end
 end
