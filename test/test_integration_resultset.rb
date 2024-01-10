@@ -18,6 +18,10 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     @db.close
   end
 
+  def test_column_names_should_be_frozen
+    assert @stmt.columns.all?(&:frozen?)
+  end
+
   def test_reset_unused
     assert_nothing_raised { @result.reset }
     assert_empty @result.to_a

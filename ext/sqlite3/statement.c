@@ -375,8 +375,13 @@ column_name(VALUE self, VALUE index)
 
     name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
 
-    if (name) { return SQLITE3_UTF8_STR_NEW2(name); }
-    return Qnil;
+    VALUE ret = Qnil;
+
+    if (name) {
+        ret = SQLITE3_UTF8_STR_NEW2(name);
+        rb_obj_freeze(ret);
+    }
+    return ret;
 }
 
 /* call-seq: stmt.column_decltype(index)

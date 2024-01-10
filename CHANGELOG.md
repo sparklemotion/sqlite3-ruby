@@ -23,6 +23,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 ### Changed
 
 - Raise `StandardError` in a few places where `Exception` was previously raised.
+- `Database#columns` returns a list of frozen strings now
 
 
 ### Removed
