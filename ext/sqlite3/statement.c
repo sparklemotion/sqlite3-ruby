@@ -145,39 +145,40 @@ step(VALUE self)
         case SQLITE_ROW: {
             int i;
             for (i = 0; i < length; i++) {
+                VALUE val;
+
                 switch (sqlite3_column_type(stmt, i)) {
                     case SQLITE_INTEGER:
-                        rb_ary_push(list, LL2NUM(sqlite3_column_int64(stmt, i)));
+                        val = LL2NUM(sqlite3_column_int64(stmt, i));
                         break;
                     case SQLITE_FLOAT:
-                        rb_ary_push(list, rb_float_new(sqlite3_column_double(stmt, i)));
+                        val = rb_float_new(sqlite3_column_double(stmt, i));
                         break;
                     case SQLITE_TEXT: {
-                        VALUE str = rb_str_new(
+                        val = rb_utf8_str_new(
                                         (const char *)sqlite3_column_text(stmt, i),
                                         (long)sqlite3_column_bytes(stmt, i)
                                     );
-                        rb_enc_associate_index(str, rb_utf8_encindex());
                         if (internal_encoding) {
-                            str = rb_str_export_to_enc(str, internal_encoding);
+                            val = rb_str_export_to_enc(val, internal_encoding);
                         }
-                        rb_ary_push(list, str);
                     }
                     break;
                     case SQLITE_BLOB: {
-                        VALUE str = rb_str_new(
+                        val = rb_str_new(
                                         (const char *)sqlite3_column_blob(stmt, i),
                                         (long)sqlite3_column_bytes(stmt, i)
                                     );
-                        rb_ary_push(list, str);
                     }
                     break;
                     case SQLITE_NULL:
-                        rb_ary_push(list, Qnil);
+                        val = Qnil;
                         break;
                     default:
                         rb_raise(rb_eRuntimeError, "bad type");
                 }
+
+                rb_ary_store(list, (long)i, val);
             }
         }
         break;
