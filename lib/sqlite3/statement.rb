@@ -1,5 +1,4 @@
 require "sqlite3/errors"
-require "sqlite3/resultset"
 
 class String
   def to_blob
@@ -79,12 +78,11 @@ module SQLite3
       reset! if active? || done?
 
       bind_params(*bind_vars) unless bind_vars.empty?
-      results = @connection.build_result_set self
 
-      step if column_count == 0
+      self.next if column_count == 0
 
-      yield results if block_given?
-      results
+      yield self if block_given?
+      self
     end
 
     # Execute the statement. If no block was given, this returns an array of
@@ -120,12 +118,50 @@ module SQLite3
       @columns
     end
 
+    # Required by the Enumerable mixin. Provides an internal iterator over the
+    # rows of the result set.
     def each
-      loop do
-        val = step
-        break self if done?
+      while (val = self.next)
         yield val
       end
+    end
+
+    # Reset the cursor, so that a result set which has reached end-of-file
+    # can be rewound and reiterated.
+    def reset(*bind_params)
+      reset!
+      bind_params(*bind_params)
+    end
+
+    # Provides an internal iterator over the rows of the result set where
+    # each row is yielded as a hash.
+    def each_hash
+      while (node = next_hash)
+        yield node
+      end
+    end
+
+    # Provides an internal iterator over the rows of the result set where
+    # each row is yielded as an array.
+    def each_row
+      while (node = step)
+        yield node
+      end
+    end
+
+    # Obtain the next row from the cursor. If there are no more rows to be
+    # had, this will return +nil+.
+    #
+    # The returned value will be an array, unless Database#results_as_hash has
+    # been set to +true+, in which case the returned value will be a hash.
+    #
+    # For arrays, the column names are accessible via the +fields+ property,
+    # and the column types are accessible via the +types+ property.
+    #
+    # For hashes, the column names are the keys of the hash, and the column
+    # types are accessible via the +types+ property.
+    def next
+      step
     end
 
     # Return an array of the data types for each column in this statement. Note
@@ -145,6 +181,19 @@ module SQLite3
       end
     end
 
+    # Return the next row as a hash
+    def next_hash
+      row = step
+      return nil if done?
+
+      Hash[*columns.zip(row).flatten]
+    end
+
+    # Query whether the cursor has reached the end of the result set or not.
+    def eof?
+      done?
+    end
+
     private
 
     # A convenience method for obtaining the metadata about the query. Note
@@ -158,6 +207,10 @@ module SQLite3
         val = column_decltype(column)
         val&.downcase
       end
+    end
+
+    class ResultsAsHash < Statement # :nodoc:
+      alias_method :next, :next_hash
     end
   end
 end

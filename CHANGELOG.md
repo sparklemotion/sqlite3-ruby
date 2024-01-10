@@ -86,6 +86,10 @@ assert_equal ["blob"], row.first.types
 end
 ```
 
+- Remove `SQLite3::ResultSet`.  `SQLite3::Statement` should quack the same
+  as a `ResultSet` object, so this should be backwards compatible.  `is_a?`
+  checks will need to be updated, but the method names should be the same
+
 ## 1.7.0 / 2023-12-27
 
 ### Ruby

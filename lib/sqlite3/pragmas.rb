@@ -532,7 +532,7 @@ module SQLite3
         version_compare(SQLite3.libversion.to_s, "3.3.7") > 0
 
       result = [] unless block_given?
-      stmt.each do |row|
+      stmt.each_row do |row|
         new_row = columns.zip(row).to_h
 
         # FIXME: This should be removed but is required for older versions

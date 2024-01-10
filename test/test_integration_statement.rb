@@ -85,14 +85,6 @@ class IntegrationStatementTestCase < SQLite3::TestCase
     assert_equal 1, @db.execute("select * from all_types where d = ?", 68719476735).length
   end
 
-  def test_execute_no_bind_no_block
-    assert_instance_of SQLite3::ResultSet, @stmt.execute
-  end
-
-  def test_execute_with_bind_no_block
-    assert_instance_of SQLite3::ResultSet, @stmt.execute(1, 2)
-  end
-
   def test_execute_no_bind_with_block
     called = false
     @stmt.execute { |row| called = true }

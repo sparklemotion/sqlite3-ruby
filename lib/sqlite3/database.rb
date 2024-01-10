@@ -155,7 +155,12 @@ module SQLite3
     # The Statement can then be executed using Statement#execute.
     #
     def prepare sql
-      stmt = SQLite3::Statement.new(self, sql)
+      stmt = if results_as_hash
+        SQLite3::Statement::ResultsAsHash.new(self, sql)
+      else
+        SQLite3::Statement.new(self, sql)
+      end
+
       return stmt unless block_given?
 
       begin
@@ -201,7 +206,6 @@ module SQLite3
 
       prepare(sql) do |stmt|
         stmt.bind_params(bind_vars)
-        stmt = build_result_set stmt
 
         if block
           stmt.each do |row|
@@ -734,17 +738,6 @@ module SQLite3
       # available to aggregate functions.
       def []=(key, value)
         @context[key] = value
-      end
-    end
-
-    # Given a statement, return a result set.
-    # This is not intended for general consumption
-    # :nodoc:
-    def build_result_set stmt
-      if results_as_hash
-        HashResultSet.new(self, stmt)
-      else
-        ResultSet.new(self, stmt)
       end
     end
   end

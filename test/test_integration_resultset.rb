@@ -97,13 +97,15 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
 
   def test_next_results_as_hash
     @db.results_as_hash = true
-    @result = @stmt.execute
+    stmt = @db.prepare("select * from foo where a in ( ?, ? )")
+    @result = stmt.execute
     @result.reset(1)
     hash = @result.next
-    assert_equal({"a" => 1, "b" => "foo"},
-      hash)
+    assert_equal({"a" => 1, "b" => "foo"}, hash)
     assert_equal 1, hash[@result.columns[0]]
     assert_equal "foo", hash[@result.columns[1]]
+  ensure
+    stmt&.close
   end
 
   def test_each

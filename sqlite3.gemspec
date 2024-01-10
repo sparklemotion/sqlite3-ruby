@@ -66,7 +66,6 @@ Gem::Specification.new do |s|
     "lib/sqlite3/database.rb",
     "lib/sqlite3/errors.rb",
     "lib/sqlite3/pragmas.rb",
-    "lib/sqlite3/resultset.rb",
     "lib/sqlite3/statement.rb",
     "lib/sqlite3/value.rb",
     "lib/sqlite3/version.rb",
