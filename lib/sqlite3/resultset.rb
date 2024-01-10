@@ -70,7 +70,6 @@ module SQLite3
     def reset(*bind_params)
       @stmt.reset!
       @stmt.bind_params(*bind_params)
-      @eof = false
     end
 
     # Query whether the cursor has reached the end of the result set or not.
