@@ -28,6 +28,46 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 ### Removed
 
 - Remove `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
+- Remove `SQLite3::Translator` and all related type translation methods.
+  If you need to do type translation on values returned from the statement object,
+  please wrap it with a delegate object.  Here is an example of using a delegate
+  class to implement type translation:
+
+```ruby
+require "sqlite3"
+require "delegate"
+
+db = SQLite3::Database.new(":memory:")
+
+return_value = db.execute_batch2 <<-EOSQL
+        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, name string);
+        INSERT INTO items (name) VALUES ("foo");
+        INSERT INTO items (name) VALUES ("bar");
+EOSQL
+
+class MyTranslator < DelegateClass(SQLite3::Statement)
+  def step
+    row = super
+    return if done?
+
+    row.map.with_index do |item, i|
+      case types[i]
+      when "integer" # turn all integers to floats
+        item.to_f
+      when "string" # add "hello" to all strings
+        item + "hello"
+      end
+    end
+  end
+end
+
+db.prepare("SELECT * FROM items") do |stmt|
+  stmt = MyTranslator.new(stmt)
+  while row = stmt.step
+    p row
+  end
+end
+```
 
 
 ## 1.7.0 / 2023-12-27
