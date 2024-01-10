@@ -20,6 +20,11 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - Moved some C code into Ruby. [#451, #455] @tenderlove
 
 
+### Changed
+
+- Raise `StandardError` in a few places where `Exception` was previously raised.
+
+
 ### Removed
 
 - Remove `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones

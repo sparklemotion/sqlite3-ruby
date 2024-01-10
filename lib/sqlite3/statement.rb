@@ -1,9 +1,9 @@
-require 'sqlite3/errors'
-require 'sqlite3/resultset'
+require "sqlite3/errors"
+require "sqlite3/resultset"
 
 class String
   def to_blob
-    SQLite3::Blob.new( self )
+    SQLite3::Blob.new(self)
   end
 end
 
@@ -49,7 +49,7 @@ module SQLite3
     #
     # See also #execute, #bind_param, Statement#bind_param, and
     # Statement#bind_params.
-    def bind_params( *bind_vars )
+    def bind_params(*bind_vars)
       index = 1
       bind_vars.flatten.each do |var|
         if Hash === var
@@ -75,16 +75,16 @@ module SQLite3
     #   end
     #
     # See also #bind_params, #execute!.
-    def execute( *bind_vars )
+    def execute(*bind_vars)
       reset! if active? || done?
 
       bind_params(*bind_vars) unless bind_vars.empty?
-      @results = ResultSet.new(@connection, self)
+      results = @connection.build_result_set self
 
-      step if 0 == column_count
+      step if column_count == 0
 
-      yield @results if block_given?
-      @results
+      yield results if block_given?
+      results
     end
 
     # Execute the statement. If no block was given, this returns an array of
@@ -101,9 +101,9 @@ module SQLite3
     #   end
     #
     # See also #bind_params, #execute.
-    def execute!( *bind_vars, &block )
+    def execute!(*bind_vars, &block)
       execute(*bind_vars)
-      block_given? ? each(&block) : to_a
+      block ? each(&block) : to_a
     end
 
     # Returns true if the statement is currently active, meaning it has an
@@ -117,7 +117,7 @@ module SQLite3
     # a (potentially) expensive operation.
     def columns
       get_metadata unless @columns
-      return @columns
+      @columns
     end
 
     def each
@@ -146,6 +146,7 @@ module SQLite3
     end
 
     private
+
     # A convenience method for obtaining the metadata about the query. Note
     # that this will actually execute the SQL, which means it can be a
     # (potentially) expensive operation.
@@ -155,7 +156,7 @@ module SQLite3
       end
       @types = Array.new(column_count) do |column|
         val = column_decltype(column)
-        val.nil? ? nil : val.downcase
+        val&.downcase
       end
     end
   end

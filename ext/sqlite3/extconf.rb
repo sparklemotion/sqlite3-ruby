@@ -19,7 +19,7 @@ module Sqlite3
 
         configure_extension
 
-        create_makefile('sqlite3/sqlite3_native')
+        create_makefile("sqlite3/sqlite3_native")
       end
 
       def configure_cross_compiler
@@ -52,7 +52,7 @@ module Sqlite3
           recipe.configure_options += [
             "--enable-shared=no",
             "--enable-static=yes",
-            "--enable-fts5",
+            "--enable-fts5"
           ]
           ENV.to_h.tap do |env|
             user_cflags = with_config("sqlite-cflags")
@@ -60,11 +60,11 @@ module Sqlite3
               "-fPIC", # needed for linking the static library into a shared library
               "-O2", # see https://github.com/sparklemotion/sqlite3-ruby/issues/335 for some benchmarks
               "-fvisibility=hidden", # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
-              "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
+              "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1"
             ]
             env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
-            recipe.configure_options += env.select { |k,v| ENV_ALLOWLIST.include?(k) }
-                                           .map { |key, value| "#{key}=#{value.strip}" }
+            recipe.configure_options += env.select { |k, v| ENV_ALLOWLIST.include?(k) }
+              .map { |key, value| "#{key}=#{value.strip}" }
           end
 
           unless File.exist?(File.join(recipe.target, recipe.host, recipe.name, recipe.version))
@@ -110,26 +110,26 @@ module Sqlite3
         abort_could_not_find(libname) unless find_library(libname, "sqlite3_libversion_number", "sqlite3.h")
 
         # Functions defined in 1.9 but not 1.8
-        have_func('rb_proc_arity')
+        have_func("rb_proc_arity")
 
         # Functions defined in 2.1 but not 2.0
-        have_func('rb_integer_pack')
+        have_func("rb_integer_pack")
 
         # These functions may not be defined
-        have_func('sqlite3_initialize')
-        have_func('sqlite3_backup_init')
-        have_func('sqlite3_column_database_name')
-        have_func('sqlite3_enable_load_extension')
-        have_func('sqlite3_load_extension')
-        have_func('sqlite3_progress_handler')
+        have_func("sqlite3_initialize")
+        have_func("sqlite3_backup_init")
+        have_func("sqlite3_column_database_name")
+        have_func("sqlite3_enable_load_extension")
+        have_func("sqlite3_load_extension")
+        have_func("sqlite3_progress_handler")
 
-        unless have_func('sqlite3_open_v2') # https://www.sqlite.org/releaselog/3_5_0.html
+        unless have_func("sqlite3_open_v2") # https://www.sqlite.org/releaselog/3_5_0.html
           abort("\nPlease use a version of SQLite3 >= 3.5.0\n\n")
         end
 
-        have_func('sqlite3_prepare_v2')
-        have_type('sqlite3_int64', 'sqlite3.h')
-        have_type('sqlite3_uint64', 'sqlite3.h')
+        have_func("sqlite3_prepare_v2")
+        have_type("sqlite3_int64", "sqlite3.h")
+        have_type("sqlite3_uint64", "sqlite3.h")
       end
 
       def minimal_recipe

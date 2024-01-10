@@ -1,4 +1,5 @@
 require "rake/clean"
+require "rubocop/rake_task"
 
 module AstyleHelper
   class << self
@@ -41,7 +42,7 @@ module AstyleHelper
 
         # be quiet about files that haven't changed
         "--formatted",
-        "--verbose",
+        "--verbose"
       ]
     end
 
@@ -59,6 +60,11 @@ namespace "format" do
   end
 
   CLEAN.add(AstyleHelper.c_files.map { |f| "#{f}.orig" })
+
+  desc "Format Ruby code"
+  task "ruby" => "rubocop:autocorrect"
 end
 
-task "format" => ["format:c"]
+RuboCop::RakeTask.new
+
+task "format" => ["format:c", "format:ruby"]

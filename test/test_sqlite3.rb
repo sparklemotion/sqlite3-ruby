@@ -1,4 +1,4 @@
-require 'helper'
+require "helper"
 
 module SQLite3
   class TestSQLite3 < SQLite3::TestCase
@@ -12,9 +12,9 @@ module SQLite3
 
     def test_threadsafe?
       if SQLite3.threadsafe > 0
-        assert SQLite3.threadsafe?
+        assert_predicate SQLite3, :threadsafe?
       else
-        refute SQLite3.threadsafe?
+        refute_predicate SQLite3, :threadsafe?
       end
     end
 
