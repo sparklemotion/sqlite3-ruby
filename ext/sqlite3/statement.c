@@ -411,125 +411,129 @@ bind_parameter_count(VALUE self)
     return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
 }
 
-/* call-seq: stmt.fullscan_steps
- *
- * Return the number of times that SQLite has stepped forward in a table as part of a full table scan
- */
-static VALUE
-fullscan_steps(VALUE self)
-{
-    sqlite3StmtRubyPtr ctx;
-    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-    REQUIRE_OPEN_STMT(ctx);
-
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_FULLSCAN_STEP, 0));
-}
-
-/* call-seq: stmt.sorts
- *
- * Return the number of sort operations that have occurred
- */
-static VALUE
-sorts(VALUE self)
-{
-    sqlite3StmtRubyPtr ctx;
-    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-    REQUIRE_OPEN_STMT(ctx);
-
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_SORT, 0));
-}
-
-/* call-seq: stmt.autoindexes
- *
- * Return the number of rows inserted into transient indices that were created automatically in order to help joins run faster
- */
-static VALUE
-autoindexes(VALUE self)
-{
-    sqlite3StmtRubyPtr ctx;
-    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-    REQUIRE_OPEN_STMT(ctx);
-
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_AUTOINDEX, 0));
-}
-
-/* call-seq: stmt.vm_steps
- *
- * Return the number of virtual machine operations executed by the prepared statement
- */
-static VALUE
-vm_steps(VALUE self)
-{
-    sqlite3StmtRubyPtr ctx;
-    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-    REQUIRE_OPEN_STMT(ctx);
-
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_VM_STEP, 0));
-}
-
+enum stmt_stat_sym {
+    stmt_stat_sym_fullscan_steps,
+    stmt_stat_sym_sorts,
+    stmt_stat_sym_autoindexes,
+    stmt_stat_sym_vm_steps,
 #ifdef SQLITE_STMTSTATUS_REPREPARE
-/* call-seq: stmt.reprepares
- *
- * Return the number of times that the prepare statement has been automatically regenerated due to schema changes or changes to bound parameters that might affect the query plan.
- */
-static VALUE
-reprepares(VALUE self)
-{
-    sqlite3StmtRubyPtr ctx;
-    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-    REQUIRE_OPEN_STMT(ctx);
-
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_REPREPARE, 0));
-}
+    stmt_stat_sym_reprepares,
 #endif
-
 #ifdef SQLITE_STMTSTATUS_RUN
-/* call-seq: stmt.runs
- *
- * Return the number of times that the prepared statement has been run
- */
-static VALUE
-runs(VALUE self)
-{
-    sqlite3StmtRubyPtr ctx;
-    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-    REQUIRE_OPEN_STMT(ctx);
-
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_RUN, 0));
-}
+    stmt_stat_sym_runs,
 #endif
-
 #ifdef SQLITE_STMTSTATUS_FILTER_MISS
-/* call-seq: stmt.filter_misses
- *
- * Return the number of times that the Bloom filter returned a find, and thus the join step had to be processed as normal.
- */
-static VALUE
-filter_misses(VALUE self)
-{
-    sqlite3StmtRubyPtr ctx;
-    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
-    REQUIRE_OPEN_STMT(ctx);
-
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_FILTER_MISS, 0));
-}
+    stmt_stat_sym_filter_misses,
 #endif
-
 #ifdef SQLITE_STMTSTATUS_FILTER_HIT
-/* call-seq: stmt.filter_hits
+    stmt_stat_sym_filter_hits,
+#endif
+    stmt_stat_sym_last
+};
+
+static VALUE stmt_stat_symbols[stmt_stat_sym_last];
+
+static void
+setup_stmt_stat_symbols(void)
+{
+    if (stmt_stat_symbols[0] == 0) {
+#define S(s) stmt_stat_symbols[stmt_stat_sym_##s] = ID2SYM(rb_intern_const(#s))
+        S(fullscan_steps);
+        S(sorts);
+        S(autoindexes);
+        S(vm_steps);
+#ifdef SQLITE_STMTSTATUS_REPREPARE
+        S(reprepares);
+#endif
+#ifdef SQLITE_STMTSTATUS_RUN
+        S(runs);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_MISS
+        S(filter_misses);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_HIT
+        S(filter_hits);
+#endif
+#undef S
+    }
+}
+
+static size_t
+stmt_stat_internal(VALUE hash_or_sym, sqlite3_stmt *stmt)
+{
+    VALUE hash = Qnil, key = Qnil;
+
+    setup_stmt_stat_symbols();
+
+    if (RB_TYPE_P(hash_or_sym, T_HASH)) {
+        hash = hash_or_sym;
+    }
+    else if (SYMBOL_P(hash_or_sym)) {
+        key = hash_or_sym;
+    }
+    else {
+        rb_raise(rb_eTypeError, "non-hash or symbol argument");
+    }
+
+#define SET(name, stat_type) \
+    if (key == stmt_stat_symbols[stmt_stat_sym_##name]) \
+        return sqlite3_stmt_status(stmt, stat_type, 0); \
+    else if (hash != Qnil) \
+        rb_hash_aset(hash, stmt_stat_symbols[stmt_stat_sym_##name], SIZET2NUM(sqlite3_stmt_status(stmt, stat_type, 0)));
+
+    SET(fullscan_steps, SQLITE_STMTSTATUS_FULLSCAN_STEP);
+    SET(sorts, SQLITE_STMTSTATUS_SORT);
+    SET(autoindexes, SQLITE_STMTSTATUS_AUTOINDEX);
+    SET(vm_steps, SQLITE_STMTSTATUS_VM_STEP);
+#ifdef SQLITE_STMTSTATUS_REPREPARE
+    SET(reprepares, SQLITE_STMTSTATUS_REPREPARE);
+#endif
+#ifdef SQLITE_STMTSTATUS_RUN
+    SET(runs, SQLITE_STMTSTATUS_RUN);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_MISS
+    SET(filter_misses, SQLITE_STMTSTATUS_FILTER_MISS);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_HIT
+    SET(filter_hits, SQLITE_STMTSTATUS_FILTER_HIT);
+#endif
+#undef SET
+
+    if (!NIL_P(key)) { /* matched key should return above */
+        rb_raise(rb_eArgError, "unknown key: %"PRIsVALUE, rb_sym2str(key));
+    }
+
+    return 0;
+}
+
+/* call-seq: stmt.stmt_stat(hash_or_key)
  *
- * Return the number of times that a join step was bypassed because a Bloom filter returned not-found
+ * Returns a Hash containing information about the statement.
  */
 static VALUE
-filter_hits(VALUE self)
+stmt_stat(VALUE self, VALUE arg) // arg is (nil || hash || symbol)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
     REQUIRE_OPEN_STMT(ctx);
 
-    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_FILTER_HIT, 0));
+    if (NIL_P(arg)) {
+        arg = rb_hash_new();
+    }
+    else if (SYMBOL_P(arg)) {
+        size_t value = stmt_stat_internal(arg, ctx->st);
+        return SIZET2NUM(value);
+    }
+    else if (RB_TYPE_P(arg, T_HASH)) {
+        // ok
+    }
+    else {
+        rb_raise(rb_eTypeError, "non-hash or symbol given");
+    }
+
+    stmt_stat_internal(arg, ctx->st);
+    return arg;
 }
-#endif
 
 #ifdef SQLITE_STMTSTATUS_MEMUSED
 /* call-seq: stmt.memory_used
@@ -583,33 +587,10 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
     rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
     rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
-    rb_define_method(cSqlite3Statement, "fullscan_steps", fullscan_steps, 0);
-    rb_define_method(cSqlite3Statement, "sorts", sorts, 0);
-    rb_define_method(cSqlite3Statement, "autoindexes", autoindexes, 0);
-    rb_define_method(cSqlite3Statement, "vm_steps", vm_steps, 0);
-    rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
-
-#ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
-    rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
-#endif
-
-#ifdef SQLITE_STMTSTATUS_REPREPARE
-    rb_define_method(cSqlite3Statement, "reprepares", reprepares, 0);
-#endif
-
-#ifdef SQLITE_STMTSTATUS_RUN
-    rb_define_method(cSqlite3Statement, "runs", runs, 0);
-#endif
-
-#ifdef SQLITE_STMTSTATUS_FILTER_MISS
-    rb_define_method(cSqlite3Statement, "filter_misses", filter_misses, 0);
-#endif
-
-#ifdef SQLITE_STMTSTATUS_FILTER_HIT
-    rb_define_method(cSqlite3Statement, "filter_hits", filter_hits, 0);
-#endif
-
+    rb_define_method(cSqlite3Statement, "stmt_stat", stmt_stat, 1);
 #ifdef SQLITE_STMTSTATUS_MEMUSED
     rb_define_method(cSqlite3Statement, "memused", memused, 0);
 #endif
+
+    rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
 }
