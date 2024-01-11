@@ -17,8 +17,6 @@ database_mark(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
     rb_gc_mark(c->busy_handler);
-    rb_gc_mark(c->stmt_timeout);
-    rb_gc_mark(c->stmt_deadline);
 }
 
 static void
