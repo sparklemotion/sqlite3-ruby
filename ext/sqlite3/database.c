@@ -559,6 +559,38 @@ set_authorizer(VALUE self, VALUE authorizer)
     return self;
 }
 
+static int
+rb_sqlite3_default_busy_callback(void *context, int count)
+{
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+    int timeout = ctx->busy_timeout;
+    int delay;
+    static const uint8_t delays[] =
+      { 1, 2, 5, 10, 15, 20, 25, 25,  25,  50,  50, 100 };
+    static const uint8_t totals[] =
+      { 0, 1, 3,  8, 18, 33, 53, 78, 103, 128, 178, 228 };
+    static const int n_delay = 12;
+    int prior;
+
+    assert( count>=0 );
+    if( count < n_delay ){
+      delay = delays[count];
+      prior = totals[count];
+    }else{
+      delay = delays[n_delay-1];
+      prior = totals[n_delay-1] + delay*(count-(n_delay-1));
+    }
+    if( prior + delay > timeout ){
+      delay = timeout - prior;
+      if( delay<=0 ) return 0;
+    }
+
+    // Release GVL during sleep
+    rb_thread_call_without_gvl(sqlite3_sleep, delay * 1000, 0);
+
+    return 1;
+}
+
 /* call-seq: db.busy_timeout = ms
  *
  * Indicates that if a request for a resource terminates because that
@@ -570,13 +602,21 @@ set_authorizer(VALUE self, VALUE authorizer)
  * See also the mutually exclusive #busy_handler.
  */
 static VALUE
-set_busy_timeout(VALUE self, VALUE timeout)
+set_busy_timeout(VALUE self, VALUE ms)
 {
     sqlite3RubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
+    int status;
 
-    CHECK(ctx->db, sqlite3_busy_timeout(ctx->db, (int)NUM2INT(timeout)));
+    if( ms>0 ){
+      ctx->busy_timeout = NUM2INT(ms);
+      status = sqlite3_busy_handler(ctx->db, rb_sqlite3_default_busy_callback, (void*)ctx);
+    }else{
+      status = sqlite3_busy_handler(ctx->db, 0, 0);
+    }
+
+    CHECK(ctx->db, status);
 
     return self;
 }
