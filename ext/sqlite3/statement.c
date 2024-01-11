@@ -506,33 +506,40 @@ stmt_stat_internal(VALUE hash_or_sym, sqlite3_stmt *stmt)
     return 0;
 }
 
+/* call-seq: stmt.stats_as_hash(hash)
+ *
+ * Returns a Hash containing information about the statement.
+ */
+static VALUE
+stats_as_hash(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
+    VALUE arg = rb_hash_new();
+
+    stmt_stat_internal(arg, ctx->st);
+    return arg;
+}
+
 /* call-seq: stmt.stmt_stat(hash_or_key)
  *
  * Returns a Hash containing information about the statement.
  */
 static VALUE
-stmt_stat(VALUE self, VALUE arg) // arg is (nil || hash || symbol)
+stat_for(VALUE self, VALUE key)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
     REQUIRE_OPEN_STMT(ctx);
 
-    if (NIL_P(arg)) {
-        arg = rb_hash_new();
-    }
-    else if (SYMBOL_P(arg)) {
-        size_t value = stmt_stat_internal(arg, ctx->st);
+    if (SYMBOL_P(key)) {
+        size_t value = stmt_stat_internal(key, ctx->st);
         return SIZET2NUM(value);
     }
-    else if (RB_TYPE_P(arg, T_HASH)) {
-        // ok
-    }
     else {
-        rb_raise(rb_eTypeError, "non-hash or symbol given");
+        rb_raise(rb_eTypeError, "non-symbol given");
     }
-
-    stmt_stat_internal(arg, ctx->st);
-    return arg;
 }
 
 #ifdef SQLITE_STMTSTATUS_MEMUSED
@@ -587,10 +594,11 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
     rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
     rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
-    rb_define_method(cSqlite3Statement, "stmt_stat", stmt_stat, 1);
 #ifdef SQLITE_STMTSTATUS_MEMUSED
     rb_define_method(cSqlite3Statement, "memused", memused, 0);
 #endif
 
     rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
+    rb_define_private_method(cSqlite3Statement, "stats_as_hash", stats_as_hash, 0);
+    rb_define_private_method(cSqlite3Statement, "stat_for", stat_for, 1);
 }

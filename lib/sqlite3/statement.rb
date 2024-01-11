@@ -164,8 +164,12 @@ module SQLite3
     # a find, and thus the join step had to be processed as normal
     #   - +filter_hits+: the number of times that a join step was bypassed
     # because a Bloom filter returned not-found
-    def stat hash_or_key = nil
-      stmt_stat hash_or_key
+    def stat key = nil
+      if key
+        stat_for(key)
+      else
+        stats_as_hash
+      end
     end
 
     private
