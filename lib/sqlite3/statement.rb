@@ -26,7 +26,7 @@ module SQLite3
     # statement (i.e., separated by semicolons), then the #remainder property
     # will be set to the trailing text.
     def initialize(db, sql)
-      raise ArgumentError, "pepare called on a closed database" if db.closed?
+      raise ArgumentError, "prepare called on a closed database" if db.closed?
 
       sql = sql.encode(Encoding::UTF_8) if sql && sql.encoding != Encoding::UTF_8
 

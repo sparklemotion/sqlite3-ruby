@@ -156,9 +156,9 @@ step(VALUE self)
                         break;
                     case SQLITE_TEXT: {
                         val = rb_utf8_str_new(
-                                        (const char *)sqlite3_column_text(stmt, i),
-                                        (long)sqlite3_column_bytes(stmt, i)
-                                    );
+                                  (const char *)sqlite3_column_text(stmt, i),
+                                  (long)sqlite3_column_bytes(stmt, i)
+                              );
                         if (internal_encoding) {
                             val = rb_str_export_to_enc(val, internal_encoding);
                         }
@@ -166,9 +166,9 @@ step(VALUE self)
                     break;
                     case SQLITE_BLOB: {
                         val = rb_str_new(
-                                        (const char *)sqlite3_column_blob(stmt, i),
-                                        (long)sqlite3_column_bytes(stmt, i)
-                                    );
+                                  (const char *)sqlite3_column_blob(stmt, i),
+                                  (long)sqlite3_column_bytes(stmt, i)
+                              );
                     }
                     break;
                     case SQLITE_NULL:
