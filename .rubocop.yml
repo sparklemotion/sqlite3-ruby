@@ -1,0 +1,88 @@
+# from https://evilmartians.com/chronicles/rubocoping-with-legacy-bring-your-ruby-code-up-to-standard
+require:
+  - standard
+  - standard-custom
+  - standard-performance
+  - rubocop-performance
+  - rubocop-minitest
+
+inherit_gem:
+  standard: config/base.yml
+  standard-custom: config/base.yml
+  standard-performance: config/base.yml
+
+AllCops:
+  SuggestExtensions: false
+  TargetRubyVersion: 3.0
+
+Naming/InclusiveLanguage:
+  Enabled: true
+
+Minitest/AssertInDelta: # new in 0.10
+  Enabled: true
+Minitest/AssertKindOf: # new in 0.10
+  Enabled: true
+Minitest/AssertOperator: # new in 0.32
+  Enabled: true
+Minitest/AssertOutput: # new in 0.10
+  Enabled: true
+Minitest/AssertPathExists: # new in 0.10
+  Enabled: true
+Minitest/AssertPredicate: # new in 0.18
+  Enabled: true
+Minitest/AssertRaisesCompoundBody: # new in 0.21
+  Enabled: true
+Minitest/AssertRaisesWithRegexpArgument: # new in 0.22
+  Enabled: true
+Minitest/AssertSame: # new in 0.26
+  Enabled: true
+Minitest/AssertSilent: # new in 0.10
+  Enabled: true
+Minitest/AssertWithExpectedArgument: # new in 0.11
+  Enabled: true
+Minitest/AssertionInLifecycleHook: # new in 0.10
+  Enabled: true
+Minitest/DuplicateTestRun: # new in 0.19
+  Enabled: true
+Minitest/EmptyLineBeforeAssertionMethods: # new in 0.23
+  Enabled: false
+Minitest/LifecycleHooksOrder: # new in 0.28
+  Enabled: true
+Minitest/LiteralAsActualArgument: # new in 0.10
+  Enabled: true
+Minitest/MultipleAssertions: # new in 0.10
+  Enabled: true
+Minitest/NonExecutableTestMethod: # new in 0.34
+  Enabled: true
+Minitest/NonPublicTestMethod: # new in 0.27
+  Enabled: true
+Minitest/RedundantMessageArgument: # new in 0.34
+  Enabled: true
+Minitest/RefuteInDelta: # new in 0.10
+  Enabled: true
+Minitest/RefuteKindOf: # new in 0.10
+  Enabled: true
+Minitest/RefuteOperator: # new in 0.32
+  Enabled: true
+Minitest/RefutePathExists: # new in 0.10
+  Enabled: true
+Minitest/RefutePredicate: # new in 0.18
+  Enabled: true
+Minitest/RefuteSame: # new in 0.26
+  Enabled: true
+Minitest/ReturnInTestMethod: # new in 0.31
+  Enabled: true
+Minitest/SkipEnsure: # new in 0.20
+  Enabled: true
+Minitest/SkipWithoutReason: # new in 0.24
+  Enabled: true
+Minitest/TestFileName: # new in 0.26
+  Enabled: true
+Minitest/TestMethodName: # new in 0.10
+  Enabled: true
+Minitest/UnreachableAssertion: # new in 0.14
+  Enabled: true
+Minitest/UnspecifiedException: # new in 0.10
+  Enabled: true
+Minitest/UselessAssertion: # new in 0.26
+  Enabled: true

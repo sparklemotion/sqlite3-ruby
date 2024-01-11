@@ -13,6 +13,13 @@
 VALUE cSqlite3Database;
 
 static void
+database_mark(void *ctx)
+{
+    sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
+    rb_gc_mark(c->busy_handler);
+}
+
+static void
 deallocate(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
@@ -31,15 +38,13 @@ database_memsize(const void *ctx)
 }
 
 static const rb_data_type_t database_type = {
-    "SQLite3::Backup",
-    {
-        NULL,
-        deallocate,
-        database_memsize,
+    .wrap_struct_name = "SQLite3::Backup",
+    .function = {
+        .dmark = database_mark,
+        .dfree = deallocate,
+        .dsize = database_memsize,
     },
-    0,
-    0,
-    RUBY_TYPED_WB_PROTECTED, // Not freed immediately because the dfree function do IOs.
+    .flags = RUBY_TYPED_WB_PROTECTED, // Not freed immediately because the dfree function do IOs.
 };
 
 static VALUE
@@ -202,10 +207,11 @@ trace(int argc, VALUE *argv, VALUE self)
 }
 
 static int
-rb_sqlite3_busy_handler(void *ctx, int count)
+rb_sqlite3_busy_handler(void *context, int count)
 {
-    VALUE self = (VALUE)(ctx);
-    VALUE handle = rb_iv_get(self, "@busy_handler");
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+
+    VALUE handle = ctx->busy_handler;
     VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM(count));
 
     if (Qfalse == result) { return 0; }
@@ -240,11 +246,13 @@ busy_handler(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "01", &block);
 
     if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
-
-    rb_iv_set(self, "@busy_handler", block);
+    ctx->busy_handler = block;
 
     status = sqlite3_busy_handler(
-                 ctx->db, NIL_P(block) ? NULL : rb_sqlite3_busy_handler, (void *)self);
+                 ctx->db,
+                 NIL_P(block) ? NULL : rb_sqlite3_busy_handler,
+                 (void *)ctx
+             );
 
     CHECK(ctx->db, status);
 
