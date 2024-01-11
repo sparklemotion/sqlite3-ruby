@@ -200,11 +200,11 @@ class IntegrationStatementTestCase < SQLite3::TestCase
           VALUES(0)
           UNION ALL
           SELECT i FROM r
-          LIMIT 10000000
+          LIMIT 1000000
         )
         SELECT i FROM r ORDER BY i LIMIT 1;
       SQL
     end
-    @db.statement_timeout = nil
+    @db.statement_timeout = 0
   end
 end

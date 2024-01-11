@@ -692,23 +692,6 @@ module SQLite3
       end
     end
 
-    def statement_timeout=( milliseconds )
-      progress_handler(nil) and return if milliseconds.nil?
-
-      timeout_seconds = milliseconds.fdiv(1000)
-
-      progress_handler do
-        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        if @statement_timeout_deadline.nil?
-          @statement_timeout_deadline = now + timeout_seconds
-        elsif now > @statement_timeout_deadline
-          next false
-        else
-          true
-        end
-      end
-    end
-
     # A helper class for dealing with custom functions (see #create_function,
     # #create_aggregate, and #create_aggregate_handler). It encapsulates the
     # opaque function object that represents the current invocation. It also

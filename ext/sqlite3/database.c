@@ -17,6 +17,8 @@ database_mark(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
     rb_gc_mark(c->busy_handler);
+    rb_gc_mark(c->stmt_timeout);
+    rb_gc_mark(c->stmt_deadline);
 }
 
 static void
@@ -260,49 +262,43 @@ busy_handler(int argc, VALUE *argv, VALUE self)
 }
 
 static int
-rb_sqlite3_progress_handler(void *ctx)
+rb_sqlite3_statement_timeout(void *context)
 {
-  VALUE self = (VALUE)(ctx);
-  VALUE handle = rb_iv_get(self, "@progress_handler");
-  VALUE result = rb_funcall(handle, rb_intern("call"), 0);
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+    struct timespec currentTime;
+    clock_gettime(CLOCK_MONOTONIC, &currentTime);
 
-  if (Qfalse == result) return 1;
+    if (ctx->stmt_deadline == 0) {
+        ctx->stmt_deadline = currentTime.tv_sec * 1e9 + currentTime.tv_nsec + (long long)ctx->stmt_timeout * 1e6;
+    } else {
+        long long timeDiff = ctx->stmt_deadline - (currentTime.tv_sec * 1e9 + currentTime.tv_nsec);
 
-  return 0;
+        if (timeDiff < 0) { return 1; }
+    }
+
+    return 0;
 }
 
-/* call-seq:
- *    progress_handler([n]) { ... }
- *    progress_handler([n,] Class.new { def call; end }.new)
+/* call-seq: db.statement_timeout = ms
  *
- * Register a progress handler with this database instance.
- * This handler will be invoked periodically during a long-running query or operation.
- * If the handler returns +false+, the operation will be interrupted; otherwise, it continues.
- * The parameter 'n' specifies the number of SQLite virtual machine instructions between invocations.
- * If 'n' is not provided, the default value is 1.
+ * Indicates that if a query lasts longer than the indicated number of
+ * milliseconds, SQLite should interrupt that query and return an error.
+ * By default, SQLite does not interrupt queries. To restore the default
+ * behavior, send 0 as the +ms+ parameter.
  */
 static VALUE
-progress_handler(int argc, VALUE *argv, VALUE self)
+set_statement_timeout(VALUE self, VALUE milliseconds)
 {
-  sqlite3RubyPtr ctx;
-  VALUE block, n_value;
+    sqlite3RubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
-  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
-  REQUIRE_OPEN_DB(ctx);
+    ctx->stmt_timeout = NUM2INT(milliseconds);
+    int n = NUM2INT(milliseconds) == 0 ? -1 : 1000;
 
-  rb_scan_args(argc, argv, "02", &n_value, &block);
+    sqlite3_progress_handler(ctx->db, n, rb_sqlite3_statement_timeout, (void *)ctx);
 
-  int n = NIL_P(n_value) ? 1 : NUM2INT(n_value);
-  if(NIL_P(block) && rb_block_given_p()) block = rb_block_proc();
-
-  rb_iv_set(self, "@progress_handler", block);
-
-  sqlite3_progress_handler(
-      ctx->db, n, NIL_P(block) ? NULL : rb_sqlite3_progress_handler, (void *)self);
-
-  return self;
+    return self;
 }
-
 
 /* call-seq: last_insert_row_id
  *
@@ -919,10 +915,10 @@ init_sqlite3_database(void)
     rb_define_method(cSqlite3Database, "changes", changes, 0);
     rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
     rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
-#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
-    rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
-#endif
     rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
+    rb_define_method(cSqlite3Database, "statement_timeout=", set_statement_timeout, 1);
+#endif
     rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
     rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
     rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 2);
