@@ -594,6 +594,9 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
     rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
     rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+#ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
+    rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
+#endif
 #ifdef SQLITE_STMTSTATUS_MEMUSED
     rb_define_method(cSqlite3Statement, "memused", memused, 0);
 #endif
