@@ -111,7 +111,9 @@ init_sqlite3_constants(void)
     rb_define_const(mSqlite3Open, "MAIN_JOURNAL",   INT2FIX(SQLITE_OPEN_MAIN_JOURNAL));
     rb_define_const(mSqlite3Open, "TEMP_JOURNAL",   INT2FIX(SQLITE_OPEN_TEMP_JOURNAL));
     rb_define_const(mSqlite3Open, "SUBJOURNAL",     INT2FIX(SQLITE_OPEN_SUBJOURNAL));
-    rb_define_const(mSqlite3Open, "MASTER_JOURNAL", INT2FIX(SQLITE_OPEN_MASTER_JOURNAL));
+    rb_define_const(mSqlite3Open, "MASTER_JOURNAL",
+                    INT2FIX(SQLITE_OPEN_MASTER_JOURNAL)); /* pre-3.33.0 */
+    rb_define_const(mSqlite3Open, "SUPER_JOURNAL",  INT2FIX(SQLITE_OPEN_MASTER_JOURNAL));
     rb_define_const(mSqlite3Open, "NOMUTEX",        INT2FIX(SQLITE_OPEN_NOMUTEX));
     rb_define_const(mSqlite3Open, "FULLMUTEX",      INT2FIX(SQLITE_OPEN_FULLMUTEX));
 #ifdef SQLITE_OPEN_AUTOPROXY

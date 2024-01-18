@@ -1,12 +1,10 @@
-require 'sqlite3/constants'
-require 'sqlite3/errors'
-require 'sqlite3/pragmas'
-require 'sqlite3/statement'
-require 'sqlite3/translator'
-require 'sqlite3/value'
+require "sqlite3/constants"
+require "sqlite3/errors"
+require "sqlite3/pragmas"
+require "sqlite3/statement"
+require "sqlite3/value"
 
 module SQLite3
-
   # The Database class encapsulates a single connection to a SQLite3 database.
   # Its usage is very straightforward:
   #
@@ -38,11 +36,10 @@ module SQLite3
     include Pragmas
 
     class << self
-
       # Without block works exactly as new.
       # With block, like new closes the database at the end, but unlike new
       # returns the result of the block instead of the database instance.
-      def open( *args )
+      def open(*args)
         database = new(*args)
 
         if block_given?
@@ -59,10 +56,9 @@ module SQLite3
       # Quotes the given string, making it safe to use in an SQL statement.
       # It replaces all instances of the single-quote character with two
       # single-quote characters. The modified string is returned.
-      def quote( string )
-        string.gsub( /'/, "''" )
+      def quote(string)
+        string.gsub("'", "''")
       end
-
     end
 
     # A boolean that indicates whether rows in result sets should be returned
@@ -85,7 +81,6 @@ module SQLite3
     # Other supported +options+:
     # - +:strict+: boolean (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
     # - +:results_as_hash+: boolean (default false), return rows as hashes instead of arrays
-    # - +:type_translation+: boolean (default false), enable type translation
     # - +:default_transaction_mode+: one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
     #
     def initialize file, options = {}, zvfs = nil
@@ -120,16 +115,14 @@ module SQLite3
         end
       end
 
-      @tracefunc        = nil
-      @authorizer       = nil
-      @encoding         = nil
-      @busy_handler     = nil
-      @collations       = {}
-      @functions        = {}
-      @results_as_hash  = options[:results_as_hash]
-      @type_translation = options[:type_translation]
-      @type_translator  = make_type_translator @type_translation
-      @readonly         = mode & Constants::Open::READONLY != 0
+      @tracefunc = nil
+      @authorizer = nil
+      @encoding = nil
+      @busy_handler = nil
+      @collations = {}
+      @functions = {}
+      @results_as_hash = options[:results_as_hash]
+      @readonly = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
 
       if block_given?
@@ -148,30 +141,11 @@ module SQLite3
       @encoding ||= Encoding.find(execute("PRAGMA encoding").first.first)
     end
 
-    def type_translation= value # :nodoc:
-      warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `SQLite3::Database#type_translation=` which is deprecated and will be removed in version 2.0.0.
-      eowarn
-      @type_translator  = make_type_translator value
-      @type_translation = value
-    end
-    attr_reader :type_translation # :nodoc:
-
-    # Return the type translator employed by this database instance. Each
-    # database instance has its own type translator; this allows for different
-    # type handlers to be installed in each instance without affecting other
-    # instances. Furthermore, the translators are instantiated lazily, so that
-    # if a database does not use type translation, it will not be burdened by
-    # the overhead of a useless type translator. (See the Translator class.)
-    def translator
-      @translator ||= Translator.new
-    end
-
     # Installs (or removes) a block that will be invoked for every access
     # to the database. If the block returns 0 (or +nil+), the statement
     # is allowed to proceed. Returning 1 causes an authorization error to
     # occur, and returning 2 causes the access to be silently denied.
-    def authorizer( &block )
+    def authorizer(&block)
       self.authorizer = block
     end
 
@@ -181,7 +155,7 @@ module SQLite3
     # The Statement can then be executed using Statement#execute.
     #
     def prepare sql
-      stmt = SQLite3::Statement.new( self, sql )
+      stmt = SQLite3::Statement.new(self, sql)
       return stmt unless block_given?
 
       begin
@@ -194,7 +168,7 @@ module SQLite3
     # Returns the filename for the database named +db_name+.  +db_name+ defaults
     # to "main".  Main return `nil` or an empty string if the database is
     # temporary or in-memory.
-    def filename db_name = 'main'
+    def filename db_name = "main"
       db_filename db_name
     end
 
@@ -214,22 +188,22 @@ module SQLite3
     # executing statements.
     def execute sql, bind_vars = [], *args, &block
       if bind_vars.nil? || !args.empty?
-        if args.empty?
-          bind_vars = []
+        bind_vars = if args.empty?
+          []
         else
-          bind_vars = [bind_vars] + args
+          [bind_vars] + args
         end
 
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `SQLite3::Database#execute` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for bind parameters as *args will be removed in 2.0.0.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `SQLite3::Database#execute` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for bind parameters as *args will be removed in 2.0.0.
+        EOWARN
       end
 
-      prepare( sql ) do |stmt|
+      prepare(sql) do |stmt|
         stmt.bind_params(bind_vars)
-        stmt    = ResultSet.new self, stmt
+        stmt = build_result_set stmt
 
-        if block_given?
+        if block
           stmt.each do |row|
             yield row
           end
@@ -249,15 +223,16 @@ module SQLite3
     #
     # See also #execute, #query, and #execute_batch for additional ways of
     # executing statements.
-    def execute2( sql, *bind_vars )
-      prepare( sql ) do |stmt|
-        result = stmt.execute( *bind_vars )
+    def execute2(sql, *bind_vars)
+      prepare(sql) do |stmt|
+        result = stmt.execute(*bind_vars)
         if block_given?
           yield stmt.columns
           result.each { |row| yield row }
         else
-          return result.inject( [ stmt.columns ] ) { |arr,row|
-            arr << row; arr }
+          return result.each_with_object([stmt.columns]) { |row, arr|
+                   arr << row
+                 }
         end
       end
     end
@@ -273,31 +248,31 @@ module SQLite3
     #
     # See also #execute_batch2 for additional ways of
     # executing statements.
-    def execute_batch( sql, bind_vars = [], *args )
+    def execute_batch(sql, bind_vars = [], *args)
       # FIXME: remove this stuff later
       unless [Array, Hash].include?(bind_vars.class)
         bind_vars = [bind_vars]
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `SQLite3::Database#execute_batch` with bind parameters that are not a list of a hash.  Please switch to passing bind parameters as an array or hash. Support for this behavior will be removed in version 2.0.0.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `SQLite3::Database#execute_batch` with bind parameters that are not a list of a hash.  Please switch to passing bind parameters as an array or hash. Support for this behavior will be removed in version 2.0.0.
+        EOWARN
       end
 
       # FIXME: remove this stuff later
       if bind_vars.nil? || !args.empty?
-        if args.empty?
-          bind_vars = []
+        bind_vars = if args.empty?
+          []
         else
-          bind_vars = [nil] + args
+          [nil] + args
         end
 
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `SQLite3::Database#execute_batch` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this behavior will be removed in version 2.0.0.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `SQLite3::Database#execute_batch` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this behavior will be removed in version 2.0.0.
+        EOWARN
       end
 
       sql = sql.strip
-      until sql.empty? do
-        prepare( sql ) do |stmt|
+      until sql.empty?
+        prepare(sql) do |stmt|
           unless stmt.closed?
             # FIXME: this should probably use sqlite3's api for batch execution
             # This implementation requires stepping over the results.
@@ -327,7 +302,7 @@ module SQLite3
     # See also #execute_batch for additional ways of
     # executing statements.
     def execute_batch2(sql, &block)
-      if block_given?
+      if block
         result = exec_batch(sql, @results_as_hash)
         result.map do |val|
           yield val
@@ -348,21 +323,20 @@ module SQLite3
     # returned, or you could have problems with locks on the table. If called
     # with a block, +close+ will be invoked implicitly when the block
     # terminates.
-    def query( sql, bind_vars = [], *args )
-
+    def query(sql, bind_vars = [], *args)
       if bind_vars.nil? || !args.empty?
-        if args.empty?
-          bind_vars = []
+        bind_vars = if args.empty?
+          []
         else
-          bind_vars = [bind_vars] + args
+          [bind_vars] + args
         end
 
-        warn(<<-eowarn) if $VERBOSE
-#{caller[0]} is calling `SQLite3::Database#query` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this will be removed in version 2.0.0.
-        eowarn
+        warn(<<~EOWARN) if $VERBOSE
+          #{caller(1..1).first} is calling `SQLite3::Database#query` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this will be removed in version 2.0.0.
+        EOWARN
       end
 
-      result = prepare( sql ).execute( bind_vars )
+      result = prepare(sql).execute(bind_vars)
       if block_given?
         begin
           yield result
@@ -370,7 +344,7 @@ module SQLite3
           result.close
         end
       else
-        return result
+        result
       end
     end
 
@@ -378,8 +352,8 @@ module SQLite3
     # discarding all others. It is otherwise identical to #execute.
     #
     # See also #get_first_value.
-    def get_first_row( sql, *bind_vars )
-      execute( sql, *bind_vars ).first
+    def get_first_row(sql, *bind_vars)
+      execute(sql, *bind_vars).first
     end
 
     # A convenience method for obtaining the first value of the first row of a
@@ -387,8 +361,8 @@ module SQLite3
     # identical to #execute.
     #
     # See also #get_first_row.
-    def get_first_value( sql, *bind_vars )
-      query( sql, bind_vars ) do |rs|
+    def get_first_value(sql, *bind_vars)
+      query(sql, bind_vars) do |rs|
         if (row = rs.next)
           return @results_as_hash ? row[rs.columns[0]] : row[0]
         end
@@ -396,7 +370,7 @@ module SQLite3
       nil
     end
 
-    alias :busy_timeout :busy_timeout=
+    alias_method :busy_timeout, :busy_timeout=
 
     # Creates a new function for use in SQL statements. It will be added as
     # +name+, with the given +arity+. (For variable arity functions, use
@@ -421,7 +395,7 @@ module SQLite3
     #   end
     #
     #   puts db.get_first_value( "select maim(name) from table" )
-    def create_function name, arity, text_rep=Constants::TextRep::UTF8, &block
+    def create_function name, arity, text_rep = Constants::TextRep::UTF8, &block
       define_function_with_flags(name, text_rep) do |*args|
         fp = FunctionProxy.new
         block.call(fp, *args)
@@ -466,20 +440,20 @@ module SQLite3
     #
     # See also #create_aggregate_handler for a more object-oriented approach to
     # aggregate functions.
-    def create_aggregate( name, arity, step=nil, finalize=nil,
-      text_rep=Constants::TextRep::ANY, &block )
+    def create_aggregate(name, arity, step = nil, finalize = nil,
+      text_rep = Constants::TextRep::ANY, &block)
 
       proxy = Class.new do
-        def self.step( &block )
+        def self.step(&block)
           define_method(:step_with_ctx, &block)
         end
 
-        def self.finalize( &block )
+        def self.finalize(&block)
           define_method(:finalize_with_ctx, &block)
         end
       end
 
-      if block_given?
+      if block
         proxy.instance_eval(&block)
       else
         proxy.class_eval do
@@ -505,7 +479,7 @@ module SQLite3
           @ctx = FunctionProxy.new
         end
 
-        def step( *args )
+        def step(*args)
           step_with_ctx(@ctx, *args)
         end
 
@@ -564,7 +538,7 @@ module SQLite3
     #
     #   db.create_aggregate_handler( LengthsAggregateHandler )
     #   puts db.get_first_value( "select lengths(name) from A" )
-    def create_aggregate_handler( handler )
+    def create_aggregate_handler(handler)
       # This is a compatibility shim so the (basically pointless) FunctionProxy
       # "ctx" object is passed as first argument to both step() and finalize().
       # Now its up to the library user whether he prefers to store his
@@ -578,7 +552,7 @@ module SQLite3
           @fp = FunctionProxy.new
         end
 
-        def step( *args )
+        def step(*args)
           super(@fp, *args)
         end
 
@@ -601,7 +575,7 @@ module SQLite3
     # individual instances of the aggregate function. Regular ruby objects
     # already provide a suitable +clone+.
     # The functions arity is the arity of the +step+ method.
-    def define_aggregator( name, aggregator )
+    def define_aggregator(name, aggregator)
       # Previously, this has been implemented in C. Now this is just yet
       # another compatibility shim
       proxy = Class.new do
@@ -655,9 +629,9 @@ module SQLite3
     # If a block is not given, it is the caller's responsibility to end the
     # transaction explicitly, either by calling #commit, or by calling
     # #rollback.
-    def transaction( mode = nil )
+    def transaction(mode = nil)
       mode = @default_transaction_mode if mode.nil?
-      execute "begin #{mode.to_s} transaction"
+      execute "begin #{mode} transaction"
 
       if block_given?
         abort = false
@@ -698,6 +672,25 @@ module SQLite3
       @readonly
     end
 
+    # Sets a #busy_handler that releases the GVL between retries,
+    # but only retries up to the indicated number of +milliseconds+.
+    # This is an alternative to #busy_timeout, which holds the GVL
+    # while SQLite sleeps and retries.
+    def busy_handler_timeout=(milliseconds)
+      timeout_seconds = milliseconds.fdiv(1000)
+
+      busy_handler do |count|
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        if count.zero?
+          @timeout_deadline = now + timeout_seconds
+        elsif now > @timeout_deadline
+          next false
+        else
+          sleep(0.001)
+        end
+      end
+    end
+
     # A helper class for dealing with custom functions (see #create_function,
     # #create_aggregate, and #create_aggregate_handler). It encapsulates the
     # opaque function object that represents the current invocation. It also
@@ -714,54 +707,44 @@ module SQLite3
       # it is non-nil, it must quack like a Hash. If it is nil, then none of
       # the context functions will be available.
       def initialize
-        @result   = nil
-        @context  = {}
+        @result = nil
+        @context = {}
       end
 
       # Set the result of the function to the given error message.
       # The function will then return that error.
-      def set_error( error )
-        @driver.result_error( @func, error.to_s, -1 )
+      def set_error(error)
+        @driver.result_error(@func, error.to_s, -1)
       end
 
       # (Only available to aggregate functions.) Returns the number of rows
       # that the aggregate has processed so far. This will include the current
       # row, and so will always return at least 1.
       def count
-        @driver.aggregate_count( @func )
+        @driver.aggregate_count(@func)
       end
 
       # Returns the value with the given key from the context. This is only
       # available to aggregate functions.
-      def []( key )
-        @context[ key ]
+      def [](key)
+        @context[key]
       end
 
       # Sets the value with the given key in the context. This is only
       # available to aggregate functions.
-      def []=( key, value )
-        @context[ key ] = value
+      def []=(key, value)
+        @context[key] = value
       end
     end
 
-    # Translates a +row+ of data from the database with the given +types+
-    def translate_from_db types, row
-      @type_translator.call types, row
-    end
-
-    private
-
-    NULL_TRANSLATOR = lambda { |_, row| row }
-
-    def make_type_translator should_translate
-      if should_translate
-        lambda { |types, row|
-          types.zip(row).map do |type, value|
-            translator.translate( type, value )
-          end
-        }
+    # Given a statement, return a result set.
+    # This is not intended for general consumption
+    # :nodoc:
+    def build_result_set stmt
+      if results_as_hash
+        HashResultSet.new(self, stmt)
       else
-        NULL_TRANSLATOR
+        ResultSet.new(self, stmt)
       end
     end
   end
