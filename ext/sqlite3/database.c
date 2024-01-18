@@ -296,7 +296,7 @@ progress_handler(int argc, VALUE *argv, VALUE self)
 
   rb_scan_args(argc, argv, "02", &n_value, &block);
 
-  int n = NIL_P(n_value) ? 1 : NUM2INT(n_value);
+  int n = NIL_P(n_value) ? 1000 : NUM2INT(n_value);
   if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
   ctx->progress_handler = block;
 
