@@ -289,49 +289,6 @@ by column name, even though they are still arrays!
   end
 ```
 
-## I'd like the values from a query to be the correct types, instead of String.
-    
-You can turn on "type translation" by setting `Database#type_translation` to
-true:
-
-
-```ruby
-  db.type_translation = true
-  db.execute( "select * from table" ) do |row|
-    p row
-  end
-```
-
-
-By doing this, each return value for each row will be translated to its
-correct type, based on its declared column type.
-
-
-You can even declare your own translation routines, if (for example) you are
-using an SQL type that is not handled by default:
-
-
-```ruby
-  # assume "objects" table has the following schema:
-  #   create table objects (
-  #     name varchar2(20),
-  #     thing object
-  #   )
-
-  db.type_translation = true
-  db.translator.add_translator( "object" ) do |type, value|
-    db.decode( value )
-  end
-
-  h = { :one=>:two, "three"=>"four", 5=>6 }
-  dump = db.encode( h )
-
-  db.execute( "insert into objects values ( ?, ? )", "bob", dump )
-
-  obj = db.get_first_value( "select thing from objects where name='bob'" )
-  p obj == h
-```
-
 ## How do I insert binary data into the database?
 
 Use blobs. Blobs are new features of SQLite3. You have to use bind

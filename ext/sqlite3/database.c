@@ -251,10 +251,10 @@ busy_handler(int argc, VALUE *argv, VALUE self)
     ctx->busy_handler = block;
 
     status = sqlite3_busy_handler(
-        ctx->db,
-        NIL_P(block) ? NULL : rb_sqlite3_busy_handler,
-        (void *)ctx
-    );
+                 ctx->db,
+                 NIL_P(block) ? NULL : rb_sqlite3_busy_handler,
+                 (void *)ctx
+             );
 
     CHECK(ctx->db, status);
 
