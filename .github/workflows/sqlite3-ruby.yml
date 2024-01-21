@@ -80,6 +80,25 @@ jobs:
       - run: bundle exec rake compile -- --disable-system-libraries
       - run: bundle exec rake test
 
+  bsd:
+    strategy:
+      fail-fast: false
+      matrix:
+        sys: ["enable", "disable"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          copyback: false
+          prepare: pkg install -y ruby devel/ruby-gems pkgconf sqlite3 git
+          run: |
+            gem install bundler
+            bundle install
+            bundle exec rake compile -- --${{matrix.sys}}-system-libraries
+            bundle exec rake test
+
   sqlcipher:
     strategy:
       fail-fast: false
