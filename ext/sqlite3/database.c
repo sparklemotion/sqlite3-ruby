@@ -12,6 +12,11 @@
 
 VALUE cSqlite3Database;
 
+// Function to check if two timespec structures are equal
+int timespec_equal(const struct timespec* ts1, const struct timespec* ts2) {
+    return (ts1->tv_sec == ts2->tv_sec) && (ts1->tv_nsec == ts2->tv_nsec);
+}
+
 static void
 database_mark(void *ctx)
 {
@@ -266,12 +271,11 @@ rb_sqlite3_statement_timeout(void *context)
     struct timespec currentTime;
     clock_gettime(CLOCK_MONOTONIC, &currentTime);
 
-    if (ctx->stmt_deadline == 0) {
-        ctx->stmt_deadline = currentTime.tv_sec * 1e9 + currentTime.tv_nsec + (long long)ctx->stmt_timeout * 1e6;
-    } else {
-        long long timeDiff = ctx->stmt_deadline - (currentTime.tv_sec * 1e9 + currentTime.tv_nsec);
-
-        if (timeDiff < 0) { return 1; }
+    if (!timespecisset(&ctx->stmt_deadline)) {
+        // Set stmt_deadline if not already set
+        ctx->stmt_deadline = currentTime;
+    } else if (timespecafter(&currentTime, &ctx->stmt_deadline)) {
+        return 1;
     }
 
     return 0;

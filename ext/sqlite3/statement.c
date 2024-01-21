@@ -70,7 +70,7 @@ prepare(VALUE self, VALUE db, VALUE sql)
              );
 
     CHECK(db_ctx->db, status);
-    db_ctx->stmt_deadline = 0;
+    timespecclear(&db_ctx->stmt_deadline);
 
     return rb_str_new2(tail);
 }
