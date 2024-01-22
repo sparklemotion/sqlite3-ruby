@@ -47,7 +47,7 @@ jobs:
           bundler-cache: true
           apt-get: libsqlite3-dev
       - if: matrix.lib == 'packaged'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ports
           key: ports-${{matrix.os}}-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
