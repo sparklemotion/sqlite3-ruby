@@ -3,7 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 group :development do
-  gem "minitest", "5.21.1"
+  gem "minitest", "5.21.2"
 
   gem "rake-compiler", "1.2.5"
   gem "rake-compiler-dock", "1.4.0"
