@@ -112,7 +112,7 @@ describe File.basename(gemfile) do
 
       it "contains extension C and header files" do
         assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
-        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
+        assert_equal(7, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
       end
 
       it "includes C files in extra_rdoc_files" do
@@ -154,7 +154,7 @@ describe File.basename(gemfile) do
 
       it "contains extension C and header files" do
         assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
-        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
+        assert_equal(7, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
       end
 
       it "includes C files in extra_rdoc_files" do
