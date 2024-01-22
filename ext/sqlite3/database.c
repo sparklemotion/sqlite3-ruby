@@ -12,11 +12,6 @@
 
 VALUE cSqlite3Database;
 
-// Function to check if two timespec structures are equal
-int timespec_equal(const struct timespec* ts1, const struct timespec* ts2) {
-    return (ts1->tv_sec == ts2->tv_sec) && (ts1->tv_nsec == ts2->tv_nsec);
-}
-
 static void
 database_mark(void *ctx)
 {
