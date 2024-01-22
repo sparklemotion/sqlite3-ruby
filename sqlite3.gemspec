@@ -61,6 +61,7 @@ Gem::Specification.new do |s|
     "ext/sqlite3/sqlite3_ruby.h",
     "ext/sqlite3/statement.c",
     "ext/sqlite3/statement.h",
+    "ext/sqlite3/timespec.h",
     "lib/sqlite3.rb",
     "lib/sqlite3/constants.rb",
     "lib/sqlite3/database.rb",
