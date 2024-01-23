@@ -82,7 +82,7 @@ module SQLite3
 
       string = @db.execute("select data from foo").first.first
       assert_equal Encoding.find("ASCII-8BIT"), string.encoding
-      assert_equal str, string.force_encoding("UTF-8")
+      assert_equal str, string.dup.force_encoding("UTF-8")
     end
 
     def test_blob_is_ascii8bit
@@ -95,7 +95,7 @@ module SQLite3
 
       string = @db.execute("select data from foo").first.first
       assert_equal Encoding.find("ASCII-8BIT"), string.encoding
-      assert_equal str, string.force_encoding("UTF-8")
+      assert_equal str, string.dup.force_encoding("UTF-8")
     end
 
     def test_blob_with_eucjp
@@ -108,7 +108,7 @@ module SQLite3
 
       string = @db.execute("select data from foo").first.first
       assert_equal Encoding.find("ASCII-8BIT"), string.encoding
-      assert_equal str, string.force_encoding("EUC-JP")
+      assert_equal str, string.dup.force_encoding("EUC-JP")
     end
 
     def test_db_with_eucjp

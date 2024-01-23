@@ -162,6 +162,7 @@ step(VALUE self)
                         if (internal_encoding) {
                             val = rb_str_export_to_enc(val, internal_encoding);
                         }
+                        rb_obj_freeze(val);
                     }
                     break;
                     case SQLITE_BLOB: {
@@ -169,6 +170,7 @@ step(VALUE self)
                                   (const char *)sqlite3_column_blob(stmt, i),
                                   (long)sqlite3_column_bytes(stmt, i)
                               );
+                        rb_obj_freeze(val);
                     }
                     break;
                     case SQLITE_NULL:
@@ -191,6 +193,8 @@ step(VALUE self)
             ctx->done_p = 0;
             CHECK(sqlite3_db_handle(ctx->st), value);
     }
+
+    rb_obj_freeze(list);
 
     return list;
 }

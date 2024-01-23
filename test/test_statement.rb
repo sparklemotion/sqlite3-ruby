@@ -12,6 +12,23 @@ module SQLite3
       @db.close
     end
 
+    def test_rows_should_be_frozen
+      @db.execute 'CREATE TABLE "things" ("float" float, "int" int, "text" blob, "string" string, "nil" string)'
+      stmt = @db.prepare "INSERT INTO things (float, int, text, string, nil) VALUES (?, ?, ?, ?, ?)"
+      stmt.execute(1.2, 2, "blob", "string", nil)
+      stmt.close
+
+      rows = @db.execute "SELECT float, int, text, string, nil FROM things"
+      assert_predicate rows, :frozen?
+      assert_equal 1, rows.length
+      row = rows[0]
+      assert_predicate row, :frozen?
+      row.each { |item| assert_predicate item, :frozen? }
+
+      assert Ractor.shareable?(rows)
+      assert Ractor.shareable?(row)
+    end
+
     def test_double_close_does_not_segv
       @db.execute 'CREATE TABLE "things" ("number" float NOT NULL)'
 

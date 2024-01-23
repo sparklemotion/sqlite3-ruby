@@ -208,7 +208,7 @@ module SQLite3
             yield row
           end
         else
-          stmt.to_a
+          stmt.to_a.freeze
         end
       end
     end
