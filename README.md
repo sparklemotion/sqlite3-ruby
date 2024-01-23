@@ -11,8 +11,7 @@ Note that this module is only compatible with SQLite 3.6.16 or newer.
 * Download: http://rubygems.org/gems/sqlite3
 * Documentation: http://www.rubydoc.info/gems/sqlite3
 
-[![Unit tests](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/sqlite3-ruby.yml/badge.svg)](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/sqlite3-ruby.yml)
-[![Native packages](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/gem-install.yml/badge.svg)](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/gem-install.yml)
+[![Test suite](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/ci.yml)
 
 
 ## Quick start

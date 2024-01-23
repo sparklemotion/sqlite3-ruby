@@ -1,4 +1,4 @@
-name: native packaging
+name: sqlite3-ruby test suite
 concurrency:
   group: "${{github.workflow}}-${{github.ref}}"
   cancel-in-progress: true
@@ -18,7 +18,112 @@ on:
       - '*'
 
 jobs:
-  setup:
+  #
+  #  basic tests
+  #
+  sqlite3:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        ruby: ["3.3", "3.2", "3.1", "3.0"]
+        lib: [system, packaged]
+        include:
+          - { os: ubuntu-latest,  ruby: truffleruby,      lib: packaged }
+          - { os: windows-latest, ruby: ucrt,             lib: system   }
+          - { os: windows-latest, ruby: mswin,            lib: system   }
+
+    runs-on: ${{matrix.os}}
+    steps:
+      - if: matrix.os == 'windows-latest'
+        name: configure git crlf
+        run: |
+          git config --system core.autocrlf false
+          git config --system core.eol lf
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: ${{matrix.ruby}}
+          bundler-cache: true
+          apt-get: libsqlite3-dev
+          brew: sqlite3 pkg-config
+          mingw: sqlite3
+          vcpkg: sqlite3
+      - if: matrix.lib == 'packaged'
+        uses: actions/cache@v4
+        with:
+          path: ports
+          key: ports-${{matrix.os}}-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
+
+      - run: bundle exec rake compile -- --disable-system-libraries
+        if: matrix.lib == 'packaged'
+
+      - run: bundle exec rake compile -- --enable-system-libraries
+        if: matrix.lib == 'system' && !startsWith(matrix.os, 'macos')
+
+      - run: bundle exec rake compile -- --enable-system-libraries --with-opt-dir=$(brew --prefix sqlite3)
+        if: matrix.lib == 'system' && startsWith(matrix.os, 'macos')
+
+      - run: bundle exec rake test
+
+  # reported at https://github.com/sparklemotion/sqlite3-ruby/issues/354
+  # TODO remove once https://github.com/flavorjones/mini_portile/issues/118 is fixed
+  fedora:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:35
+    steps:
+      - run: |
+          dnf group install -y "C Development Tools and Libraries"
+          dnf install -y ruby ruby-devel libyaml-devel
+      - uses: actions/checkout@v4
+      - run: bundle install
+      - run: bundle exec rake compile -- --disable-system-libraries
+      - run: bundle exec rake test
+
+  sqlcipher:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        ruby: ["3.3", "3.0"] # oldest and newest
+        include:
+          - { os: windows-latest, ruby: mingw }
+          - { os: windows-latest, ruby: mswin }
+    runs-on: ${{matrix.os}}
+    steps:
+      - if: matrix.os == 'windows-latest'
+        name: configure git crlf
+        run: |
+          git config --system core.autocrlf false
+          git config --system core.eol lf
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: ${{matrix.ruby}}
+          bundler-cache: true
+          apt-get: libsqlcipher-dev
+          brew: sqlcipher pkg-config
+          mingw: sqlcipher
+          vcpkg: sqlcipher
+      - run: bundle exec rake compile -- --with-sqlcipher
+      - run: bundle exec rake test
+
+  valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          apt-get: libsqlite3-dev valgrind
+      - run: bundle install
+      - run: bundle exec rake compile
+      - run: bundle exec rake test:valgrind
+
+  rcd_setup:
+    needs: ["sqlite3"]
     runs-on: ubuntu-latest
     outputs:
       rcd_image_version: ${{steps.rcd_image_version.outputs.rcd_image_version}}
@@ -37,7 +142,7 @@ jobs:
         run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
 
   cruby-package:
-    needs: ["setup"]
+    needs: ["rcd_setup"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -146,7 +251,7 @@ jobs:
           ruby -rsqlite3 -e 'puts SQLite3::SQLITE_LOADED_VERSION'
 
   cruby-native-package:
-    needs: ["setup"]
+    needs: ["rcd_setup"]
     strategy:
       fail-fast: false
       matrix:
@@ -167,7 +272,7 @@ jobs:
           path: ports/archives
           key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
       - env:
-          DOCKER_IMAGE: "ghcr.io/rake-compiler/rake-compiler-dock-image:${{needs.setup.outputs.rcd_image_version}}-mri-${{matrix.plat}}"
+          DOCKER_IMAGE: "ghcr.io/rake-compiler/rake-compiler-dock-image:${{needs.rcd_setup.outputs.rcd_image_version}}-mri-${{matrix.plat}}"
         run: |
           docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 ${DOCKER_IMAGE} \
             ./bin/test-gem-build gems ${{matrix.plat}}
