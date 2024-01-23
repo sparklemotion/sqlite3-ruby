@@ -294,11 +294,11 @@ module SQLite3
     end
 
     def test_stat_fullscan_steps
-      @db.execute 'CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);'
+      @db.execute "CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);"
       10.times do |i|
-        @db.execute 'INSERT INTO test_table (name) VALUES (?)', "name_#{i}"
+        @db.execute "INSERT INTO test_table (name) VALUES (?)", "name_#{i}"
       end
-      @db.execute 'DROP INDEX IF EXISTS idx_test_table_id;'
+      @db.execute "DROP INDEX IF EXISTS idx_test_table_id;"
       stmt = @db.prepare("SELECT * FROM test_table WHERE name LIKE 'name%'")
       stmt.execute.to_a
 
@@ -308,9 +308,9 @@ module SQLite3
     end
 
     def test_stat_sorts
-      @db.execute 'CREATE TABLE test1(a)'
-      @db.execute 'INSERT INTO test1 VALUES (1)'
-      stmt = @db.prepare('select * from test1 order by a')
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1 order by a")
       stmt.execute.to_a
 
       assert_equal 1, stmt.stat(:sorts)
@@ -322,8 +322,8 @@ module SQLite3
       @db.execute "CREATE TABLE t1(a,b);"
       @db.execute "CREATE TABLE t2(c,d);"
       10.times do |i|
-        @db.execute 'INSERT INTO t1 (a, b) VALUES (?, ?)', [i, i.to_s]
-        @db.execute 'INSERT INTO t2 (c, d) VALUES (?, ?)', [i, i.to_s]
+        @db.execute "INSERT INTO t1 (a, b) VALUES (?, ?)", [i, i.to_s]
+        @db.execute "INSERT INTO t2 (c, d) VALUES (?, ?)", [i, i.to_s]
       end
       stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c;")
       stmt.execute.to_a
@@ -334,9 +334,9 @@ module SQLite3
     end
 
     def test_stat_vm_steps
-      @db.execute 'CREATE TABLE test1(a)'
-      @db.execute 'INSERT INTO test1 VALUES (1)'
-      stmt = @db.prepare('select * from test1 order by a')
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1 order by a")
       stmt.execute.to_a
 
       assert_operator stmt.stat(:vm_steps), :>, 0
@@ -345,12 +345,12 @@ module SQLite3
     end
 
     def test_stat_reprepares
-      @db.execute 'CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);'
+      @db.execute "CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);"
       10.times do |i|
-        @db.execute 'INSERT INTO test_table (name) VALUES (?)', "name_#{i}"
+        @db.execute "INSERT INTO test_table (name) VALUES (?)", "name_#{i}"
       end
       stmt = @db.prepare("SELECT * FROM test_table WHERE name LIKE ?")
-      stmt.execute('name%').to_a
+      stmt.execute("name%").to_a
 
       if stmt.stat.key?(:reprepares)
         assert_equal 1, stmt.stat(:reprepares)
@@ -362,9 +362,9 @@ module SQLite3
     end
 
     def test_stat_runs
-      @db.execute 'CREATE TABLE test1(a)'
-      @db.execute 'INSERT INTO test1 VALUES (1)'
-      stmt = @db.prepare('select * from test1')
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1")
       stmt.execute.to_a
 
       if stmt.stat.key?(:runs)
@@ -380,8 +380,8 @@ module SQLite3
       @db.execute "CREATE TABLE t1(a,b);"
       @db.execute "CREATE TABLE t2(c,d);"
       10.times do |i|
-        @db.execute 'INSERT INTO t1 (a, b) VALUES (?, ?)', [i, i.to_s]
-        @db.execute 'INSERT INTO t2 (c, d) VALUES (?, ?)', [i, i.to_s]
+        @db.execute "INSERT INTO t1 (a, b) VALUES (?, ?)", [i, i.to_s]
+        @db.execute "INSERT INTO t2 (c, d) VALUES (?, ?)", [i, i.to_s]
       end
       stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c;")
       stmt.execute.to_a
@@ -399,8 +399,8 @@ module SQLite3
       @db.execute "CREATE TABLE t1(a,b);"
       @db.execute "CREATE TABLE t2(c,d);"
       10.times do |i|
-        @db.execute 'INSERT INTO t1 (a, b) VALUES (?, ?)', [i, i.to_s]
-        @db.execute 'INSERT INTO t2 (c, d) VALUES (?, ?)', [i+1, i.to_s]
+        @db.execute "INSERT INTO t1 (a, b) VALUES (?, ?)", [i, i.to_s]
+        @db.execute "INSERT INTO t2 (c, d) VALUES (?, ?)", [i + 1, i.to_s]
       end
       stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c AND b = '1' AND d = '1';")
       stmt.execute.to_a
@@ -415,9 +415,9 @@ module SQLite3
     end
 
     def test_memused
-      @db.execute 'CREATE TABLE test1(a)'
-      @db.execute 'INSERT INTO test1 VALUES (1)'
-      stmt = @db.prepare('select * from test1')
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1")
 
       skip("memused not defined") unless stmt.respond_to?(:memused)
 

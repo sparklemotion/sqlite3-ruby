@@ -473,11 +473,9 @@ stmt_stat_internal(VALUE hash_or_sym, sqlite3_stmt *stmt)
 
     if (RB_TYPE_P(hash_or_sym, T_HASH)) {
         hash = hash_or_sym;
-    }
-    else if (SYMBOL_P(hash_or_sym)) {
+    } else if (SYMBOL_P(hash_or_sym)) {
         key = hash_or_sym;
-    }
-    else {
+    } else {
         rb_raise(rb_eTypeError, "non-hash or symbol argument");
     }
 
@@ -542,8 +540,7 @@ stat_for(VALUE self, VALUE key)
     if (SYMBOL_P(key)) {
         size_t value = stmt_stat_internal(key, ctx->st);
         return SIZET2NUM(value);
-    }
-    else {
+    } else {
         rb_raise(rb_eTypeError, "non-symbol given");
     }
 }
