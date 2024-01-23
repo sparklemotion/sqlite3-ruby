@@ -345,8 +345,11 @@ jobs:
         include:
           - { ruby: "3.0", flavor: "alpine" }
           - { ruby: "3.1", flavor: "alpine3.18" }
+          - { ruby: "3.1", flavor: "alpine3.19" }
           - { ruby: "3.2", flavor: "alpine3.18" }
+          - { ruby: "3.2", flavor: "alpine3.19" }
           - { ruby: "3.3", flavor: "alpine3.18" }
+          - { ruby: "3.3", flavor: "alpine3.19" }
     runs-on: ubuntu-latest
     container:
       image: ruby:${{matrix.ruby}}-${{matrix.flavor}}
