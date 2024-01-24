@@ -48,6 +48,22 @@ module SQLite3
       end
     end
 
+    def test_column_names_are_deduped
+      @db.execute "CREATE TABLE 'things' ('float' float, 'int' int, 'text' blob, 'string' string, 'nil' string)"
+      stmt = @db.prepare "SELECT float, int, text, string, nil FROM things"
+      assert_equal ["float", "int", "text", "string", "nil"], stmt.columns
+      columns = stmt.columns
+      stmt.close
+
+      stmt = @db.prepare "SELECT float, int, text, string, nil FROM things"
+      # Make sure this new statement returns the same interned strings
+      stmt.columns.each_with_index do |str, i|
+        assert_same columns[i], str
+      end
+    ensure
+      stmt&.close
+    end
+
     def test_insert_duplicate_records
       @db.execute 'CREATE TABLE "things" ("name" varchar(20) CONSTRAINT "index_things_on_name" UNIQUE)'
       stmt = @db.prepare("INSERT INTO things(name) VALUES(?)")
