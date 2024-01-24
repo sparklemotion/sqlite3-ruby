@@ -1,6 +1,6 @@
 name: sqlite3-ruby test suite
 concurrency:
-  group: "${{github.workflow}}-${{github.ref}}"
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 on:
   workflow_dispatch:
@@ -21,21 +21,46 @@ jobs:
   #
   #  basic tests
   #
-  sqlite3:
+  rubocop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - run: bundle exec rake rubocop
+
+  basic:
+    needs: rubocop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          apt-get: libsqlite3-dev
+      - run: bundle exec rake compile test -- --enable-system-libraries
+
+  test:
+    needs: basic
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu, macos, windows]
         ruby: ["3.3", "3.2", "3.1", "3.0"]
-        lib: [system, packaged]
+        syslib: [enable, disable]
         include:
-          - { os: ubuntu-latest,  ruby: truffleruby,      lib: packaged }
-          - { os: windows-latest, ruby: ucrt,             lib: system   }
-          - { os: windows-latest, ruby: mswin,            lib: system   }
-
-    runs-on: ${{matrix.os}}
+          # additional compilation flags for homebrew
+          - { os: macos, syslib: enable, compile_flags: "--with-opt-dir=$(brew --prefix sqlite3)" }
+          # additional versions of ruby to test
+          - { os: ubuntu, ruby: truffleruby, syslib: disable }
+          - { os: windows, ruby: ucrt, syslib: enable }
+          - { os: windows, ruby: mswin, syslib: enable }
+    runs-on: ${{ matrix.os }}-latest
     steps:
-      - if: matrix.os == 'windows-latest'
+      - if: matrix.os == 'windows'
         name: configure git crlf
         run: |
           git config --system core.autocrlf false
@@ -43,32 +68,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby-pkgs@v1
         with:
-          ruby-version: ${{matrix.ruby}}
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           apt-get: libsqlite3-dev
           brew: sqlite3 pkg-config
           mingw: sqlite3
           vcpkg: sqlite3
-      - if: matrix.lib == 'packaged'
+      - if: matrix.syslib == 'disable'
         uses: actions/cache@v4
         with:
           path: ports
-          key: ports-${{matrix.os}}-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
-
-      - run: bundle exec rake compile -- --disable-system-libraries
-        if: matrix.lib == 'packaged'
-
-      - run: bundle exec rake compile -- --enable-system-libraries
-        if: matrix.lib == 'system' && !startsWith(matrix.os, 'macos')
-
-      - run: bundle exec rake compile -- --enable-system-libraries --with-opt-dir=$(brew --prefix sqlite3)
-        if: matrix.lib == 'system' && startsWith(matrix.os, 'macos')
-
+          key: ports-${{ matrix.os }}-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
+      - run: bundle exec rake compile -- --${{ matrix.syslib }}-system-libraries ${{ matrix.compile_flags }}
       - run: bundle exec rake test
 
-  # reported at https://github.com/sparklemotion/sqlite3-ruby/issues/354
-  # TODO remove once https://github.com/flavorjones/mini_portile/issues/118 is fixed
   fedora:
+    # reported at https://github.com/sparklemotion/sqlite3-ruby/issues/354
+    # TODO remove once https://github.com/flavorjones/mini_portile/issues/118 is fixed
+    needs: basic
+    name: "fedora:35"
     runs-on: ubuntu-latest
     container:
       image: fedora:35
@@ -82,17 +100,18 @@ jobs:
       - run: bundle exec rake test
 
   sqlcipher:
+    needs: basic
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu, macos, windows]
         ruby: ["3.3", "3.0"] # oldest and newest
         include:
-          - { os: windows-latest, ruby: mingw }
-          - { os: windows-latest, ruby: mswin }
-    runs-on: ${{matrix.os}}
+          - { os: windows, ruby: mingw }
+          - { os: windows, ruby: mswin }
+    runs-on: ${{ matrix.os }}-latest
     steps:
-      - if: matrix.os == 'windows-latest'
+      - if: matrix.os == 'windows'
         name: configure git crlf
         run: |
           git config --system core.autocrlf false
@@ -100,7 +119,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby-pkgs@v1
         with:
-          ruby-version: ${{matrix.ruby}}
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           apt-get: libsqlcipher-dev
           brew: sqlcipher pkg-config
@@ -110,6 +129,7 @@ jobs:
       - run: bundle exec rake test
 
   valgrind:
+    needs: basic
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -117,22 +137,29 @@ jobs:
         with:
           ruby-version: "3.3"
           bundler-cache: true
-          apt-get: libsqlite3-dev valgrind
-      - run: bundle install
+          apt-get: valgrind
+      - uses: actions/cache@v4
+        with:
+          path: ports
+          key: ports-ubuntu-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
       - run: bundle exec rake compile
       - run: bundle exec rake test:valgrind
 
-  rcd_setup:
-    needs: ["sqlite3"]
+  #
+  #  gem tests (source and native)
+  #
+  native_setup:
+    needs: basic
+    name: "Setup for native gem tests"
     runs-on: ubuntu-latest
     outputs:
-      rcd_image_version: ${{steps.rcd_image_version.outputs.rcd_image_version}}
+      rcd_image_version: ${{ steps.rcd_image_version.outputs.rcd_image_version }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
           path: ports/archives
-          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
+          key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
@@ -141,15 +168,16 @@ jobs:
       - id: rcd_image_version
         run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
 
-  cruby-package:
-    needs: ["rcd_setup"]
+  build_source_gem:
+    needs: native_setup
+    name: "build source"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
           path: ports/archives
-          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
+          key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
@@ -157,108 +185,48 @@ jobs:
       - run: ./bin/test-gem-build gems ruby
       - uses: actions/upload-artifact@v3
         with:
-          name: cruby-gem
+          name: source-gem
           path: gems
           retention-days: 1
 
-  cruby-linux-install:
-    needs: ["cruby-package"]
+  install_source_linux:
+    needs: build_source_gem
+    name: "test source"
     strategy:
       fail-fast: false
       matrix:
-        sys: ["enable", "disable"]
-        ruby: ["3.0", "3.1", "3.2", "3.3"]
-    runs-on: ubuntu-latest
+        os: [ubuntu, macos, windows]
+        ruby: ["3.3", "3.2", "3.1", "3.0"]
+        syslib: [enable, disable]
+        include:
+          # additional compilation flags for homebrew
+          - { os: macos, syslib: enable, compile_flags: "--with-opt-dir=$(brew --prefix sqlite3)" }
+    runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby-pkgs@v1
         with:
-          ruby-version: "${{matrix.ruby}}"
-          apt-get: "libsqlite3-dev pkg-config"
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-gem
-          path: gems
-      - run: ./bin/test-gem-install gems --${{matrix.sys}}-system-libraries
-
-  cruby-osx-install:
-    needs: ["cruby-package"]
-    strategy:
-      fail-fast: false
-      matrix:
-        sys: ["enable", "disable"]
-        ruby: ["3.1", "3.2", "3.3", "truffleruby"]
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby-pkgs@v1
-        with:
-          ruby-version: "${{matrix.ruby}}"
+          ruby-version: ${{ matrix.ruby }}
+          apt-get: libsqlite3-dev pkg-config
           brew: sqlite3 pkg-config
+          mingw: sqlite3
       - uses: actions/download-artifact@v3
         with:
-          name: cruby-gem
+          name: source-gem
           path: gems
-      - if: matrix.sys == 'enable'
-        run: ./bin/test-gem-install gems --enable-system-libraries --with-opt-dir=$(brew --prefix sqlite3)
-      - if: matrix.sys == 'disable'
-        run: ./bin/test-gem-install gems --disable-system-libraries
+      - run: ./bin/test-gem-install gems -- --${{ matrix.syslib }}-system-libraries ${{ matrix.compile_flags }}
+        shell: bash
 
-  cruby-windows-install:
-    needs: ["cruby-package"]
+  build_native_gem:
+    needs: native_setup
+    name: "build native"
     strategy:
       fail-fast: false
       matrix:
-        sys: ["enable", "disable"]
-        ruby: ["3.0"]
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby-pkgs@v1
-        with:
-          ruby-version: "${{matrix.ruby}}"
-          mingw: "sqlite3"
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-gem
-          path: gems
-      - run: |
-          gem install --verbose --no-document gems/*.gem -- --${{matrix.sys}}-system-libraries
-          gem list -d sqlite3
-          ruby -rsqlite3 -e 'puts SQLite3::SQLITE_LOADED_VERSION'
-
-  cruby-windows-install-ucrt:
-    needs: ["cruby-package"]
-    strategy:
-      fail-fast: false
-      matrix:
-        sys: ["enable", "disable"]
-        ruby: ["3.1", "3.2", "3.3"]
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby-pkgs@v1
-        with:
-          ruby-version: "${{matrix.ruby}}"
-          mingw: "sqlite3"
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-gem
-          path: gems
-      - run: |
-          gem install --verbose --no-document gems/*.gem -- --${{matrix.sys}}-system-libraries
-          gem list -d sqlite3
-          ruby -rsqlite3 -e 'puts SQLite3::SQLITE_LOADED_VERSION'
-
-  cruby-native-package:
-    needs: ["rcd_setup"]
-    strategy:
-      fail-fast: false
-      matrix:
-        plat:
+        platform:
           - "aarch64-linux"
           - "arm-linux"
-          - "arm64-darwin" # github actions does not support this runtime as of 2022-12, but let's build anyway
+          - "arm64-darwin"
           - "x64-mingw-ucrt"
           - "x64-mingw32"
           - "x86-linux"
@@ -270,162 +238,107 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ports/archives
-          key: ports-archives-tarball-${{hashFiles('ext/sqlite3/extconf.rb','dependencies.yml')}}
-      - env:
-          DOCKER_IMAGE: "ghcr.io/rake-compiler/rake-compiler-dock-image:${{needs.rcd_setup.outputs.rcd_image_version}}-mri-${{matrix.plat}}"
-        run: |
-          docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 ${DOCKER_IMAGE} \
-            ./bin/test-gem-build gems ${{matrix.plat}}
+          key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
+      - run: |
+          docker run --rm -v $PWD:/work -w /work \
+            ghcr.io/rake-compiler/rake-compiler-dock-image:${{ needs.native_setup.outputs.rcd_image_version }}-mri-${{ matrix.platform }} \
+            ./bin/test-gem-build gems ${{ matrix.platform }}
       - uses: actions/upload-artifact@v3
         with:
-          name: "cruby-${{matrix.plat}}-gem"
+          name: "cruby-${{ matrix.platform }}-gem"
           path: gems
           retention-days: 1
 
-  cruby-aarch64-linux-install:
-    needs: ["cruby-native-package"]
+  test_architecture_matrix:
+    name: "${{ matrix.platform }} ${{ matrix.ruby }}"
+    needs: build_native_gem
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["3.0", "3.1", "3.2", "3.3"]
+        platform:
+          - aarch64-linux
+          # - aarch64-linux-gnu
+          # - aarch64-linux-musl
+          - arm-linux
+          # - arm-linux-gnu
+          # - arm-linux-musl
+          - x86-linux
+          # - x86-linux-gnu
+          # - x86-linux-musl
+          - x86_64-linux
+          # - x86_64-linux-gnu
+          # - x86_64-linux-musl
+        ruby: ["3.3", "3.2", "3.1", "3.0"]
+        include:
+          # # declare docker image for each platform
+          # - { platform: aarch64-linux-musl, docker_tag: "-alpine" }
+          # - { platform: arm-linux-musl, docker_tag: "-alpine" }
+          # - { platform: x86-linux-musl, docker_tag: "-alpine" }
+          # - { platform: x86_64-linux-musl, docker_tag: "-alpine" }
+          # declare docker platform for each platform
+          - { platform: aarch64-linux, docker_platform: "--platform=linux/arm64" }
+          # - { platform: aarch64-linux-gnu, docker_platform: "--platform=linux/arm64" }
+          # - { platform: aarch64-linux-musl, docker_platform: "--platform=linux/arm64" }
+          - { platform: arm-linux, docker_platform: "--platform=linux/arm/v7" }
+          # - { platform: arm-linux-gnu, docker_platform: "--platform=linux/arm/v7" }
+          # - { platform: arm-linux-musl, docker_platform: "--platform=linux/arm/v7" }
+          - { platform: x86-linux, docker_platform: "--platform=linux/386" }
+          # - { platform: x86-linux-gnu, docker_platform: "--platform=linux/386" }
+          # - { platform: x86-linux-musl, docker_platform: "--platform=linux/386" }
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
         with:
-          name: cruby-aarch64-linux-gem
+          name: cruby-${{ matrix.platform }}-gem
           path: gems
       - run: |
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-          docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 \
-            --platform=linux/arm64/v8 \
-            ruby:${{matrix.ruby}} \
+          docker run --rm -v $PWD:/work -w /work \
+            ${{ matrix.docker_platform}} ruby:${{ matrix.ruby }} \
             ./bin/test-gem-install ./gems
 
-  cruby-arm-linux-install:
-    needs: ["cruby-native-package"]
+  test_the_rest:
+    name: "${{ matrix.platform }} ${{ matrix.ruby }}"
+    needs: build_native_gem
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["3.0", "3.1", "3.2", "3.3"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-arm-linux-gem
-          path: gems
-      - run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-          docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 \
-            --platform=linux/arm/v7 \
-            ruby:${{matrix.ruby}} \
-            ./bin/test-gem-install ./gems
-
-## arm64-darwin installation testing is omitted until github actions supports it
-#  cruby-arm64-darwin-install:
-#    ...
-
-  cruby-x64-mingw-ucrt-install:
-    needs: ["cruby-native-package"]
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby: ["3.1", "3.2", "3.3"]
-    runs-on: windows-2022
+        os: [macos]
+        ruby: ["3.3", "3.2", "3.1", "3.0"]
+        include:
+          - os: macos
+            platform: x86_64-darwin
+          # # arm64-darwin installation testing is omitted until github actions supports it
+          # - os: macos
+          #   platform: arm64-darwin
+          - os: windows
+            ruby: "3.0"
+            platform: x64-mingw32
+          - os: windows
+            ruby: "3.1"
+            platform: x64-mingw-ucrt
+          - os: windows
+            ruby: "3.2"
+            platform: x64-mingw-ucrt
+          - os: windows
+            ruby: "3.3"
+            platform: x64-mingw-ucrt
+    runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "${{matrix.ruby}}"
+          ruby-version: "${{ matrix.ruby }}"
       - uses: actions/download-artifact@v3
         with:
-          name: cruby-x64-mingw-ucrt-gem
-          path: gems
-      - run: |
-          gem install --verbose --no-document gems/*.gem
-          gem list -d sqlite3
-          ruby -rsqlite3 -e 'puts SQLite3::SQLITE_LOADED_VERSION'
-
-  cruby-x64-mingw32-install:
-    needs: ["cruby-native-package"]
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby: ["3.0"]
-    runs-on: windows-2019
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "${{matrix.ruby}}"
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-x64-mingw32-gem
-          path: gems
-      - run: |
-          gem install --verbose --no-document gems/*.gem
-          gem list -d sqlite3
-          ruby -rsqlite3 -e 'puts SQLite3::SQLITE_LOADED_VERSION'
-
-  cruby-x86-linux-install:
-    needs: ["cruby-native-package"]
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby: ["3.0", "3.1", "3.2", "3.3"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-x86-linux-gem
-          path: gems
-      - run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-          docker run --rm -v "$(pwd):/sqlite3" -w /sqlite3 \
-            --platform=linux/386 \
-            ruby:${{matrix.ruby}} \
-            ./bin/test-gem-install ./gems
-
-  cruby-x86_64-darwin-install:
-    needs: ["cruby-native-package"]
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby: ["3.0", "3.1", "3.2", "3.3"]
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "${{matrix.ruby}}"
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-x86_64-darwin-gem
+          name: cruby-${{ matrix.platform }}-gem
           path: gems
       - run: ./bin/test-gem-install gems
-
-  cruby-x86_64-linux-install:
-    needs: ["cruby-native-package"]
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby: ["3.0", "3.1", "3.2", "3.3"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "${{matrix.ruby}}"
-      - uses: actions/download-artifact@v3
-        with:
-          name: cruby-x86_64-linux-gem
-          path: gems
-      - run: ./bin/test-gem-install gems
+        shell: bash
 
   cruby-x86_64-linux-musl-install:
-    needs: ["cruby-native-package"]
+    needs: build_native_gem
     strategy:
       fail-fast: false
       matrix:
