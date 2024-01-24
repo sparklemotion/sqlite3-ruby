@@ -25,8 +25,10 @@ module SQLite3
       assert_predicate row, :frozen?
       row.each { |item| assert_predicate item, :frozen? }
 
-      assert Ractor.shareable?(rows)
-      assert Ractor.shareable?(row)
+      if defined?(Ractor)
+        assert Ractor.shareable?(rows)
+        assert Ractor.shareable?(row)
+      end
     end
 
     def test_double_close_does_not_segv
