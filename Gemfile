@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 gemspec
 
-gem("minitest", "5.20.0")
+gem("minitest", "5.21.2")
 gem("rake-compiler", "1.2.5")
 gem("rake-compiler-dock", "1.4.0")
 gem("rdoc", "6.6.2")
