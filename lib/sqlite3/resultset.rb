@@ -86,7 +86,7 @@ module SQLite3
       row = @stmt.step
       return nil if @stmt.done?
 
-      Hash[*@stmt.columns.zip(row).flatten]
+      @stmt.columns.zip(row).to_h
     end
   end
 
