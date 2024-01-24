@@ -13,6 +13,14 @@ module SQLite3
       @db.close
     end
 
+    def test_change_encoding
+      db = SQLite3::Database.new(":memory:")
+      assert_equal Encoding.find("UTF-8"), db.encoding
+
+      db.execute "PRAGMA encoding='UTF-16le'"
+      assert_equal Encoding.find("UTF-16le"), db.encoding
+    end
+
     def test_encoding_when_results_are_hash
       db = SQLite3::Database.new(":memory:", results_as_hash: true)
       assert_equal Encoding.find("UTF-8"), db.encoding
