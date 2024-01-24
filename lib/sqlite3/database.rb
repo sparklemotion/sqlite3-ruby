@@ -117,7 +117,6 @@ module SQLite3
 
       @tracefunc = nil
       @authorizer = nil
-      @encoding = nil
       @busy_handler = nil
       @collations = {}
       @functions = {}
@@ -138,9 +137,7 @@ module SQLite3
     #
     # Fetch the encoding set on this database
     def encoding
-      @encoding ||= prepare("PRAGMA encoding") { |stmt|
-        Encoding.find(stmt.first.first)
-      }
+      prepare("PRAGMA encoding") { |stmt| Encoding.find(stmt.first.first) }
     end
 
     # Installs (or removes) a block that will be invoked for every access
