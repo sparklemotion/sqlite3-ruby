@@ -8,14 +8,18 @@ require "yaml"
 
 cross_rubies = ["3.3.0", "3.2.0", "3.1.0", "3.0.0"]
 cross_platforms = [
-  "aarch64-linux",
-  "arm-linux",
+  "aarch64-linux-gnu",
+  "aarch64-linux-musl",
+  "arm-linux-gnu",
+  "arm-linux-musl",
   "arm64-darwin",
   "x64-mingw-ucrt",
   "x64-mingw32",
-  "x86-linux",
+  "x86-linux-gnu",
+  "x86-linux-musl",
   "x86_64-darwin",
-  "x86_64-linux"
+  "x86_64-linux-gnu",
+  "x86_64-linux-musl"
 ]
 ENV["RUBY_CC_VERSION"] = cross_rubies.join(":")
 
