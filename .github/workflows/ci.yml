@@ -41,7 +41,8 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
           apt-get: libsqlite3-dev
-      - run: bundle exec rake compile test -- --enable-system-libraries
+      - run: bundle exec rake compile -- --enable-system-libraries
+      - run: bundle exec rake test
 
   test:
     needs: basic
