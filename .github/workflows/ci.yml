@@ -216,7 +216,7 @@ jobs:
           name: source-gem
           path: gems
       - run: ./bin/test-gem-install gems -- --${{ matrix.syslib }}-system-libraries ${{ matrix.compile_flags }}
-        shell: bash
+        shell: sh
 
   build_native_gem:
     needs: native_setup
@@ -339,7 +339,7 @@ jobs:
           name: cruby-${{ matrix.platform }}-gem
           path: gems
       - run: ./bin/test-gem-install gems
-        shell: bash
+        shell: sh
 
   cruby-x86_64-linux-musl-install:
     needs: build_native_gem
@@ -363,7 +363,7 @@ jobs:
         with:
           name: cruby-x86_64-linux-gem
           path: gems
-      - run: apk add bash build-base
+      - run: apk add build-base
       - if: matrix.ruby == '3.0' # https://github.com/rake-compiler/rake-compiler/pull/236
         run: gem update --system
       - run: ./bin/test-gem-install ./gems
