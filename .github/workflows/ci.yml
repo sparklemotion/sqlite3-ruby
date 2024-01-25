@@ -297,7 +297,10 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           docker run --rm -v $PWD:/work -w /work \
             ${{ matrix.docker_platform}} ruby:${{ matrix.ruby }} \
-            ./bin/test-gem-install ./gems
+            sh -c "
+              gem update --system &&
+              ./bin/test-gem-install ./gems
+            "
 
   test_the_rest:
     name: "${{ matrix.platform }} ${{ matrix.ruby }}"
@@ -361,4 +364,6 @@ jobs:
           name: cruby-x86_64-linux-gem
           path: gems
       - run: apk add bash build-base
+      - if: matrix.ruby == '3.0' # https://github.com/rake-compiler/rake-compiler/pull/236
+        run: gem update --system
       - run: ./bin/test-gem-install ./gems
