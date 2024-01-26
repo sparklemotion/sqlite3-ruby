@@ -110,4 +110,31 @@ class IntegrationPendingTestCase < SQLite3::TestCase
 
     assert_operator work.size - work.find_index("|"), :>, 3
   end
+
+  def test_progress_handler_releasing_gvl
+    work = []
+
+    Thread.new do
+      loop do
+        sleep 0.1
+        work << "."
+      end
+    end
+
+    @db.progress_handler { Thread.pass }
+
+    work << ">"
+    @db.execute <<~SQL
+      WITH RECURSIVE r(i) AS (
+        VALUES(0)
+        UNION ALL
+        SELECT i FROM r
+        LIMIT 10000000
+      )
+      SELECT i FROM r WHERE i = 1;
+    SQL
+    work << "<"
+
+    assert_operator work.find_index("<") - work.find_index(">"), :>, 9
+  end
 end
