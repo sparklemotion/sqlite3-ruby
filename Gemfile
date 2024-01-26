@@ -3,7 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 group :development do
-  gem "minitest", "5.21.1"
+  gem "minitest", "5.21.2"
 
   gem "rake-compiler", "1.2.5"
   gem "rake-compiler-dock", "1.4.0"
@@ -12,10 +12,7 @@ group :development do
 
   gem "rdoc", "6.6.2"
 
-  gem "rubocop", require: false
-  gem "standardrb", require: false
-  gem "rubocop-minitest", require: false
-
-  # FIXME: Remove after minitest removes dependency
-  gem "mutex_m"
+  gem "rubocop", "1.59.0", require: false
+  gem "rubocop-minitest", "0.34.3", require: false
+  gem "standard", "1.33.0", require: false
 end

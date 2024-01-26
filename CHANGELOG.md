@@ -11,19 +11,26 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 
 ### Added
 
-- `Database#busy_handler_timeout=` introduced as an alternative to `#busy_timeout=` that can be used when it's desired to release the GVL between retries. [#443] @fractaledmind
+- `Database#busy_handler_timeout=` introduced as an alternative to `#busy_timeout=` that can be used when it's desired to release the GVL between retries. [#443, #456] @fractaledmind
+- Support the `SUPER_JOURNAL` flag which is an alias for `MASTER_JOURNAL` as of sqlite 3.33.0. [#467] @flavorjones
+- `Statement#stat` and `Statement#memused` introduced to report statistics. [#461] @fractaledmind
 
 
 ### Improved
 
 - Avoid leaking memory for statements that are not closed properly. [#392] @haileys
 - Moved some C code into Ruby. [#451, #455] @tenderlove
+- Improve performance of `ResultSet` hashes. [#154, #484, #468] @tenderlove
+- Fix a GC compaction issue with `busy_handler`. [#466] @byroot
+- Remove unused `ResultSet` instance variable. [#469] @tenderlove
 
 
 ### Changed
 
-- Raise `StandardError` in a few places where `Exception` was previously raised.
-- `Database#columns` returns a list of frozen strings now
+- Raise `StandardError` in a few places where `Exception` was previously raised. [#467] @flavorjones
+- `Database#columns` returns a list of frozen strings. [#474] @tenderlove
+- Freeze results that come from the database. [#480] @tenderlove
+- The encoding of a Database is no longer cached. [#485] @tenderlove
 
 
 ### Removed
@@ -86,6 +93,13 @@ assert_equal ["blob"], row.first.types
   assert_equal ["blob"], v.types
 end
 ```
+
+## 1.7.1 / 2024-01-24
+
+### Dependencies
+
+- Vendored sqlite is update to [v3.45.0](https://www.sqlite.org/releaselog/3_45_0.html). @flavorjones
+
 
 ## 1.7.0 / 2023-12-27
 

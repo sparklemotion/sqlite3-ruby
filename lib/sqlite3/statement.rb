@@ -145,6 +145,33 @@ module SQLite3
       end
     end
 
+    # Returns a Hash containing information about the statement.
+    # The contents of the hash are implementation specific and may change in
+    # the future without notice. The hash includes information about internal
+    # statistics about the statement such as:
+    #   - +fullscan_steps+: the number of times that SQLite has stepped forward
+    # in a table as part of a full table scan
+    #   - +sorts+: the number of sort operations that have occurred
+    #   - +autoindexes+: the number of rows inserted into transient indices
+    # that were created automatically in order to help joins run faster
+    #   - +vm_steps+: the number of virtual machine operations executed by the
+    # prepared statement
+    #   - +reprepares+: the number of times that the prepare statement has been
+    # automatically regenerated due to schema changes or changes to bound
+    # parameters that might affect the query plan
+    #   - +runs+: the number of times that the prepared statement has been run
+    #   - +filter_misses+: the number of times that the Bloom filter returned
+    # a find, and thus the join step had to be processed as normal
+    #   - +filter_hits+: the number of times that a join step was bypassed
+    # because a Bloom filter returned not-found
+    def stat key = nil
+      if key
+        stat_for(key)
+      else
+        stats_as_hash
+      end
+    end
+
     private
 
     # A convenience method for obtaining the metadata about the query. Note

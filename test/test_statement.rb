@@ -12,6 +12,25 @@ module SQLite3
       @db.close
     end
 
+    def test_rows_should_be_frozen
+      @db.execute 'CREATE TABLE "things" ("float" float, "int" int, "text" blob, "string" string, "nil" string)'
+      stmt = @db.prepare "INSERT INTO things (float, int, text, string, nil) VALUES (?, ?, ?, ?, ?)"
+      stmt.execute(1.2, 2, "blob", "string", nil)
+      stmt.close
+
+      rows = @db.execute "SELECT float, int, text, string, nil FROM things"
+      assert_predicate rows, :frozen?
+      assert_equal 1, rows.length
+      row = rows[0]
+      assert_predicate row, :frozen?
+      row.each { |item| assert_predicate item, :frozen? }
+
+      if defined?(Ractor)
+        assert Ractor.shareable?(rows)
+        assert Ractor.shareable?(row)
+      end
+    end
+
     def test_double_close_does_not_segv
       @db.execute 'CREATE TABLE "things" ("number" float NOT NULL)'
 
@@ -285,6 +304,145 @@ module SQLite3
       while (x = stmt.step)
         assert_equal [nil, nil], x
       end
+
+      stmt.close
+    end
+
+    def test_stat
+      assert @stmt.stat.is_a?(Hash)
+    end
+
+    def test_stat_fullscan_steps
+      @db.execute "CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);"
+      10.times do |i|
+        @db.execute "INSERT INTO test_table (name) VALUES (?)", "name_#{i}"
+      end
+      @db.execute "DROP INDEX IF EXISTS idx_test_table_id;"
+      stmt = @db.prepare("SELECT * FROM test_table WHERE name LIKE 'name%'")
+      stmt.execute.to_a
+
+      assert_equal 9, stmt.stat(:fullscan_steps)
+
+      stmt.close
+    end
+
+    def test_stat_sorts
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1 order by a")
+      stmt.execute.to_a
+
+      assert_equal 1, stmt.stat(:sorts)
+
+      stmt.close
+    end
+
+    def test_stat_autoindexes
+      @db.execute "CREATE TABLE t1(a,b);"
+      @db.execute "CREATE TABLE t2(c,d);"
+      10.times do |i|
+        @db.execute "INSERT INTO t1 (a, b) VALUES (?, ?)", [i, i.to_s]
+        @db.execute "INSERT INTO t2 (c, d) VALUES (?, ?)", [i, i.to_s]
+      end
+      stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c;")
+      stmt.execute.to_a
+
+      assert_equal 9, stmt.stat(:autoindexes)
+
+      stmt.close
+    end
+
+    def test_stat_vm_steps
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1 order by a")
+      stmt.execute.to_a
+
+      assert_operator stmt.stat(:vm_steps), :>, 0
+
+      stmt.close
+    end
+
+    def test_stat_reprepares
+      @db.execute "CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);"
+      10.times do |i|
+        @db.execute "INSERT INTO test_table (name) VALUES (?)", "name_#{i}"
+      end
+      stmt = @db.prepare("SELECT * FROM test_table WHERE name LIKE ?")
+      stmt.execute("name%").to_a
+
+      if stmt.stat.key?(:reprepares)
+        assert_equal 1, stmt.stat(:reprepares)
+      else
+        assert_raises(ArgumentError, "unknown key: reprepares") { stmt.stat(:reprepares) }
+      end
+
+      stmt.close
+    end
+
+    def test_stat_runs
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1")
+      stmt.execute.to_a
+
+      if stmt.stat.key?(:runs)
+        assert_equal 1, stmt.stat(:runs)
+      else
+        assert_raises(ArgumentError, "unknown key: runs") { stmt.stat(:runs) }
+      end
+
+      stmt.close
+    end
+
+    def test_stat_filter_misses
+      @db.execute "CREATE TABLE t1(a,b);"
+      @db.execute "CREATE TABLE t2(c,d);"
+      10.times do |i|
+        @db.execute "INSERT INTO t1 (a, b) VALUES (?, ?)", [i, i.to_s]
+        @db.execute "INSERT INTO t2 (c, d) VALUES (?, ?)", [i, i.to_s]
+      end
+      stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c;")
+      stmt.execute.to_a
+
+      if stmt.stat.key?(:filter_misses)
+        assert_equal 10, stmt.stat(:filter_misses)
+      else
+        assert_raises(ArgumentError, "unknown key: filter_misses") { stmt.stat(:filter_misses) }
+      end
+
+      stmt.close
+    end
+
+    def test_stat_filter_hits
+      @db.execute "CREATE TABLE t1(a,b);"
+      @db.execute "CREATE TABLE t2(c,d);"
+      10.times do |i|
+        @db.execute "INSERT INTO t1 (a, b) VALUES (?, ?)", [i, i.to_s]
+        @db.execute "INSERT INTO t2 (c, d) VALUES (?, ?)", [i + 1, i.to_s]
+      end
+      stmt = @db.prepare("SELECT * FROM t1, t2 WHERE a=c AND b = '1' AND d = '1';")
+      stmt.execute.to_a
+
+      if stmt.stat.key?(:filter_hits)
+        assert_equal 1, stmt.stat(:filter_hits)
+      else
+        assert_raises(ArgumentError, "unknown key: filter_hits") { stmt.stat(:filter_hits) }
+      end
+
+      stmt.close
+    end
+
+    def test_memused
+      @db.execute "CREATE TABLE test1(a)"
+      @db.execute "INSERT INTO test1 VALUES (1)"
+      stmt = @db.prepare("select * from test1")
+
+      skip("memused not defined") unless stmt.respond_to?(:memused)
+
+      stmt.execute.to_a
+
+      assert_operator stmt.memused, :>, 0
 
       stmt.close
     end

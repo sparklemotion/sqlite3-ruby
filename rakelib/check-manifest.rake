@@ -22,8 +22,10 @@ task :check_manifest do
     [0-9]*
   }
   ignore_files = %w[
+    .editorconfig
     .gitignore
     .rdoc_options
+    .rubocop.yml
     Gemfile?*
     Rakefile
     [a-z]*.{log,out}

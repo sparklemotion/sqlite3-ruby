@@ -5,6 +5,7 @@ if ENV["GITHUB_ACTIONS"] == "true" || ENV["CI"]
   $VERBOSE = nil
 end
 
+puts "info: ruby version: #{RUBY_DESCRIPTION}"
 puts "info: gem version: #{SQLite3::VERSION}"
 puts "info: sqlite version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
 puts "info: sqlcipher?: #{SQLite3.sqlcipher?}"

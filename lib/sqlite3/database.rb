@@ -117,7 +117,6 @@ module SQLite3
 
       @tracefunc = nil
       @authorizer = nil
-      @encoding = nil
       @busy_handler = nil
       @progress_handler = nil
       @collations = {}
@@ -139,7 +138,7 @@ module SQLite3
     #
     # Fetch the encoding set on this database
     def encoding
-      @encoding ||= Encoding.find(execute("PRAGMA encoding").first.first)
+      prepare("PRAGMA encoding") { |stmt| Encoding.find(stmt.first.first) }
     end
 
     # Installs (or removes) a block that will be invoked for every access
@@ -209,7 +208,7 @@ module SQLite3
             yield row
           end
         else
-          stmt.to_a
+          stmt.to_a.freeze
         end
       end
     end
