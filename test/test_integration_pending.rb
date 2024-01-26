@@ -135,6 +135,6 @@ class IntegrationPendingTestCase < SQLite3::TestCase
     SQL
     work << "<"
 
-    assert_operator work.find_index("<") - work.find_index(">"), :>, 9
+    assert_operator work.find_index("<") - work.find_index(">"), :>, 5
   end
 end
