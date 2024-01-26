@@ -525,7 +525,7 @@ class IntegrationTestCase < SQLite3::TestCase
     skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
 
     progress_calls = []
-    handler = Proc.new do
+    handler = proc do
       progress_calls << nil
       true
     end
