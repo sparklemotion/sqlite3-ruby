@@ -512,7 +512,7 @@ class IntegrationTestCase < SQLite3::TestCase
     skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
 
     progress_calls = []
-    @db.progress_handler do
+    @db.progress_handler(10) do
       progress_calls << nil
       true
     end
@@ -544,7 +544,7 @@ class IntegrationTestCase < SQLite3::TestCase
   def test_progress_handler_interrupts_operation
     skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
 
-    @db.progress_handler do
+    @db.progress_handler(10) do
       false
     end
 
