@@ -941,7 +941,7 @@ init_sqlite3_database(void)
     rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
 #endif
 
-#ifndef HAVE_SQLITE3_PROGRESS_HANDLER
+#ifdef HAVE_SQLITE3_PROGRESS_HANDLER
     rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
 #endif
 
