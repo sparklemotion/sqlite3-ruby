@@ -251,10 +251,7 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
                  rb_sqlite3_aggregator_final
              );
 
-    if (status != SQLITE_OK) {
-        rb_sqlite3_raise(ctx->db, status);
-        return self; // just in case rb_sqlite3_raise returns.
-    }
+    CHECK(ctx->db, status);
 
     rb_ary_push(aggregators, aw);
 

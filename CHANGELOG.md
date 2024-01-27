@@ -28,7 +28,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 
 ### Changed
 
-- Raise `StandardError` in a few places where `Exception` was previously raised. [#467] @flavorjones
+- Consistently use `SQLite3::Exception` or subclasses. Previously some `Pragmas` methods raised `Exception`, and `Database#execute_batch2` and `Database#load_extension` raised `RuntimeError`. [#467] @flavorjones
 - `Database#columns` returns a list of frozen strings. [#474] @tenderlove
 - Freeze results that come from the database. [#480] @tenderlove
 - The encoding of a Database is no longer cached. [#485] @tenderlove
