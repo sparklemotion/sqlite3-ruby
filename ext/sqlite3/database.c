@@ -277,32 +277,34 @@ last_insert_row_id(VALUE self)
 VALUE
 sqlite3val2rb(sqlite3_value *val)
 {
+    VALUE rb_val;
+
     switch (sqlite3_value_type(val)) {
         case SQLITE_INTEGER:
-            return LL2NUM(sqlite3_value_int64(val));
+            rb_val = LL2NUM(sqlite3_value_int64(val));
             break;
         case SQLITE_FLOAT:
-            return rb_float_new(sqlite3_value_double(val));
+            rb_val = rb_float_new(sqlite3_value_double(val));
             break;
-        case SQLITE_TEXT:
-            return rb_str_new2((const char *)sqlite3_value_text(val));
+        case SQLITE_TEXT: {
+            rb_val = rb_utf8_str_new_cstr((const char *)sqlite3_value_text(val));
+            rb_obj_freeze(rb_val);
             break;
+        }
         case SQLITE_BLOB: {
-            /* Sqlite warns calling sqlite3_value_bytes may invalidate pointer from sqlite3_value_blob,
-               so we explicitly get the length before getting blob pointer.
-               Note that rb_str_new apparently create string with ASCII-8BIT (BINARY) encoding,
-               which is what we want, as blobs are binary
-             */
             int len = sqlite3_value_bytes(val);
-            return rb_str_new((const char *)sqlite3_value_blob(val), len);
+            rb_val = rb_str_new((const char *)sqlite3_value_blob(val), len);
+            rb_obj_freeze(rb_val);
             break;
         }
         case SQLITE_NULL:
-            return Qnil;
+            rb_val = Qnil;
             break;
         default:
-            rb_raise(rb_eRuntimeError, "bad type"); /* FIXME */
+            rb_raise(rb_eRuntimeError, "bad type");
     }
+
+    return rb_val;
 }
 
 void

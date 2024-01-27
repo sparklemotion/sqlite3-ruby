@@ -15,6 +15,36 @@ module SQLite3
       @db.close unless @db.closed?
     end
 
+    def test_custom_function_encoding
+      @db.execute("CREATE TABLE
+                       sourceTable(
+                         sourceData TEXT);")
+      @db.execute("INSERT INTO sourceTable
+                     VALUES ('abcde');")
+
+      @db.create_function("GetCopy", 1) { |func, value|
+        func.result = value
+      }
+
+      @db.transaction { |t|
+        t.execute("CREATE TABLE
+                         afterTable(
+                           beforeData TEXT,
+                           afterData TEXT);".squeeze(" "))
+
+        t.execute("INSERT INTO afterTable
+                       SELECT
+                         sourceData,
+                         GetCopy(sourceData)
+                       FROM sourceTable;")
+      }
+
+      assert_equal(1, @db.get_first_value("SELECT 1
+                                        FROM afterTable
+                                        WHERE beforeData = afterData
+                                        LIMIT 1;"))
+    end
+
     def test_segv
       assert_raises { SQLite3::Database.new 1 } # rubocop:disable Minitest/UnspecifiedException
     end
