@@ -23,6 +23,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - Improve performance of `ResultSet` hashes. [#154, #484, #468] @tenderlove
 - Fix a GC compaction issue with `busy_handler`. [#466] @byroot
 - Remove unused `ResultSet` instance variable. [#469] @tenderlove
+- Fix encoding for values passed to custom functions. [#218, #488] @tenderlove
 
 
 ### Changed
