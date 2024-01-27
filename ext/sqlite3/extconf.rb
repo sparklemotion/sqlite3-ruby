@@ -109,6 +109,10 @@ module Sqlite3
 
         abort_could_not_find(libname) unless find_library(libname, "sqlite3_libversion_number", "sqlite3.h")
 
+        # Truffle Ruby doesn't support this yet:
+        # https://github.com/oracle/truffleruby/issues/3408
+        have_func("rb_enc_interned_str_cstr")
+
         # Functions defined in 1.9 but not 1.8
         have_func("rb_proc_arity")
 
