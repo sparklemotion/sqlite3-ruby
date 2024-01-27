@@ -58,6 +58,7 @@ module SQLite3
       stmt = @db.prepare "SELECT float, int, text, string, nil FROM things"
       # Make sure this new statement returns the same interned strings
       stmt.columns.each_with_index do |str, i|
+        assert_predicate columns[i], :frozen?
         assert_same columns[i], str
       end
     ensure

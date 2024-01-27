@@ -366,16 +366,15 @@ column_count(VALUE self)
 
 #if HAVE_RB_ENC_INTERNED_STR_CSTR
 static VALUE
-interned_utf8_cstr(const char * str)
+interned_utf8_cstr(const char *str)
 {
     return rb_enc_interned_str_cstr(str, rb_utf8_encoding());
 }
 #else
 static VALUE
-interned_utf8_cstr(const char * str)
+interned_utf8_cstr(const char *str)
 {
     VALUE rb_str = rb_utf8_str_new_cstr(str);
-    rb_obj_freeze(rb_str);
     return rb_funcall(rb_str, rb_intern("-@"), 0);
 }
 #endif
