@@ -200,7 +200,7 @@ module SQLite3
       end
       assert_equal [[1, 50], [2, 60]], return_value
 
-      assert_raises(RuntimeError) do
+      assert_raises(SQLite3::Exception) do
         # "names" is not a valid column
         @db.execute_batch2 'INSERT INTO items (names) VALUES ("bazz")'
       end
@@ -629,6 +629,11 @@ module SQLite3
       skip("extensions are not enabled") unless db.respond_to?(:load_extension)
       assert_raises(TypeError) { db.load_extension(1) }
       assert_raises(TypeError) { db.load_extension(Pathname.new("foo.so")) }
+    end
+
+    def test_load_extension_error
+      db = SQLite3::Database.new(":memory:")
+      assert_raises(SQLite3::Exception) { db.load_extension("path/to/foo.so") }
     end
 
     def test_raw_float_infinity

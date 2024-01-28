@@ -22,16 +22,14 @@ module SQLite3
         when "on", "yes", "true", "y", "t" then mode = "'ON'"
         when "off", "no", "false", "n", "f" then mode = "'OFF'"
         else
-          raise StandardError,
-            "unrecognized pragma parameter #{mode.inspect}"
+          raise SQLite3::Exception, "unrecognized pragma parameter #{mode.inspect}"
         end
       when true, 1
         mode = "ON"
       when false, 0, nil
         mode = "OFF"
       else
-        raise StandardError,
-          "unrecognized pragma parameter #{mode.inspect}"
+        raise SQLite3::Exception, "unrecognized pragma parameter #{mode.inspect}"
       end
 
       execute("PRAGMA #{name}=#{mode}")
@@ -62,8 +60,7 @@ module SQLite3
     def set_enum_pragma(name, mode, enums)
       match = enums.find { |p| p.find { |i| i.to_s.downcase == mode.to_s.downcase } }
       unless match
-        raise StandardError,
-          "unrecognized #{name} #{mode.inspect}"
+        raise SQLite3::Exception, "unrecognized #{name} #{mode.inspect}"
       end
       execute("PRAGMA #{name}='#{match.first.upcase}'")
     end

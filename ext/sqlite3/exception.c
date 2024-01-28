@@ -90,10 +90,28 @@ rb_sqlite3_raise(sqlite3 *db, int status)
             klass = rb_path2class("SQLite3::NotADatabaseException");
             break;
         default:
-            klass = rb_eRuntimeError;
+            klass = rb_path2class("SQLite3::Exception");
     }
 
     klass = rb_exc_new2(klass, sqlite3_errmsg(db));
     rb_iv_set(klass, "@code", INT2FIX(status));
     rb_exc_raise(klass);
+}
+
+/*
+ *  accepts a sqlite3 error message as the final argument, which will be `sqlite3_free`d
+ */
+void
+rb_sqlite3_raise_msg(sqlite3 *db, int status, const char* msg)
+{
+  VALUE exception;
+
+  if (status == SQLITE_OK) {
+    return;
+  }
+
+  exception = rb_exc_new2(rb_path2class("SQLite3::Exception"), msg);
+  sqlite3_free((void*)msg);
+  rb_iv_set(exception, "@code", INT2FIX(status));
+  rb_exc_raise(exception);
 }

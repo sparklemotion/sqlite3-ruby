@@ -23,11 +23,12 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - Improve performance of `ResultSet` hashes. [#154, #484, #468] @tenderlove
 - Fix a GC compaction issue with `busy_handler`. [#466] @byroot
 - Remove unused `ResultSet` instance variable. [#469] @tenderlove
+- Fix encoding for values passed to custom functions. [#218, #488] @tenderlove
 
 
 ### Changed
 
-- Raise `StandardError` in a few places where `Exception` was previously raised. [#467] @flavorjones
+- Consistently use `SQLite3::Exception` or subclasses. Previously some `Pragmas` methods raised `Exception`, and `Database#execute_batch2` and `Database#load_extension` raised `RuntimeError`. [#467] @flavorjones
 - `Database#columns` returns a list of frozen strings. [#474] @tenderlove
 - Freeze results that come from the database. [#480] @tenderlove
 - The encoding of a Database is no longer cached. [#485] @tenderlove

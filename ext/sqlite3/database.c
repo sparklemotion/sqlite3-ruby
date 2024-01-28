@@ -668,16 +668,13 @@ load_extension(VALUE self, VALUE file)
     sqlite3RubyPtr ctx;
     int status;
     char *errMsg;
-    VALUE errexp;
+
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
 
     status = sqlite3_load_extension(ctx->db, StringValuePtr(file), 0, &errMsg);
-    if (status != SQLITE_OK) {
-        errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
-        sqlite3_free(errMsg);
-        rb_exc_raise(errexp);
-    }
+
+    CHECK_MSG(ctx->db, status, errMsg);
 
     return self;
 }
@@ -779,7 +776,6 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
     int status;
     VALUE callback_ary = rb_ary_new();
     char *errMsg;
-    VALUE errexp;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
@@ -794,11 +790,7 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
                               &errMsg);
     }
 
-    if (status != SQLITE_OK) {
-        errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
-        sqlite3_free(errMsg);
-        rb_exc_raise(errexp);
-    }
+    CHECK_MSG(ctx->db, status, errMsg);
 
     return callback_ary;
 }
