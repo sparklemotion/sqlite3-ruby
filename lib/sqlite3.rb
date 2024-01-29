@@ -14,4 +14,9 @@ module SQLite3
   def self.threadsafe?
     threadsafe > 0
   end
+
+  # Is the gem's C extension marked as Ractor-safe?
+  def self.ractor_safe?
+    threadsafe? && !defined?(Ractor).nil?
+  end
 end
