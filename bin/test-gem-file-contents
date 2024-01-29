@@ -94,13 +94,24 @@ describe File.basename(gemfile) do
   end
 
   describe "all platforms" do
-    ["lib", "test"].each do |dir|
+    ["lib"].each do |dir|
       it "contains every ruby file in #{dir}/" do
         expected = `git ls-files #{dir}`.split("\n").grep(/\.rb$/).sort
         skip "looks like this isn't a git repository" if expected.empty?
         actual = gemfile_contents.select { |f| f.start_with?("#{dir}/") }.grep(/\.rb$/).sort
         assert_equal(expected, actual)
       end
+    end
+
+    ["test"].each do |dir|
+      it "does not contain files from #{dir}/" do
+        actual = gemfile_contents.select { |f| f.start_with?("#{dir}/") }.grep(/\.rb$/)
+        assert_empty(actual)
+      end
+    end
+
+    it "does not contain the Gemfile" do
+      refute_includes(gemfile_contents, "Gemfile")
     end
   end
 
