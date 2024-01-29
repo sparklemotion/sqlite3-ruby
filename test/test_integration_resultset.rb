@@ -92,10 +92,10 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     @db.execute("insert into foo_real values (42)")
     @db.query("select a, sum(a), typeof(a), typeof(sum(a)) from foo_real") do |result|
       result = result.next
-      assert result[0].is_a?(Float)
-      assert result[1].is_a?(Float)
-      assert result[2].is_a?(String)
-      assert result[3].is_a?(String)
+      assert_kind_of Float, result[0]
+      assert_kind_of Float, result[1]
+      assert_kind_of String, result[2]
+      assert_kind_of String, result[3]
     end
   end
 
