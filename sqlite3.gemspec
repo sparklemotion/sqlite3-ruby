@@ -39,7 +39,6 @@ Gem::Specification.new do |s|
     ".gemtest",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
-    "ChangeLog.cvs",
     "FAQ.md",
     "INSTALLATION.md",
     "LICENSE",
