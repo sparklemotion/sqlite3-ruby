@@ -37,12 +37,9 @@ Gem::Specification.new do |s|
 
   s.files = [
     ".gemtest",
-    "API_CHANGES.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
-    "ChangeLog.cvs",
     "FAQ.md",
-    "Gemfile",
     "INSTALLATION.md",
     "LICENSE",
     "LICENSE-DEPENDENCIES",
@@ -69,32 +66,10 @@ Gem::Specification.new do |s|
     "lib/sqlite3/resultset.rb",
     "lib/sqlite3/statement.rb",
     "lib/sqlite3/value.rb",
-    "lib/sqlite3/version.rb",
-    "test/helper.rb",
-    "test/test_backup.rb",
-    "test/test_collation.rb",
-    "test/test_database.rb",
-    "test/test_database_flags.rb",
-    "test/test_database_readonly.rb",
-    "test/test_database_readwrite.rb",
-    "test/test_deprecated.rb",
-    "test/test_encoding.rb",
-    "test/test_integration.rb",
-    "test/test_integration_aggregate.rb",
-    "test/test_integration_open_close.rb",
-    "test/test_integration_pending.rb",
-    "test/test_integration_resultset.rb",
-    "test/test_integration_statement.rb",
-    "test/test_pragmas.rb",
-    "test/test_resource_cleanup.rb",
-    "test/test_result_set.rb",
-    "test/test_sqlite3.rb",
-    "test/test_statement.rb",
-    "test/test_statement_execute.rb"
+    "lib/sqlite3/version.rb"
   ]
 
   s.extra_rdoc_files = [
-    "API_CHANGES.md",
     "CHANGELOG.md",
     "README.md",
     "ext/sqlite3/aggregator.c",

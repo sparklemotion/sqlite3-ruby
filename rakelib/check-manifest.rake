@@ -17,6 +17,7 @@ task :check_manifest do
     pkg
     ports
     rakelib
+    test
     tmp
     vendor
     [0-9]*
@@ -26,7 +27,7 @@ task :check_manifest do
     .gitignore
     .rdoc_options
     .rubocop.yml
-    Gemfile?*
+    Gemfile*
     Rakefile
     [a-z]*.{log,out}
     [0-9]*
