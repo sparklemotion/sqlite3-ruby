@@ -13,6 +13,6 @@ group :development do
   gem "rdoc", "6.6.2"
 
   gem "rubocop", "1.59.0", require: false
-  gem "rubocop-minitest", "0.34.3", require: false
+  gem "rubocop-minitest", "0.34.5", require: false
   gem "standard", "1.33.0", require: false
 end
