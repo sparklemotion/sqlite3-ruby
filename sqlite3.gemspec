@@ -37,7 +37,6 @@ Gem::Specification.new do |s|
 
   s.files = [
     ".gemtest",
-    "API_CHANGES.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "ChangeLog.cvs",
@@ -72,7 +71,6 @@ Gem::Specification.new do |s|
   ]
 
   s.extra_rdoc_files = [
-    "API_CHANGES.md",
     "CHANGELOG.md",
     "README.md",
     "ext/sqlite3/aggregator.c",

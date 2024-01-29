@@ -5,6 +5,28 @@
 This doc is a short introduction on how to modify and maintain the sqlite3-ruby gem.
 
 
+## Architecture notes
+
+### Garbage collection
+
+All statements keep pointers back to their respective database connections.
+The `@connection` instance variable on the `Statement` handle keeps the database
+connection alive.  Memory allocated for a statement handler will be freed in
+two cases:
+
+1. `#close` is called on the statement
+2. The `SQLite3::Database` object gets garbage collected
+
+We can't free the memory for the statement in the garbage collection function
+for the statement handler.  The reason is because there exists a race
+condition.  We cannot guarantee the order in which objects will be garbage
+collected.  So, it is possible that a connection and a statement are up for
+garbage collection.  If the database connection were to be free'd before the
+statement, then boom.  Instead we'll be conservative and free unclosed
+statements when the connection is terminated.
+
+
+
 ## Building gems
 
 As a prerequisite please make sure you have `docker` correctly installed, so that you're able to cross-compile the native gems.
