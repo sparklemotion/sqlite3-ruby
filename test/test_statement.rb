@@ -326,7 +326,7 @@ module SQLite3
     end
 
     def test_stat
-      assert @stmt.stat.is_a?(Hash)
+      assert_kind_of Hash, @stmt.stat
     end
 
     def test_stat_fullscan_steps
