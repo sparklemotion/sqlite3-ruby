@@ -95,11 +95,18 @@ assert_equal ["blob"], row.first.types
 end
 ```
 
+## 1.7.2 / 2024-01-30
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.45.1](https://www.sqlite.org/releaselog/3_45_1.html). @flavorjones
+
+
 ## 1.7.1 / 2024-01-24
 
 ### Dependencies
 
-- Vendored sqlite is update to [v3.45.0](https://www.sqlite.org/releaselog/3_45_0.html). @flavorjones
+- Vendored sqlite is updated to [v3.45.0](https://www.sqlite.org/releaselog/3_45_0.html). @flavorjones
 
 
 ## 1.7.0 / 2023-12-27
