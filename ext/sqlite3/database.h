@@ -6,6 +6,7 @@
 struct _sqlite3Ruby {
     sqlite3 *db;
     VALUE busy_handler;
+    VALUE progress_handler;
 };
 
 typedef struct _sqlite3Ruby sqlite3Ruby;

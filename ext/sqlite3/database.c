@@ -17,6 +17,7 @@ database_mark(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
     rb_gc_mark(c->busy_handler);
+    rb_gc_mark(c->progress_handler);
 }
 
 static void
@@ -51,6 +52,7 @@ static VALUE
 allocate(VALUE klass)
 {
     sqlite3RubyPtr ctx;
+
     return TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
 }
 
@@ -258,6 +260,57 @@ busy_handler(int argc, VALUE *argv, VALUE self)
 
     return self;
 }
+
+#ifdef HAVE_SQLITE3_PROGRESS_HANDLER
+static int
+rb_sqlite3_progress_handler(void *context)
+{
+  sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+
+  VALUE handle = ctx->progress_handler;
+  VALUE result = rb_funcall(handle, rb_intern("call"), 0);
+
+  if (Qfalse == result) { return 1; }
+
+  return 0;
+}
+
+/* call-seq:
+ *    progress_handler([n]) { ... }
+ *    progress_handler([n,] Class.new { def call; end }.new)
+ *
+ * Register a progress handler with this database instance.
+ * This handler will be invoked periodically during a long-running query or operation.
+ * If the handler returns +false+, the operation will be interrupted; otherwise, it continues.
+ * The parameter 'n' specifies the number of SQLite virtual machine instructions between invocations.
+ * If 'n' is not provided, the default value is 1.
+ */
+static VALUE
+progress_handler(int argc, VALUE *argv, VALUE self)
+{
+  sqlite3RubyPtr ctx;
+  VALUE block, n_value;
+
+  TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+  REQUIRE_OPEN_DB(ctx);
+
+  rb_scan_args(argc, argv, "02", &n_value, &block);
+
+  int n = NIL_P(n_value) ? 1000 : NUM2INT(n_value);
+  if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
+  ctx->progress_handler = block;
+
+  sqlite3_progress_handler(
+      ctx->db,
+      n,
+      NIL_P(block) ? NULL : rb_sqlite3_progress_handler,
+      (void *)ctx
+  );
+
+  return self;
+}
+#endif
+
 
 /* call-seq: last_insert_row_id
  *
@@ -880,6 +933,10 @@ init_sqlite3_database(void)
 
 #ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
     rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
+#endif
+
+#ifdef HAVE_SQLITE3_PROGRESS_HANDLER
+    rb_define_method(cSqlite3Database, "progress_handler", progress_handler, -1);
 #endif
 
     rb_sqlite3_aggregator_init();

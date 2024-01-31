@@ -505,4 +505,66 @@ class IntegrationTestCase < SQLite3::TestCase
       [1, "foo"])
     assert_equal "foo", result
   end
+
+  ###
+  # The `progress_handler` method may not exist depending on how sqlite3 was compiled
+  def test_progress_handler_used
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
+    progress_calls = []
+    @db.progress_handler(10) do
+      progress_calls << nil
+      true
+    end
+    @db.execute "create table test1(a, b)"
+
+    assert_operator 1, :<, progress_calls.size
+  end
+
+  def test_progress_handler_opcode_arg
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
+    progress_calls = []
+    handler = proc do
+      progress_calls << nil
+      true
+    end
+    @db.progress_handler(1, handler)
+    @db.execute "create table test1(a, b)"
+    first_count = progress_calls.size
+
+    progress_calls = []
+    @db.progress_handler(10, handler)
+    @db.execute "create table test2(a, b)"
+    second_count = progress_calls.size
+
+    assert_operator first_count, :>=, second_count
+  end
+
+  def test_progress_handler_interrupts_operation
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
+    @db.progress_handler(10) do
+      false
+    end
+
+    assert_raises(SQLite3::InterruptException) do
+      @db.execute "create table test1(a, b)"
+    end
+  end
+
+  def test_clear_handler
+    skip("progress_handler method not defined") unless @db.respond_to?(:progress_handler)
+
+    progress_calls = []
+    @db.progress_handler do
+      progress_calls << nil
+      true
+    end
+    @db.progress_handler(nil)
+
+    @db.execute "create table test1(a, b)"
+
+    assert_equal 0, progress_calls.size
+  end
 end

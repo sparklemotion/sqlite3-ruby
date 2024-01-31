@@ -118,6 +118,7 @@ module SQLite3
       @tracefunc = nil
       @authorizer = nil
       @busy_handler = nil
+      @progress_handler = nil
       @collations = {}
       @functions = {}
       @results_as_hash = options[:results_as_hash]
