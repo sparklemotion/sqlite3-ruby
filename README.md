@@ -76,6 +76,78 @@ end
 # => ["Jane", "me@janedoe.com", "A", "http://blog.janedoe.com"]
 ```
 
+## Thread Safety
+
+When `SQLite3.threadsafe?` returns `true`, then SQLite3 has been compiled to
+support running in a multithreaded environment.  However, this doesn't mean
+that all classes in the SQLite3 gem can be considered "thread safe".
+
+When `SQLite3.threadsafe?` returns `true`, it is safe to share only
+`SQLite3::Database` instances among threads without providing your own locking
+mechanism.  For example, the following code is fine because only the database
+instance is shared among threads:
+
+```ruby
+require 'sqlite3'
+
+db = SQLite3::Database.new ":memory:"
+
+latch = Queue.new
+
+ts = 10.times.map {
+  Thread.new {
+    latch.pop
+    db.execute "SELECT '#{Thread.current.inspect}'"
+  }
+}
+10.times { latch << nil }
+
+p ts.map(&:value)
+```
+
+Other instances can be shared among threads, but they require that you provide
+your own locking for thread safety.  For example, `SQLite3::Statement` objects
+(prepared statements) are mutable, so applications must take care to add
+appropriate locks to avoid data race conditions when sharing these objects
+among threads.
+
+Lets rewrite the above example but use a prepared statement and safely share
+the prepared statement among threads:
+
+```ruby
+db = SQLite3::Database.new ":memory:"
+
+# Prepare a statement
+stmt = db.prepare "SELECT :inspect"
+stmt_lock = Mutex.new
+
+latch = Queue.new
+
+ts = 10.times.map {
+  Thread.new {
+    latch.pop
+
+    # Add a lock when using the prepared statement.
+    # Binding values, and walking over results will mutate the statement, so
+    # in order to prevent other threads from "seeing" this thread's data, we
+    # must lock when using the statement object
+    stmt_lock.synchronize do
+      stmt.execute(Thread.current.inspect).to_a
+    end
+  }
+}
+
+10.times { latch << nil }
+
+p ts.map(&:value)
+
+stmt.close
+```
+
+It is generally recommended that if applications want to share a database among
+threads, they _only_ share the database instance object.  Other objects are
+fine to share, but may require manual locking for thread safety.
+
 ## Support
 
 ### Installation or database extensions
