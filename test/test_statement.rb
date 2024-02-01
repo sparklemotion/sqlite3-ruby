@@ -65,6 +65,23 @@ module SQLite3
       stmt&.close
     end
 
+    def test_sql_method
+      sql = "SELECT 1234"
+      stmt = @db.prepare sql
+      assert_equal sql, stmt.sql
+    ensure
+      stmt.close
+    end
+
+    def test_expanded_sql_method
+      sql = "SELECT ?"
+      stmt = @db.prepare sql
+      stmt.bind_params 1234
+      assert_equal "SELECT 1234", stmt.expanded_sql
+    ensure
+      stmt.close
+    end
+
     def test_insert_duplicate_records
       @db.execute 'CREATE TABLE "things" ("name" varchar(20) CONSTRAINT "index_things_on_name" UNIQUE)'
       stmt = @db.prepare("INSERT INTO things(name) VALUES(?)")
