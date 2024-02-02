@@ -259,6 +259,44 @@ busy_handler(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
+static int
+rb_sqlite3_statement_timeout(void *context)
+{
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+    struct timespec currentTime;
+    clock_gettime(CLOCK_MONOTONIC, &currentTime);
+
+    if (!timespecisset(&ctx->stmt_deadline)) {
+        // Set stmt_deadline if not already set
+        ctx->stmt_deadline = currentTime;
+    } else if (timespecafter(&currentTime, &ctx->stmt_deadline)) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/* call-seq: db.statement_timeout = ms
+ *
+ * Indicates that if a query lasts longer than the indicated number of
+ * milliseconds, SQLite should interrupt that query and return an error.
+ * By default, SQLite does not interrupt queries. To restore the default
+ * behavior, send 0 as the +ms+ parameter.
+ */
+static VALUE
+set_statement_timeout(VALUE self, VALUE milliseconds)
+{
+    sqlite3RubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+
+    ctx->stmt_timeout = NUM2INT(milliseconds);
+    int n = NUM2INT(milliseconds) == 0 ? -1 : 1000;
+
+    sqlite3_progress_handler(ctx->db, n, rb_sqlite3_statement_timeout, (void *)ctx);
+
+    return self;
+}
+
 /* call-seq: last_insert_row_id
  *
  * Obtains the unique row ID of the last row to be inserted by this Database
@@ -869,6 +907,9 @@ init_sqlite3_database(void)
     rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
     rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
     rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
+    rb_define_method(cSqlite3Database, "statement_timeout=", set_statement_timeout, 1);
+#endif
     rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
     rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
     rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 2);
