@@ -42,7 +42,6 @@ Gem::Specification.new do |s|
     "FAQ.md",
     "INSTALLATION.md",
     "LICENSE",
-    "LICENSE-DEPENDENCIES",
     "README.md",
     "dependencies.yml",
     "ext/sqlite3/aggregator.c",
