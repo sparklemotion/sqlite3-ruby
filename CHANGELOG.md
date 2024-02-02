@@ -14,6 +14,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - `Database#busy_handler_timeout=` introduced as an alternative to `#busy_timeout=` that can be used when it's desired to release the GVL between retries. [#443, #456] @fractaledmind
 - Support the `SUPER_JOURNAL` flag which is an alias for `MASTER_JOURNAL` as of sqlite 3.33.0. [#467] @flavorjones
 - `Statement#stat` and `Statement#memused` introduced to report statistics. [#461] @fractaledmind
+- `Statement#sql` and `Statement#expanded_sql` introduced to retrieve the SQL statement associated with the `Statement` object. [#293, #498] @tenderlove
 
 
 ### Improved
@@ -28,8 +29,8 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 
 ### Changed
 
-- Consistently use `SQLite3::Exception` or subclasses. Previously some `Pragmas` methods raised `Exception`, and `Database#execute_batch2` and `Database#load_extension` raised `RuntimeError`. [#467] @flavorjones
-- `Database#columns` returns a list of frozen strings. [#474] @tenderlove
+- Consistently use `SQLite3::Exception` or subclasses. Previously some `Pragmas` methods raised `Exception`, and `Database#execute_batch2` and `Database#load_extension` raised `RuntimeError`. [#467, #490] @flavorjones
+- `Database#columns` returns a list of internal frozen strings. [#155, #474, #486] @tenderlove
 - Freeze results that come from the database. [#480] @tenderlove
 - The encoding of a Database is no longer cached. [#485] @tenderlove
 
