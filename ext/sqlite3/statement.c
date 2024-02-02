@@ -622,10 +622,17 @@ static VALUE
 get_expanded_sql(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
+    char *expanded_sql;
+    VALUE rb_expanded_sql;
+
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
     REQUIRE_OPEN_STMT(ctx);
 
-    return rb_obj_freeze(SQLITE3_UTF8_STR_NEW2(sqlite3_expanded_sql(ctx->st)));
+    expanded_sql = sqlite3_expanded_sql(ctx->st);
+    rb_expanded_sql = rb_obj_freeze(SQLITE3_UTF8_STR_NEW2(expanded_sql));
+    sqlite3_free(expanded_sql);
+
+    return rb_expanded_sql;
 }
 
 void
