@@ -598,6 +598,35 @@ database_name(VALUE self, VALUE index)
 
 #endif
 
+/* call-seq: stmt.sql
+ *
+ * Returns the SQL statement used to create this prepared statement
+ */
+static VALUE
+get_sql(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    return rb_obj_freeze(SQLITE3_UTF8_STR_NEW2(sqlite3_sql(ctx->st)));
+}
+
+/* call-seq: stmt.expanded_sql
+ *
+ * Returns the SQL statement used to create this prepared statement, but
+ * with bind parameters substituted in to the statement.
+ */
+static VALUE
+get_expanded_sql(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    return rb_obj_freeze(SQLITE3_UTF8_STR_NEW2(sqlite3_expanded_sql(ctx->st)));
+}
+
 void
 init_sqlite3_statement(void)
 {
@@ -615,6 +644,8 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
     rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
     rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+    rb_define_method(cSqlite3Statement, "sql", get_sql, 0);
+    rb_define_method(cSqlite3Statement, "expanded_sql", get_expanded_sql, 0);
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
     rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
 #endif
