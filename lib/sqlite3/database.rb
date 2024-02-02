@@ -30,6 +30,14 @@ module SQLite3
   # ArrayFields module from Ara Howard. If you require the ArrayFields
   # module before performing a query, and if you have not enabled results as
   # hashes, then the results will all be indexible by field name.
+  #
+  # Thread safety:
+  #
+  # When `SQLite3.threadsafe?` returns true, it is safe to share instances of
+  # the database class among threads without adding specific locking. Other
+  # object instances may require applications to provide their own locks if
+  # they are to be shared among threads.  Please see the README.md for more
+  # information.
   class Database
     attr_reader :collations
 
