@@ -175,7 +175,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 This library is licensed under `BSD-3-Clause`, see [`LICENSE`](./LICENSE).
 
-
 ### Dependencies
 
-The source code of `sqlite` is distributed in the "ruby platform" gem. This code is public domain, see [`LICENSE-DEPENDENCIES`](./LICENSE-DEPENDENCIES) for details.
+The source code of `sqlite` is distributed in the "ruby platform" gem. This code is public domain,
+see https://www.sqlite.org/copyright.html for details.
