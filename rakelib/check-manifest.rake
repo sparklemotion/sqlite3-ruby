@@ -5,10 +5,11 @@
 desc "Perform a sanity check on the gemspec file list"
 task :check_manifest do
   ignore_directories = %w{
-    .bundle
     .DS_Store
+    .bundle
     .git
     .github
+    .ruby-lsp
     bin
     doc
     gems
