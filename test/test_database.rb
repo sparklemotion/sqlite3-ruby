@@ -621,7 +621,7 @@ module SQLite3
       error = assert_raises SQLite3::SQLException do
         db.execute('create index index_numbers_nope ON numbers ("nope");')
       end
-      assert_includes error.message, "no such column: nope"
+      assert_match(/no such column: "?nope"?/, error.message)
     end
 
     def test_load_extension_with_nonstring_argument
