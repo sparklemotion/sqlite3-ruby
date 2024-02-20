@@ -760,6 +760,24 @@ transaction_active_p(VALUE self)
     return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
+/* call-seq: db.cache_misses
+ *
+ * Return the number of pager cache misses that have occurred.
+ *
+ */
+static VALUE
+cache_misses(VALUE self)
+{
+    sqlite3RubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_OPEN_DB(ctx);
+    int iCur, iHi;
+
+    sqlite3_db_status(ctx->db, SQLITE_DBSTATUS_CACHE_MISS, &iCur, &iHi, 0);
+
+    return INT2NUM(iCur);
+}
+
 static int
 hash_callback_function(VALUE callback_ary, int count, char **data, char **columns)
 {
@@ -912,6 +930,7 @@ init_sqlite3_database(void)
 #endif
     rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
     rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
+    rb_define_method(cSqlite3Database, "cache_misses", cache_misses, 0);
     rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 2);
     rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
