@@ -651,9 +651,9 @@ module SQLite3
         ensure
           abort and rollback or commit
         end
+      else
+        true
       end
-
-      true
     end
 
     # Commits the current transaction. If there is no current transaction,

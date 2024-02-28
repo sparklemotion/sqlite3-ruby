@@ -33,6 +33,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - `Database#columns` returns a list of internal frozen strings. [#155, #474, #486] @tenderlove
 - Freeze results that come from the database. [#480] @tenderlove
 - The encoding of a Database is no longer cached. [#485] @tenderlove
+- `Database#transaction` returns the result of the block when used with a block. @alexcwatt
 
 
 ### Removed

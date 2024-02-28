@@ -686,5 +686,14 @@ module SQLite3
     ensure
       tf&.unlink
     end
+
+    def test_transaction_returns_true_without_block
+      assert @db.transaction
+    end
+
+    def test_transaction_returns_block_result
+      result = @db.transaction { :foo }
+      assert_equal :foo, result
+    end
   end
 end
