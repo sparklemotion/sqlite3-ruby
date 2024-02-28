@@ -251,8 +251,7 @@ module SQLite3
     # in turn. The same bind parameters, if given, will be applied to each
     # statement.
     #
-    # This always returns +nil+, making it unsuitable for queries that return
-    # rows.
+    # This always returns the result of the last statement.
     #
     # See also #execute_batch2 for additional ways of
     # executing statements.
@@ -279,6 +278,7 @@ module SQLite3
       end
 
       sql = sql.strip
+      result = nil
       until sql.empty?
         prepare(sql) do |stmt|
           unless stmt.closed?
@@ -287,13 +287,13 @@ module SQLite3
             if bind_vars.length == stmt.bind_parameter_count
               stmt.bind_params(bind_vars)
             end
-            stmt.step
+            result = stmt.step
           end
           sql = stmt.remainder.strip
         end
       end
-      # FIXME: we should not return `nil` as a success return value
-      nil
+
+      result
     end
 
     # Executes all SQL statements in the given string. By contrast, the other
