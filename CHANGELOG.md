@@ -33,13 +33,14 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - `Database#columns` returns a list of internal frozen strings. [#155, #474, #486] @tenderlove
 - Freeze results that come from the database. [#480] @tenderlove
 - The encoding of a Database is no longer cached. [#485] @tenderlove
-- `Database#transaction` returns the result of the block when used with a block. @alexcwatt
+- `Database#transaction` returns the result of the block when used with a block. [#508] @alexcwatt
 
 
 ### Removed
 
-- Remove `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
-- Remove `SQLite3::Translator` and all related type translation methods.
+- Remove methods `SQLite3::Database::FunctionProxy#count` and `#set_error`. [#164, #509, #510] @alexcwatt @flavorjones
+- Remove class `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
+- Remove class `SQLite3::Translator` and all related type translation methods.
   If you need to do type translation on values returned from the statement object,
   please wrap it with a delegate object.  Here is an example of using a delegate
   class to implement type translation:
