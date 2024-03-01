@@ -719,12 +719,6 @@ module SQLite3
         @context = {}
       end
 
-      # Set the result of the function to the given error message.
-      # The function will then return that error.
-      def set_error(error)
-        @driver.result_error(@func, error.to_s, -1)
-      end
-
       # Returns the value with the given key from the context. This is only
       # available to aggregate functions.
       def [](key)
