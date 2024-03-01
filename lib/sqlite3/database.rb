@@ -725,13 +725,6 @@ module SQLite3
         @driver.result_error(@func, error.to_s, -1)
       end
 
-      # (Only available to aggregate functions.) Returns the number of rows
-      # that the aggregate has processed so far. This will include the current
-      # row, and so will always return at least 1.
-      def count
-        @driver.aggregate_count(@func)
-      end
-
       # Returns the value with the given key from the context. This is only
       # available to aggregate functions.
       def [](key)
