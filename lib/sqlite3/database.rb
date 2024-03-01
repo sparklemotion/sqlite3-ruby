@@ -195,18 +195,6 @@ module SQLite3
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
     def execute sql, bind_vars = [], *args, &block
-      if bind_vars.nil? || !args.empty?
-        bind_vars = if args.empty?
-          []
-        else
-          [bind_vars] + args
-        end
-
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#execute` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for bind parameters as *args will be removed in 2.0.0.
-        EOWARN
-      end
-
       prepare(sql) do |stmt|
         stmt.bind_params(bind_vars)
         stmt = build_result_set stmt
@@ -257,27 +245,6 @@ module SQLite3
     # See also #execute_batch2 for additional ways of
     # executing statements.
     def execute_batch(sql, bind_vars = [], *args)
-      # FIXME: remove this stuff later
-      unless [Array, Hash].include?(bind_vars.class)
-        bind_vars = [bind_vars]
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#execute_batch` with bind parameters that are not a list of a hash.  Please switch to passing bind parameters as an array or hash. Support for this behavior will be removed in version 2.0.0.
-        EOWARN
-      end
-
-      # FIXME: remove this stuff later
-      if bind_vars.nil? || !args.empty?
-        bind_vars = if args.empty?
-          []
-        else
-          [nil] + args
-        end
-
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#execute_batch` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this behavior will be removed in version 2.0.0.
-        EOWARN
-      end
-
       sql = sql.strip
       until sql.empty?
         prepare(sql) do |stmt|
@@ -332,18 +299,6 @@ module SQLite3
     # with a block, +close+ will be invoked implicitly when the block
     # terminates.
     def query(sql, bind_vars = [], *args)
-      if bind_vars.nil? || !args.empty?
-        bind_vars = if args.empty?
-          []
-        else
-          [bind_vars] + args
-        end
-
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#query` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this will be removed in version 2.0.0.
-        EOWARN
-      end
-
       result = prepare(sql).execute(bind_vars)
       if block_given?
         begin

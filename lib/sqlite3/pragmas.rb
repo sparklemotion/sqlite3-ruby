@@ -532,12 +532,6 @@ module SQLite3
       stmt.each do |row|
         new_row = columns.zip(row).to_h
 
-        # FIXME: This should be removed but is required for older versions
-        # of rails
-        if Object.const_defined?(:ActiveRecord)
-          new_row["notnull"] = new_row["notnull"].to_s
-        end
-
         tweak_default(new_row) if needs_tweak_default
 
         # Ensure the type value is downcased.  On Mac and Windows
