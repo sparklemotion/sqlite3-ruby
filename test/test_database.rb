@@ -145,11 +145,19 @@ module SQLite3
     end
 
     def test_batch_last_comment_is_processed
-      # FIXME: nil as a successful return value is kinda dumb
       assert_nil @db.execute_batch <<-EOSQL
         CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT);
         -- omg
       EOSQL
+    end
+
+    def test_batch_last_expression_value_is_returned
+      batch = <<-EOSQL
+        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT);
+        SELECT COUNT(*) FROM items;
+      EOSQL
+
+      assert_equal [0], @db.execute_batch(batch)
     end
 
     def test_execute_batch2
