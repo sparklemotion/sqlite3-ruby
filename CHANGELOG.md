@@ -34,6 +34,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - Freeze results that come from the database. [#480] @tenderlove
 - The encoding of a Database is no longer cached. [#485] @tenderlove
 - `Database#transaction` returns the result of the block when used with a block. [#508] @alexcwatt
+- `Database#execute_batch` returns the result of the last statement executed. [#512] @alexcwatt
 
 
 ### Removed
