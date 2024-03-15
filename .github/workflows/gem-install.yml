@@ -9,7 +9,7 @@ on:
   push:
     branches:
       - master
-      - v*.*.x
+      - "*-stable"
     tags:
       - v*.*.*
   pull_request:
