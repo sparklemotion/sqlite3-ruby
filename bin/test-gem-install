@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /usr/bin/env sh
 #
 #  run as part of CI
 #
@@ -15,14 +15,14 @@ test -e /etc/os-release && cat /etc/os-release
 
 set -e -x -u
 
-pushd $GEMS_DIR
+cd $GEMS_DIR
 
   gemfile=$(ls *.gem | head -n1)
   ls -l ${gemfile}
   gem install --no-document ${gemfile} -- ${INSTALL_FLAGS}
   gem list -d sqlite3
 
-popd
+cd ..
 
 bundle install --local || bundle install
 
