@@ -85,6 +85,22 @@ threadsafe_p(VALUE UNUSED(klass))
     return INT2NUM(sqlite3_threadsafe());
 }
 
+static VALUE
+status_p(VALUE UNUSED(klass), VALUE opArg, VALUE resetFlagArg)
+{
+    int op = NUM2INT(opArg);
+    bool resetFlag = TYPE(resetFlagArg) == T_TRUE;
+
+    int pCurrent = 0;
+    int pHighwater = 0;
+    sqlite3_status(op, &pCurrent, &pHighwater, resetFlag);
+
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("current")), INT2FIX(pCurrent));
+    rb_hash_aset(hash, ID2SYM(rb_intern("highwater")), INT2FIX(pHighwater));
+    return hash;
+}
+
 void
 init_sqlite3_constants(void)
 {
@@ -164,6 +180,7 @@ Init_sqlite3_native(void)
     rb_define_singleton_method(mSqlite3, "sqlcipher?", using_sqlcipher, 0);
     rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
     rb_define_singleton_method(mSqlite3, "threadsafe", threadsafe_p, 0);
+    rb_define_singleton_method(mSqlite3, "status", status_p, 2);
     rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
     rb_define_const(mSqlite3, "SQLITE_VERSION_NUMBER", INT2FIX(SQLITE_VERSION_NUMBER));
     rb_define_const(mSqlite3, "SQLITE_LOADED_VERSION", rb_str_new2(sqlite3_libversion()));

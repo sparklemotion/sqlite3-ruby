@@ -21,5 +21,11 @@ module SQLite3
     def test_compiled_version_and_loaded_version
       assert_equal(SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION)
     end
+
+    def test_status
+      status = SQLite3.status(SQLite3::Constants::Status::MEMORY_USED, false)
+      assert_not_nil(status.fetch(:current))
+      assert_not_nil(status.fetch(:highwater))
+    end
   end
 end
