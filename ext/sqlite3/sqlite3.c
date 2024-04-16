@@ -85,6 +85,42 @@ threadsafe_p(VALUE UNUSED(klass))
     return INT2NUM(sqlite3_threadsafe());
 }
 
+/*
+ * call-seq:
+ *   status(parameter) → Hash
+ *   status(parameter, reset_flag = false) → Hash
+ *
+ * Queries the SQLite3 library for run-time status information. Passing a truthy +reset_flag+ will
+ * reset the highwater mark to the current value.
+ *
+ * [Parameters]
+ * - +parameter+ (Integer, SQLite3::Constants::Status): The status parameter to query.
+ * - +reset_flag+ (Boolean): Whether to reset the highwater mark. (default is +false+)
+ *
+ * [Returns]
+ * A Hash containing +:current+ and +:highwater+ keys for integer values.
+ */
+static VALUE
+rb_sqlite3_status(int argc, VALUE *argv, VALUE klass)
+{
+    VALUE opArg, resetFlagArg;
+
+    rb_scan_args(argc, argv, "11", &opArg, &resetFlagArg);
+
+    int op = NUM2INT(opArg);
+    bool resetFlag = RTEST(resetFlagArg);
+
+    int pCurrent = 0;
+    int pHighwater = 0;
+    sqlite3_status(op, &pCurrent, &pHighwater, resetFlag);
+
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("current")), INT2FIX(pCurrent));
+    rb_hash_aset(hash, ID2SYM(rb_intern("highwater")), INT2FIX(pHighwater));
+
+    return hash;
+}
+
 void
 init_sqlite3_constants(void)
 {
@@ -164,6 +200,7 @@ Init_sqlite3_native(void)
     rb_define_singleton_method(mSqlite3, "sqlcipher?", using_sqlcipher, 0);
     rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
     rb_define_singleton_method(mSqlite3, "threadsafe", threadsafe_p, 0);
+    rb_define_singleton_method(mSqlite3, "status", rb_sqlite3_status, -1);
     rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
     rb_define_const(mSqlite3, "SQLITE_VERSION_NUMBER", INT2FIX(SQLITE_VERSION_NUMBER));
     rb_define_const(mSqlite3, "SQLITE_LOADED_VERSION", rb_str_new2(sqlite3_libversion()));
