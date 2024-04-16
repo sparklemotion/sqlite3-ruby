@@ -15,6 +15,7 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 - Support the `SUPER_JOURNAL` flag which is an alias for `MASTER_JOURNAL` as of sqlite 3.33.0. [#467] @flavorjones
 - `Statement#stat` and `Statement#memused` introduced to report statistics. [#461] @fractaledmind
 - `Statement#sql` and `Statement#expanded_sql` introduced to retrieve the SQL statement associated with the `Statement` object. [#293, #498] @tenderlove
+- `SQLite3.status` introduced to return run-time status and reset high-water marks. See `SQLite3::Constants::Status` for details. [#520] @wjlroe
 
 
 ### Improved
