@@ -23,9 +23,19 @@ module SQLite3
     end
 
     def test_status
+      status = SQLite3.status(SQLite3::Constants::Status::MEMORY_USED)
+      assert_operator(status.fetch(:current), :>=, 0)
+      assert_operator(status.fetch(:highwater), :>=, status.fetch(:current))
+    end
+
+    def test_status_reset_highwater_mark
       status = SQLite3.status(SQLite3::Constants::Status::MEMORY_USED, false)
-      assert_not_nil(status.fetch(:current))
-      assert_not_nil(status.fetch(:highwater))
+      assert_operator(status.fetch(:current), :>=, 0)
+      assert_operator(status.fetch(:highwater), :>=, status.fetch(:current))
+
+      status = SQLite3.status(SQLite3::Constants::Status::MEMORY_USED, true)
+      assert_operator(status.fetch(:current), :>=, 0)
+      assert_operator(status.fetch(:highwater), :>=, status.fetch(:current))
     end
   end
 end
