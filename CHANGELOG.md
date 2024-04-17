@@ -1,12 +1,45 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.0.0 / 2024-04-17
 
-(will be 2.0.0)
+This is a major release which contains some breaking changes, primarily the removal of
+long-deprecated functionality. Before upgrading, please make sure to address deprecation warnings
+emitted from your application using sqlite3-ruby v1.7.x.
+
 
 ### Ruby
 
-This release drops support for Ruby 2.7. [#453] @flavorjones
+- This release drops support for Ruby 2.7. [#453] @flavorjones
+
+
+### Packaging
+
+Native (precompiled) gems are now available for Linux Musl. [#442] @flavorjones
+
+Here are the platforms for which native gems are shipped:
+
+- `aarch64-linux-gnu` (requires: glibc >= 2.29)
+- `aarch64-linux-musl`
+- `arm-linux-gnu` (requires: glibc >= 2.29)
+- `arm-linux-musl`
+- `arm64-darwin`
+- `x64-mingw32` / `x64-mingw-ucrt`
+- `x86-linux-gnu` (requires: glibc >= 2.17)
+- `x86-linux-musl`
+- `x86_64-darwin`
+- `x86_64-linux-gnu` (requires: glibc >= 2.17)
+- `x86_64-linux-musl`
+
+⚠ Ruby 3.0 linux users must use Rubygems >= 3.3.22 in order to use these gems.
+
+⚠ Musl linux users should update to Bundler >= 2.5.6 to avoid https://github.com/rubygems/rubygems/issues/7432
+
+See [the INSTALLATION doc](https://github.com/sparklemotion/sqlite3-ruby/blob/main/INSTALLATION.md) for more information.
+
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.45.3](https://sqlite.org/releaselog/3_45_3.html). @flavorjones
 
 
 ### Added
@@ -40,67 +73,90 @@ This release drops support for Ruby 2.7. [#453] @flavorjones
 
 ### Removed
 
-- Removed class `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
-- Removed class `SQLite3::Translator` and all related type translation methods.
-  If you need to do type translation on values returned from the statement object,
-  please wrap it with a delegate object.  Here is an example of using a delegate
-  class to implement type translation:
+- Removed class `SQLite3::Translator` and all related type translation methods which have been deprecated since v1.3.2. [#470] @tenderlove
 
-```ruby
-require "sqlite3"
-require "delegate"
+  If you need to do type translation on values returned from the statement object, please wrap it
+  with a delegate object.  Here is an example of using a delegate class to implement type
+  translation:
 
-db = SQLite3::Database.new(":memory:")
+  ```ruby
+  require "sqlite3"
+  require "delegate"
 
-return_value = db.execute_batch2 <<-EOSQL
-        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, name string);
-        INSERT INTO items (name) VALUES ("foo");
-        INSERT INTO items (name) VALUES ("bar");
-EOSQL
+  db = SQLite3::Database.new(":memory:")
 
-class MyTranslator < DelegateClass(SQLite3::Statement)
-  def step
-    row = super
-    return if done?
+  return_value = db.execute_batch2 <<-EOSQL
+          CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, name string);
+          INSERT INTO items (name) VALUES ("foo");
+          INSERT INTO items (name) VALUES ("bar");
+  EOSQL
 
-    row.map.with_index do |item, i|
-      case types[i]
-      when "integer" # turn all integers to floats
-        item.to_f
-      when "string" # add "hello" to all strings
-        item + "hello"
+  class MyTranslator < DelegateClass(SQLite3::Statement)
+    def step
+      row = super
+      return if done?
+
+      row.map.with_index do |item, i|
+        case types[i]
+        when "integer" # turn all integers to floats
+          item.to_f
+        when "string" # add "hello" to all strings
+          item + "hello"
+        end
       end
     end
   end
-end
 
-db.prepare("SELECT * FROM items") do |stmt|
-  stmt = MyTranslator.new(stmt)
-  while row = stmt.step
-    p row
+  db.prepare("SELECT * FROM items") do |stmt|
+    stmt = MyTranslator.new(stmt)
+    while row = stmt.step
+      p row
+    end
   end
-end
-```
+  ```
 
-- Removed `types` and `fields` readers on row objects.
+- Removed `types` and `fields` readers on row objects, which have been deprecated since
+  v1.3.6. [#471] @tenderlove
+
   Deprecated code looks like this:
 
-```ruby
-row = @db.execute("select * from foo")
-assert_equal ["blob"], row.first.types
-```
+  ```ruby
+  row = @db.execute("select * from foo")
+  assert_equal ["blob"], row.first.types
+  ```
 
   If you would like to access the "types" associated with a returned query,
   use a prepared statement like this:
 
-```ruby
-@db.prepare("select * from foo") do |v|
-  assert_equal ["blob"], v.types
-end
-```
+  ```ruby
+  @db.prepare("select * from foo") do |v|
+    assert_equal ["blob"], v.types
+  end
+  ```
 
-- Removed methods `SQLite3::Database::FunctionProxy#count` and `#set_error`. [#164, #509, #510] @alexcwatt @flavorjones
-- Removed support for non-Array bind parameters to methods `Database#execute`, `#execute_batch`, and `#query`.
+- Removed support for non-Array bind parameters to methods `Database#execute`, `#execute_batch`, and `#query`, which has been deprecated since v1.3.0. [#511] @flavorjones
+
+  Deprecated code looks like this:
+
+  ``` ruby
+  @db.query("select * from foo where a = ? and b = ? and c = ?", 1, 2, 3)
+  ```
+
+  For these cases, pass the bind parameters as an array:
+
+  ``` ruby
+  @db.query("select * from foo where a = ? and b = ? and c = ?", [1, 2, 3])
+  ```
+
+- Removed class `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
+- Removed methods `SQLite3::Database::FunctionProxy#count` and `#set_error` which have been broken since at least v1.3.13. [#164, #509, #510] @alexcwatt @flavorjones
+
+
+## 1.7.3 / 2024-03-15
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.45.2](https://www.sqlite.org/releaselog/3_45_2.html). @flavorjones
 
 
 ## 1.7.2 / 2024-01-30
