@@ -480,5 +480,19 @@ module SQLite3
 
       stmt.close
     end
+
+    def test_raise_if_bind_params_not_an_array
+      assert_raises(ArgumentError) do
+        @db.execute "SELECT * from table1 where a = ? and b = ?", 1, 2
+      end
+
+      assert_raises(ArgumentError) do
+        @db.query "SELECT * from table1 where a = ? and b = ?", 1, 2
+      end
+
+      assert_raises(ArgumentError) do
+        @db.execute_batch "SELECT * from table1 where a = ? and b = ?", 1, 2
+      end
+    end
   end
 end

@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Fixed
+
+- Raise an exception if `Database#execute`, `#execute_batch`, or `#query` are passed multiple bind parameters that are not in an Array. In v2.0.0 these methods would silently swallow additional arguments. [#527] @flavorjones
+
+
 ## 2.0.0 / 2024-04-17
 
 This is a major release which contains some breaking changes, primarily the removal of
