@@ -194,7 +194,7 @@ module SQLite3
     #
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
-    def execute sql, bind_vars = [], *args, &block
+    def execute sql, bind_vars = [], &block
       prepare(sql) do |stmt|
         stmt.bind_params(bind_vars)
         stmt = build_result_set stmt
@@ -243,7 +243,7 @@ module SQLite3
     #
     # See also #execute_batch2 for additional ways of
     # executing statements.
-    def execute_batch(sql, bind_vars = [], *args)
+    def execute_batch(sql, bind_vars = [])
       sql = sql.strip
       result = nil
       until sql.empty?
@@ -298,7 +298,7 @@ module SQLite3
     # returned, or you could have problems with locks on the table. If called
     # with a block, +close+ will be invoked implicitly when the block
     # terminates.
-    def query(sql, bind_vars = [], *args)
+    def query(sql, bind_vars = [])
       result = prepare(sql).execute(bind_vars)
       if block_given?
         begin
