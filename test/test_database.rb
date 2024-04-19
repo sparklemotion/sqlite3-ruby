@@ -326,6 +326,24 @@ module SQLite3
       assert_equal :foo, r
     end
 
+    def test_prepare_batch_split
+      db = SQLite3::Database.new(":memory:")
+      s1 = db.prepare("select 'asdf'; select 'qwer'; select 'côté'")
+
+      assert_equal " select 'qwer'; select 'côté'", s1.remainder
+      assert_equal Encoding::UTF_8, s1.remainder.encoding
+
+      s2 = db.prepare(s1.remainder)
+
+      assert_equal " select 'côté'", s2.remainder
+      assert_equal Encoding::UTF_8, s2.remainder.encoding
+
+      s3 = db.prepare(s2.remainder)
+
+      assert_equal "", s3.remainder
+      assert_equal Encoding::UTF_8, s3.remainder.encoding
+    end
+
     def test_total_changes
       db = SQLite3::Database.new(":memory:")
       db.execute("create table foo ( a integer primary key, b text )")
