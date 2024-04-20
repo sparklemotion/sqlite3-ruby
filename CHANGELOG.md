@@ -1,10 +1,10 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.0.1 / 2024-04-20
 
 ### Fixed
 
-- Raise an exception if `Database#execute`, `#execute_batch`, or `#query` are passed multiple bind parameters that are not in an Array. In v2.0.0 these methods would silently swallow additional arguments. [#527] @flavorjones
+- Raise `ArgumentError` if `Database#execute`, `#execute_batch`, or `#query` are passed multiple bind parameters that are not in an Array. In v2.0.0 these methods would silently swallow additional arguments, and this change makes the failure explicit. See the CHANGELOG notes for v2.0.0 for examples on how to update your code. [#527] @flavorjones
 - Fixed a regression in v2.0.0 that caused `Database#execute_batch` to raise an encoding exception when passed some non-ascii strings. As a result of this fix, `Database#prepare` now ensures the "remainder" string will always be encoded as UTF-8. [#524] @flavorjones
 
 
