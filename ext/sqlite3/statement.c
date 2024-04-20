@@ -72,7 +72,7 @@ prepare(VALUE self, VALUE db, VALUE sql)
     CHECK(db_ctx->db, status);
     timespecclear(&db_ctx->stmt_deadline);
 
-    return rb_str_new2(tail);
+    return rb_utf8_str_new_cstr(tail);
 }
 
 /* call-seq: stmt.close
