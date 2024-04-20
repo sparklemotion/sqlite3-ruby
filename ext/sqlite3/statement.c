@@ -110,6 +110,10 @@ closed_p(VALUE self)
     return Qfalse;
 }
 
+void *step_without_gvl(void *data) {
+    return (void *)(VALUE)sqlite3_step(data);
+}
+
 static VALUE
 step(VALUE self)
 {
@@ -129,7 +133,12 @@ step(VALUE self)
 
     stmt = ctx->st;
 
+#if 0
     value = sqlite3_step(stmt);
+#else
+    value = (VALUE)rb_thread_call_without_gvl(step_without_gvl, (void *)stmt, NULL, NULL);
+#endif
+
     if (rb_errinfo() != Qnil) {
         /* some user defined function was invoked as a callback during step and
          * it raised an exception that has been suppressed until step returns.
