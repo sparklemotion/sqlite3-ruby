@@ -184,7 +184,7 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
       - run: ./bin/test-gem-build gems ruby
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: source-gem
           path: gems
@@ -211,7 +211,7 @@ jobs:
           apt-get: libsqlite3-dev pkg-config
           brew: sqlite3 pkg-config
           mingw: sqlite3
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: source-gem
           path: gems
@@ -248,7 +248,7 @@ jobs:
           docker run --rm -v $PWD:/work -w /work \
             ghcr.io/rake-compiler/rake-compiler-dock-image:${{ needs.native_setup.outputs.rcd_image_version }}-mri-${{ matrix.platform }} \
             ./bin/test-gem-build gems ${{ matrix.platform }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: "cruby-${{ matrix.platform }}-gem"
           path: gems
@@ -286,7 +286,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-${{ matrix.platform }}-gem
           path: gems
@@ -332,7 +332,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{ matrix.ruby }}"
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-${{ matrix.platform }}-gem
           path: gems
@@ -357,7 +357,7 @@ jobs:
       image: ruby:${{matrix.ruby}}-${{matrix.flavor}}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cruby-x86_64-linux-musl-gem
           path: gems
