@@ -17,13 +17,13 @@ class IntegrationPendingTestCase < SQLite3::TestCase
       @thread_to_main.push state
     end
 
-    def wait_for_thread expected_state
-      state = @thread_to_main.pop
+    def wait_for_thread expected_state, non_block = false
+      state = @thread_to_main.pop(non_block)
       raise "Invalid state #{state}. #{expected_state} is expected" if state != expected_state
     end
 
-    def wait_for_main expected_state
-      state = @main_to_thread.pop
+    def wait_for_main expected_state, non_block = false
+      state = @main_to_thread.pop(non_block)
       raise "Invalid state #{state}. #{expected_state} is expected" if state != expected_state
     end
 
@@ -33,6 +33,11 @@ class IntegrationPendingTestCase < SQLite3::TestCase
 
     def close_main
       @main_to_thread.close
+    end
+
+    def close
+      close_thread
+      close_main
     end
   end
 
