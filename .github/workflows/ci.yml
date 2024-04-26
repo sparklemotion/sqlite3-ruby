@@ -306,27 +306,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos]
+        os: [windows-latest, macos-13, macos-14]
         ruby: ["3.3", "3.2", "3.1", "3.0"]
         include:
-          - os: macos
+          - os: macos-13
             platform: x86_64-darwin
-          # # arm64-darwin installation testing is omitted until github actions supports it
-          # - os: macos
-          #   platform: arm64-darwin
-          - os: windows
+          - os: macos-14
+            platform: arm64-darwin
+          - os: windows-latest
             ruby: "3.0"
             platform: x64-mingw32
-          - os: windows
+          - os: windows-latest
             ruby: "3.1"
             platform: x64-mingw-ucrt
-          - os: windows
+          - os: windows-latest
             ruby: "3.2"
             platform: x64-mingw-ucrt
-          - os: windows
+          - os: windows-latest
             ruby: "3.3"
             platform: x64-mingw-ucrt
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
