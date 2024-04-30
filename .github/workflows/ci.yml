@@ -100,6 +100,23 @@ jobs:
       - run: bundle exec rake compile -- --disable-system-libraries
       - run: bundle exec rake test
 
+  bsd:
+    needs: basic
+    name: "FreeBSD"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          copyback: false
+          prepare: pkg install -y ruby devel/ruby-gems pkgconf
+          run: |
+            gem install bundler
+            bundle install --local || bundle install
+            bundle exec rake compile -- --disable-system-libraries
+            bundle exec rake test
+
   sqlcipher:
     needs: basic
     strategy:
