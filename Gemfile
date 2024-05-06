@@ -8,7 +8,7 @@ group :development do
   gem "rake-compiler", "1.2.7"
   gem "rake-compiler-dock", "1.5.0"
 
-  gem "ruby_memcheck", "2.3.0" if Gem::Platform.local.os == "linux"
+  gem "ruby_memcheck", "3.0.0" if Gem::Platform.local.os == "linux"
 
   gem "rdoc", "6.6.3.1"
 
