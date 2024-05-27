@@ -40,7 +40,6 @@ jobs:
           bundle install
           bundle remove sqlite3
           bundle add sqlite3 --path=".."
-          sed -i 's/^gem "sqlite3".*//' activerecord/lib/active_record/connection_adapters/sqlite3_adapter.rb
       - name: run tests
         run: |
           cd rails/activerecord
