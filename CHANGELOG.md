@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## 2.0.3 / 2024-07-29
+
+### Improved
+
+- `Database#quote` avoids allocating strings where reusing frozen strings is preferable. #548 @casperisfine
+
+
 ## 2.0.2 / 2024-05-23
 
 ### Dependencies
