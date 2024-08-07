@@ -21,10 +21,11 @@ jobs:
       - run: |
           git clone --depth=1 https://github.com/sqlite/sqlite
           git -C sqlite log -n1
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "3.3"
           bundler-cache: true
+          apt-get: tcl-dev # https://sqlite.org/forum/forumpost/45c4862d37
       - run: bundle exec rake compile -- --with-sqlite-source-dir=${GITHUB_WORKSPACE}/sqlite
       - run: bundle exec rake test
 
