@@ -246,7 +246,7 @@ busy_handler(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "01", &block);
 
     if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
-    ctx->busy_handler = block;
+    RB_OBJ_WRITE(self, &ctx->busy_handler, block);
 
     status = sqlite3_busy_handler(
                  ctx->db,
