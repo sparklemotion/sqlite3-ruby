@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Improved
+
+- Use `sqlite3_close_v2` to close databases in a deferred manner if there are unclosed prepared statements. Previously closing a database while statements were open resulted in a `BusyException`. See https://www.sqlite.org/c3ref/close.html for more context. @flavorjones
+
+
 ## 2.0.4 / 2024-08-13
 
 ### Dependencies
