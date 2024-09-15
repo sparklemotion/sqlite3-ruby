@@ -4,7 +4,8 @@
 
 ### Improved
 
-- Use `sqlite3_close_v2` to close databases in a deferred manner if there are unclosed prepared statements. Previously closing a database while statements were open resulted in a `BusyException`. See https://www.sqlite.org/c3ref/close.html for more context. @flavorjones
+- Use `sqlite3_close_v2` to close databases in a deferred manner if there are unclosed prepared statements. Previously closing a database while statements were open resulted in a `BusyException`. See https://www.sqlite.org/c3ref/close.html for more context. [#557] @flavorjones
+- When setting a Database `busy_handler`, fire the write barrier to prevent potential crashes during the GC mark phase. [#556] @jhawthorn
 
 
 ## 2.0.4 / 2024-08-13
