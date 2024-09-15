@@ -25,7 +25,7 @@ deallocate(void *ctx)
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
     sqlite3 *db     = c->db;
 
-    if (db) { sqlite3_close(db); }
+    if (db) { sqlite3_close_v2(db); }
     xfree(c);
 }
 
@@ -131,7 +131,7 @@ sqlite3_rb_close(VALUE self)
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
     db = ctx->db;
-    CHECK(db, sqlite3_close(ctx->db));
+    CHECK(db, sqlite3_close_v2(ctx->db));
 
     ctx->db = NULL;
 

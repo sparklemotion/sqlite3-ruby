@@ -611,9 +611,7 @@ module SQLite3
 
     def test_close_with_open_statements
       s = @db.prepare("select 'foo'")
-      assert_raises(SQLite3::BusyException) do
-        @db.close
-      end
+      @db.close # refute_raises(SQLite3::BusyException)
     ensure
       s&.close
     end
