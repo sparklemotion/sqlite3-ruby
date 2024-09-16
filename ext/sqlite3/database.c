@@ -13,6 +13,39 @@
 VALUE cSqlite3Database;
 
 static void
+close_or_discard_db(sqlite3RubyPtr ctx)
+{
+    if (ctx->db) {
+        if (ctx->owner == getpid()) {
+            // Ordinary close.
+            sqlite3_close_v2(ctx->db);
+        } else {
+            // This is an open connection carried across a fork().
+            // "Discard" it. See adr/2024-09-fork-safety.md
+            sqlite3_file *sfile;
+            int status;
+
+            rb_warning("An open sqlite database connection was inherited from a forked process and "
+                       "is being discarded. This is a memory leak. If possible, please close all sqlite "
+                       "database connections before forking.");
+
+            // close the open file descriptors
+            status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_FILE_POINTER, &sfile);
+            if (status == 0 && sfile->pMethods != NULL) {
+                sfile->pMethods->xClose(sfile);
+            }
+
+            status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_JOURNAL_POINTER, &sfile);
+            if (status == 0 && sfile->pMethods != NULL) {
+                sfile->pMethods->xClose(sfile);
+            }
+        }
+        ctx->db = NULL;
+    }
+}
+
+
+static void
 database_mark(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
@@ -22,11 +55,8 @@ database_mark(void *ctx)
 static void
 deallocate(void *ctx)
 {
-    sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
-    sqlite3 *db     = c->db;
-
-    if (db) { sqlite3_close_v2(db); }
-    xfree(c);
+    close_or_discard_db((sqlite3RubyPtr)ctx);
+    xfree(ctx);
 }
 
 static size_t
@@ -51,7 +81,9 @@ static VALUE
 allocate(VALUE klass)
 {
     sqlite3RubyPtr ctx;
-    return TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
+    VALUE object = TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
+    ctx->owner = getpid();
+    return object;
 }
 
 static char *
@@ -61,8 +93,6 @@ utf16_string_value_ptr(VALUE str)
     rb_str_buf_cat(str, "\x00\x00", 2L);
     return RSTRING_PTR(str);
 }
-
-static VALUE sqlite3_rb_close(VALUE self);
 
 sqlite3RubyPtr
 sqlite3_database_unwrap(VALUE database)
@@ -119,21 +149,22 @@ rb_sqlite3_disable_quirk_mode(VALUE self)
 #endif
 }
 
-/* call-seq: db.close
+/*
+ *  Close the database and release all associated resources.
  *
- * Closes this database.
+ *  ⚠ If the process that created the database forks a child process, and this method is called
+ *  from the child process, then this method will _not_ free memory resources and instead will
+ *  call discard. This is a memory leak, but is safer than risking database corruption.
+ *
+ *  See adr/2024-09-fork-safety.md for more information on fork safety.
  */
 static VALUE
 sqlite3_rb_close(VALUE self)
 {
     sqlite3RubyPtr ctx;
-    sqlite3 *db;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
-    db = ctx->db;
-    CHECK(db, sqlite3_close_v2(ctx->db));
-
-    ctx->db = NULL;
+    close_or_discard_db(ctx);
 
     rb_iv_set(self, "-aggregators", Qnil);
 

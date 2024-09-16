@@ -148,6 +148,23 @@ It is generally recommended that if applications want to share a database among
 threads, they _only_ share the database instance object.  Other objects are
 fine to share, but may require manual locking for thread safety.
 
+
+## Fork Safety
+
+[Sqlite is not fork
+safe](https://www.sqlite.org/howtocorrupt.html#_carrying_an_open_database_connection_across_a_fork_)
+and you should not carry an open database connection across a `fork()`. Using an inherited
+connection in the child may corrupt your database, leak memory, or cause other undefined behavior.
+
+Instead, whenever possible, close connections in the parent before forking.
+
+If that's not possible or convenient, then immediately close any inherited connections in the child
+after forking, before opening any new connections. This will incur a small one-time memory leak per
+connection, but that's preferable to potentially corrupting your database.
+
+See [./adr/2024-09-fork-safety.md](./adr/2024-09-fork-safety.md) for more information and context.
+
+
 ## Support
 
 ### Installation or database extensions

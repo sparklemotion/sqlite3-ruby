@@ -2,6 +2,11 @@
 
 ## next / unreleased
 
+### Changed
+
+- Any database connections carried across a `fork()` will not be fully closed to help protect database files against corruption. Using a database connection in a child process that was created in a parent process is unsafe and may corrupt the database file. If an inherited connection is closed then a warning will be emitted and some reserved memory will be lost to the child process permanently. See the README "Fork Safety" section and `adr/2024-09-fork-safety.md` for more information. [#558] @flavorjones
+
+
 ### Improved
 
 - Use `sqlite3_close_v2` to close databases in a deferred manner if there are unclosed prepared statements. Previously closing a database while statements were open resulted in a `BusyException`. See https://www.sqlite.org/c3ref/close.html for more context. [#557] @flavorjones

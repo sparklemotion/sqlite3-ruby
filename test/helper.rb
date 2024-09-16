@@ -1,10 +1,6 @@
 require "sqlite3"
 require "minitest/autorun"
 
-if ENV["GITHUB_ACTIONS"] == "true" || ENV["CI"]
-  $VERBOSE = nil
-end
-
 puts "info: ruby version: #{RUBY_DESCRIPTION}"
 puts "info: gem version: #{SQLite3::VERSION}"
 puts "info: sqlite version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
@@ -19,6 +15,11 @@ module SQLite3
 
     def assert_nothing_raised
       yield
+    end
+
+    def i_am_running_in_valgrind
+      # https://stackoverflow.com/questions/365458/how-can-i-detect-if-a-program-is-running-from-within-valgrind/62364698#62364698
+      ENV["LD_PRELOAD"] =~ /valgrind|vgpreload/
     end
   end
 end

@@ -721,5 +721,43 @@ module SQLite3
       result = @db.transaction { :foo }
       assert_equal :foo, result
     end
+
+    def test_discard_a_connection
+      skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
+      skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
+
+      begin
+        read, write = IO.pipe
+
+        db = SQLite3::Database.new("test.db")
+        Process.fork do
+          $stderr = StringIO.new
+
+          result = db.close
+
+          write.write((result == db) ? "ok\n" : "fail\n")
+          write.write(db.closed? ? "ok\n" : "fail\n")
+          write.write($stderr.string)
+
+          write.close
+          read.close
+          exit!
+        end
+
+        assert_equal("ok", read.readline.chomp, "return value was not the database")
+        assert_equal("ok", read.readline.chomp, "closed? did not return true")
+        assert_match(
+          /warning: An open sqlite database connection was inherited from a forked process/,
+          read.readline,
+          "expected warning was not emitted"
+        )
+
+        write.close
+        read.close
+      ensure
+        db.close
+        FileUtils.rm_f("test.db")
+      end
+    end
   end
 end
