@@ -611,7 +611,9 @@ module SQLite3
 
     def test_close_with_open_statements
       s = @db.prepare("select 'foo'")
-      @db.close # refute_raises(SQLite3::BusyException)
+      assert_nothing_raised do # formerly raised SQLite3::BusyException
+        @db.close
+      end
     ensure
       s&.close
     end
@@ -662,7 +664,7 @@ module SQLite3
 
     def test_raw_float_infinity
       # https://github.com/sparklemotion/sqlite3-ruby/issues/396
-      skip if SQLite3::SQLITE_LOADED_VERSION >= "3.43.0"
+      skip if SQLite3::SQLITE_LOADED_VERSION == "3.43.0"
 
       db = SQLite3::Database.new ":memory:"
       db.execute("create table foo (temperature float)")
