@@ -16,6 +16,7 @@ module SQLite3
     end
 
     @databases = []
+    @mutex = Mutex.new
 
     class << self
       def hook!
@@ -23,7 +24,9 @@ module SQLite3
       end
 
       def track(database)
-        @databases << WeakRef.new(database)
+        @mutex.synchronize do
+          @databases << WeakRef.new(database)
+        end
       end
 
       def discard
