@@ -29,6 +29,12 @@ close_or_discard_db(sqlite3RubyPtr ctx)
                        "is being discarded. This is a memory leak. If possible, please close all sqlite "
                        "database connections before forking.");
 
+            // release as much heap memory as possible by deallocating non-essential memory
+            // allocations held by the database library. Memory used to cache database pages to
+            // improve performance is an example of non-essential memory.
+            sqlite3_db_release_memory(ctx->db);
+
+            // release file descriptors
 #ifdef HAVE_SQLITE3_DB_NAME
             const char *db_name;
             int j_db = 0;
