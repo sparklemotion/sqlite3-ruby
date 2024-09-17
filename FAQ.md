@@ -207,48 +207,46 @@ Or do a `Database#prepare` to get the `Statement`, and then use either
   stmt.bind_params( "value", "name" => "bob" )
 ```
 
-## How do I discover metadata about a query?
+## How do I discover metadata about a query result?
   
-If you ever want to know the names or types of the columns in a result
-set, you can do it in several ways.
+IMPORTANT: `Database#execute` returns an Array of Array of Strings
+which will have no metadata about the query or the result, such
+as column names.
 
 
-The first way is to ask the row object itself. Each row will have a
-property "fields" that returns an array of the column names. The row
-will also have a property "types" that returns an array of the column
-types:
+There are 2 main sources of query metadata:
+
+* `Statement`
+* `ResultSet`
 
 
-```ruby
-  rows = db.execute( "select * from table" )
-  p rows[0].fields
-  p rows[0].types
-```
-
-
-Obviously, this approach requires you to execute a statement that actually
-returns data. If you don't know if the statement will return any rows, but
-you still need the metadata, you can use `Database#query` and ask the
-`ResultSet` object itself:
+You can get a `Statement` via `Database#prepare`, and you can get
+a `ResultSet` via `Statement#execute` or `Database#query`.
 
 
 ```ruby
-  db.query( "select * from table" ) do |result|
-    p result.columns
-    p result.types
-    ...
-  end
-```
+sql = 'select * from table'
 
+# No metadata
+rows = db.execute(sql)
+rows.class # => Array, no metadata
+rows.first.class # => Array, no metadata
+rows.first.first.class #=> String, no metadata
 
-Lastly, you can use `Database#prepare` and ask the `Statement` object what
-the metadata are:
+# Statement has metadata
+stmt = db.prepare(sql)
+stmt.columns # => [ ... ]
+stmt.type # => [ ... ]
 
+# ResultSet has metadata
+results = stmt.execute
+results.columns # => [ ... ]
+results.types # => [ ... ]
 
-```ruby
-  stmt = db.prepare( "select * from table" )
-  p stmt.columns
-  p stmt.types
+# ResultSet has metadata
+results = db.query(sql)
+results.columns # => [ ... ]
+results.types # => [ ... ]
 ```
 
 ## I'd like the rows to be indexible by column name.
@@ -273,7 +271,18 @@ is unavailable on the row, although the "types" property remains.)
 ```
 
 
-The other way is to use Ara Howard's
+A more granular way to do this is via `ResultSet#next_hash` or
+`ResultSet#each_hash`.
+
+
+```ruby
+  results = db.query( "select * from table" )
+  row = results.next_hash
+  p row['column1']
+```
+
+
+Another way is to use Ara Howard's
 [`ArrayFields`](http://rubyforge.org/projects/arrayfields)
 module. Just `require "arrayfields"`, and all of your rows will be indexable
 by column name, even though they are still arrays!
