@@ -2,6 +2,11 @@
 
 ## next / unreleased
 
+### Ruby
+
+- This release drops support for Ruby 3.0.
+
+
 ### Fork safety improvements
 
 Sqlite itself is [not fork-safe](https://www.sqlite.org/howtocorrupt.html#_carrying_an_open_database_connection_across_a_fork_). Specifically, writing in a child process to a database connection that was created in the parent process may corrupt the database file. To mitigate this risk, sqlite3-ruby has implemented the following changes:

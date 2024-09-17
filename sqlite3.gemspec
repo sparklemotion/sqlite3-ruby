@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
 
   s.licenses = ["BSD-3-Clause"]
 
-  s.required_ruby_version = Gem::Requirement.new(">= 3.0")
+  s.required_ruby_version = Gem::Requirement.new(">= 3.1")
 
   s.homepage = "https://github.com/sparklemotion/sqlite3-ruby"
   s.metadata = {

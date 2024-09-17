@@ -21,8 +21,6 @@ In v2.0.0 and later, native (precompiled) gems are available for recent Ruby ver
 - `x86_64-linux-gnu` (requires: glibc >= 2.17)
 - `x86_64-linux-musl`
 
-⚠ Ruby 3.0 linux users must use Rubygems >= 3.3.22 in order to use these gems.
-
 ⚠ Musl linux users should update to Bundler >= 2.5.6 to avoid https://github.com/rubygems/rubygems/issues/7432
 
 If you are using one of these Ruby versions on one of these platforms, the native gem is the recommended way to install sqlite3-ruby.
