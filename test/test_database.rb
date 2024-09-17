@@ -869,5 +869,27 @@ module SQLite3
         FileUtils.rm_f("test.db")
       end
     end
+
+    def test_a_discarded_connection_with_statements
+      skip("discard leaks memory") if i_am_running_in_valgrind
+
+      begin
+        db = SQLite3::Database.new("test.db")
+        db.execute("create table foo (bar int)")
+        db.execute("insert into foo values (1)")
+        stmt = db.prepare("select * from foo")
+
+        db.send(:discard)
+
+        e = assert_raises(SQLite3::Exception) { stmt.execute }
+        assert_match(/cannot use a statement associated with a closed database/, e.message)
+
+        assert_nothing_raised { stmt.close }
+        assert_predicate(stmt, :closed?)
+      ensure
+        db.close
+        FileUtils.rm_f("test.db")
+      end
+    end
   end
 end

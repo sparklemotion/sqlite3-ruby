@@ -12,6 +12,45 @@
 
 VALUE cSqlite3Database;
 
+/* See adr/2024-09-fork-safety.md */
+static void
+discard_db(sqlite3RubyPtr ctx)
+{
+    sqlite3_file *sfile;
+    int status;
+
+    // release as much heap memory as possible by deallocating non-essential memory
+    // allocations held by the database library. Memory used to cache database pages to
+    // improve performance is an example of non-essential memory.
+    // on my development machine, this reduces the lost memory from 152k to 69k.
+    sqlite3_db_release_memory(ctx->db);
+
+    // release file descriptors
+#ifdef HAVE_SQLITE3_DB_NAME
+    const char *db_name;
+    int j_db = 0;
+    while ((db_name = sqlite3_db_name(ctx->db, j_db)) != NULL) {
+        status = sqlite3_file_control(ctx->db, db_name, SQLITE_FCNTL_FILE_POINTER, &sfile);
+        if (status == 0 && sfile->pMethods != NULL) {
+            sfile->pMethods->xClose(sfile);
+        }
+        j_db++;
+    }
+#else
+    status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_FILE_POINTER, &sfile);
+    if (status == 0 && sfile->pMethods != NULL) {
+        sfile->pMethods->xClose(sfile);
+    }
+#endif
+
+    status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_JOURNAL_POINTER, &sfile);
+    if (status == 0 && sfile->pMethods != NULL) {
+        sfile->pMethods->xClose(sfile);
+    }
+
+    ctx->db = NULL;
+}
+
 static void
 close_or_discard_db(sqlite3RubyPtr ctx)
 {
@@ -21,41 +60,11 @@ close_or_discard_db(sqlite3RubyPtr ctx)
         if (isReadonly || ctx->owner == getpid()) {
             // Ordinary close.
             sqlite3_close_v2(ctx->db);
+            ctx->db = NULL;
         } else {
-            // This is an open connection carried across a fork().
-            // "Discard" it. See adr/2024-09-fork-safety.md
-            sqlite3_file *sfile;
-            int status;
-
-            // release as much heap memory as possible by deallocating non-essential memory
-            // allocations held by the database library. Memory used to cache database pages to
-            // improve performance is an example of non-essential memory.
-            sqlite3_db_release_memory(ctx->db);
-
-            // release file descriptors
-#ifdef HAVE_SQLITE3_DB_NAME
-            const char *db_name;
-            int j_db = 0;
-            while ((db_name = sqlite3_db_name(ctx->db, j_db)) != NULL) {
-                status = sqlite3_file_control(ctx->db, db_name, SQLITE_FCNTL_FILE_POINTER, &sfile);
-                if (status == 0 && sfile->pMethods != NULL) {
-                    sfile->pMethods->xClose(sfile);
-                }
-                j_db++;
-            }
-#else
-            status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_FILE_POINTER, &sfile);
-            if (status == 0 && sfile->pMethods != NULL) {
-                sfile->pMethods->xClose(sfile);
-            }
-#endif
-
-            status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_JOURNAL_POINTER, &sfile);
-            if (status == 0 && sfile->pMethods != NULL) {
-                sfile->pMethods->xClose(sfile);
-            }
+            // This is an open connection carried across a fork(). "Discard" it.
+            discard_db(ctx);
         }
-        ctx->db = NULL;
     }
 }
 
@@ -184,6 +193,20 @@ sqlite3_rb_close(VALUE self)
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
     close_or_discard_db(ctx);
+
+    rb_iv_set(self, "-aggregators", Qnil);
+
+    return self;
+}
+
+/* private method, primarily for testing */
+static VALUE
+sqlite3_rb_discard(VALUE self)
+{
+    sqlite3RubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+
+    discard_db(ctx);
 
     rb_iv_set(self, "-aggregators", Qnil);
 
@@ -943,6 +966,7 @@ init_sqlite3_database(void)
     rb_define_private_method(cSqlite3Database, "open16", rb_sqlite3_open16, 1);
     rb_define_method(cSqlite3Database, "collation", collation, 2);
     rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
+    rb_define_private_method(cSqlite3Database, "discard", sqlite3_rb_discard, 0);
     rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
     rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);
     rb_define_method(cSqlite3Database, "trace", trace, -1);
