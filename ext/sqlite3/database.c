@@ -27,11 +27,6 @@ close_or_discard_db(sqlite3RubyPtr ctx)
             sqlite3_file *sfile;
             int status;
 
-            rb_warning("An open writable sqlite database connection was inherited from a "
-                       "forked process and is being closed to prevent the risk of corruption. "
-                       "If possible, please close all writable sqlite database connections "
-                       "before forking.");
-
             // release as much heap memory as possible by deallocating non-essential memory
             // allocations held by the database library. Memory used to cache database pages to
             // improve performance is an example of non-essential memory.

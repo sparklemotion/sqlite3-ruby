@@ -752,7 +752,7 @@ module SQLite3
         assert_equal("ok", assertion.chomp, "closed? did not return true")
         assert_equal(1, stderr.count, "unexpected output on stderr: #{stderr.inspect}")
         assert_match(
-          /warning: An open writable sqlite database connection was inherited from a forked process/,
+          /warning: Writable sqlite database connection\(s\) were inherited from a forked process/,
           stderr.first,
           "expected warning was not emitted"
         )
