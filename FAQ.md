@@ -236,7 +236,7 @@ rows.first.first.class #=> String, no metadata
 # Statement has metadata
 stmt = db.prepare(sql)
 stmt.columns # => [ ... ]
-stmt.type # => [ ... ]
+stmt.types # => [ ... ]
 
 # ResultSet has metadata
 results = stmt.execute
