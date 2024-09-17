@@ -29,11 +29,22 @@ close_or_discard_db(sqlite3RubyPtr ctx)
                        "is being discarded. This is a memory leak. If possible, please close all sqlite "
                        "database connections before forking.");
 
-            // close the open file descriptors
+#ifdef HAVE_SQLITE3_DB_NAME
+            const char *db_name;
+            int j_db = 0;
+            while ((db_name = sqlite3_db_name(ctx->db, j_db)) != NULL) {
+                status = sqlite3_file_control(ctx->db, db_name, SQLITE_FCNTL_FILE_POINTER, &sfile);
+                if (status == 0 && sfile->pMethods != NULL) {
+                    sfile->pMethods->xClose(sfile);
+                }
+                j_db++;
+            }
+#else
             status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_FILE_POINTER, &sfile);
             if (status == 0 && sfile->pMethods != NULL) {
                 sfile->pMethods->xClose(sfile);
             }
+#endif
 
             status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_JOURNAL_POINTER, &sfile);
             if (status == 0 && sfile->pMethods != NULL) {

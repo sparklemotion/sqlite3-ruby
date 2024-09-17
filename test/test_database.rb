@@ -730,7 +730,9 @@ module SQLite3
         read, write = IO.pipe
 
         db = SQLite3::Database.new("test.db")
+        db.execute("attach database 'test.db' as 'foo';") # exercise sqlite3_db_name()
         Process.fork do
+          read.close
           $stderr = StringIO.new
 
           result = db.close
@@ -740,20 +742,22 @@ module SQLite3
           write.write($stderr.string)
 
           write.close
-          read.close
           exit!
         end
+        write.close
 
-        assert_equal("ok", read.readline.chomp, "return value was not the database")
-        assert_equal("ok", read.readline.chomp, "closed? did not return true")
+        assert1, assert2, *stderr = *read.readlines
+        read.close
+
+        assert_equal("ok", assert1.chomp, "return value was not the database")
+        assert_equal("ok", assert2.chomp, "closed? did not return true")
+
+        assert_equal(1, stderr.count, "unexpected output on stderr: #{stderr.inspect}")
         assert_match(
           /warning: An open sqlite database connection was inherited from a forked process/,
-          read.readline,
+          stderr.first,
           "expected warning was not emitted"
         )
-
-        write.close
-        read.close
       ensure
         db.close
         FileUtils.rm_f("test.db")
