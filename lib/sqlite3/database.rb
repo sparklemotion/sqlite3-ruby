@@ -5,6 +5,7 @@ require "sqlite3/errors"
 require "sqlite3/pragmas"
 require "sqlite3/statement"
 require "sqlite3/value"
+require "sqlite3/fork_safety"
 
 module SQLite3
   # The Database class encapsulates a single connection to a SQLite3 database.
@@ -133,6 +134,8 @@ module SQLite3
       @results_as_hash = options[:results_as_hash]
       @readonly = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
+
+      ForkSafety.track(self)
 
       if block_given?
         begin

@@ -16,7 +16,9 @@ static void
 close_or_discard_db(sqlite3RubyPtr ctx)
 {
     if (ctx->db) {
-        if (ctx->owner == getpid()) {
+        int isReadonly = (ctx->flags & SQLITE_OPEN_READONLY);
+
+        if (isReadonly || ctx->owner == getpid()) {
             // Ordinary close.
             sqlite3_close_v2(ctx->db);
         } else {
@@ -25,9 +27,10 @@ close_or_discard_db(sqlite3RubyPtr ctx)
             sqlite3_file *sfile;
             int status;
 
-            rb_warning("An open sqlite database connection was inherited from a forked process and "
-                       "is being discarded. This is a memory leak. If possible, please close all sqlite "
-                       "database connections before forking.");
+            rb_warning("An open writable sqlite database connection was inherited from a "
+                       "forked process and is being closed to prevent the risk of corruption. "
+                       "If possible, please close all writable sqlite database connections "
+                       "before forking.");
 
             // release as much heap memory as possible by deallocating non-essential memory
             // allocations held by the database library. Memory used to cache database pages to
@@ -124,6 +127,7 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 {
     sqlite3RubyPtr ctx;
     int status;
+    int flags;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
@@ -136,14 +140,16 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 #  endif
 #endif
 
+    flags = NUM2INT(mode);
     status = sqlite3_open_v2(
                  StringValuePtr(file),
                  &ctx->db,
-                 NUM2INT(mode),
+                 flags,
                  NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
              );
 
-    CHECK(ctx->db, status)
+    CHECK(ctx->db, status);
+    ctx->flags = flags;
 
     return self;
 }
@@ -169,9 +175,10 @@ rb_sqlite3_disable_quirk_mode(VALUE self)
 /*
  *  Close the database and release all associated resources.
  *
- *  ⚠ If the process that created the database forks a child process, and this method is called
- *  from the child process, then this method will _not_ free memory resources and instead will
- *  call discard. This is a memory leak, but is safer than risking database corruption.
+ *  ⚠ Writable connections that are carried across a +fork()+ are not completely closed. Sqlite does
+ *  not support forking, and fully closing a writable connection that has been carried across a fork
+ *  may corrupt the database. Since it is an incomplete close, not all memory resources are freed,
+ *  but this is safer than risking data loss.
  *
  *  See adr/2024-09-fork-safety.md for more information on fork safety.
  */
@@ -918,6 +925,10 @@ rb_sqlite3_open16(VALUE self, VALUE file)
 #endif
 
     status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
+
+    // these are the perm flags used implicitly by sqlite3_open16,
+    // see https://www.sqlite.org/capi3ref.html#sqlite3_open
+    ctx->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
 
     CHECK(ctx->db, status)
 

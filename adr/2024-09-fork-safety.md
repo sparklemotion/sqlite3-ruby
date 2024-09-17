@@ -1,5 +1,5 @@
 
-# 2024-09 Discard database connections when carried across fork()of fork safety
+# 2024-09 Automatically close database connections when carried across fork()
 
 ## Status
 
@@ -15,17 +15,23 @@ SQLite is known to not be fork-safe[^howto], so this was not entirely surprising
 Advice from upstream contributors[^advice] is, essentially: don't fork if you have open database connections. Or, if you have forked, don't call `sqlite3_close` on those connections and thereby leak some amount of memory in the child process. Neither of these options are ideal, see below.
 
 
-## Decision
+## Decisions
 
-Open database connections carried across a `fork()` will not be fully closed in the child process, to avoid the risk of corrupting the database file.
+1. Open writable database connections carried across a `fork()` will automatically be closed in the child process to mitigate the risk of corrupting the database file.
+2. These connections will be incompletely closed ("discarded") which will result in a one-time memory leak in the child process.
 
-The sqlite3-ruby gem will track the ID of the process that opened each database connection. If, when the database is closed (either explicitly with `Database#close` or implicitly via GC) the current process ID is different from the original process, then we "discard" the connection.
+First, the gem will register an "after fork" handler via `Process._fork` that will close any open writable database connections in the child process. This is a best-effort attempt to avoid corruption, but it is not guaranteed to prevent corruption in all cases. Any connections closed by this handler will also emit a warning to let users know what's happening.
+
+Second, the sqlite3-ruby gem will store the ID of the process that opened each database connection. If, when a writable database is closed (either explicitly with `Database#close` or implicitly via GC or after-fork callback) the current process ID is different from the original process, then we "discard" the connection.
 
 "Discard" here means:
 
 - The `Database` object acts "closed", including returning `true` from `#closed?`.
 - `sqlite3_close_v2` is not called on the object, because it is unsafe to do so per sqlite instructions[^howto]. As a result, some memory will be lost permanently (a one-time "memory leak").
 - Open file descriptors associated with the database are closed.
+- Any memory that can be freed safely is recovered.
+
+Note that readonly databases are being treated as "fork safe" and are not affected by any of these changes.
 
 
 ## Consequences
