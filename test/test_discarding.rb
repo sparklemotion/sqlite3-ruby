@@ -39,7 +39,6 @@ module SQLite3
     def test_fork_discards_an_open_readwrite_connection
       skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
       skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
-      skip("ruby 3.0 doesn't have Process._fork") if RUBY_VERSION < "3.1.0"
 
       GC.start
       begin
