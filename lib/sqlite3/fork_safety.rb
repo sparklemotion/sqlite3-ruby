@@ -38,10 +38,10 @@ module SQLite3
             unless warned
               # If you are here, you may want to read
               # https://github.com/sparklemotion/sqlite3-ruby/pull/558
-              warn("#{__FILE__}:#{__LINE__}: warning: " \
-                   "Writable sqlite database connection(s) were inherited from a forked process. " \
+              warn("Writable sqlite database connection(s) were inherited from a forked process. " \
                    "This is unsafe and the connections are being closed to prevent possible data " \
-                   "corruption. Please close writable sqlite database connections before forking.")
+                   "corruption. Please close writable sqlite database connections before forking.",
+                uplevel: 0)
               warned = true
             end
             db.close

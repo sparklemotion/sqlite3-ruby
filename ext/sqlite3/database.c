@@ -179,12 +179,13 @@ rb_sqlite3_disable_quirk_mode(VALUE self)
 /*
  *  Close the database and release all associated resources.
  *
- *  ⚠ Writable connections that are carried across a +fork()+ are not completely closed. Sqlite does
- *  not support forking, and fully closing a writable connection that has been carried across a fork
- *  may corrupt the database. Since it is an incomplete close, not all memory resources are freed,
- *  but this is safer than risking data loss.
+ *  ⚠ Writable connections that are carried across a <tt>fork()</tt> are not completely
+ *  closed. {Sqlite does not support forking}[https://www.sqlite.org/howtocorrupt.html],
+ *  and fully closing a writable connection that has been carried across a fork may corrupt the
+ *  database. Since it is an incomplete close, not all memory resources are freed, but this is safer
+ *  than risking data loss.
  *
- *  See adr/2024-09-fork-safety.md for more information on fork safety.
+ *  See rdoc-ref:adr/2024-09-fork-safety.md for more information on fork safety.
  */
 static VALUE
 sqlite3_rb_close(VALUE self)

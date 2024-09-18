@@ -26,19 +26,21 @@ Second, the sqlite3-ruby gem will store the ID of the process that opened each d
 
 "Discard" here means:
 
+- `sqlite3_close_v2` is not called on the database, because it is unsafe to do so per sqlite instructions[^howto].
+  - Open file descriptors associated with the database are closed.
+  - Any memory that can be freed safely is recovered.
+  - But some memory will be lost permanently (a one-time "memory leak").
 - The `Database` object acts "closed", including returning `true` from `#closed?`.
-- `sqlite3_close_v2` is not called on the object, because it is unsafe to do so per sqlite instructions[^howto]. As a result, some memory will be lost permanently (a one-time "memory leak").
-- Open file descriptors associated with the database are closed.
-- Any memory that can be freed safely is recovered.
+- Related `Statement` objects are rendered unusable and will raise an exception if used.
 
-Note that readonly databases are being treated as "fork safe" and are not affected by any of these changes.
+Note that readonly databases are being treated as "fork safe" and are not affected by these changes.
 
 
 ## Consequences
 
 The positive consequence is that we remove a potential cause of database corruption for applications that fork with active sqlite database connections.
 
-The negative consequence is that, for each discarded connection, some memory will be permanently lost (leaked) in the child process.
+The negative consequence is that, for each discarded connection, some memory will be permanently lost (leaked) in the child process. We consider this to be an acceptable tradeoff given the risk of data loss.
 
 
 ## Alternatives considered.
@@ -57,7 +59,6 @@ I think this approach is promising, but complex and risky. Sqlite is a complex l
 ## References
 
 - [Database connections carried across fork() will not be fully closed by flavorjones · Pull Request #558 · sparklemotion/sqlite3-ruby](https://github.com/sparklemotion/sqlite3-ruby/pull/558)
-- TODO rails pr implementing sqlite3adapter discard
 
 
 ## Footnotes

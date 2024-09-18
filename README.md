@@ -156,11 +156,11 @@ safe](https://www.sqlite.org/howtocorrupt.html#_carrying_an_open_database_connec
 and instructs users to not carry an open writable database connection across a `fork()`. Using an inherited
 connection in the child may corrupt your database, leak memory, or cause other undefined behavior.
 
-To help protect users of this gem from accidental corruption due to this lack of fork safety, the gem will immediately close any open writable databases in the child after a fork.
-
-Whenever possible, close writable connections in the parent before forking. Discarding writable
+To help protect users of this gem from accidental corruption due to this lack of fork safety, the gem will immediately close any open writable databases in the child after a fork. Discarding writable
 connections in the child will incur a small one-time memory leak per connection, but that's
 preferable to potentially corrupting your database.
+
+Whenever possible, close writable connections in the parent before forking.
 
 See [./adr/2024-09-fork-safety.md](./adr/2024-09-fork-safety.md) for more information and context.
 
