@@ -86,10 +86,10 @@ jobs:
     # reported at https://github.com/sparklemotion/sqlite3-ruby/issues/354
     # TODO remove once https://github.com/flavorjones/mini_portile/issues/118 is fixed
     needs: basic
-    name: "fedora:35"
+    name: "fedora:40"
     runs-on: ubuntu-latest
     container:
-      image: fedora:35
+      image: fedora:40
     steps:
       - run: |
           dnf group install -y "C Development Tools and Libraries"
