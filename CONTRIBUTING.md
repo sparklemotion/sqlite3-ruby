@@ -7,6 +7,11 @@ This doc is a short introduction on how to modify and maintain the sqlite3-ruby 
 
 ## Architecture notes
 
+### Decision record
+
+As of 2024-09, we're starting to keep some architecture decisions in the subdirectory `/adr`, so
+please look there for additional information.
+
 ### Garbage collection
 
 All statements keep pointers back to their respective database connections.
