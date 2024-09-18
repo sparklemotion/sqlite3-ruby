@@ -1,6 +1,6 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## prerelease 2.1.0.rc1 / 2024-09-18
 
 ### Ruby
 
@@ -11,7 +11,7 @@
 
 Sqlite itself is [not fork-safe](https://www.sqlite.org/howtocorrupt.html#_carrying_an_open_database_connection_across_a_fork_). Specifically, writing in a child process to a database connection that was created in the parent process may corrupt the database file. To mitigate this risk, sqlite3-ruby has implemented the following changes:
 
-- Open writable database connections carried across a `fork()` will immediately be closed in the child process to mitigate the risk of corrupting the database file.
+- All open writable database connections carried across a `fork()` will immediately be closed in the child process to mitigate the risk of corrupting the database file.
 - These connections will be incompletely closed ("discarded") which will result in a one-time memory leak in the child process.
 
 If it's at all possible, we strongly recommend that you close writable database connections in the parent before forking.
