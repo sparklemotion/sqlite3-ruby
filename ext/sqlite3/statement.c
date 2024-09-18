@@ -4,6 +4,20 @@
   if(!_ctxt->st) \
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed statement");
 
+static void
+require_open_db(VALUE stmt_rb)
+{
+    VALUE closed_p = rb_funcall(
+                         rb_iv_get(stmt_rb, "@connection"),
+                         rb_intern("closed?"), 0);
+
+    if (RTEST(closed_p)) {
+        rb_raise(rb_path2class("SQLite3::Exception"),
+                 "cannot use a statement associated with a closed database");
+    }
+}
+
+
 VALUE cSqlite3Statement;
 
 static void
@@ -121,6 +135,7 @@ step(VALUE self)
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     if (ctx->done_p) { return Qnil; }
@@ -216,6 +231,8 @@ bind_param(VALUE self, VALUE key, VALUE value)
     int index;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     switch (TYPE(key)) {
@@ -308,6 +325,8 @@ reset_bang(VALUE self)
     sqlite3StmtRubyPtr ctx;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     sqlite3_reset(ctx->st);
@@ -328,6 +347,8 @@ clear_bindings_bang(VALUE self)
     sqlite3StmtRubyPtr ctx;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     sqlite3_clear_bindings(ctx->st);
@@ -360,6 +381,8 @@ column_count(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     return INT2NUM(sqlite3_column_count(ctx->st));
@@ -391,6 +414,8 @@ column_name(VALUE self, VALUE index)
     const char *name;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
@@ -414,6 +439,8 @@ column_decltype(VALUE self, VALUE index)
     const char *name;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
@@ -431,6 +458,8 @@ bind_parameter_count(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
@@ -538,7 +567,10 @@ stats_as_hash(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
+
     VALUE arg = rb_hash_new();
 
     stmt_stat_internal(arg, ctx->st);
@@ -554,6 +586,8 @@ stat_for(VALUE self, VALUE key)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     if (SYMBOL_P(key)) {
@@ -574,6 +608,8 @@ memused(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_MEMUSED, 0));
@@ -591,6 +627,8 @@ database_name(VALUE self, VALUE index)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     return SQLITE3_UTF8_STR_NEW2(
@@ -608,6 +646,8 @@ get_sql(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     return rb_obj_freeze(SQLITE3_UTF8_STR_NEW2(sqlite3_sql(ctx->st)));
@@ -626,6 +666,8 @@ get_expanded_sql(VALUE self)
     VALUE rb_expanded_sql;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    require_open_db(self);
     REQUIRE_OPEN_STMT(ctx);
 
     expanded_sql = sqlite3_expanded_sql(ctx->st);

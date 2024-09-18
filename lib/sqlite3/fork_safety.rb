@@ -1,0 +1,56 @@
+# frozen_string_literal: true
+
+require "weakref"
+
+# based on Rails's active_support/fork_tracker.rb
+module SQLite3
+  module ForkSafety
+    module CoreExt
+      def _fork
+        pid = super
+        if pid == 0
+          ForkSafety.discard
+        end
+        pid
+      end
+    end
+
+    @databases = []
+    @mutex = Mutex.new
+
+    class << self
+      def hook!
+        ::Process.singleton_class.prepend(CoreExt)
+      end
+
+      def track(database)
+        @mutex.synchronize do
+          @databases << WeakRef.new(database)
+        end
+      end
+
+      def discard
+        warned = false
+        @databases.each do |db|
+          next unless db.weakref_alive?
+
+          unless db.closed? || db.readonly?
+            unless warned
+              # If you are here, you may want to read
+              # https://github.com/sparklemotion/sqlite3-ruby/pull/558
+              warn("Writable sqlite database connection(s) were inherited from a forked process. " \
+                   "This is unsafe and the connections are being closed to prevent possible data " \
+                   "corruption. Please close writable sqlite database connections before forking.",
+                uplevel: 0)
+              warned = true
+            end
+            db.close
+          end
+        end
+        @databases.clear
+      end
+    end
+  end
+end
+
+SQLite3::ForkSafety.hook!

@@ -131,6 +131,8 @@ module Sqlite3
         end
 
         have_func("sqlite3_prepare_v2")
+        have_func("sqlite3_db_name", "sqlite3.h") # v3.39.0
+
         have_type("sqlite3_int64", "sqlite3.h")
         have_type("sqlite3_uint64", "sqlite3.h")
       end
