@@ -4,7 +4,7 @@
 
 ### Ruby
 
-- This release drops support for Ruby 3.0.
+- This release drops support for Ruby 3.0. [#563] @flavorjones
 
 
 ### Fork safety improvements
