@@ -49,15 +49,16 @@ discard_db(sqlite3RubyPtr ctx)
     }
 
     ctx->db = NULL;
+    ctx->flags |= SQLITE3_RB_DATABASE_DISCARDED;
 }
 
 static void
 close_or_discard_db(sqlite3RubyPtr ctx)
 {
     if (ctx->db) {
-        int isReadonly = (ctx->flags & SQLITE_OPEN_READONLY);
+        int is_readonly = (ctx->flags & SQLITE3_RB_DATABASE_READONLY);
 
-        if (isReadonly || ctx->owner == getpid()) {
+        if (is_readonly || ctx->owner == getpid()) {
             // Ordinary close.
             sqlite3_close_v2(ctx->db);
             ctx->db = NULL;
@@ -153,7 +154,9 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
              );
 
     CHECK(ctx->db, status);
-    ctx->flags = flags;
+    if (flags & SQLITE_OPEN_READONLY) {
+        ctx->flags |= SQLITE3_RB_DATABASE_READONLY;
+    }
 
     return self;
 }
@@ -943,11 +946,10 @@ rb_sqlite3_open16(VALUE self, VALUE file)
 #endif
 #endif
 
-    status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
-
-    // these are the perm flags used implicitly by sqlite3_open16,
+    // sqlite3_open16 implicitly uses flags (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
     // see https://www.sqlite.org/capi3ref.html#sqlite3_open
-    ctx->flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+    // so we do not ever set SQLITE3_RB_DATABASE_READONLY in ctx->flags
+    status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
 
     CHECK(ctx->db, status)
 

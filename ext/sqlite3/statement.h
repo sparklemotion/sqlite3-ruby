@@ -5,6 +5,7 @@
 
 struct _sqlite3StmtRuby {
     sqlite3_stmt *st;
+    sqlite3Ruby *db;
     int done_p;
 };
 
