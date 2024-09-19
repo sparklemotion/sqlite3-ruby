@@ -16,20 +16,15 @@ please look there for additional information.
 
 All statements keep pointers back to their respective database connections.
 The `@connection` instance variable on the `Statement` handle keeps the database
-connection alive.  Memory allocated for a statement handler will be freed in
-two cases:
+connection alive.
 
-1. `#close` is called on the statement
-2. The `SQLite3::Database` object gets garbage collected
+We use `sqlite3_close_v2` in `Database#close` since v2.1.0 which defers _actually_ closing the
+connection and freeing the underlying memory until all open statments are closed; though the
+`Database` object will immediately behave as though it's been fully closed. If a Database is not
+explicitly closed, it will be closed when it is GCed.
 
-We can't free the memory for the statement in the garbage collection function
-for the statement handler.  The reason is because there exists a race
-condition.  We cannot guarantee the order in which objects will be garbage
-collected.  So, it is possible that a connection and a statement are up for
-garbage collection.  If the database connection were to be free'd before the
-statement, then boom.  Instead we'll be conservative and free unclosed
-statements when the connection is terminated.
-
+`Statement#close` finalizes the underlying statement. If a Statement is not explicitly closed, it
+will be closed/finalized when it is GCed.
 
 
 ## Building gems
