@@ -160,7 +160,7 @@ module SQLite3
         db.send(:discard)
 
         e = assert_raises(SQLite3::Exception) { stmt.execute }
-        assert_match(/cannot use a statement associated with a closed database/, e.message)
+        assert_match(/cannot use a statement associated with a discarded database/, e.message)
 
         assert_nothing_raised { stmt.close }
         assert_predicate(stmt, :closed?)

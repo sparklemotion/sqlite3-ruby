@@ -135,6 +135,13 @@ module SQLite3
       end
     end
 
+    def test_closed_db_behavior
+      @db.close
+      result = nil
+      assert_nothing_raised { result = @stmt.execute }
+      refute_nil result
+    end
+
     def test_new_with_remainder
       stmt = SQLite3::Statement.new(@db, "select 'foo';bar")
       assert_equal "bar", stmt.remainder
