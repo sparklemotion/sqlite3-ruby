@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## prerelease 2.1.0.rc2 / 2024-09-18
+
+### Improved
+
+- Address a performance regression in 2.1.0.rc1.
+
+
 ## prerelease 2.1.0.rc1 / 2024-09-18
 
 ### Ruby
