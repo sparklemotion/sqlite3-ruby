@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## prerelease 2.1.0.rc3 / 2024-09-18
+
+### Improved
+
+- Allow suppression of fork safety warnings. [#566] @flavorjones
+
+
 ## prerelease 2.1.0.rc2 / 2024-09-18
 
 ### Improved
