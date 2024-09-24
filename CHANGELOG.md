@@ -1,20 +1,6 @@
 # sqlite3-ruby Changelog
 
-## prerelease 2.1.0.rc3 / 2024-09-18
-
-### Improved
-
-- Allow suppression of fork safety warnings. [#566] @flavorjones
-
-
-## prerelease 2.1.0.rc2 / 2024-09-18
-
-### Improved
-
-- Address a performance regression in 2.1.0.rc1.
-
-
-## prerelease 2.1.0.rc1 / 2024-09-18
+## 2.1.0 / 2024-09-24
 
 ### Ruby
 
@@ -28,15 +14,20 @@ Sqlite itself is [not fork-safe](https://www.sqlite.org/howtocorrupt.html#_carry
 - All open writable database connections carried across a `fork()` will immediately be closed in the child process to mitigate the risk of corrupting the database file.
 - These connections will be incompletely closed ("discarded") which will result in a one-time memory leak in the child process.
 
-If it's at all possible, we strongly recommend that you close writable database connections in the parent before forking.
+If it's at all possible, we strongly recommend that you close writable database connections in the parent before forking. If absolutely necessary (and you know what you're doing), you may suppress the fork safety warnings by calling `SQLite3::ForkSafety.suppress_warnings!`.
 
-See the README "Fork Safety" section and `adr/2024-09-fork-safety.md` for more information. [#558] @flavorjones
+See the README's "Fork Safety" section and `adr/2024-09-fork-safety.md` for more information. [#558, #565, #566] @flavorjones
 
 
 ### Improved
 
 - Use `sqlite3_close_v2` to close databases in a deferred manner if there are unclosed prepared statements. Previously closing a database while statements were open resulted in a `BusyException`. See https://www.sqlite.org/c3ref/close.html for more context. [#557] @flavorjones
 - When setting a Database `busy_handler`, fire the write barrier to prevent potential crashes during the GC mark phase. [#556] @jhawthorn
+
+
+### Documentation
+
+- The `FAQ.md` has been updated to fix some inaccuracies. [#562] @rickhull
 
 
 ## 2.0.4 / 2024-08-13

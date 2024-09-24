@@ -160,7 +160,7 @@ To help protect users of this gem from accidental corruption due to this lack of
 connections in the child will incur a small one-time memory leak per connection, but that's
 preferable to potentially corrupting your database.
 
-Whenever possible, close writable connections in the parent before forking.
+Whenever possible, close writable connections in the parent before forking. If absolutely necessary (and you know what you're doing), you may suppress the fork safety warnings by calling `SQLite3::ForkSafety.suppress_warnings!`.
 
 See [./adr/2024-09-fork-safety.md](./adr/2024-09-fork-safety.md) for more information and context.
 
