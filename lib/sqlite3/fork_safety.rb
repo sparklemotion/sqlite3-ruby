@@ -17,6 +17,7 @@ module SQLite3
 
     @databases = []
     @mutex = Mutex.new
+    @suppress = false
 
     class << self
       def hook!
@@ -30,7 +31,7 @@ module SQLite3
       end
 
       def discard
-        warned = false
+        warned = @suppress
         @databases.each do |db|
           next unless db.weakref_alive?
 
@@ -48,6 +49,11 @@ module SQLite3
           end
         end
         @databases.clear
+      end
+
+      # Call to suppress the fork-related warnings.
+      def suppress_warnings!
+        @suppress = true
       end
     end
   end
