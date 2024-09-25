@@ -102,9 +102,10 @@ class IntegrationTestCase < SQLite3::TestCase
   end
 
   def test_prepare_invalid_syntax
-    assert_raise(SQLite3::SQLException) do
+    exception = assert_raise(SQLite3::SQLException) do
       @db.prepare "select from foo"
     end
+    assert_equal("near \"from\": syntax error\n  select from foo\n         ^--- error here", exception.message)
   end
 
   def test_prepare_invalid_column

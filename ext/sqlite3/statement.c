@@ -78,7 +78,7 @@ prepare(VALUE self, VALUE db, VALUE sql)
                  &tail
              );
 
-    CHECK(db_ctx->db, status);
+    CHECK_PREPARE(db_ctx->db, status, StringValuePtr(sql));
     timespecclear(&db_ctx->stmt_deadline);
 
     return rb_utf8_str_new_cstr(tail);
