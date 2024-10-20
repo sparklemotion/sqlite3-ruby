@@ -85,15 +85,15 @@ rb_sqlite3_raise(sqlite3 *db, int status)
 void
 rb_sqlite3_raise_msg(sqlite3 *db, int status, const char *msg)
 {
-    VALUE exception;
-
-    if (status == SQLITE_OK) {
+    VALUE klass = status2klass(status);
+    if (NIL_P(klass)) {
         return;
     }
 
-    exception = rb_exc_new2(rb_path2class("SQLite3::Exception"), msg);
-    sqlite3_free((void *)msg);
+    VALUE exception = rb_exc_new2(klass, msg);
     rb_iv_set(exception, "@code", INT2FIX(status));
+    sqlite3_free((void *)msg);
+
     rb_exc_raise(exception);
 }
 
