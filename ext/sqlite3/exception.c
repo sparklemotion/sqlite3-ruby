@@ -111,11 +111,10 @@ rb_sqlite3_raise_with_sql(sqlite3 *db, int status, const char *sql)
 
     // Create a more detailed error message
     if (error_offset >= 0 && sql) {
-        char *formatted_error = NULL;
-        asprintf(&formatted_error, "%s\n  %s\n  %*s^--- error here",
-                 sqlite_error_msg, sql, error_offset, "");
-        error_message = rb_str_new2(formatted_error);
-        free(formatted_error);
+        error_message = rb_sprintf(
+            "%s\n  %s\n  %*s^--- error here",
+            sqlite_error_msg, sql, error_offset, ""
+            );
     } else {
         error_message = rb_str_new2(sqlite_error_msg);
     }
