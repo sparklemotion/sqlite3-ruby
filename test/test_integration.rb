@@ -102,10 +102,50 @@ class IntegrationTestCase < SQLite3::TestCase
   end
 
   def test_prepare_invalid_syntax
+    assert_raise(SQLite3::SQLException) do
+      @db.prepare "select from foo"
+    end
+  end
+
+  def test_prepare_exception_shows_error_position
     exception = assert_raise(SQLite3::SQLException) do
       @db.prepare "select from foo"
     end
-    assert_equal("near \"from\": syntax error\n  select from foo\n         ^--- error here", exception.message)
+    assert_equal(<<~MSG, exception.message)
+      near "from": syntax error:
+      select from foo
+             ^
+    MSG
+  end
+
+  def test_prepare_exception_shows_error_position_newline1
+    exception = assert_raise(SQLite3::SQLException) do
+      @db.prepare(<<~SQL)
+        select
+        from foo
+      SQL
+    end
+    assert_equal(<<~MSG, exception.message)
+      near "from": syntax error:
+      select
+      from foo
+      ^
+    MSG
+  end
+
+  def test_prepare_exception_shows_error_position_newline2
+    exception = assert_raise(SQLite3::SQLException) do
+      @db.prepare(<<~SQL)
+        select asdf
+        from foo
+      SQL
+    end
+    assert_equal(<<~MSG, exception.message)
+      no such column: asdf:
+      select asdf
+             ^
+      from foo
+    MSG
   end
 
   def test_prepare_invalid_column
