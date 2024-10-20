@@ -105,23 +105,18 @@ rb_sqlite3_raise_with_sql(sqlite3 *db, int status, const char *sql)
         return;
     }
 
-    VALUE error_message = Qnil;
-    const char *sqlite_error_msg = sqlite3_errmsg(db);
-    int error_offset = sqlite3_error_offset(db);
+    const char *error_msg = sqlite3_errmsg(db);
+    int error_offset = -1;
+#ifdef HAVE_SQLITE3_ERROR_OFFSET
+    error_offset = sqlite3_error_offset(db);
+#endif
 
-    // Create a more detailed error message
-    if (error_offset >= 0 && sql) {
-        error_message = rb_sprintf(
-                            "%s:\n%s\n%*s^\n",
-                            sqlite_error_msg, sql, error_offset, ""
-                        );
-    } else {
-        error_message = rb_str_new2(sqlite_error_msg);
-    }
-
-    VALUE exception = rb_exc_new3(klass, error_message);
+    VALUE exception = rb_exc_new2(klass, error_msg);
     rb_iv_set(exception, "@code", INT2FIX(status));
-    rb_iv_set(exception, "@error_offset", INT2FIX(error_offset));
+    if (sql) {
+        rb_iv_set(exception, "@sql", rb_str_new2(sql));
+        rb_iv_set(exception, "@sql_offset", INT2FIX(error_offset));
+    }
 
     rb_exc_raise(exception);
 }
