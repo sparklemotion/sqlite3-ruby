@@ -7,6 +7,13 @@
 - SQL Syntax errors during `Database#prepare` will raise a verbose exception with a multiline message indicating with a "^" exactly where in the statement the error occurred. [#554] @fractaledmind @flavorjones
 
 
+## 2.1.1 / 2024-10-22
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.47.0](https://sqlite.org/releaselog/3_47_0.html) [#570] @flavorjones
+
+
 ## 2.1.0 / 2024-09-24
 
 ### Ruby
