@@ -107,6 +107,70 @@ class IntegrationTestCase < SQLite3::TestCase
     end
   end
 
+  def test_prepare_exception_shows_error_position
+    exception = assert_raise(SQLite3::SQLException) do
+      @db.prepare "select from foo"
+    end
+    if exception.sql_offset >= 0 # HAVE_SQLITE_ERROR_OFFSET
+      assert_equal(<<~MSG.chomp, exception.message)
+        near "from": syntax error:
+        select from foo
+               ^
+      MSG
+    else
+      assert_equal(<<~MSG.chomp, exception.message)
+        near "from": syntax error:
+        select from foo
+      MSG
+    end
+  end
+
+  def test_prepare_exception_shows_error_position_newline1
+    exception = assert_raise(SQLite3::SQLException) do
+      @db.prepare(<<~SQL)
+        select
+        from foo
+      SQL
+    end
+    if exception.sql_offset >= 0 # HAVE_SQLITE_ERROR_OFFSET
+      assert_equal(<<~MSG.chomp, exception.message)
+        near "from": syntax error:
+        select
+        from foo
+        ^
+      MSG
+    else
+      assert_equal(<<~MSG.chomp, exception.message)
+        near "from": syntax error:
+        select
+        from foo
+      MSG
+    end
+  end
+
+  def test_prepare_exception_shows_error_position_newline2
+    exception = assert_raise(SQLite3::SQLException) do
+      @db.prepare(<<~SQL)
+        select asdf
+        from foo
+      SQL
+    end
+    if exception.sql_offset >= 0 # HAVE_SQLITE_ERROR_OFFSET
+      assert_equal(<<~MSG.chomp, exception.message)
+        no such column: asdf:
+        select asdf
+               ^
+        from foo
+      MSG
+    else
+      assert_equal(<<~MSG.chomp, exception.message)
+        no such column: asdf:
+        select asdf
+        from foo
+      MSG
+    end
+  end
+
   def test_prepare_invalid_column
     assert_raise(SQLite3::SQLException) do
       @db.prepare "select k from foo"

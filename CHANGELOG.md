@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Improved
+
+- SQL Syntax errors during `Database#prepare` will raise a verbose exception with a multiline message indicating with a "^" exactly where in the statement the error occurred. [#554] @fractaledmind @flavorjones
+
+
 ## 2.1.1 / 2024-10-22
 
 ### Dependencies

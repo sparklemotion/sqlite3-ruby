@@ -4,6 +4,34 @@ module SQLite3
   class Exception < ::StandardError
     # A convenience for accessing the error code for this exception.
     attr_reader :code
+
+    # If the error is associated with a SQL query, this is the query
+    attr_reader :sql
+
+    # If the error is associated with a particular offset in a SQL query, this is the non-negative
+    # offset. If the offset is not available, this will be -1.
+    attr_reader :sql_offset
+
+    def message
+      [super, sql_error].compact.join(":\n")
+    end
+
+    private def sql_error
+      return nil unless @sql
+      return @sql.chomp unless @sql_offset >= 0
+
+      offset = @sql_offset
+      sql.lines.flat_map do |line|
+        if offset >= 0 && line.length > offset
+          blanks = " " * offset
+          offset = -1
+          [line.chomp, blanks + "^"]
+        else
+          offset -= line.length if offset
+          line.chomp
+        end
+      end.join("\n")
+    end
   end
 
   class SQLException < Exception; end
