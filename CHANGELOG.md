@@ -2,6 +2,11 @@
 
 ## next / unreleased
 
+### Added
+
+- URI filenames are now allowed. This allows the injection of some behavior via recognized query parameters. See https://www.sqlite.org/uri.html for more information. #571 @flavorjones
+
+
 ### Improved
 
 - SQL Syntax errors during `Database#prepare` will raise a verbose exception with a multiline message indicating with a "^" exactly where in the statement the error occurred. [#554] @fractaledmind @flavorjones
