@@ -338,6 +338,14 @@ module SQLite3
       set_int_pragma "mmap_size", size
     end
 
+    def optimize(bitmask = nil)
+      if bitmask
+        set_int_pragma "optimize", bitmask
+      else
+        execute("PRAGMA optimize")
+      end
+    end
+
     def page_count
       get_int_pragma "page_count"
     end
