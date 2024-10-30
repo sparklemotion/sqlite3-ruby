@@ -1,10 +1,10 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.2.0 / 2024-10-30
 
 ### Added
 
-- URI filenames are now allowed. This allows the injection of some behavior via recognized query parameters. See https://www.sqlite.org/uri.html for more information. #571 @flavorjones
+- URI filenames are now allowed. This allows the injection of some behavior via recognized query parameters. See https://www.sqlite.org/uri.html for more information. [#571] @flavorjones
 
 
 ### Improved
