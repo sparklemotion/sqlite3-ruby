@@ -21,5 +21,9 @@ module SQLite3
       # https://stackoverflow.com/questions/365458/how-can-i-detect-if-a-program-is-running-from-within-valgrind/62364698#62364698
       ENV["LD_PRELOAD"] =~ /valgrind|vgpreload/
     end
+
+    def windows?
+      ::RUBY_PLATFORM =~ /mingw|mswin/
+    end
   end
 end

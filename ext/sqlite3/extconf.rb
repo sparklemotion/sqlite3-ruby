@@ -61,7 +61,8 @@ module Sqlite3
               "-fPIC", # needed for linking the static library into a shared library
               "-O2", # see https://github.com/sparklemotion/sqlite3-ruby/issues/335 for some benchmarks
               "-fvisibility=hidden", # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
-              "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1"
+              "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
+              "-DSQLITE_USE_URI=1"
             ]
             env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
             recipe.configure_options += env.select { |k, v| ENV_ALLOWLIST.include?(k) }
