@@ -50,8 +50,9 @@ module Sqlite3
       def configure_packaged_libraries
         minimal_recipe.tap do |recipe|
           recipe.configure_options += [
-            "--enable-shared=no",
-            "--enable-static=yes",
+            "--disable-shared",
+            "--enable-static",
+            "--disable-tcl",
             "--enable-fts5"
           ]
           ENV.to_h.tap do |env|
