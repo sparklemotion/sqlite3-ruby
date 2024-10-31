@@ -342,6 +342,8 @@ module SQLite3
     #
     # To customize the optimization options, pass +bitmask+ with a combination
     # of the Constants::Optimize masks.
+    #
+    # See https://www.sqlite.org/pragma.html#pragma_optimize for more information.
     def optimize(bitmask = nil)
       if bitmask
         set_int_pragma "optimize", bitmask

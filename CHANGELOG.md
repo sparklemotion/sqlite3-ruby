@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Added
+
+- `Database#optimize` which wraps the `pragma optimize;` statement. Also added `Constants::Optimize` to allow advanced users to pass a bitmask of options. See https://www.sqlite.org/pragma.html#pragma_optimize. [#572] @alexcwatt @flavorjones
+
+
 ## 2.2.0 / 2024-10-30
 
 ### Added
