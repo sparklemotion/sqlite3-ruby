@@ -338,6 +338,10 @@ module SQLite3
       set_int_pragma "mmap_size", size
     end
 
+    # Attempt to optimize the database.
+    #
+    # To customize the optimization options, pass +bitmask+ with a combination
+    # of the Constants::Optimize masks.
     def optimize(bitmask = nil)
       if bitmask
         set_int_pragma "optimize", bitmask

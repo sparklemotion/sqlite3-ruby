@@ -170,5 +170,21 @@ module SQLite3
       # This parameter records the number of separate memory allocations currently checked out.
       MALLOC_COUNT = 9
     end
+
+    module Optimize
+      # Debugging mode. Do not actually perform any optimizations but instead return one line of text
+      # for each optimization that would have been done.
+      DEBUG = 0x00001
+
+      # Run ANALYZE on tables that might benefit.
+      ANALYZE_TABLES = 0x00002
+
+      # When running ANALYZE, set a temporary PRAGMA analysis_limit to prevent excess run-time.
+      LIMIT_ANALYZE = 0x00010
+
+      # Check the size of all tables, not just tables that have not been recently used, to see if
+      # any have grown and shrunk significantly and hence might benefit from being re-analyzed.
+      CHECK_ALL_TABLES = 0x10000
+    end
   end
 end
