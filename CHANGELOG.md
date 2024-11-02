@@ -7,6 +7,11 @@
 - `Database#optimize` which wraps the `pragma optimize;` statement. Also added `Constants::Optimize` to allow advanced users to pass a bitmask of options. See https://www.sqlite.org/pragma.html#pragma_optimize. [#572] @alexcwatt @flavorjones
 
 
+### Fixed
+
+- Fix `Database#encoding=` support for switching the database encoding to `UTF-16BE`, which has been broken since `Database#encoding=` was introduced in v1.3.12 in 2016. [#575] @miyucy
+
+
 ## 2.2.0 / 2024-10-30
 
 ### Added

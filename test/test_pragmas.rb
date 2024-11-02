@@ -73,5 +73,53 @@ module SQLite3
         @db.test_statements
       )
     end
+
+    def test_encoding_uppercase
+      assert_equal(Encoding::UTF_8, @db.encoding)
+
+      @db.encoding = "UTF-16"
+      assert_equal(Encoding::UTF_16LE, @db.encoding)
+
+      @db.encoding = "UTF-16LE"
+      assert_equal(Encoding::UTF_16LE, @db.encoding)
+
+      @db.encoding = "UTF-16BE"
+      assert_equal(Encoding::UTF_16BE, @db.encoding)
+
+      @db.encoding = "UTF-8"
+      assert_equal(Encoding::UTF_8, @db.encoding)
+    end
+
+    def test_encoding_lowercase
+      assert_equal(Encoding::UTF_8, @db.encoding)
+
+      @db.encoding = "utf-16"
+      assert_equal(Encoding::UTF_16LE, @db.encoding)
+
+      @db.encoding = "utf-16le"
+      assert_equal(Encoding::UTF_16LE, @db.encoding)
+
+      @db.encoding = "utf-16be"
+      assert_equal(Encoding::UTF_16BE, @db.encoding)
+
+      @db.encoding = "utf-8"
+      assert_equal(Encoding::UTF_8, @db.encoding)
+    end
+
+    def test_encoding_objects
+      assert_equal(Encoding::UTF_8, @db.encoding)
+
+      @db.encoding = Encoding::UTF_16
+      assert_equal(Encoding::UTF_16LE, @db.encoding)
+
+      @db.encoding = Encoding::UTF_16LE
+      assert_equal(Encoding::UTF_16LE, @db.encoding)
+
+      @db.encoding = Encoding::UTF_16BE
+      assert_equal(Encoding::UTF_16BE, @db.encoding)
+
+      @db.encoding = Encoding::UTF_8
+      assert_equal(Encoding::UTF_8, @db.encoding)
+    end
   end
 end
