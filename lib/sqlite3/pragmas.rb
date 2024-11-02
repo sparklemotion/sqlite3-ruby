@@ -93,7 +93,7 @@ module SQLite3
     LOCKING_MODES = [["normal"], ["exclusive"]]
 
     # The list of valid encodings.
-    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be "]]
+    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be"]]
 
     # The list of valid WAL checkpoints.
     WAL_CHECKPOINTS = [["passive"], ["full"], ["restart"], ["truncate"]]
