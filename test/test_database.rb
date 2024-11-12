@@ -721,5 +721,11 @@ module SQLite3
       result = @db.transaction { :foo }
       assert_equal :foo, result
     end
+
+    def test_sqlite_dbpage_vtab
+      skip("sqlite_dbpage not supported") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
+
+      assert_nothing_raised { @db.execute("select count(*) from sqlite_dbpage") }
+    end
   end
 end
