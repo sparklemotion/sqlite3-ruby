@@ -727,5 +727,9 @@ module SQLite3
 
       assert_nothing_raised { @db.execute("select count(*) from sqlite_dbpage") }
     end
+
+    def test_dbstat_table_exists
+      assert_nothing_raised { @db.execute("select * from dbstat") }
+    end
   end
 end
