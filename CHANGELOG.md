@@ -12,6 +12,7 @@
 ### Fixed
 
 - Fix `Database#encoding=` support for switching the database encoding to `UTF-16BE`, which has been broken since `Database#encoding=` was introduced in v1.3.12 in 2016. [#575] @miyucy
+- Omit mention of the `pkg-config` gem when failing to build from source, since it is not used. [#358] @flavorjones
 
 
 ## 2.2.0 / 2024-10-30
