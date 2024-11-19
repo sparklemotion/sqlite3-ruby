@@ -14,6 +14,9 @@ exclude:
 - "bin"
 - "rakelib"
 - "ext/sqlite3/extconf.rb"
+- "vendor"
+- "ports"
+- "tmp"
 hyperlink_all: false
 line_numbers: false
 locale: 

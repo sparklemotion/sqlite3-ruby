@@ -95,6 +95,9 @@ module Sqlite3
           end
 
           ldflags.each { |ldflag| append_ldflags(ldflag) }
+
+          append_cppflags("-DUSING_PACKAGED_LIBRARIES")
+          append_cppflags("-DUSING_PRECOMPILED_LIBRARIES") if cross_build?
         end
       end
 

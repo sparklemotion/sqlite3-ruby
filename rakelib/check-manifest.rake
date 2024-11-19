@@ -10,6 +10,7 @@ task :check_manifest do
     .git
     .github
     .ruby-lsp
+    adr
     bin
     doc
     gems

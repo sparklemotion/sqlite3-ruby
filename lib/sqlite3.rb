@@ -15,3 +15,5 @@ module SQLite3
     threadsafe > 0
   end
 end
+
+require "sqlite3/version_info"
