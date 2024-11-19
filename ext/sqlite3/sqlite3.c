@@ -210,4 +210,16 @@ Init_sqlite3_native(void)
 
     /* (String) The version of the sqlite3 library loaded at runtime (e.g., "3.46.1") */
     rb_define_const(mSqlite3, "SQLITE_LOADED_VERSION", rb_str_new2(sqlite3_libversion()));
+
+#ifdef USING_PACKAGED_LIBRARIES
+    rb_define_const(mSqlite3, "SQLITE_PACKAGED_LIBRARIES", Qtrue);
+#else
+    rb_define_const(mSqlite3, "SQLITE_PACKAGED_LIBRARIES", Qfalse);
+#endif
+
+#ifdef USING_PRECOMPILED_LIBRARIES
+    rb_define_const(mSqlite3, "SQLITE_PRECOMPILED_LIBRARIES", Qtrue);
+#else
+    rb_define_const(mSqlite3, "SQLITE_PRECOMPILED_LIBRARIES", Qfalse);
+#endif
 }

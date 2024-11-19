@@ -8,6 +8,8 @@ module SQLite3
     sqlite: {
       compiled: SQLite3::SQLITE_VERSION,
       loaded: SQLite3::SQLITE_LOADED_VERSION,
+      packaged: SQLite3::SQLITE_PACKAGED_LIBRARIES,
+      precompiled: SQLite3::SQLITE_PRECOMPILED_LIBRARIES,
       sqlcipher: SQLite3.sqlcipher?,
       threadsafe: SQLite3.threadsafe?
     }
