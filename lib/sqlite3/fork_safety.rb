@@ -2,10 +2,10 @@
 
 require "weakref"
 
-# based on Rails's active_support/fork_tracker.rb
 module SQLite3
+  # based on Rails's active_support/fork_tracker.rb
   module ForkSafety
-    module CoreExt
+    module CoreExt # :nodoc:
       def _fork
         pid = super
         if pid == 0
@@ -20,17 +20,17 @@ module SQLite3
     @suppress = false
 
     class << self
-      def hook!
+      def hook! # :nodoc:
         ::Process.singleton_class.prepend(CoreExt)
       end
 
-      def track(database)
+      def track(database) # :nodoc:
         @mutex.synchronize do
           @databases << WeakRef.new(database)
         end
       end
 
-      def discard
+      def discard # :nodoc:
         warned = @suppress
         @databases.each do |db|
           next unless db.weakref_alive?
