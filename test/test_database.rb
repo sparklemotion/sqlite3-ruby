@@ -727,5 +727,11 @@ module SQLite3
 
       assert_nothing_raised { @db.execute("select count(*) from sqlite_dbpage") }
     end
+
+    def test_dbstat_table_exists
+      skip("dbstat not supported") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
+
+      assert_nothing_raised { @db.execute("select * from dbstat") }
+    end
   end
 end
