@@ -1,11 +1,8 @@
 require "sqlite3"
 require "minitest/autorun"
+require "yaml"
 
-puts "info: ruby version: #{RUBY_DESCRIPTION}"
-puts "info: gem version: #{SQLite3::VERSION}"
-puts "info: sqlite version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
-puts "info: sqlcipher?: #{SQLite3.sqlcipher?}"
-puts "info: threadsafe?: #{SQLite3.threadsafe?}"
+puts SQLite3::VERSION_INFO.to_yaml
 
 module SQLite3
   class TestCase < Minitest::Test

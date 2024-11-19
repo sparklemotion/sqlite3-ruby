@@ -201,8 +201,13 @@ Init_sqlite3_native(void)
     rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
     rb_define_singleton_method(mSqlite3, "threadsafe", threadsafe_p, 0);
     rb_define_singleton_method(mSqlite3, "status", rb_sqlite3_status, -1);
-    rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
-    rb_define_const(mSqlite3, "SQLITE_VERSION_NUMBER", INT2FIX(SQLITE_VERSION_NUMBER));
-    rb_define_const(mSqlite3, "SQLITE_LOADED_VERSION", rb_str_new2(sqlite3_libversion()));
 
+    /* (String) The version of the sqlite3 library compiled with (e.g., "3.46.1") */
+    rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
+
+    /* (Integer) The version of the sqlite3 library compiled with (e.g., 346001) */
+    rb_define_const(mSqlite3, "SQLITE_VERSION_NUMBER", INT2FIX(SQLITE_VERSION_NUMBER));
+
+    /* (String) The version of the sqlite3 library loaded at runtime (e.g., "3.46.1") */
+    rb_define_const(mSqlite3, "SQLITE_LOADED_VERSION", rb_str_new2(sqlite3_libversion()));
 }
