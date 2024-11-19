@@ -729,6 +729,8 @@ module SQLite3
     end
 
     def test_dbstat_table_exists
+      skip("dbstat not supported") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
+
       assert_nothing_raised { @db.execute("select * from dbstat") }
     end
   end
