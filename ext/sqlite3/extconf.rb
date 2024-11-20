@@ -176,7 +176,7 @@ module Sqlite3
       end
 
       def abort_pkg_config(id)
-        abort("\nCould not configure the build properly (#{id}). Please install either the `pkg-config` utility or the `pkg-config` rubygem.\n\n")
+        abort("\nCould not configure the build properly (#{id}). Please install the `pkg-config` utility.\n\n")
       end
 
       def cross_build?
