@@ -1,18 +1,18 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.3.0 / 2024-11-20
 
 ### Added
 
 - The SQLITE_DBPAGE extension is now enabled by default, which implements an eponymous-only virtual table that provides direct access to the underlying database file by interacting with the pager. See https://www.sqlite.org/dbpage.html for more information. [#578] @flavorjones
 - The DBSTAT extension is now enabled by default, which implements a read-only eponymous virtual table that returns information about the amount of disk space used to store the content of an SQLite database. See https://sqlite.org/dbstat.html for more information. [#580] @pawurb @flavorjones
 - `Database#optimize` which wraps the `pragma optimize;` statement. Also added `Constants::Optimize` to allow advanced users to pass a bitmask of options. See https://www.sqlite.org/pragma.html#pragma_optimize. [#572] @alexcwatt @flavorjones
-- `SQLite3::VERSION_INFO` is a new constant that tracks a bag of metadata about the gem and the sqlite library used. `SQLite3::SQLITE_PACKAGED_LIBRARIES` and `SQLite3::SQLITE_PRECOMPILED_LIBRARIES` are new constants indicating how the gem was built. [#581] @flavorjones
+- `SQLite3::VERSION_INFO` is contains a bag of metadata about the gem and the sqlite library used. `SQLite3::SQLITE_PACKAGED_LIBRARIES` and `SQLite3::SQLITE_PRECOMPILED_LIBRARIES` are indicate how the gem was built. [#581] @flavorjones
 
 
 ### Fixed
 
-- Fix `Database#encoding=` support for switching the database encoding to `UTF-16BE`, which has been broken since `Database#encoding=` was introduced in v1.3.12 in 2016. [#575] @miyucy
+- `Database#encoding=` support for switching the database encoding to `UTF-16BE`, which has been broken since `Database#encoding=` was introduced in v1.3.12 in 2016. [#575] @miyucy
 - Omit mention of the `pkg-config` gem when failing to build from source, since it is not used. [#358] @flavorjones
 
 
