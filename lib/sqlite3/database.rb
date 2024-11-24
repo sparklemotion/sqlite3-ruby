@@ -8,8 +8,10 @@ require "sqlite3/value"
 require "sqlite3/fork_safety"
 
 module SQLite3
-  # The Database class encapsulates a single connection to a SQLite3 database.
-  # Its usage is very straightforward:
+  # == Overview
+  #
+  # The Database class encapsulates a single connection to a SQLite3 database.  Here's a
+  # straightforward example of usage:
   #
   #   require 'sqlite3'
   #
@@ -19,28 +21,59 @@ module SQLite3
   #     end
   #   end
   #
-  # It wraps the lower-level methods provided by the selected driver, and
-  # includes the Pragmas module for access to various pragma convenience
-  # methods.
+  # It wraps the lower-level methods provided by the selected driver, and includes the Pragmas
+  # module for access to various pragma convenience methods.
   #
-  # The Database class provides type translation services as well, by which
-  # the SQLite3 data types (which are all represented as strings) may be
-  # converted into their corresponding types (as defined in the schemas
-  # for their tables). This translation only occurs when querying data from
+  # The Database class provides type translation services as well, by which the SQLite3 data types
+  # (which are all represented as strings) may be converted into their corresponding types (as
+  # defined in the schemas for their tables). This translation only occurs when querying data from
   # the database--insertions and updates are all still typeless.
   #
-  # Furthermore, the Database class has been designed to work well with the
-  # ArrayFields module from Ara Howard. If you require the ArrayFields
-  # module before performing a query, and if you have not enabled results as
-  # hashes, then the results will all be indexible by field name.
+  # Furthermore, the Database class has been designed to work well with the ArrayFields module from
+  # Ara Howard. If you require the ArrayFields module before performing a query, and if you have not
+  # enabled results as hashes, then the results will all be indexible by field name.
   #
-  # Thread safety:
+  # == Thread safety
   #
-  # When `SQLite3.threadsafe?` returns true, it is safe to share instances of
-  # the database class among threads without adding specific locking. Other
-  # object instances may require applications to provide their own locks if
-  # they are to be shared among threads.  Please see the README.md for more
-  # information.
+  # When SQLite3.threadsafe? returns true, it is safe to share instances of the database class
+  # among threads without adding specific locking. Other object instances may require applications
+  # to provide their own locks if they are to be shared among threads.  Please see the README.md for
+  # more information.
+  #
+  # == SQLite Extensions
+  #
+  # SQLite3::Database supports the universe of {sqlite
+  # extensions}[https://www.sqlite.org/loadext.html]. It's possible to load an extension into an
+  # existing Database object using the #load_extension method and passing a filesystem path:
+  #
+  #   db = SQLite3::Database.new(":memory:")
+  #   db.enable_load_extension(true)
+  #   db.load_extension("/path/to/extension")
+  #
+  # As of v2.4.0, it's also possible to pass an object that responds to +#to_path+. This
+  # documentation will refer to the supported interface as +_ExtensionSpecifier+, which can be
+  # expressed in RBS syntax as:
+  #
+  #   interface _ExtensionSpecifier
+  #     def to_path: () → String
+  #   end
+  #
+  # So, for example, if you are using the {sqlean gem}[https://github.com/flavorjones/sqlean-ruby]
+  # which provides modules that implement this interface, you can pass the module directly:
+  #
+  #   db = SQLite3::Database.new(":memory:")
+  #   db.enable_load_extension(true)
+  #   db.load_extension(SQLean::Crypto)
+  #
+  # It's also possible in v2.4.0+ to load extensions via the SQLite3::Database constructor by using
+  # the +extensions:+ keyword argument to pass an array of String paths or extension specifiers:
+  #
+  #   db = SQLite3::Database.new(":memory:", extensions: ["/path/to/extension", SQLean::Crypto])
+  #
+  # Note that when loading extensions via the constructor, there is no need to call
+  # #enable_load_extension; however it is still necessary to call #enable_load_extensions before any
+  # subsequently invocations of #load_extension on the initialized Database object.
+  #
   class Database
     attr_reader :collations
 
@@ -76,23 +109,25 @@ module SQLite3
     # as hashes or not. By default, rows are returned as arrays.
     attr_accessor :results_as_hash
 
-    # call-seq: SQLite3::Database.new(file, options = {})
+    # call-seq:
+    #   SQLite3::Database.new(file, options = {})
     #
     # Create a new Database object that opens the given file.
     #
     # Supported permissions +options+:
     # - the default mode is <tt>READWRITE | CREATE</tt>
-    # - +:readonly+: boolean (default false), true to set the mode to +READONLY+
-    # - +:readwrite+: boolean (default false), true to set the mode to +READWRITE+
-    # - +:flags+: set the mode to a combination of SQLite3::Constants::Open flags.
+    # - +readonly:+ boolean (default false), true to set the mode to +READONLY+
+    # - +readwrite:+ boolean (default false), true to set the mode to +READWRITE+
+    # - +flags:+ set the mode to a combination of SQLite3::Constants::Open flags.
     #
     # Supported encoding +options+:
-    # - +:utf16+: boolean (default false), is the filename's encoding UTF-16 (only needed if the filename encoding is not UTF_16LE or BE)
+    # - +utf16:+ +boolish+ (default false), is the filename's encoding UTF-16 (only needed if the filename encoding is not UTF_16LE or BE)
     #
     # Other supported +options+:
-    # - +:strict+: boolean (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
-    # - +:results_as_hash+: boolean (default false), return rows as hashes instead of arrays
-    # - +:default_transaction_mode+: one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
+    # - +strict:+ +boolish+ (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
+    # - +results_as_hash:+ +boolish+ (default false), return rows as hashes instead of arrays
+    # - +default_transaction_mode:+ one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
+    # - +extensions:+ <tt>Array[String | _ExtensionSpecifier]</tt> SQLite extensions to load into the database. See Database@SQLite+Extensions for more information.
     #
     def initialize file, options = {}, zvfs = nil
       mode = Constants::Open::READWRITE | Constants::Open::CREATE
@@ -134,6 +169,8 @@ module SQLite3
       @results_as_hash = options[:results_as_hash]
       @readonly = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
+
+      initialize_extensions(options[:extensions])
 
       ForkSafety.track(self)
 
@@ -655,6 +692,52 @@ module SQLite3
         else
           sleep(0.001)
         end
+      end
+    end
+
+    # call-seq:
+    #   load_extension(extension_specifier) -> self
+    #
+    # Loads an SQLite extension library from the named file. Extension loading must be enabled using
+    # #enable_load_extension prior to using this method.
+    #
+    # See also: Database@SQLite+Extensions
+    #
+    # [Parameters]
+    # - +extension_specifier+: (String | +_ExtensionSpecifier+) If a String, it is the filesystem path
+    #   to the sqlite extension file. If an object that responds to #to_path, the
+    #   return value of that method is used as the filesystem path to the sqlite extension file.
+    #
+    # [Example] Using a filesystem path:
+    #
+    #   db.load_extension("/path/to/my_extension.so")
+    #
+    # [Example] Using the {sqlean gem}[https://github.com/flavorjones/sqlean-ruby]:
+    #
+    #   db.load_extension(SQLean::VSV)
+    #
+    def load_extension(extension_specifier)
+      if extension_specifier.respond_to?(:to_path)
+        extension_specifier = extension_specifier.to_path
+      elsif !extension_specifier.is_a?(String)
+        raise TypeError, "extension_specifier #{extension_specifier.inspect} is not a String or a valid extension specifier object"
+      end
+      load_extension_internal(extension_specifier)
+    end
+
+    def initialize_extensions(extensions) # :nodoc:
+      return if extensions.nil?
+      raise TypeError, "extensions must be an Array" unless extensions.is_a?(Array)
+      return if extensions.empty?
+
+      begin
+        enable_load_extension(true)
+
+        extensions.each do |extension|
+          load_extension(extension)
+        end
+      ensure
+        enable_load_extension(false)
       end
     end
 
