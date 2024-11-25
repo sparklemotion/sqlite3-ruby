@@ -310,7 +310,6 @@ jobs:
             ${{ matrix.docker_platform}} ruby:${{ matrix.ruby }}${{ matrix.docker_tag }} \
             sh -c "
               ${{ matrix.bootstrap }}
-              gem update --system &&
               ./bin/test-gem-install ./gems
             "
 
