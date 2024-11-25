@@ -7,11 +7,6 @@ module SQLite3
       @stmt = SQLite3::Statement.new(@db, "select 'foo'")
     end
 
-    def teardown
-      @stmt.close if !@stmt.closed?
-      @db.close
-    end
-
     def test_rows_should_be_frozen
       @db.execute 'CREATE TABLE "things" ("float" float, "int" int, "text" blob, "string" string, "nil" string)'
       stmt = @db.prepare "INSERT INTO things (float, int, text, string, nil) VALUES (?, ?, ?, ?, ?)"
@@ -323,10 +318,8 @@ module SQLite3
       @db.execute('CREATE TABLE "employees" ("name" varchar(20) NOT NULL CONSTRAINT "index_employees_on_name" UNIQUE)')
       stmt = @db.prepare("INSERT INTO Employees(name) VALUES(?)")
       stmt.execute("employee-1")
-      begin
+      assert_raises(SQLite3::ConstraintException) do
         stmt.execute("employee-1")
-      rescue
-        SQLite3::ConstraintException
       end
       stmt.reset!
       assert stmt.execute("employee-2")

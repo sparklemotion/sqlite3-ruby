@@ -11,10 +11,6 @@ module SQLite3
       super
     end
 
-    def teardown
-      @db.close unless @db.closed?
-    end
-
     def test_custom_function_encoding
       @db.execute("CREATE TABLE
                        sourceTable(
@@ -50,60 +46,50 @@ module SQLite3
     end
 
     def test_db_filename
-      tf = nil
-      assert_equal "", @db.filename("main")
-      tf = Tempfile.new "thing"
-      @db = SQLite3::Database.new tf.path
-      assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename("main"))
-    ensure
-      tf&.unlink
+      assert_equal "", db.filename("main")
+
+      Tempfile.open "thing" do |tf|
+        db = SQLite3::Database.new tf.path
+        assert_equal File.realdirpath(tf.path), File.realdirpath(db.filename("main"))
+      end
     end
 
     def test_filename
-      tf = nil
-      assert_equal "", @db.filename
-      tf = Tempfile.new "thing"
-      @db = SQLite3::Database.new tf.path
-      assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename)
-    ensure
-      tf&.unlink
+      assert_equal "", db.filename
+
+      Tempfile.open "thing" do |tf|
+        db = SQLite3::Database.new tf.path
+        assert_equal File.realdirpath(tf.path), File.realdirpath(db.filename)
+      end
     end
 
     def test_filename_with_attachment
-      tf = nil
-      assert_equal "", @db.filename
-      tf = Tempfile.new "thing"
-      @db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"
+      assert_equal "", db.filename
 
-      assert_equal File.realdirpath(tf.path), File.realdirpath(@db.filename("testing"))
-    ensure
-      tf&.unlink
+      Tempfile.open "thing" do |tf|
+        db.execute "ATTACH DATABASE '#{tf.path}' AS 'testing'"
+        assert_equal File.realdirpath(tf.path), File.realdirpath(db.filename("testing"))
+      end
     end
 
     def test_filename_to_path
-      tf = Tempfile.new "thing"
-      pn = Pathname tf.path
-      db = SQLite3::Database.new pn
-      assert_equal pn.realdirpath.to_s, File.realdirpath(db.filename)
-    ensure
-      tf&.close!
-      db&.close
+      Tempfile.open "thing" do |tf|
+        pn = Pathname tf.path
+        db = SQLite3::Database.new pn
+        assert_equal pn.realdirpath.to_s, File.realdirpath(db.filename)
+      end
     end
 
     def test_error_code
-      begin
-        db.execute "SELECT"
-      rescue SQLite3::SQLException => e
-      end
+      e = assert_raises(SQLite3::SQLException) { db.execute "SELECT" }
       assert_equal 1, e.code
     end
 
     def test_extended_error_code
       db.extended_result_codes = true
       db.execute 'CREATE TABLE "employees" ("token" integer NOT NULL)'
-      begin
+      e = assert_raises(SQLite3::ConstraintException) do
         db.execute "INSERT INTO employees (token) VALUES (NULL)"
-      rescue SQLite3::ConstraintException => e
       end
       assert_equal 1299, e.code
     end
@@ -217,37 +203,27 @@ module SQLite3
     def test_new
       db = SQLite3::Database.new(":memory:")
       assert_instance_of(SQLite3::Database, db)
-    ensure
-      db&.close
     end
 
     def test_open
       db = SQLite3::Database.open(":memory:")
       assert_instance_of(SQLite3::Database, db)
-    ensure
-      db&.close
     end
 
     def test_open_returns_block_result
-      result = SQLite3::Database.open(":memory:") do |db|
-        :foo
-      end
+      result = SQLite3::Database.open(":memory:") { |db| :foo }
       assert_equal :foo, result
     end
 
     def test_new_yields_self
       thing = nil
-      SQLite3::Database.new(":memory:") do |db|
-        thing = db
-      end
+      SQLite3::Database.new(":memory:") { |db| thing = db }
       assert_instance_of(SQLite3::Database, thing)
     end
 
     def test_open_yields_self
       thing = nil
-      SQLite3::Database.open(":memory:") do |db|
-        thing = db
-      end
+      SQLite3::Database.open(":memory:") { |db| thing = db }
       assert_instance_of(SQLite3::Database, thing)
     end
 
@@ -257,8 +233,6 @@ module SQLite3
 
       db = SQLite3::Database.new(":memory:".encode(utf16), utf16: true)
       assert_instance_of(SQLite3::Database, db)
-    ensure
-      db&.close
     end
 
     def test_close
@@ -313,8 +287,6 @@ module SQLite3
       db = SQLite3::Database.new(":memory:")
       stmt = db.prepare('select "hello world"')
       assert_instance_of(SQLite3::Statement, stmt)
-    ensure
-      stmt&.close
     end
 
     def test_block_prepare_does_not_double_close
@@ -566,8 +538,6 @@ module SQLite3
         end
       }.new
       statements << @db.prepare("select 'fooooo'")
-    ensure
-      statements.each(&:close)
     end
 
     def test_authorizer_ignore
@@ -578,8 +548,6 @@ module SQLite3
       }.new
       stmt = @db.prepare("select 'fooooo'")
       assert_nil stmt.step
-    ensure
-      stmt&.close
     end
 
     def test_authorizer_fail
@@ -604,18 +572,14 @@ module SQLite3
       end
 
       @db.authorizer = nil
-      s = @db.prepare("select 'fooooo'")
-    ensure
-      s&.close
+      @db.prepare("select 'fooooo'") # refute_raises
     end
 
     def test_close_with_open_statements
-      s = @db.prepare("select 'foo'")
+      @db.prepare("select 'foo'")
       assert_nothing_raised do # formerly raised SQLite3::BusyException
         @db.close
       end
-    ensure
-      s&.close
     end
 
     def test_execute_with_empty_bind_params
@@ -625,8 +589,6 @@ module SQLite3
     def test_query_with_named_bind_params
       resultset = @db.query("select :n", {"n" => "foo"})
       assert_equal [["foo"]], resultset.to_a
-    ensure
-      resultset&.close
     end
 
     def test_execute_with_named_bind_params
@@ -674,43 +636,39 @@ module SQLite3
     end
 
     def test_default_transaction_mode
-      tf = Tempfile.new "database_default_transaction_mode"
-      SQLite3::Database.new(tf.path) do |db|
-        db.execute("create table foo (score int)")
-        db.execute("insert into foo values (?)", 1)
-      end
+      Tempfile.open "database_default_transaction_mode" do |tf|
+        SQLite3::Database.new(tf.path) do |db|
+          db.execute("create table foo (score int)")
+          db.execute("insert into foo values (?)", 1)
+        end
 
-      test_cases = [
-        {mode: nil, read: true, write: true},
-        {mode: :deferred, read: true, write: true},
-        {mode: :immediate, read: true, write: false},
-        {mode: :exclusive, read: false, write: false}
-      ]
+        test_cases = [
+          {mode: nil, read: true, write: true},
+          {mode: :deferred, read: true, write: true},
+          {mode: :immediate, read: true, write: false},
+          {mode: :exclusive, read: false, write: false}
+        ]
 
-      test_cases.each do |item|
-        db = SQLite3::Database.new tf.path, default_transaction_mode: item[:mode]
-        db2 = SQLite3::Database.new tf.path
-        db.transaction do
-          sql_for_read_test = "select * from foo"
-          if item[:read]
-            assert_nothing_raised { db2.execute(sql_for_read_test) }
-          else
-            assert_raises(SQLite3::BusyException) { db2.execute(sql_for_read_test) }
-          end
+        test_cases.each do |item|
+          db = SQLite3::Database.new tf.path, default_transaction_mode: item[:mode]
+          db2 = SQLite3::Database.new tf.path
+          db.transaction do
+            sql_for_read_test = "select * from foo"
+            if item[:read]
+              assert_nothing_raised { db2.execute(sql_for_read_test) }
+            else
+              assert_raises(SQLite3::BusyException) { db2.execute(sql_for_read_test) }
+            end
 
-          sql_for_write_test = "insert into foo values (2)"
-          if item[:write]
-            assert_nothing_raised { db2.execute(sql_for_write_test) }
-          else
-            assert_raises(SQLite3::BusyException) { db2.execute(sql_for_write_test) }
+            sql_for_write_test = "insert into foo values (2)"
+            if item[:write]
+              assert_nothing_raised { db2.execute(sql_for_write_test) }
+            else
+              assert_raises(SQLite3::BusyException) { db2.execute(sql_for_write_test) }
+            end
           end
         end
-      ensure
-        db.close if db && !db.closed?
-        db2.close if db2 && !db2.closed?
       end
-    ensure
-      tf&.unlink
     end
 
     def test_transaction_returns_true_without_block
