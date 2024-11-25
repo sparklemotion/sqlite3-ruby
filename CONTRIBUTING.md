@@ -45,12 +45,16 @@ Update `/dependencies.yml` to reflect:
 
 ## Making a release
 
-A quick checklist:
+A quick checklist to cutting a release of the sqlite3 gem:
 
 - [ ] make sure CI is green!
-- [ ] update `CHANGELOG.md` and `lib/sqlite3/version.rb`
-- [ ] run `bin/build-gems` and make sure it completes and all the tests pass
-- [ ] create a git tag using a format that matches the pattern `v\d+\.\d+\.\d+`, e.g. `v1.3.13`
-- [ ] `git push && git push --tags`
-- [ ] `for g in gems/*.gem ; do gem push $g ; done`
-- [ ] create a release at https://github.com/sparklemotion/sqlite3-ruby/releases and include sha2 checksums
+- bump the version
+  - [ ] update `CHANGELOG.md` and `lib/sqlite3/version.rb`
+  - [ ] create a git tag using a format that matches the pattern `v\d+\.\d+\.\d+`, e.g. `v1.3.13`
+- build the native gems
+  - [ ] run `bin/build-gems` and make sure it completes and all the tests pass
+- push
+  - [ ] `git push && git push --tags`
+  - [ ] `for g in gems/*.gem ; do gem push $g ; done`
+- announce
+  - [ ] create a release at https://github.com/sparklemotion/sqlite3-ruby/releases and include sha2 checksums
