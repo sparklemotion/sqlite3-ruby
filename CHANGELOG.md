@@ -1,5 +1,13 @@
 # sqlite3-ruby Changelog
 
+## 2.4.0 / 2024-12-03
+
+### Added
+
+- `Database#load_extension` now accepts any object that responds to `#to_path`, in addition to String filesystem paths. [#586] @flavorjones
+- `Database.new` now accepts an `extensions:` parameter, which is an array of SQLite extensions that will be loaded during initialization. The array may contain String filesystem paths and objects that respond to `#to_path`. [#586] @flavorjones
+
+
 ## 2.3.1 / 2024-11-25
 
 ### Dependencies
