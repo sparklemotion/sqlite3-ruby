@@ -17,6 +17,7 @@ exclude:
 - "vendor"
 - "ports"
 - "tmp"
+- "pkg"
 hyperlink_all: false
 line_numbers: false
 locale: 

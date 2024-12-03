@@ -3,6 +3,12 @@ require "tempfile"
 require "pathname"
 
 module SQLite3
+  class FakeExtensionSpecifier
+    def self.to_path
+      "/path/to/extension"
+    end
+  end
+
   class TestDatabase < SQLite3::TestCase
     attr_reader :db
 
@@ -13,6 +19,17 @@ module SQLite3
 
     def teardown
       @db.close unless @db.closed?
+    end
+
+    def mock_database_load_extension_internal(db)
+      class << db
+        attr_reader :load_extension_internal_path
+
+        def load_extension_internal(path)
+          @load_extension_internal_path ||= []
+          @load_extension_internal_path << path
+        end
+      end
     end
 
     def test_custom_function_encoding
@@ -650,16 +667,117 @@ module SQLite3
       assert_match(/no such column: "?nope"?/, error.message)
     end
 
-    def test_load_extension_with_nonstring_argument
-      db = SQLite3::Database.new(":memory:")
+    def test_load_extension_error_with_nonexistent_path
       skip("extensions are not enabled") unless db.respond_to?(:load_extension)
-      assert_raises(TypeError) { db.load_extension(1) }
-      assert_raises(TypeError) { db.load_extension(Pathname.new("foo.so")) }
+      db.enable_load_extension(true)
+
+      assert_raises(SQLite3::Exception) { db.load_extension("/nonexistent/path") }
+      assert_raises(SQLite3::Exception) { db.load_extension(Pathname.new("nonexistent")) }
     end
 
-    def test_load_extension_error
-      db = SQLite3::Database.new(":memory:")
-      assert_raises(SQLite3::Exception) { db.load_extension("path/to/foo.so") }
+    def test_load_extension_error_with_invalid_argument
+      skip("extensions are not enabled") unless db.respond_to?(:load_extension)
+      db.enable_load_extension(true)
+
+      assert_raises(TypeError) { db.load_extension(1) }
+      assert_raises(TypeError) { db.load_extension({a: 1}) }
+      assert_raises(TypeError) { db.load_extension([]) }
+      assert_raises(TypeError) { db.load_extension(Object.new) }
+    end
+
+    def test_load_extension_with_an_extension_descriptor
+      mock_database_load_extension_internal(db)
+
+      db.load_extension(Pathname.new("/path/to/ext2"))
+      assert_equal(["/path/to/ext2"], db.load_extension_internal_path)
+
+      db.load_extension_internal_path.clear # reset
+
+      db.load_extension(FakeExtensionSpecifier)
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+    end
+
+    def test_initialize_extensions_with_extensions_calls_enable_load_extension
+      mock_database_load_extension_internal(db)
+      class << db
+        attr_accessor :enable_load_extension_called
+        attr_reader :enable_load_extension_arg
+
+        def reset_test
+          @enable_load_extension_called = 0
+          @enable_load_extension_arg = []
+        end
+
+        def enable_load_extension(val)
+          @enable_load_extension_called += 1
+          @enable_load_extension_arg << val
+        end
+      end
+
+      db.reset_test
+      db.initialize_extensions(nil)
+      assert_equal(0, db.enable_load_extension_called)
+
+      db.reset_test
+      db.initialize_extensions([])
+      assert_equal(0, db.enable_load_extension_called)
+
+      db.reset_test
+      db.initialize_extensions(["/path/to/extension"])
+      assert_equal(2, db.enable_load_extension_called)
+      assert_equal([true, false], db.enable_load_extension_arg)
+
+      db.reset_test
+      db.initialize_extensions([FakeExtensionSpecifier])
+      assert_equal(2, db.enable_load_extension_called)
+      assert_equal([true, false], db.enable_load_extension_arg)
+    end
+
+    def test_initialize_extensions_object_is_an_extension_specifier
+      mock_database_load_extension_internal(db)
+
+      db.initialize_extensions([Pathname.new("/path/to/extension")])
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+
+      db.load_extension_internal_path.clear # reset
+
+      db.initialize_extensions([FakeExtensionSpecifier])
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+    end
+
+    def test_initialize_extensions_object_not_an_extension_specifier
+      mock_database_load_extension_internal(db)
+
+      db.initialize_extensions(["/path/to/extension"])
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+
+      assert_raises(TypeError) { db.initialize_extensions([Class.new]) }
+
+      assert_raises(TypeError) { db.initialize_extensions(FakeExtensionSpecifier) }
+    end
+
+    def test_initialize_with_extensions_calls_initialize_extensions
+      # ephemeral class to capture arguments passed to initialize_extensions
+      klass = Class.new(SQLite3::Database) do
+        attr :initialize_extensions_called, :initialize_extensions_arg
+
+        def initialize_extensions(extensions)
+          @initialize_extensions_called = true
+          @initialize_extensions_arg = extensions
+        end
+      end
+
+      db = klass.new(":memory:")
+      assert(db.initialize_extensions_called)
+      assert_nil(db.initialize_extensions_arg)
+
+      db = klass.new(":memory:", extensions: [])
+      assert(db.initialize_extensions_called)
+      assert_empty(db.initialize_extensions_arg)
+
+      db = klass.new(":memory:", extensions: ["path/to/ext1", "path/to/ext2", FakeExtensionSpecifier])
+      assert(db.initialize_extensions_called)
+      assert_equal(["path/to/ext1", "path/to/ext2", FakeExtensionSpecifier], db.initialize_extensions_arg)
     end
 
     def test_raw_float_infinity

@@ -771,14 +771,8 @@ collation(VALUE self, VALUE name, VALUE comparator)
 }
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
-/* call-seq: db.load_extension(file)
- *
- * Loads an SQLite extension library from the named file. Extension
- * loading must be enabled using db.enable_load_extension(true) prior
- * to calling this API.
- */
 static VALUE
-load_extension(VALUE self, VALUE file)
+load_extension_internal(VALUE self, VALUE file)
 {
     sqlite3RubyPtr ctx;
     int status;
@@ -997,7 +991,7 @@ init_sqlite3_database(void)
     rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
-    rb_define_method(cSqlite3Database, "load_extension", load_extension, 1);
+    rb_define_private_method(cSqlite3Database, "load_extension_internal", load_extension_internal, 1);
 #endif
 
 #ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
