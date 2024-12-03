@@ -9,20 +9,20 @@ Note that this module is only compatible with SQLite 3.6.16 or newer.
 * Source code: https://github.com/sparklemotion/sqlite3-ruby
 * Mailing list: http://groups.google.com/group/sqlite3-ruby
 * Download: http://rubygems.org/gems/sqlite3
-* Documentation: http://www.rubydoc.info/gems/sqlite3
+* Documentation: https://sparklemotion.github.io/sqlite3-ruby/
 
 [![Test suite](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/sparklemotion/sqlite3-ruby/actions/workflows/ci.yml)
 
 
 ## Quick start
 
-For help understanding the SQLite3 Ruby API, please read the [FAQ](./FAQ.md) and the [full API documentation](https://rubydoc.info/gems/sqlite3).
+For help understanding the SQLite3 Ruby API, please read the [FAQ](./FAQ.md) and the [full API documentation](https://sparklemotion.github.io/sqlite3-ruby/).
 
 A few key classes whose APIs are often-used are:
 
-- SQLite3::Database ([rdoc](https://rubydoc.info/gems/sqlite3/SQLite3/Database))
-- SQLite3::Statement ([rdoc](https://rubydoc.info/gems/sqlite3/SQLite3/Statement))
-- SQLite3::ResultSet ([rdoc](https://rubydoc.info/gems/sqlite3/SQLite3/ResultSet))
+- SQLite3::Database ([rdoc](https://sparklemotion.github.io/sqlite3-ruby/SQLite3/Database.html))
+- SQLite3::Statement ([rdoc](https://sparklemotion.github.io/sqlite3-ruby/SQLite3/Statement.html))
+- SQLite3::ResultSet ([rdoc](https://sparklemotion.github.io/sqlite3-ruby/SQLite3/ResultSet.html))
 
 If you have any questions that you feel should be addressed in the FAQ, please send them to [the mailing list](http://groups.google.com/group/sqlite3-ruby) or open a [discussion thread](https://github.com/sparklemotion/sqlite3-ruby/discussions/categories/q-a).
 

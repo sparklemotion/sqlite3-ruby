@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.metadata = {
     "homepage_uri" => "https://github.com/sparklemotion/sqlite3-ruby",
     "bug_tracker_uri" => "https://github.com/sparklemotion/sqlite3-ruby/issues",
-    "documentation_uri" => "https://www.rubydoc.info/gems/sqlite3",
+    "documentation_uri" => "https://sparklemotion.github.io/sqlite3-ruby/",
     "changelog_uri" => "https://github.com/sparklemotion/sqlite3-ruby/blob/master/CHANGELOG.md",
     "source_code_uri" => "https://github.com/sparklemotion/sqlite3-ruby",
 
