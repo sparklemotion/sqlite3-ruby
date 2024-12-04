@@ -35,17 +35,21 @@ module SQLite3
         @databases.each do |db|
           next unless db.weakref_alive?
 
-          unless db.closed? || db.readonly?
-            unless warned
-              # If you are here, you may want to read
-              # https://github.com/sparklemotion/sqlite3-ruby/pull/558
-              warn("Writable sqlite database connection(s) were inherited from a forked process. " \
-                   "This is unsafe and the connections are being closed to prevent possible data " \
-                   "corruption. Please close writable sqlite database connections before forking.",
-                uplevel: 0)
-              warned = true
+          begin
+            unless db.closed? || db.readonly?
+              unless warned
+                # If you are here, you may want to read
+                # https://github.com/sparklemotion/sqlite3-ruby/pull/558
+                warn("Writable sqlite database connection(s) were inherited from a forked process. " \
+                     "This is unsafe and the connections are being closed to prevent possible data " \
+                     "corruption. Please close writable sqlite database connections before forking.",
+                  uplevel: 0)
+                warned = true
+              end
+              db.close
             end
-            db.close
+          rescue WeakRef::RefError
+            # GC may run while this method is executing, and that's OK
           end
         end
         @databases.clear
