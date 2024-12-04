@@ -74,6 +74,15 @@ module SQLite3
   # #enable_load_extension; however it is still necessary to call #enable_load_extensions before any
   # subsequently invocations of #load_extension on the initialized Database object.
   #
+  # You can load extensions in a Rails application by using the +extensions:+ configuration option:
+  #
+  #   # config/database.yml
+  #   development:
+  #     adapter: sqlite3
+  #     extensions:
+  #       - .sqlpkg/nalgeon/crypto/crypto.so # a filesystem path
+  #       - <%= SQLean::UUID.to_path %>      # or ruby code returning a path
+  #
   class Database
     attr_reader :collations
 
