@@ -19,7 +19,7 @@ bundle exec rake compile test
 
 # package the gems, including precompiled native
 bundle exec rake clean clobber
-bundle exec rake -m gem:all
+bundle exec rake gem:all
 cp -v pkg/sqlite3*.gem gems
 
 # test those gem files!
