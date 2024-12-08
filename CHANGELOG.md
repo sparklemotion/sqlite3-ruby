@@ -1,5 +1,29 @@
 # sqlite3-ruby Changelog
 
+## 2.4.1 / 2024-12-08
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.47.2](https://sqlite.org/releaselog/3_47.2.html) #593 @flavorjones
+
+  The description from the upstream maintainers is:
+
+  > SQLite version 3.47.2, now available, fixes an important bug that first appeared in the 3.47.0
+  > release. In SQLite versions 3.47.0 and 3.47.1, if you try to convert a string into a
+  > floating-point value and the first 16 significant digits of the value are exactly
+  > "1844674407370955", then the floating-point number generated might be incorrect. The problem
+  > only affects x64 and i386 CPUs, so it does not affect you if you are running on ARM. And it only
+  > affects releases 3.47.0 and 3.47.1. **If you are running SQLite versions 3.47.0 or 3.47.1, then
+  > upgrading is recommended.**
+
+  Saving you a click, you should upgrade if you're running sqlite3-ruby v2.1.1 or later.
+
+
+### Fixed
+
+- Prevent unnecessary "Invalid Reference" warnings from the `ForkSafety` module when GC runs during the "after fork" hook. #592 @flavorjones
+
+
 ## 2.4.0 / 2024-12-03
 
 ### Added
