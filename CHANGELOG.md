@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## 2.5.0.rc1 / 2024-12-14
+
+### Ruby
+
+This release introduces native gem packages that include Ruby 3.4.
+
+
 ## 2.4.1 / 2024-12-08
 
 ### Dependencies
