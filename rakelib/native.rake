@@ -6,19 +6,19 @@ require "rake/extensiontask"
 require "rake_compiler_dock"
 require "yaml"
 
-cross_rubies = ["3.3.0", "3.2.0", "3.1.0"]
+cross_rubies = ["3.4.0", "3.3.5", "3.2.0", "3.1.0"]
 cross_platforms = [
   "aarch64-linux-gnu",
   "aarch64-linux-musl",
   "arm-linux-gnu",
   "arm-linux-musl",
-  "arm64-darwin",
-  "x64-mingw-ucrt",
   "x86-linux-gnu",
   "x86-linux-musl",
-  "x86_64-darwin",
   "x86_64-linux-gnu",
-  "x86_64-linux-musl"
+  "x86_64-linux-musl",
+  "arm64-darwin",
+  "x86_64-darwin",
+  "x64-mingw-ucrt"
 ]
 ENV["RUBY_CC_VERSION"] = cross_rubies.join(":")
 
