@@ -10,7 +10,7 @@ group :development do
 
   gem "ruby_memcheck", "3.0.0" if Gem::Platform.local.os == "linux"
 
-  gem "rdoc", "6.9.0"
+  gem "rdoc", "6.10.0"
 
   gem "rubocop", "1.59.0", require: false
   gem "rubocop-minitest", "0.34.5", require: false
