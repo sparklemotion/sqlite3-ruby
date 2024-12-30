@@ -105,6 +105,25 @@ ts = 10.times.map {
 p ts.map(&:value)
 ```
 
+However, beware `SQLite3::Database#transaction` is not thread-safe. You should
+provide some mechanisms such as locking or connection pooling for thread safety.
+For example:
+
+```ruby
+require 'sqlite3'
+
+db = SQLite3::Database.new('db.sqlite')
+stmt_lock = Mutex.new
+
+2.times.map do
+  Thread.new do
+    stmt_lock.synchronize do
+      db.transaction { sleep 1 }
+    end
+  end
+end.each(&:join)
+```
+
 Other instances can be shared among threads, but they require that you provide
 your own locking for thread safety.  For example, `SQLite3::Statement` objects
 (prepared statements) are mutable, so applications must take care to add
