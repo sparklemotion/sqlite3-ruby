@@ -6,7 +6,7 @@ require "rake/extensiontask"
 require "rake_compiler_dock"
 require "yaml"
 
-cross_rubies = ["3.4.0", "3.3.5", "3.2.0", "3.1.0"]
+cross_rubies = ["3.4.1", "3.3.5", "3.2.6", "3.1.6"]
 cross_platforms = [
   "aarch64-linux-gnu",
   "aarch64-linux-musl",
