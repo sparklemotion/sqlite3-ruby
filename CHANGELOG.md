@@ -4,7 +4,8 @@
 
 ### Dependencies
 
-- Updated to rake-compiler-dock v1.9.1.
+- Vendored sqlite is updated to [v3.48.0](https://sqlite.org/releaselog/3_48.0.html) #605 @flavorjones
+- Updated to rake-compiler-dock v1.9.1. #610 @flavorjones
 
 
 ## 2.5.0 / 2024-12-25
