@@ -1,7 +1,5 @@
 require "helper"
 
-require "benchmark"
-
 class IntegrationPendingTestCase < SQLite3::TestCase
   class ThreadSynchronizer
     def initialize
@@ -103,12 +101,12 @@ class IntegrationPendingTestCase < SQLite3::TestCase
     end
     synchronizer.wait_for_thread :ready_0
 
-    time = Benchmark.measure do
-      assert_raise(SQLite3::BusyException) do
-        @db.execute "insert into foo (b) values ( 'from 2' )"
-      end
+    start_time = Time.now
+    assert_raise(SQLite3::BusyException) do
+      @db.execute "insert into foo (b) values ( 'from 2' )"
     end
-    assert_operator time.real * 1000, :>=, 1000
+    end_time = Time.now
+    assert_operator(end_time - start_time, :>=, 1.0)
 
     synchronizer.send_to_thread :end_1
     synchronizer.close_main
