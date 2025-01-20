@@ -6,7 +6,6 @@ require "rake/extensiontask"
 require "rake_compiler_dock"
 require "yaml"
 
-cross_rubies = ["3.4.1", "3.3.5", "3.2.6", "3.1.6"]
 cross_platforms = [
   "aarch64-linux-gnu",
   "aarch64-linux-musl",
@@ -20,7 +19,7 @@ cross_platforms = [
   "x86_64-darwin",
   "x64-mingw-ucrt"
 ]
-ENV["RUBY_CC_VERSION"] = cross_rubies.join(":")
+RakeCompilerDock.set_ruby_cc_version("~> 3.1")
 
 Gem::PackageTask.new(SQLITE3_SPEC).define # packaged_tarball version of the gem for platform=ruby
 task "package" => cross_platforms.map { |p| "gem:#{p}" } # "package" task for all the native platforms
