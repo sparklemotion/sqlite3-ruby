@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Dependencies
+
+- Updated to rake-compiler-dock v1.9.1.
+
+
 ## 2.5.0 / 2024-12-25
 
 ### Ruby
