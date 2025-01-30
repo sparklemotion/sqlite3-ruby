@@ -6,7 +6,7 @@ module SQLite3
   class TestDatabaseURI < SQLite3::TestCase
     def test_open_absolute_file_uri
       skip("windows uri paths are hard") if windows?
-      skip("sqlcipher may not allow URIs") if SQLite3.sqlcipher?
+      skip("system libraries may not allow URIs") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
 
       Tempfile.open "test.db" do |file|
         db = SQLite3::Database.new("file:#{file.path}")
@@ -17,7 +17,7 @@ module SQLite3
 
     def test_open_relative_file_uri
       skip("windows uri paths are hard") if windows?
-      skip("sqlcipher may not allow URIs") if SQLite3.sqlcipher?
+      skip("system libraries may not allow URIs") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
 
       Dir.mktmpdir do |dir|
         Dir.chdir dir do
@@ -31,7 +31,7 @@ module SQLite3
 
     def test_open_file_uri_readonly
       skip("windows uri paths are hard") if windows?
-      skip("sqlcipher may not allow URIs") if SQLite3.sqlcipher?
+      skip("system libraries may not allow URIs") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
 
       Tempfile.open "test.db" do |file|
         db = SQLite3::Database.new("file:#{file.path}?mode=ro")
