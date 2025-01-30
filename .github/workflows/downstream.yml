@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby-pkgs@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "3.4"
           bundler: latest
           bundler-cache: true
           apt-get: sqlite3 # active record test suite uses the sqlite3 cli
@@ -37,7 +37,7 @@ jobs:
         run: |
           git clone --depth 1 --branch main https://github.com/rails/rails
           cd rails
-          bundle install
+          bundle install --prefer-local
           bundle remove sqlite3
           bundle add sqlite3 --path=".."
       - name: run tests

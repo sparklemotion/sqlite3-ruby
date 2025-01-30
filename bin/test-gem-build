@@ -16,6 +16,7 @@ test -e /etc/os-release && cat /etc/os-release
 
 set -x
 
+bundle config set without development
 bundle install --local || bundle install
 bundle exec rake set-version-to-timestamp
 

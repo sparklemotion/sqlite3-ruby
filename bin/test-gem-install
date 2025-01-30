@@ -24,6 +24,7 @@ cd $GEMS_DIR
 
 cd ..
 
+bundle config set without development
 bundle install --local || bundle install
 
 rm -rf lib ext # ensure we don't use the local files
