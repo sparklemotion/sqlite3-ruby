@@ -17,6 +17,9 @@ on:
     branches:
       - '*'
 
+env:
+  BUNDLE_WITHOUT: "development"
+
 jobs:
   ruby_versions:
     outputs:
@@ -31,6 +34,8 @@ jobs:
   #
   rubocop:
     runs-on: ubuntu-latest
+    env:
+      BUNDLE_WITHOUT: "" # we need rubocop, obviously
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
@@ -101,7 +106,7 @@ jobs:
     steps:
       - run: |
           dnf group install -y "C Development Tools and Libraries"
-          dnf install -y ruby ruby-devel libyaml-devel
+          dnf install -y ruby ruby-devel
       - uses: actions/checkout@v4
       - run: bundle install
       - run: bundle exec rake compile -- --disable-system-libraries
@@ -118,6 +123,7 @@ jobs:
           usesh: true
           copyback: false
           prepare: pkg install -y ruby devel/ruby-gems pkgconf
+          envs: BUNDLE_WITHOUT
           run: |
             gem install bundler
             bundle install --local || bundle install
@@ -294,10 +300,10 @@ jobs:
         ruby: ${{ fromJSON(needs.ruby_versions.outputs.image_tag) }}
         include:
           # declare docker image for each platform
-          - { platform: aarch64-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base yaml-dev &&" }
-          - { platform: arm-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base yaml-dev &&" }
-          - { platform: x86-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base yaml-dev &&" }
-          - { platform: x86_64-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base yaml-dev &&" }
+          - { platform: aarch64-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base &&" }
+          - { platform: arm-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base &&" }
+          - { platform: x86-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base &&" }
+          - { platform: x86_64-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base &&" }
           # declare docker platform for each platform
           - { platform: aarch64-linux-gnu, docker_platform: "--platform=linux/arm64" }
           - { platform: aarch64-linux-musl, docker_platform: "--platform=linux/arm64" }
@@ -371,5 +377,5 @@ jobs:
         with:
           name: cruby-x86_64-linux-musl-gem
           path: gems
-      - run: apk add build-base yaml-dev
+      - run: apk add build-base
       - run: ./bin/test-gem-install ./gems
