@@ -2,6 +2,8 @@ require "helper"
 
 module SQLite3
   class TestPragmas < SQLite3::TestCase
+    BIGENDIAN = ([1].pack("I") == [1].pack("N"))
+
     class DatabaseTracker < SQLite3::Database
       attr_reader :test_statements
 
@@ -78,7 +80,8 @@ module SQLite3
       assert_equal(Encoding::UTF_8, @db.encoding)
 
       @db.encoding = "UTF-16"
-      assert_equal(Encoding::UTF_16LE, @db.encoding)
+      native = BIGENDIAN ? Encoding::UTF_16BE : Encoding::UTF_16LE
+      assert_equal(native, @db.encoding)
 
       @db.encoding = "UTF-16LE"
       assert_equal(Encoding::UTF_16LE, @db.encoding)
@@ -94,7 +97,8 @@ module SQLite3
       assert_equal(Encoding::UTF_8, @db.encoding)
 
       @db.encoding = "utf-16"
-      assert_equal(Encoding::UTF_16LE, @db.encoding)
+      native = BIGENDIAN ? Encoding::UTF_16BE : Encoding::UTF_16LE
+      assert_equal(native, @db.encoding)
 
       @db.encoding = "utf-16le"
       assert_equal(Encoding::UTF_16LE, @db.encoding)
@@ -110,7 +114,8 @@ module SQLite3
       assert_equal(Encoding::UTF_8, @db.encoding)
 
       @db.encoding = Encoding::UTF_16
-      assert_equal(Encoding::UTF_16LE, @db.encoding)
+      native = BIGENDIAN ? Encoding::UTF_16BE : Encoding::UTF_16LE
+      assert_equal(native, @db.encoding)
 
       @db.encoding = Encoding::UTF_16LE
       assert_equal(Encoding::UTF_16LE, @db.encoding)
