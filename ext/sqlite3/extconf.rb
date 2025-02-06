@@ -52,7 +52,6 @@ module Sqlite3
           recipe.configure_options += [
             "--disable-shared",
             "--enable-static",
-            "--disable-tcl",
             "--enable-fts5"
           ]
           ENV.to_h.tap do |env|
