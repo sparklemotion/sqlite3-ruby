@@ -789,7 +789,7 @@ load_extension_internal(VALUE self, VALUE file)
 }
 #endif
 
-#ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
+#if defined(HAVE_SQLITE3_ENABLE_LOAD_EXTENSION) && defined(HAVE_SQLITE3_LOAD_EXTENSION)
 /* call-seq: db.enable_load_extension(onoff)
  *
  * Enable or disable extension loading.
@@ -992,11 +992,11 @@ init_sqlite3_database(void)
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
     rb_define_private_method(cSqlite3Database, "load_extension_internal", load_extension_internal, 1);
-#endif
-
 #ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
     rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
 #endif
+#endif
+
 
     rb_sqlite3_aggregator_init();
 }
