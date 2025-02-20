@@ -1,11 +1,21 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.6.0 / 2025-02-20
 
 ### Dependencies
 
 - Vendored sqlite is updated to [v3.49.1](https://sqlite.org/releaselog/3_49_1.html) (from v3.47.2). #605 @flavorjones
 - Updated to rake-compiler-dock v1.9.1. #610 @flavorjones
+
+### Important note for Window users
+
+Loading extensions is not available on Windows when using the precompiled native gems or compiling the vendored sqlite library from source, starting with sqlite3-ruby v2.6.0.
+
+Sqlite 3.48.0 and later have dramatically changed the "autoconf amalgamation" that is vendored in this gem. Specifically, the configuration is no longer actually autoconf, but some scripts that emulate autoconf's interface and behavior.
+
+Although this _mostly_ "just worked", we're having a problem resolving the libraries necessary for loading extensions. As a result, starting with sqlite3-ruby v2.6.0, extensions cannot be loaded on Windows when using precompiled native gems or when compiling the vendored sqlite library.
+
+If you are willing and able to help fix this, let us know at https://github.com/sparklemotion/sqlite3-ruby/issues/618.
 
 
 ## 2.5.0 / 2024-12-25
