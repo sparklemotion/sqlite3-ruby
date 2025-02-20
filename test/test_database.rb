@@ -667,8 +667,17 @@ module SQLite3
       assert_match(/no such column: "?nope"?/, error.message)
     end
 
+    def test_load_extension_is_defined_on_expected_platforms
+      if ::RUBY_PLATFORM =~ /mingw|mswin/ && SQLite3::SQLITE_PACKAGED_LIBRARIES
+        skip("as of sqlite 3.48.0, the autoconf amalgamation does not reliably find dlopen" \
+             "on windows when building sqlite from source")
+      end
+      assert_respond_to(db, :load_extension)
+      assert_respond_to(db, :enable_load_extension)
+    end
+
     def test_load_extension_error_with_nonexistent_path
-      skip("extensions are not enabled") unless db.respond_to?(:load_extension)
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
       db.enable_load_extension(true)
 
       assert_raises(SQLite3::Exception) { db.load_extension("/nonexistent/path") }
@@ -676,7 +685,7 @@ module SQLite3
     end
 
     def test_load_extension_error_with_invalid_argument
-      skip("extensions are not enabled") unless db.respond_to?(:load_extension)
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
       db.enable_load_extension(true)
 
       assert_raises(TypeError) { db.load_extension(1) }
@@ -686,6 +695,8 @@ module SQLite3
     end
 
     def test_load_extension_with_an_extension_descriptor
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
       mock_database_load_extension_internal(db)
 
       db.load_extension(Pathname.new("/path/to/ext2"))
@@ -698,7 +709,10 @@ module SQLite3
     end
 
     def test_initialize_extensions_with_extensions_calls_enable_load_extension
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
       mock_database_load_extension_internal(db)
+
       class << db
         attr_accessor :enable_load_extension_called
         attr_reader :enable_load_extension_arg
@@ -734,6 +748,8 @@ module SQLite3
     end
 
     def test_initialize_extensions_object_is_an_extension_specifier
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
       mock_database_load_extension_internal(db)
 
       db.initialize_extensions([Pathname.new("/path/to/extension")])
@@ -746,6 +762,8 @@ module SQLite3
     end
 
     def test_initialize_extensions_object_not_an_extension_specifier
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
       mock_database_load_extension_internal(db)
 
       db.initialize_extensions(["/path/to/extension"])
