@@ -3,6 +3,12 @@ require "tempfile"
 require "pathname"
 
 module SQLite3
+  class FakeExtensionSpecifier
+    def self.to_path
+      "/path/to/extension"
+    end
+  end
+
   class TestDatabase < SQLite3::TestCase
     attr_reader :db
 
@@ -13,6 +19,47 @@ module SQLite3
 
     def teardown
       @db.close unless @db.closed?
+    end
+
+    def mock_database_load_extension_internal(db)
+      class << db
+        attr_reader :load_extension_internal_path
+
+        def load_extension_internal(path)
+          @load_extension_internal_path ||= []
+          @load_extension_internal_path << path
+        end
+      end
+    end
+
+    def test_custom_function_encoding
+      @db.execute("CREATE TABLE
+                       sourceTable(
+                         sourceData TEXT);")
+      @db.execute("INSERT INTO sourceTable
+                     VALUES ('abcde');")
+
+      @db.create_function("GetCopy", 1) { |func, value|
+        func.result = value
+      }
+
+      @db.transaction { |t|
+        t.execute("CREATE TABLE
+                         afterTable(
+                           beforeData TEXT,
+                           afterData TEXT);".squeeze(" "))
+
+        t.execute("INSERT INTO afterTable
+                       SELECT
+                         sourceData,
+                         GetCopy(sourceData)
+                       FROM sourceTable;")
+      }
+
+      assert_equal(1, @db.get_first_value("SELECT 1
+                                        FROM afterTable
+                                        WHERE beforeData = afterData
+                                        LIMIT 1;"))
     end
 
     def test_segv
@@ -115,11 +162,19 @@ module SQLite3
     end
 
     def test_batch_last_comment_is_processed
-      # FIXME: nil as a successful return value is kinda dumb
       assert_nil @db.execute_batch <<-EOSQL
         CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT);
         -- omg
       EOSQL
+    end
+
+    def test_batch_last_expression_value_is_returned
+      batch = <<-EOSQL
+        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT);
+        SELECT COUNT(*) FROM items;
+      EOSQL
+
+      assert_equal [0], @db.execute_batch(batch)
     end
 
     def test_execute_batch2
@@ -170,7 +225,7 @@ module SQLite3
       end
       assert_equal [[1, 50], [2, 60]], return_value
 
-      assert_raises(RuntimeError) do
+      assert_raises(SQLite3::Exception) do
         # "names" is not a valid column
         @db.execute_batch2 'INSERT INTO items (names) VALUES ("bazz")'
       end
@@ -286,6 +341,24 @@ module SQLite3
         :foo
       end
       assert_equal :foo, r
+    end
+
+    def test_prepare_batch_split
+      db = SQLite3::Database.new(":memory:")
+      s1 = db.prepare("select 'asdf'; select 'qwer'; select 'côté'")
+
+      assert_equal " select 'qwer'; select 'côté'", s1.remainder
+      assert_equal Encoding::UTF_8, s1.remainder.encoding
+
+      s2 = db.prepare(s1.remainder)
+
+      assert_equal " select 'côté'", s2.remainder
+      assert_equal Encoding::UTF_8, s2.remainder.encoding
+
+      s3 = db.prepare(s2.remainder)
+
+      assert_equal "", s3.remainder
+      assert_equal Encoding::UTF_8, s3.remainder.encoding
     end
 
     def test_total_changes
@@ -555,7 +628,7 @@ module SQLite3
 
     def test_close_with_open_statements
       s = @db.prepare("select 'foo'")
-      assert_raises(SQLite3::BusyException) do
+      assert_nothing_raised do # formerly raised SQLite3::BusyException
         @db.close
       end
     ensure
@@ -591,19 +664,143 @@ module SQLite3
       error = assert_raises SQLite3::SQLException do
         db.execute('create index index_numbers_nope ON numbers ("nope");')
       end
-      assert_includes error.message, "no such column: nope"
+      assert_match(/no such column: "?nope"?/, error.message)
     end
 
-    def test_load_extension_with_nonstring_argument
-      db = SQLite3::Database.new(":memory:")
-      skip("extensions are not enabled") unless db.respond_to?(:load_extension)
+    def test_load_extension_is_defined_on_expected_platforms
+      if ::RUBY_PLATFORM =~ /mingw|mswin/ && SQLite3::SQLITE_PACKAGED_LIBRARIES
+        skip("as of sqlite 3.48.0, the autoconf amalgamation does not reliably find dlopen" \
+             "on windows when building sqlite from source")
+      end
+      assert_respond_to(db, :load_extension)
+      assert_respond_to(db, :enable_load_extension)
+    end
+
+    def test_load_extension_error_with_nonexistent_path
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+      db.enable_load_extension(true)
+
+      assert_raises(SQLite3::Exception) { db.load_extension("/nonexistent/path") }
+      assert_raises(SQLite3::Exception) { db.load_extension(Pathname.new("nonexistent")) }
+    end
+
+    def test_load_extension_error_with_invalid_argument
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+      db.enable_load_extension(true)
+
       assert_raises(TypeError) { db.load_extension(1) }
-      assert_raises(TypeError) { db.load_extension(Pathname.new("foo.so")) }
+      assert_raises(TypeError) { db.load_extension({a: 1}) }
+      assert_raises(TypeError) { db.load_extension([]) }
+      assert_raises(TypeError) { db.load_extension(Object.new) }
+    end
+
+    def test_load_extension_with_an_extension_descriptor
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
+      mock_database_load_extension_internal(db)
+
+      db.load_extension(Pathname.new("/path/to/ext2"))
+      assert_equal(["/path/to/ext2"], db.load_extension_internal_path)
+
+      db.load_extension_internal_path.clear # reset
+
+      db.load_extension(FakeExtensionSpecifier)
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+    end
+
+    def test_initialize_extensions_with_extensions_calls_enable_load_extension
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
+      mock_database_load_extension_internal(db)
+
+      class << db
+        attr_accessor :enable_load_extension_called
+        attr_reader :enable_load_extension_arg
+
+        def reset_test
+          @enable_load_extension_called = 0
+          @enable_load_extension_arg = []
+        end
+
+        def enable_load_extension(val)
+          @enable_load_extension_called += 1
+          @enable_load_extension_arg << val
+        end
+      end
+
+      db.reset_test
+      db.initialize_extensions(nil)
+      assert_equal(0, db.enable_load_extension_called)
+
+      db.reset_test
+      db.initialize_extensions([])
+      assert_equal(0, db.enable_load_extension_called)
+
+      db.reset_test
+      db.initialize_extensions(["/path/to/extension"])
+      assert_equal(2, db.enable_load_extension_called)
+      assert_equal([true, false], db.enable_load_extension_arg)
+
+      db.reset_test
+      db.initialize_extensions([FakeExtensionSpecifier])
+      assert_equal(2, db.enable_load_extension_called)
+      assert_equal([true, false], db.enable_load_extension_arg)
+    end
+
+    def test_initialize_extensions_object_is_an_extension_specifier
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
+      mock_database_load_extension_internal(db)
+
+      db.initialize_extensions([Pathname.new("/path/to/extension")])
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+
+      db.load_extension_internal_path.clear # reset
+
+      db.initialize_extensions([FakeExtensionSpecifier])
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+    end
+
+    def test_initialize_extensions_object_not_an_extension_specifier
+      skip("extensions are not enabled") unless db.respond_to?(:enable_load_extension)
+
+      mock_database_load_extension_internal(db)
+
+      db.initialize_extensions(["/path/to/extension"])
+      assert_equal(["/path/to/extension"], db.load_extension_internal_path)
+
+      assert_raises(TypeError) { db.initialize_extensions([Class.new]) }
+
+      assert_raises(TypeError) { db.initialize_extensions(FakeExtensionSpecifier) }
+    end
+
+    def test_initialize_with_extensions_calls_initialize_extensions
+      # ephemeral class to capture arguments passed to initialize_extensions
+      klass = Class.new(SQLite3::Database) do
+        attr :initialize_extensions_called, :initialize_extensions_arg
+
+        def initialize_extensions(extensions)
+          @initialize_extensions_called = true
+          @initialize_extensions_arg = extensions
+        end
+      end
+
+      db = klass.new(":memory:")
+      assert(db.initialize_extensions_called)
+      assert_nil(db.initialize_extensions_arg)
+
+      db = klass.new(":memory:", extensions: [])
+      assert(db.initialize_extensions_called)
+      assert_empty(db.initialize_extensions_arg)
+
+      db = klass.new(":memory:", extensions: ["path/to/ext1", "path/to/ext2", FakeExtensionSpecifier])
+      assert(db.initialize_extensions_called)
+      assert_equal(["path/to/ext1", "path/to/ext2", FakeExtensionSpecifier], db.initialize_extensions_arg)
     end
 
     def test_raw_float_infinity
       # https://github.com/sparklemotion/sqlite3-ruby/issues/396
-      skip if SQLite3::SQLITE_LOADED_VERSION >= "3.43.0"
+      skip if SQLite3::SQLITE_LOADED_VERSION == "3.43.0"
 
       db = SQLite3::Database.new ":memory:"
       db.execute("create table foo (temperature float)")
@@ -650,6 +847,27 @@ module SQLite3
       end
     ensure
       tf&.unlink
+    end
+
+    def test_transaction_returns_true_without_block
+      assert @db.transaction
+    end
+
+    def test_transaction_returns_block_result
+      result = @db.transaction { :foo }
+      assert_equal :foo, result
+    end
+
+    def test_sqlite_dbpage_vtab
+      skip("sqlite_dbpage not supported") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
+
+      assert_nothing_raised { @db.execute("select count(*) from sqlite_dbpage") }
+    end
+
+    def test_dbstat_table_exists
+      skip("dbstat not supported") unless SQLite3::SQLITE_PACKAGED_LIBRARIES
+
+      assert_nothing_raised { @db.execute("select * from dbstat") }
     end
   end
 end

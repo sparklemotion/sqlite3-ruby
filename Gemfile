@@ -2,20 +2,19 @@ source "https://rubygems.org"
 
 gemspec
 
+group :test do
+  gem "minitest", "5.25.4"
+
+  gem "ruby_memcheck", "3.0.1" if Gem::Platform.local.os == "linux"
+
+  gem "rake-compiler", "1.2.9"
+  gem "rake-compiler-dock", "1.9.1"
+end
+
 group :development do
-  gem "minitest", "5.20.0"
+  gem "rdoc", "6.12.0"
 
-  gem "rake-compiler", "1.2.5"
-  gem "rake-compiler-dock", "1.4.0"
-
-  gem "ruby_memcheck", "2.3.0" if Gem::Platform.local.os == "linux"
-
-  gem "rdoc", "6.6.2"
-
-  gem "rubocop", require: false
-  gem "standardrb", require: false
-  gem "rubocop-minitest", require: false
-
-  # FIXME: Remove after minitest removes dependency
-  gem "mutex_m"
+  gem "rubocop", "1.59.0", require: false
+  gem "rubocop-minitest", "0.34.5", require: false
+  gem "standard", "1.33.0", require: false
 end

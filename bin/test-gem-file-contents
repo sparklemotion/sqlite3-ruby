@@ -65,22 +65,7 @@ Minitest::Reporters.use!([Minitest::Reporters::SpecReporter.new])
 
 puts "Testing '#{gemfile}' (#{gemspec.platform})"
 describe File.basename(gemfile) do
-  let(:all_supported_ruby_versions) {
-    ["3.0", "3.1", "3.2", "3.3"]
-  }
-  let(:native_supported_ruby_versions) { ["3.0", "3.1", "3.2", "3.3"] }
-  let(:ucrt_supported_ruby_versions) { ["3.1", "3.2", "3.3"] }
-  let(:platform_supported_ruby_versions) do
-    if gemspec.platform.to_s == "x64-mingw-ucrt"
-      ucrt_supported_ruby_versions
-    elsif gemspec.platform.to_s == "x64-mingw32"
-      native_supported_ruby_versions - ucrt_supported_ruby_versions
-    elsif gemspec.platform.cpu
-      native_supported_ruby_versions
-    else
-      all_supported_ruby_versions
-    end
-  end
+  let(:supported_ruby_versions) { ["3.1", "3.2", "3.3", "3.4"] }
 
   describe "setup" do
     it "gemfile contains some files" do
@@ -94,13 +79,24 @@ describe File.basename(gemfile) do
   end
 
   describe "all platforms" do
-    ["lib", "test"].each do |dir|
+    ["lib"].each do |dir|
       it "contains every ruby file in #{dir}/" do
         expected = `git ls-files #{dir}`.split("\n").grep(/\.rb$/).sort
         skip "looks like this isn't a git repository" if expected.empty?
         actual = gemfile_contents.select { |f| f.start_with?("#{dir}/") }.grep(/\.rb$/).sort
         assert_equal(expected, actual)
       end
+    end
+
+    ["test"].each do |dir|
+      it "does not contain files from #{dir}/" do
+        actual = gemfile_contents.select { |f| f.start_with?("#{dir}/") }.grep(/\.rb$/)
+        assert_empty(actual)
+      end
+    end
+
+    it "does not contain the Gemfile" do
+      refute_includes(gemfile_contents, "Gemfile")
     end
   end
 
@@ -112,7 +108,7 @@ describe File.basename(gemfile) do
 
       it "contains extension C and header files" do
         assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
-        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
+        assert_equal(7, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
       end
 
       it "includes C files in extra_rdoc_files" do
@@ -136,7 +132,7 @@ describe File.basename(gemfile) do
       end
 
       it "sets required_ruby_version appropriately" do
-        all_supported_ruby_versions.each do |v|
+        supported_ruby_versions.each do |v|
           assert(
             gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
             "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}"
@@ -154,7 +150,7 @@ describe File.basename(gemfile) do
 
       it "contains extension C and header files" do
         assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.c", f) })
-        assert_equal(6, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
+        assert_equal(7, gemfile_contents.count { |f| File.fnmatch?("ext/**/*.h", f) })
       end
 
       it "includes C files in extra_rdoc_files" do
@@ -170,7 +166,7 @@ describe File.basename(gemfile) do
       end
 
       it "contains expected shared library files " do
-        platform_supported_ruby_versions.each do |version|
+        supported_ruby_versions.each do |version|
           actual = gemfile_contents.find do |p|
             File.fnmatch?("lib/sqlite3/#{version}/sqlite3_native.{so,bundle}", p, File::FNM_EXTGLOB)
           end
@@ -186,24 +182,17 @@ describe File.basename(gemfile) do
           File.fnmatch?("lib/sqlite3/**/*.{so,bundle}", p, File::FNM_EXTGLOB)
         end
         assert_equal(
-          platform_supported_ruby_versions.length,
+          supported_ruby_versions.length,
           actual.length,
           "did not expect extra shared library files"
         )
       end
 
       it "sets required_ruby_version appropriately" do
-        unsupported_versions = all_supported_ruby_versions - platform_supported_ruby_versions
-        platform_supported_ruby_versions.each do |v|
+        supported_ruby_versions.each do |v|
           assert(
             gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
             "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}"
-          )
-        end
-        unsupported_versions.each do |v|
-          refute(
-            gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
-            "required_ruby_version='#{gemspec.required_ruby_version}' should not support ruby #{v}"
           )
         end
       end

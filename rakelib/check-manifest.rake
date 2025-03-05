@@ -5,10 +5,12 @@
 desc "Perform a sanity check on the gemspec file list"
 task :check_manifest do
   ignore_directories = %w{
-    .bundle
     .DS_Store
+    .bundle
     .git
     .github
+    .ruby-lsp
+    adr
     bin
     doc
     gems
@@ -17,14 +19,17 @@ task :check_manifest do
     pkg
     ports
     rakelib
+    test
     tmp
     vendor
     [0-9]*
   }
   ignore_files = %w[
+    .editorconfig
     .gitignore
     .rdoc_options
-    Gemfile?*
+    .rubocop.yml
+    Gemfile*
     Rakefile
     [a-z]*.{log,out}
     [0-9]*

@@ -1,99 +1,122 @@
 #include <sqlite3_ruby.h>
 
-void
-rb_sqlite3_raise(sqlite3 *db, int status)
+static VALUE
+status2klass(int status)
 {
-    VALUE klass = Qnil;
-
     /* Consider only lower 8 bits, to work correctly when
        extended result codes are enabled. */
     switch (status & 0xff) {
         case SQLITE_OK:
-            return;
-            break;
+            return Qnil;
         case SQLITE_ERROR:
-            klass = rb_path2class("SQLite3::SQLException");
-            break;
+            return rb_path2class("SQLite3::SQLException");
         case SQLITE_INTERNAL:
-            klass = rb_path2class("SQLite3::InternalException");
-            break;
+            return rb_path2class("SQLite3::InternalException");
         case SQLITE_PERM:
-            klass = rb_path2class("SQLite3::PermissionException");
-            break;
+            return rb_path2class("SQLite3::PermissionException");
         case SQLITE_ABORT:
-            klass = rb_path2class("SQLite3::AbortException");
-            break;
+            return rb_path2class("SQLite3::AbortException");
         case SQLITE_BUSY:
-            klass = rb_path2class("SQLite3::BusyException");
-            break;
+            return rb_path2class("SQLite3::BusyException");
         case SQLITE_LOCKED:
-            klass = rb_path2class("SQLite3::LockedException");
-            break;
+            return rb_path2class("SQLite3::LockedException");
         case SQLITE_NOMEM:
-            klass = rb_path2class("SQLite3::MemoryException");
-            break;
+            return rb_path2class("SQLite3::MemoryException");
         case SQLITE_READONLY:
-            klass = rb_path2class("SQLite3::ReadOnlyException");
-            break;
+            return rb_path2class("SQLite3::ReadOnlyException");
         case SQLITE_INTERRUPT:
-            klass = rb_path2class("SQLite3::InterruptException");
-            break;
+            return rb_path2class("SQLite3::InterruptException");
         case SQLITE_IOERR:
-            klass = rb_path2class("SQLite3::IOException");
-            break;
+            return rb_path2class("SQLite3::IOException");
         case SQLITE_CORRUPT:
-            klass = rb_path2class("SQLite3::CorruptException");
-            break;
+            return rb_path2class("SQLite3::CorruptException");
         case SQLITE_NOTFOUND:
-            klass = rb_path2class("SQLite3::NotFoundException");
-            break;
+            return rb_path2class("SQLite3::NotFoundException");
         case SQLITE_FULL:
-            klass = rb_path2class("SQLite3::FullException");
-            break;
+            return rb_path2class("SQLite3::FullException");
         case SQLITE_CANTOPEN:
-            klass = rb_path2class("SQLite3::CantOpenException");
-            break;
+            return rb_path2class("SQLite3::CantOpenException");
         case SQLITE_PROTOCOL:
-            klass = rb_path2class("SQLite3::ProtocolException");
-            break;
+            return rb_path2class("SQLite3::ProtocolException");
         case SQLITE_EMPTY:
-            klass = rb_path2class("SQLite3::EmptyException");
-            break;
+            return rb_path2class("SQLite3::EmptyException");
         case SQLITE_SCHEMA:
-            klass = rb_path2class("SQLite3::SchemaChangedException");
-            break;
+            return rb_path2class("SQLite3::SchemaChangedException");
         case SQLITE_TOOBIG:
-            klass = rb_path2class("SQLite3::TooBigException");
-            break;
+            return rb_path2class("SQLite3::TooBigException");
         case SQLITE_CONSTRAINT:
-            klass = rb_path2class("SQLite3::ConstraintException");
-            break;
+            return rb_path2class("SQLite3::ConstraintException");
         case SQLITE_MISMATCH:
-            klass = rb_path2class("SQLite3::MismatchException");
-            break;
+            return rb_path2class("SQLite3::MismatchException");
         case SQLITE_MISUSE:
-            klass = rb_path2class("SQLite3::MisuseException");
-            break;
+            return rb_path2class("SQLite3::MisuseException");
         case SQLITE_NOLFS:
-            klass = rb_path2class("SQLite3::UnsupportedException");
-            break;
+            return rb_path2class("SQLite3::UnsupportedException");
         case SQLITE_AUTH:
-            klass = rb_path2class("SQLite3::AuthorizationException");
-            break;
+            return rb_path2class("SQLite3::AuthorizationException");
         case SQLITE_FORMAT:
-            klass = rb_path2class("SQLite3::FormatException");
-            break;
+            return rb_path2class("SQLite3::FormatException");
         case SQLITE_RANGE:
-            klass = rb_path2class("SQLite3::RangeException");
-            break;
+            return rb_path2class("SQLite3::RangeException");
         case SQLITE_NOTADB:
-            klass = rb_path2class("SQLite3::NotADatabaseException");
-            break;
+            return rb_path2class("SQLite3::NotADatabaseException");
         default:
-            klass = rb_eRuntimeError;
+            return rb_path2class("SQLite3::Exception");
+    }
+}
+
+void
+rb_sqlite3_raise(sqlite3 *db, int status)
+{
+    VALUE klass = status2klass(status);
+    if (NIL_P(klass)) {
+        return;
     }
 
-    klass = rb_exc_new2(klass, sqlite3_errmsg(db));
-    rb_iv_set(klass, "@code", INT2FIX(status));
-    rb_exc_raise(klass);
+    VALUE exception = rb_exc_new2(klass, sqlite3_errmsg(db));
+    rb_iv_set(exception, "@code", INT2FIX(status));
+
+    rb_exc_raise(exception);
+}
+
+/*
+ *  accepts a sqlite3 error message as the final argument, which will be `sqlite3_free`d
+ */
+void
+rb_sqlite3_raise_msg(sqlite3 *db, int status, const char *msg)
+{
+    VALUE klass = status2klass(status);
+    if (NIL_P(klass)) {
+        return;
+    }
+
+    VALUE exception = rb_exc_new2(klass, msg);
+    rb_iv_set(exception, "@code", INT2FIX(status));
+    sqlite3_free((void *)msg);
+
+    rb_exc_raise(exception);
+}
+
+void
+rb_sqlite3_raise_with_sql(sqlite3 *db, int status, const char *sql)
+{
+    VALUE klass = status2klass(status);
+    if (NIL_P(klass)) {
+        return;
+    }
+
+    const char *error_msg = sqlite3_errmsg(db);
+    int error_offset = -1;
+#ifdef HAVE_SQLITE3_ERROR_OFFSET
+    error_offset = sqlite3_error_offset(db);
+#endif
+
+    VALUE exception = rb_exc_new2(klass, error_msg);
+    rb_iv_set(exception, "@code", INT2FIX(status));
+    if (sql) {
+        rb_iv_set(exception, "@sql", rb_str_new2(sql));
+        rb_iv_set(exception, "@sql_offset", INT2FIX(error_offset));
+    }
+
+    rb_exc_raise(exception);
 }

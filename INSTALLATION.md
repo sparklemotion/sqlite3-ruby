@@ -7,15 +7,21 @@ This document will help you install the `sqlite3` ruby gem. It also contains ins
 
 ### Native Gems (recommended)
 
-In v1.5.0 and later, native (precompiled) gems are available for recent Ruby versions on these platforms:
+In v2.0.0 and later, native (precompiled) gems are available for recent Ruby versions on these platforms:
 
-- `aarch64-linux` (requires: glibc >= 2.29)
-- `arm-linux` (requires: glibc >= 2.29)
+- `aarch64-linux-gnu` (requires: glibc >= 2.29)
+- `aarch64-linux-musl`
+- `arm-linux-gnu` (requires: glibc >= 2.29)
+- `arm-linux-musl`
 - `arm64-darwin`
-- `x64-mingw32` / `x64-mingw-ucrt`
-- `x86-linux` (requires: glibc >= 2.17)
+- `x64-mingw-ucrt`
+- `x86-linux-gnu` (requires: glibc >= 2.17)
+- `x86-linux-musl`
 - `x86_64-darwin`
-- `x86_64-linux` (requires: glibc >= 2.17)
+- `x86_64-linux-gnu` (requires: glibc >= 2.17)
+- `x86_64-linux-musl`
+
+⚠ Musl linux users should update to Bundler >= 2.5.6 to avoid https://github.com/rubygems/rubygems/issues/7432
 
 If you are using one of these Ruby versions on one of these platforms, the native gem is the recommended way to install sqlite3-ruby.
 
@@ -56,6 +62,8 @@ If you are on a platform or version of Ruby that is not covered by the Native Ge
 #### Packaged libsqlite3
 
 By default, as of v1.5.0 of this library, the latest available version of libsqlite3 is packaged with the gem and will be compiled and used automatically. This takes a bit longer than the native gem, but will provide a modern, well-supported version of libsqlite3.
+
+⚠ A prerequisite to build the gem with the packaged sqlite3 is that you must have `pkgconf` installed.
 
 For example, on a linux system running Ruby 2.5:
 

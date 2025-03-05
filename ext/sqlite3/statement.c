@@ -1,8 +1,12 @@
 #include <sqlite3_ruby.h>
 
 #define REQUIRE_OPEN_STMT(_ctxt) \
-  if(!_ctxt->st) \
+  if (!_ctxt->st) \
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed statement");
+
+#define REQUIRE_LIVE_DB(_ctxt) \
+  if (_ctxt->db->flags & SQLITE3_RB_DATABASE_DISCARDED) \
+    rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a statement associated with a discarded database");
 
 VALUE cSqlite3Statement;
 
@@ -57,6 +61,11 @@ prepare(VALUE self, VALUE db, VALUE sql)
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
+    /* Dereferencing a pointer to the database struct will be faster than accessing it through the
+     * instance variable @connection. The struct pointer is guaranteed to be live because instance
+     * variable will keep it from being GCed. */
+    ctx->db = db_ctx;
+
 #ifdef HAVE_SQLITE3_PREPARE_V2
     status = sqlite3_prepare_v2(
 #else
@@ -69,9 +78,10 @@ prepare(VALUE self, VALUE db, VALUE sql)
                  &tail
              );
 
-    CHECK(db_ctx->db, status);
+    CHECK_PREPARE(db_ctx->db, status, StringValuePtr(sql));
+    timespecclear(&db_ctx->stmt_deadline);
 
-    return rb_str_new2(tail);
+    return rb_utf8_str_new_cstr(tail);
 }
 
 /* call-seq: stmt.close
@@ -120,6 +130,7 @@ step(VALUE self)
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     if (ctx->done_p) { return Qnil; }
@@ -162,6 +173,7 @@ step(VALUE self)
                         if (internal_encoding) {
                             val = rb_str_export_to_enc(val, internal_encoding);
                         }
+                        rb_obj_freeze(val);
                     }
                     break;
                     case SQLITE_BLOB: {
@@ -169,6 +181,7 @@ step(VALUE self)
                                   (const char *)sqlite3_column_blob(stmt, i),
                                   (long)sqlite3_column_bytes(stmt, i)
                               );
+                        rb_obj_freeze(val);
                     }
                     break;
                     case SQLITE_NULL:
@@ -192,6 +205,8 @@ step(VALUE self)
             CHECK(sqlite3_db_handle(ctx->st), value);
     }
 
+    rb_obj_freeze(list);
+
     return list;
 }
 
@@ -211,6 +226,8 @@ bind_param(VALUE self, VALUE key, VALUE value)
     int index;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     switch (TYPE(key)) {
@@ -303,6 +320,8 @@ reset_bang(VALUE self)
     sqlite3StmtRubyPtr ctx;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     sqlite3_reset(ctx->st);
@@ -323,6 +342,8 @@ clear_bindings_bang(VALUE self)
     sqlite3StmtRubyPtr ctx;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     sqlite3_clear_bindings(ctx->st);
@@ -355,10 +376,27 @@ column_count(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     return INT2NUM(sqlite3_column_count(ctx->st));
 }
+
+#if HAVE_RB_ENC_INTERNED_STR_CSTR
+static VALUE
+interned_utf8_cstr(const char *str)
+{
+    return rb_enc_interned_str_cstr(str, rb_utf8_encoding());
+}
+#else
+static VALUE
+interned_utf8_cstr(const char *str)
+{
+    VALUE rb_str = rb_utf8_str_new_cstr(str);
+    return rb_funcall(rb_str, rb_intern("-@"), 0);
+}
+#endif
 
 /* call-seq: stmt.column_name(index)
  *
@@ -371,6 +409,8 @@ column_name(VALUE self, VALUE index)
     const char *name;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     name = sqlite3_column_name(ctx->st, (int)NUM2INT(index));
@@ -378,8 +418,7 @@ column_name(VALUE self, VALUE index)
     VALUE ret = Qnil;
 
     if (name) {
-        ret = SQLITE3_UTF8_STR_NEW2(name);
-        rb_obj_freeze(ret);
+        ret = interned_utf8_cstr(name);
     }
     return ret;
 }
@@ -395,6 +434,8 @@ column_decltype(VALUE self, VALUE index)
     const char *name;
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
@@ -412,10 +453,163 @@ bind_parameter_count(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
 }
+
+enum stmt_stat_sym {
+    stmt_stat_sym_fullscan_steps,
+    stmt_stat_sym_sorts,
+    stmt_stat_sym_autoindexes,
+    stmt_stat_sym_vm_steps,
+#ifdef SQLITE_STMTSTATUS_REPREPARE
+    stmt_stat_sym_reprepares,
+#endif
+#ifdef SQLITE_STMTSTATUS_RUN
+    stmt_stat_sym_runs,
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_MISS
+    stmt_stat_sym_filter_misses,
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_HIT
+    stmt_stat_sym_filter_hits,
+#endif
+    stmt_stat_sym_last
+};
+
+static VALUE stmt_stat_symbols[stmt_stat_sym_last];
+
+static void
+setup_stmt_stat_symbols(void)
+{
+    if (stmt_stat_symbols[0] == 0) {
+#define S(s) stmt_stat_symbols[stmt_stat_sym_##s] = ID2SYM(rb_intern_const(#s))
+        S(fullscan_steps);
+        S(sorts);
+        S(autoindexes);
+        S(vm_steps);
+#ifdef SQLITE_STMTSTATUS_REPREPARE
+        S(reprepares);
+#endif
+#ifdef SQLITE_STMTSTATUS_RUN
+        S(runs);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_MISS
+        S(filter_misses);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_HIT
+        S(filter_hits);
+#endif
+#undef S
+    }
+}
+
+static size_t
+stmt_stat_internal(VALUE hash_or_sym, sqlite3_stmt *stmt)
+{
+    VALUE hash = Qnil, key = Qnil;
+
+    setup_stmt_stat_symbols();
+
+    if (RB_TYPE_P(hash_or_sym, T_HASH)) {
+        hash = hash_or_sym;
+    } else if (SYMBOL_P(hash_or_sym)) {
+        key = hash_or_sym;
+    } else {
+        rb_raise(rb_eTypeError, "non-hash or symbol argument");
+    }
+
+#define SET(name, stat_type) \
+    if (key == stmt_stat_symbols[stmt_stat_sym_##name]) \
+        return sqlite3_stmt_status(stmt, stat_type, 0); \
+    else if (hash != Qnil) \
+        rb_hash_aset(hash, stmt_stat_symbols[stmt_stat_sym_##name], SIZET2NUM(sqlite3_stmt_status(stmt, stat_type, 0)));
+
+    SET(fullscan_steps, SQLITE_STMTSTATUS_FULLSCAN_STEP);
+    SET(sorts, SQLITE_STMTSTATUS_SORT);
+    SET(autoindexes, SQLITE_STMTSTATUS_AUTOINDEX);
+    SET(vm_steps, SQLITE_STMTSTATUS_VM_STEP);
+#ifdef SQLITE_STMTSTATUS_REPREPARE
+    SET(reprepares, SQLITE_STMTSTATUS_REPREPARE);
+#endif
+#ifdef SQLITE_STMTSTATUS_RUN
+    SET(runs, SQLITE_STMTSTATUS_RUN);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_MISS
+    SET(filter_misses, SQLITE_STMTSTATUS_FILTER_MISS);
+#endif
+#ifdef SQLITE_STMTSTATUS_FILTER_HIT
+    SET(filter_hits, SQLITE_STMTSTATUS_FILTER_HIT);
+#endif
+#undef SET
+
+    if (!NIL_P(key)) { /* matched key should return above */
+        rb_raise(rb_eArgError, "unknown key: %"PRIsVALUE, rb_sym2str(key));
+    }
+
+    return 0;
+}
+
+/* call-seq: stmt.stats_as_hash(hash)
+ *
+ * Returns a Hash containing information about the statement.
+ */
+static VALUE
+stats_as_hash(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    VALUE arg = rb_hash_new();
+
+    stmt_stat_internal(arg, ctx->st);
+    return arg;
+}
+
+/* call-seq: stmt.stmt_stat(hash_or_key)
+ *
+ * Returns a Hash containing information about the statement.
+ */
+static VALUE
+stat_for(VALUE self, VALUE key)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    if (SYMBOL_P(key)) {
+        size_t value = stmt_stat_internal(key, ctx->st);
+        return SIZET2NUM(value);
+    } else {
+        rb_raise(rb_eTypeError, "non-symbol given");
+    }
+}
+
+#ifdef SQLITE_STMTSTATUS_MEMUSED
+/* call-seq: stmt.memory_used
+ *
+ * Return the approximate number of bytes of heap memory used to store the prepared statement
+ */
+static VALUE
+memused(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    return INT2NUM(sqlite3_stmt_status(ctx->st, SQLITE_STMTSTATUS_MEMUSED, 0));
+}
+#endif
 
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
 
@@ -428,6 +622,8 @@ database_name(VALUE self, VALUE index)
 {
     sqlite3StmtRubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
     return SQLITE3_UTF8_STR_NEW2(
@@ -435,6 +631,46 @@ database_name(VALUE self, VALUE index)
 }
 
 #endif
+
+/* call-seq: stmt.sql
+ *
+ * Returns the SQL statement used to create this prepared statement
+ */
+static VALUE
+get_sql(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    return rb_obj_freeze(SQLITE3_UTF8_STR_NEW2(sqlite3_sql(ctx->st)));
+}
+
+/* call-seq: stmt.expanded_sql
+ *
+ * Returns the SQL statement used to create this prepared statement, but
+ * with bind parameters substituted in to the statement.
+ */
+static VALUE
+get_expanded_sql(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    char *expanded_sql;
+    VALUE rb_expanded_sql;
+
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    expanded_sql = sqlite3_expanded_sql(ctx->st);
+    rb_expanded_sql = rb_obj_freeze(SQLITE3_UTF8_STR_NEW2(expanded_sql));
+    sqlite3_free(expanded_sql);
+
+    return rb_expanded_sql;
+}
 
 void
 init_sqlite3_statement(void)
@@ -453,9 +689,16 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
     rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
     rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
-    rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
-
+    rb_define_method(cSqlite3Statement, "sql", get_sql, 0);
+    rb_define_method(cSqlite3Statement, "expanded_sql", get_expanded_sql, 0);
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
     rb_define_method(cSqlite3Statement, "database_name", database_name, 1);
 #endif
+#ifdef SQLITE_STMTSTATUS_MEMUSED
+    rb_define_method(cSqlite3Statement, "memused", memused, 0);
+#endif
+
+    rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
+    rb_define_private_method(cSqlite3Statement, "stats_as_hash", stats_as_hash, 0);
+    rb_define_private_method(cSqlite3Statement, "stat_for", stat_for, 1);
 }

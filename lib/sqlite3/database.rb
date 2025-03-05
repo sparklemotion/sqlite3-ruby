@@ -1,12 +1,17 @@
+# frozen_string_literal: true
+
 require "sqlite3/constants"
 require "sqlite3/errors"
 require "sqlite3/pragmas"
 require "sqlite3/statement"
 require "sqlite3/value"
+require "sqlite3/fork_safety"
 
 module SQLite3
-  # The Database class encapsulates a single connection to a SQLite3 database.
-  # Its usage is very straightforward:
+  # == Overview
+  #
+  # The Database class encapsulates a single connection to a SQLite3 database.  Here's a
+  # straightforward example of usage:
   #
   #   require 'sqlite3'
   #
@@ -16,20 +21,68 @@ module SQLite3
   #     end
   #   end
   #
-  # It wraps the lower-level methods provided by the selected driver, and
-  # includes the Pragmas module for access to various pragma convenience
-  # methods.
+  # It wraps the lower-level methods provided by the selected driver, and includes the Pragmas
+  # module for access to various pragma convenience methods.
   #
-  # The Database class provides type translation services as well, by which
-  # the SQLite3 data types (which are all represented as strings) may be
-  # converted into their corresponding types (as defined in the schemas
-  # for their tables). This translation only occurs when querying data from
+  # The Database class provides type translation services as well, by which the SQLite3 data types
+  # (which are all represented as strings) may be converted into their corresponding types (as
+  # defined in the schemas for their tables). This translation only occurs when querying data from
   # the database--insertions and updates are all still typeless.
   #
-  # Furthermore, the Database class has been designed to work well with the
-  # ArrayFields module from Ara Howard. If you require the ArrayFields
-  # module before performing a query, and if you have not enabled results as
-  # hashes, then the results will all be indexible by field name.
+  # Furthermore, the Database class has been designed to work well with the ArrayFields module from
+  # Ara Howard. If you require the ArrayFields module before performing a query, and if you have not
+  # enabled results as hashes, then the results will all be indexible by field name.
+  #
+  # == Thread safety
+  #
+  # When SQLite3.threadsafe? returns true, it is safe to share instances of the database class
+  # among threads without adding specific locking. Other object instances may require applications
+  # to provide their own locks if they are to be shared among threads.  Please see the README.md for
+  # more information.
+  #
+  # == SQLite Extensions
+  #
+  # SQLite3::Database supports the universe of {sqlite
+  # extensions}[https://www.sqlite.org/loadext.html]. It's possible to load an extension into an
+  # existing Database object using the #load_extension method and passing a filesystem path:
+  #
+  #   db = SQLite3::Database.new(":memory:")
+  #   db.enable_load_extension(true)
+  #   db.load_extension("/path/to/extension")
+  #
+  # As of v2.4.0, it's also possible to pass an object that responds to +#to_path+. This
+  # documentation will refer to the supported interface as +_ExtensionSpecifier+, which can be
+  # expressed in RBS syntax as:
+  #
+  #   interface _ExtensionSpecifier
+  #     def to_path: () → String
+  #   end
+  #
+  # So, for example, if you are using the {sqlean gem}[https://github.com/flavorjones/sqlean-ruby]
+  # which provides modules that implement this interface, you can pass the module directly:
+  #
+  #   db = SQLite3::Database.new(":memory:")
+  #   db.enable_load_extension(true)
+  #   db.load_extension(SQLean::Crypto)
+  #
+  # It's also possible in v2.4.0+ to load extensions via the SQLite3::Database constructor by using
+  # the +extensions:+ keyword argument to pass an array of String paths or extension specifiers:
+  #
+  #   db = SQLite3::Database.new(":memory:", extensions: ["/path/to/extension", SQLean::Crypto])
+  #
+  # Note that when loading extensions via the constructor, there is no need to call
+  # #enable_load_extension; however it is still necessary to call #enable_load_extensions before any
+  # subsequently invocations of #load_extension on the initialized Database object.
+  #
+  # You can load extensions in a Rails application by using the +extensions:+ configuration option:
+  #
+  #   # config/database.yml
+  #   development:
+  #     adapter: sqlite3
+  #     extensions:
+  #       - .sqlpkg/nalgeon/crypto/crypto.so # a filesystem path
+  #       - <%= SQLean::UUID.to_path %>      # or ruby code returning a path
+  #
   class Database
     attr_reader :collations
 
@@ -65,23 +118,25 @@ module SQLite3
     # as hashes or not. By default, rows are returned as arrays.
     attr_accessor :results_as_hash
 
-    # call-seq: SQLite3::Database.new(file, options = {})
+    # call-seq:
+    #   SQLite3::Database.new(file, options = {})
     #
     # Create a new Database object that opens the given file.
     #
     # Supported permissions +options+:
     # - the default mode is <tt>READWRITE | CREATE</tt>
-    # - +:readonly+: boolean (default false), true to set the mode to +READONLY+
-    # - +:readwrite+: boolean (default false), true to set the mode to +READWRITE+
-    # - +:flags+: set the mode to a combination of SQLite3::Constants::Open flags.
+    # - +readonly:+ boolean (default false), true to set the mode to +READONLY+
+    # - +readwrite:+ boolean (default false), true to set the mode to +READWRITE+
+    # - +flags:+ set the mode to a combination of SQLite3::Constants::Open flags.
     #
     # Supported encoding +options+:
-    # - +:utf16+: boolean (default false), is the filename's encoding UTF-16 (only needed if the filename encoding is not UTF_16LE or BE)
+    # - +utf16:+ +boolish+ (default false), is the filename's encoding UTF-16 (only needed if the filename encoding is not UTF_16LE or BE)
     #
     # Other supported +options+:
-    # - +:strict+: boolean (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
-    # - +:results_as_hash+: boolean (default false), return rows as hashes instead of arrays
-    # - +:default_transaction_mode+: one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
+    # - +strict:+ +boolish+ (default false), disallow the use of double-quoted string literals (see https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted)
+    # - +results_as_hash:+ +boolish+ (default false), return rows as hashes instead of arrays
+    # - +default_transaction_mode:+ one of +:deferred+ (default), +:immediate+, or +:exclusive+. If a mode is not specified in a call to #transaction, this will be the default transaction mode.
+    # - +extensions:+ <tt>Array[String | _ExtensionSpecifier]</tt> SQLite extensions to load into the database. See Database@SQLite+Extensions for more information.
     #
     def initialize file, options = {}, zvfs = nil
       mode = Constants::Open::READWRITE | Constants::Open::CREATE
@@ -117,13 +172,16 @@ module SQLite3
 
       @tracefunc = nil
       @authorizer = nil
-      @encoding = nil
-      @busy_handler = nil
+      @progress_handler = nil
       @collations = {}
       @functions = {}
       @results_as_hash = options[:results_as_hash]
       @readonly = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
+
+      initialize_extensions(options[:extensions])
+
+      ForkSafety.track(self)
 
       if block_given?
         begin
@@ -138,7 +196,7 @@ module SQLite3
     #
     # Fetch the encoding set on this database
     def encoding
-      @encoding ||= Encoding.find(execute("PRAGMA encoding").first.first)
+      prepare("PRAGMA encoding") { |stmt| Encoding.find(stmt.first.first) }
     end
 
     # Installs (or removes) a block that will be invoked for every access
@@ -186,19 +244,7 @@ module SQLite3
     #
     # See also #execute2, #query, and #execute_batch for additional ways of
     # executing statements.
-    def execute sql, bind_vars = [], *args, &block
-      if bind_vars.nil? || !args.empty?
-        bind_vars = if args.empty?
-          []
-        else
-          [bind_vars] + args
-        end
-
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#execute` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for bind parameters as *args will be removed in 2.0.0.
-        EOWARN
-      end
-
+    def execute sql, bind_vars = [], &block
       prepare(sql) do |stmt|
         stmt.bind_params(bind_vars)
         stmt = build_result_set stmt
@@ -208,7 +254,7 @@ module SQLite3
             yield row
           end
         else
-          stmt.to_a
+          stmt.to_a.freeze
         end
       end
     end
@@ -243,34 +289,13 @@ module SQLite3
     # in turn. The same bind parameters, if given, will be applied to each
     # statement.
     #
-    # This always returns +nil+, making it unsuitable for queries that return
-    # rows.
+    # This always returns the result of the last statement.
     #
     # See also #execute_batch2 for additional ways of
     # executing statements.
-    def execute_batch(sql, bind_vars = [], *args)
-      # FIXME: remove this stuff later
-      unless [Array, Hash].include?(bind_vars.class)
-        bind_vars = [bind_vars]
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#execute_batch` with bind parameters that are not a list of a hash.  Please switch to passing bind parameters as an array or hash. Support for this behavior will be removed in version 2.0.0.
-        EOWARN
-      end
-
-      # FIXME: remove this stuff later
-      if bind_vars.nil? || !args.empty?
-        bind_vars = if args.empty?
-          []
-        else
-          [nil] + args
-        end
-
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#execute_batch` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this behavior will be removed in version 2.0.0.
-        EOWARN
-      end
-
+    def execute_batch(sql, bind_vars = [])
       sql = sql.strip
+      result = nil
       until sql.empty?
         prepare(sql) do |stmt|
           unless stmt.closed?
@@ -279,13 +304,13 @@ module SQLite3
             if bind_vars.length == stmt.bind_parameter_count
               stmt.bind_params(bind_vars)
             end
-            stmt.step
+            result = stmt.step
           end
           sql = stmt.remainder.strip
         end
       end
-      # FIXME: we should not return `nil` as a success return value
-      nil
+
+      result
     end
 
     # Executes all SQL statements in the given string. By contrast, the other
@@ -323,19 +348,7 @@ module SQLite3
     # returned, or you could have problems with locks on the table. If called
     # with a block, +close+ will be invoked implicitly when the block
     # terminates.
-    def query(sql, bind_vars = [], *args)
-      if bind_vars.nil? || !args.empty?
-        bind_vars = if args.empty?
-          []
-        else
-          [bind_vars] + args
-        end
-
-        warn(<<~EOWARN) if $VERBOSE
-          #{caller(1..1).first} is calling `SQLite3::Database#query` with nil or multiple bind params without using an array.  Please switch to passing bind parameters as an array. Support for this will be removed in version 2.0.0.
-        EOWARN
-      end
-
+    def query(sql, bind_vars = [])
       result = prepare(sql).execute(bind_vars)
       if block_given?
         begin
@@ -643,9 +656,9 @@ module SQLite3
         ensure
           abort and rollback or commit
         end
+      else
+        true
       end
-
-      true
     end
 
     # Commits the current transaction. If there is no current transaction,
@@ -691,6 +704,52 @@ module SQLite3
       end
     end
 
+    # call-seq:
+    #   load_extension(extension_specifier) -> self
+    #
+    # Loads an SQLite extension library from the named file. Extension loading must be enabled using
+    # #enable_load_extension prior to using this method.
+    #
+    # See also: Database@SQLite+Extensions
+    #
+    # [Parameters]
+    # - +extension_specifier+: (String | +_ExtensionSpecifier+) If a String, it is the filesystem path
+    #   to the sqlite extension file. If an object that responds to #to_path, the
+    #   return value of that method is used as the filesystem path to the sqlite extension file.
+    #
+    # [Example] Using a filesystem path:
+    #
+    #   db.load_extension("/path/to/my_extension.so")
+    #
+    # [Example] Using the {sqlean gem}[https://github.com/flavorjones/sqlean-ruby]:
+    #
+    #   db.load_extension(SQLean::VSV)
+    #
+    def load_extension(extension_specifier)
+      if extension_specifier.respond_to?(:to_path)
+        extension_specifier = extension_specifier.to_path
+      elsif !extension_specifier.is_a?(String)
+        raise TypeError, "extension_specifier #{extension_specifier.inspect} is not a String or a valid extension specifier object"
+      end
+      load_extension_internal(extension_specifier)
+    end
+
+    def initialize_extensions(extensions) # :nodoc:
+      return if extensions.nil?
+      raise TypeError, "extensions must be an Array" unless extensions.is_a?(Array)
+      return if extensions.empty?
+
+      begin
+        enable_load_extension(true)
+
+        extensions.each do |extension|
+          load_extension(extension)
+        end
+      ensure
+        enable_load_extension(false)
+      end
+    end
+
     # A helper class for dealing with custom functions (see #create_function,
     # #create_aggregate, and #create_aggregate_handler). It encapsulates the
     # opaque function object that represents the current invocation. It also
@@ -709,19 +768,6 @@ module SQLite3
       def initialize
         @result = nil
         @context = {}
-      end
-
-      # Set the result of the function to the given error message.
-      # The function will then return that error.
-      def set_error(error)
-        @driver.result_error(@func, error.to_s, -1)
-      end
-
-      # (Only available to aggregate functions.) Returns the number of rows
-      # that the aggregate has processed so far. This will include the current
-      # row, and so will always return at least 1.
-      def count
-        @driver.aggregate_count(@func)
       end
 
       # Returns the value with the given key from the context. This is only

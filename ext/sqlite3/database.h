@@ -3,9 +3,17 @@
 
 #include <sqlite3_ruby.h>
 
+/* bits in the `flags` field */
+#define SQLITE3_RB_DATABASE_READONLY  0x01
+#define SQLITE3_RB_DATABASE_DISCARDED 0x02
+
 struct _sqlite3Ruby {
     sqlite3 *db;
     VALUE busy_handler;
+    int stmt_timeout;
+    struct timespec stmt_deadline;
+    rb_pid_t owner;
+    int flags;
 };
 
 typedef struct _sqlite3Ruby sqlite3Ruby;

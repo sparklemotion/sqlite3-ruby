@@ -13,6 +13,22 @@ module SQLite3
       @db.close
     end
 
+    def test_change_encoding
+      db = SQLite3::Database.new(":memory:")
+      assert_equal Encoding.find("UTF-8"), db.encoding
+
+      db.execute "PRAGMA encoding='UTF-16le'"
+      assert_equal Encoding.find("UTF-16le"), db.encoding
+    end
+
+    def test_encoding_when_results_are_hash
+      db = SQLite3::Database.new(":memory:", results_as_hash: true)
+      assert_equal Encoding.find("UTF-8"), db.encoding
+
+      db = SQLite3::Database.new(":memory:")
+      assert_equal Encoding.find("UTF-8"), db.encoding
+    end
+
     def test_select_encoding_on_utf_16
       str = "foo"
       utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
@@ -82,7 +98,7 @@ module SQLite3
 
       string = @db.execute("select data from foo").first.first
       assert_equal Encoding.find("ASCII-8BIT"), string.encoding
-      assert_equal str, string.force_encoding("UTF-8")
+      assert_equal str, string.dup.force_encoding("UTF-8")
     end
 
     def test_blob_is_ascii8bit
@@ -95,7 +111,7 @@ module SQLite3
 
       string = @db.execute("select data from foo").first.first
       assert_equal Encoding.find("ASCII-8BIT"), string.encoding
-      assert_equal str, string.force_encoding("UTF-8")
+      assert_equal str, string.dup.force_encoding("UTF-8")
     end
 
     def test_blob_with_eucjp
@@ -108,7 +124,7 @@ module SQLite3
 
       string = @db.execute("select data from foo").first.first
       assert_equal Encoding.find("ASCII-8BIT"), string.encoding
-      assert_equal str, string.force_encoding("EUC-JP")
+      assert_equal str, string.dup.force_encoding("EUC-JP")
     end
 
     def test_db_with_eucjp

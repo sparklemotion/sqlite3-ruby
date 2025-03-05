@@ -22,16 +22,14 @@ module SQLite3
         when "on", "yes", "true", "y", "t" then mode = "'ON'"
         when "off", "no", "false", "n", "f" then mode = "'OFF'"
         else
-          raise StandardError,
-            "unrecognized pragma parameter #{mode.inspect}"
+          raise SQLite3::Exception, "unrecognized pragma parameter #{mode.inspect}"
         end
       when true, 1
         mode = "ON"
       when false, 0, nil
         mode = "OFF"
       else
-        raise StandardError,
-          "unrecognized pragma parameter #{mode.inspect}"
+        raise SQLite3::Exception, "unrecognized pragma parameter #{mode.inspect}"
       end
 
       execute("PRAGMA #{name}=#{mode}")
@@ -62,8 +60,7 @@ module SQLite3
     def set_enum_pragma(name, mode, enums)
       match = enums.find { |p| p.find { |i| i.to_s.downcase == mode.to_s.downcase } }
       unless match
-        raise StandardError,
-          "unrecognized #{name} #{mode.inspect}"
+        raise SQLite3::Exception, "unrecognized #{name} #{mode.inspect}"
       end
       execute("PRAGMA #{name}='#{match.first.upcase}'")
     end
@@ -96,7 +93,7 @@ module SQLite3
     LOCKING_MODES = [["normal"], ["exclusive"]]
 
     # The list of valid encodings.
-    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be "]]
+    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be"]]
 
     # The list of valid WAL checkpoints.
     WAL_CHECKPOINTS = [["passive"], ["full"], ["restart"], ["truncate"]]
@@ -341,6 +338,20 @@ module SQLite3
       set_int_pragma "mmap_size", size
     end
 
+    # Attempt to optimize the database.
+    #
+    # To customize the optimization options, pass +bitmask+ with a combination
+    # of the Constants::Optimize masks.
+    #
+    # See https://www.sqlite.org/pragma.html#pragma_optimize for more information.
+    def optimize(bitmask = nil)
+      if bitmask
+        set_int_pragma "optimize", bitmask
+      else
+        execute("PRAGMA optimize")
+      end
+    end
+
     def page_count
       get_int_pragma "page_count"
     end
@@ -534,12 +545,6 @@ module SQLite3
       result = [] unless block_given?
       stmt.each do |row|
         new_row = columns.zip(row).to_h
-
-        # FIXME: This should be removed but is required for older versions
-        # of rails
-        if Object.const_defined?(:ActiveRecord)
-          new_row["notnull"] = new_row["notnull"].to_s
-        end
 
         tweak_default(new_row) if needs_tweak_default
 

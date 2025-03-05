@@ -20,3 +20,5 @@ module SQLite3
     threadsafe? && !defined?(Ractor).nil?
   end
 end
+
+require "sqlite3/version_info"

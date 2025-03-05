@@ -1,3 +1,4 @@
 module SQLite3
-  VERSION = "2.0.0.dev"
+  # (String) the version of the sqlite3 gem, e.g. "2.1.1"
+  VERSION = "2.6.0"
 end

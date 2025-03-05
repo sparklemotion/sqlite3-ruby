@@ -50,8 +50,8 @@ module Sqlite3
       def configure_packaged_libraries
         minimal_recipe.tap do |recipe|
           recipe.configure_options += [
-            "--enable-shared=no",
-            "--enable-static=yes",
+            "--disable-shared",
+            "--enable-static",
             "--enable-fts5"
           ]
           ENV.to_h.tap do |env|
@@ -60,7 +60,10 @@ module Sqlite3
               "-fPIC", # needed for linking the static library into a shared library
               "-O2", # see https://github.com/sparklemotion/sqlite3-ruby/issues/335 for some benchmarks
               "-fvisibility=hidden", # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
-              "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1"
+              "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
+              "-DSQLITE_USE_URI=1",
+              "-DSQLITE_ENABLE_DBPAGE_VTAB=1",
+              "-DSQLITE_ENABLE_DBSTAT_VTAB=1"
             ]
             env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
             recipe.configure_options += env.select { |k, v| ENV_ALLOWLIST.include?(k) }
@@ -93,6 +96,9 @@ module Sqlite3
           end
 
           ldflags.each { |ldflag| append_ldflags(ldflag) }
+
+          append_cppflags("-DUSING_PACKAGED_LIBRARIES")
+          append_cppflags("-DUSING_PRECOMPILED_LIBRARIES") if cross_build?
         end
       end
 
@@ -108,6 +114,10 @@ module Sqlite3
         end
 
         abort_could_not_find(libname) unless find_library(libname, "sqlite3_libversion_number", "sqlite3.h")
+
+        # Truffle Ruby doesn't support this yet:
+        # https://github.com/oracle/truffleruby/issues/3408
+        have_func("rb_enc_interned_str_cstr")
 
         # Functions defined in 1.9 but not 1.8
         have_func("rb_proc_arity")
@@ -130,6 +140,9 @@ module Sqlite3
         end
 
         have_func("sqlite3_prepare_v2")
+        have_func("sqlite3_db_name", "sqlite3.h") # v3.39.0
+        have_func("sqlite3_error_offset", "sqlite3.h") # v3.38.0
+
         have_type("sqlite3_int64", "sqlite3.h")
         have_type("sqlite3_uint64", "sqlite3.h")
       end
@@ -165,7 +178,7 @@ module Sqlite3
       end
 
       def abort_pkg_config(id)
-        abort("\nCould not configure the build properly (#{id}). Please install either the `pkg-config` utility or the `pkg-config` rubygem.\n\n")
+        abort("\nCould not configure the build properly (#{id}). Please install the `pkg-config` utility.\n\n")
       end
 
       def cross_build?

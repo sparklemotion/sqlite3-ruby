@@ -18,13 +18,13 @@ Gem::Specification.new do |s|
 
   s.licenses = ["BSD-3-Clause"]
 
-  s.required_ruby_version = Gem::Requirement.new(">= 3.0")
+  s.required_ruby_version = Gem::Requirement.new(">= 3.1")
 
   s.homepage = "https://github.com/sparklemotion/sqlite3-ruby"
   s.metadata = {
     "homepage_uri" => "https://github.com/sparklemotion/sqlite3-ruby",
     "bug_tracker_uri" => "https://github.com/sparklemotion/sqlite3-ruby/issues",
-    "documentation_uri" => "https://www.rubydoc.info/gems/sqlite3",
+    "documentation_uri" => "https://sparklemotion.github.io/sqlite3-ruby/",
     "changelog_uri" => "https://github.com/sparklemotion/sqlite3-ruby/blob/master/CHANGELOG.md",
     "source_code_uri" => "https://github.com/sparklemotion/sqlite3-ruby",
 
@@ -37,15 +37,11 @@ Gem::Specification.new do |s|
 
   s.files = [
     ".gemtest",
-    "API_CHANGES.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
-    "ChangeLog.cvs",
     "FAQ.md",
-    "Gemfile",
     "INSTALLATION.md",
     "LICENSE",
-    "LICENSE-DEPENDENCIES",
     "README.md",
     "dependencies.yml",
     "ext/sqlite3/aggregator.c",
@@ -61,41 +57,21 @@ Gem::Specification.new do |s|
     "ext/sqlite3/sqlite3_ruby.h",
     "ext/sqlite3/statement.c",
     "ext/sqlite3/statement.h",
+    "ext/sqlite3/timespec.h",
     "lib/sqlite3.rb",
     "lib/sqlite3/constants.rb",
     "lib/sqlite3/database.rb",
     "lib/sqlite3/errors.rb",
+    "lib/sqlite3/fork_safety.rb",
     "lib/sqlite3/pragmas.rb",
     "lib/sqlite3/resultset.rb",
     "lib/sqlite3/statement.rb",
     "lib/sqlite3/value.rb",
     "lib/sqlite3/version.rb",
-    "test/helper.rb",
-    "test/test_backup.rb",
-    "test/test_collation.rb",
-    "test/test_database.rb",
-    "test/test_database_flags.rb",
-    "test/test_database_readonly.rb",
-    "test/test_database_readwrite.rb",
-    "test/test_deprecated.rb",
-    "test/test_encoding.rb",
-    "test/test_integration.rb",
-    "test/test_integration_aggregate.rb",
-    "test/test_integration_open_close.rb",
-    "test/test_integration_pending.rb",
-    "test/test_integration_ractor.rb",
-    "test/test_integration_resultset.rb",
-    "test/test_integration_statement.rb",
-    "test/test_pragmas.rb",
-    "test/test_resource_cleanup.rb",
-    "test/test_result_set.rb",
-    "test/test_sqlite3.rb",
-    "test/test_statement.rb",
-    "test/test_statement_execute.rb"
+    "lib/sqlite3/version_info.rb"
   ]
 
   s.extra_rdoc_files = [
-    "API_CHANGES.md",
     "CHANGELOG.md",
     "README.md",
     "ext/sqlite3/aggregator.c",

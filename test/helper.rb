@@ -1,15 +1,8 @@
 require "sqlite3"
 require "minitest/autorun"
+require "yaml"
 
-if ENV["GITHUB_ACTIONS"] == "true" || ENV["CI"]
-  $VERBOSE = nil
-end
-
-puts "info: gem version: #{SQLite3::VERSION}"
-puts "info: sqlite version: #{SQLite3::SQLITE_VERSION}/#{SQLite3::SQLITE_LOADED_VERSION}"
-puts "info: sqlcipher?: #{SQLite3.sqlcipher?}"
-puts "info: threadsafe?: #{SQLite3.threadsafe?}"
-puts "info: ractor_safe?: #{SQLite3.ractor_safe?}"
+puts SQLite3::VERSION_INFO.to_yaml
 
 module SQLite3
   class TestCase < Minitest::Test
@@ -19,6 +12,15 @@ module SQLite3
 
     def assert_nothing_raised
       yield
+    end
+
+    def i_am_running_in_valgrind
+      # https://stackoverflow.com/questions/365458/how-can-i-detect-if-a-program-is-running-from-within-valgrind/62364698#62364698
+      ENV["LD_PRELOAD"] =~ /valgrind|vgpreload/
+    end
+
+    def windows?
+      ::RUBY_PLATFORM =~ /mingw|mswin/
     end
   end
 end

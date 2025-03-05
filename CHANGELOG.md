@@ -1,91 +1,335 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.6.0 / 2025-02-20
 
-(will be 2.0.0)
+### Dependencies
+
+- Vendored sqlite is updated to [v3.49.1](https://sqlite.org/releaselog/3_49_1.html) (from v3.47.2). #605 @flavorjones
+- Updated to rake-compiler-dock v1.9.1. #610 @flavorjones
+
+### Important note for Window users
+
+Loading extensions is not available on Windows when using the precompiled native gems or compiling the vendored sqlite library from source, starting with sqlite3-ruby v2.6.0.
+
+Sqlite 3.48.0 and later have dramatically changed the "autoconf amalgamation" that is vendored in this gem. Specifically, the configuration is no longer actually autoconf, but some scripts that emulate autoconf's interface and behavior.
+
+Although this _mostly_ "just worked", we're having a problem resolving the libraries necessary for loading extensions. As a result, starting with sqlite3-ruby v2.6.0, extensions cannot be loaded on Windows when using precompiled native gems or when compiling the vendored sqlite library.
+
+If you are willing and able to help fix this, let us know at https://github.com/sparklemotion/sqlite3-ruby/issues/618.
+
+
+## 2.5.0 / 2024-12-25
 
 ### Ruby
 
-This release drops support for Ruby 2.7. [#453] @flavorjones
+This release introduces native gem packages that include Ruby 3.4.
+
+
+## 2.4.1 / 2024-12-08
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.47.2](https://sqlite.org/releaselog/3_47.2.html) #593 @flavorjones
+
+  The description from the upstream maintainers is:
+
+  > SQLite version 3.47.2, now available, fixes an important bug that first appeared in the 3.47.0
+  > release. In SQLite versions 3.47.0 and 3.47.1, if you try to convert a string into a
+  > floating-point value and the first 16 significant digits of the value are exactly
+  > "1844674407370955", then the floating-point number generated might be incorrect. The problem
+  > only affects x64 and i386 CPUs, so it does not affect you if you are running on ARM. And it only
+  > affects releases 3.47.0 and 3.47.1. **If you are running SQLite versions 3.47.0 or 3.47.1, then
+  > upgrading is recommended.**
+
+  Saving you a click, you should upgrade if you're running sqlite3-ruby v2.1.1 or later.
+
+
+### Fixed
+
+- Prevent unnecessary "Invalid Reference" warnings from the `ForkSafety` module when GC runs during the "after fork" hook. #592 @flavorjones
+
+
+## 2.4.0 / 2024-12-03
+
+### Added
+
+- `Database#load_extension` now accepts any object that responds to `#to_path`, in addition to String filesystem paths. [#586] @flavorjones
+- `Database.new` now accepts an `extensions:` parameter, which is an array of SQLite extensions that will be loaded during initialization. The array may contain String filesystem paths and objects that respond to `#to_path`. [#586] @flavorjones
+
+
+## 2.3.1 / 2024-11-25
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.47.1](https://sqlite.org/releaselog/3_47_1.html) [#589] @flavorjones
+
+
+## 2.3.0 / 2024-11-20
+
+### Added
+
+- The SQLITE_DBPAGE extension is now enabled by default, which implements an eponymous-only virtual table that provides direct access to the underlying database file by interacting with the pager. See https://www.sqlite.org/dbpage.html for more information. [#578] @flavorjones
+- The DBSTAT extension is now enabled by default, which implements a read-only eponymous virtual table that returns information about the amount of disk space used to store the content of an SQLite database. See https://sqlite.org/dbstat.html for more information. [#580] @pawurb @flavorjones
+- `Database#optimize` which wraps the `pragma optimize;` statement. Also added `Constants::Optimize` to allow advanced users to pass a bitmask of options. See https://www.sqlite.org/pragma.html#pragma_optimize. [#572] @alexcwatt @flavorjones
+- `SQLite3::VERSION_INFO` is contains a bag of metadata about the gem and the sqlite library used. `SQLite3::SQLITE_PACKAGED_LIBRARIES` and `SQLite3::SQLITE_PRECOMPILED_LIBRARIES` are indicate how the gem was built. [#581] @flavorjones
+
+
+### Fixed
+
+- `Database#encoding=` support for switching the database encoding to `UTF-16BE`, which has been broken since `Database#encoding=` was introduced in v1.3.12 in 2016. [#575] @miyucy
+- Omit mention of the `pkg-config` gem when failing to build from source, since it is not used. [#358] @flavorjones
+
+
+## 2.2.0 / 2024-10-30
+
+### Added
+
+- URI filenames are now allowed. This allows the injection of some behavior via recognized query parameters. See https://www.sqlite.org/uri.html for more information. [#571] @flavorjones
+
+
+### Improved
+
+- SQL Syntax errors during `Database#prepare` will raise a verbose exception with a multiline message indicating with a "^" exactly where in the statement the error occurred. [#554] @fractaledmind @flavorjones
+
+
+## 2.1.1 / 2024-10-22
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.47.0](https://sqlite.org/releaselog/3_47_0.html) [#570] @flavorjones
+
+
+## 2.1.0 / 2024-09-24
+
+### Ruby
+
+- This release drops support for Ruby 3.0. [#563] @flavorjones
+
+
+### Fork safety improvements
+
+Sqlite itself is [not fork-safe](https://www.sqlite.org/howtocorrupt.html#_carrying_an_open_database_connection_across_a_fork_). Specifically, writing in a child process to a database connection that was created in the parent process may corrupt the database file. To mitigate this risk, sqlite3-ruby has implemented the following changes:
+
+- All open writable database connections carried across a `fork()` will immediately be closed in the child process to mitigate the risk of corrupting the database file.
+- These connections will be incompletely closed ("discarded") which will result in a one-time memory leak in the child process.
+
+If it's at all possible, we strongly recommend that you close writable database connections in the parent before forking. If absolutely necessary (and you know what you're doing), you may suppress the fork safety warnings by calling `SQLite3::ForkSafety.suppress_warnings!`.
+
+See the README's "Fork Safety" section and `adr/2024-09-fork-safety.md` for more information. [#558, #565, #566] @flavorjones
+
+
+### Improved
+
+- Use `sqlite3_close_v2` to close databases in a deferred manner if there are unclosed prepared statements. Previously closing a database while statements were open resulted in a `BusyException`. See https://www.sqlite.org/c3ref/close.html for more context. [#557] @flavorjones
+- When setting a Database `busy_handler`, fire the write barrier to prevent potential crashes during the GC mark phase. [#556] @jhawthorn
+
+
+### Documentation
+
+- The `FAQ.md` has been updated to fix some inaccuracies. [#562] @rickhull
+
+
+## 2.0.4 / 2024-08-13
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.46.1](https://sqlite.org/releaselog/3_46_1.html) @flavorjones
+
+
+## 2.0.3 / 2024-07-29
+
+### Improved
+
+- `Database#quote` avoids allocating strings where reusing frozen strings is preferable. #548 @casperisfine
+
+
+## 2.0.2 / 2024-05-23
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.46.0](https://sqlite.org/releaselog/3_46_0.html) @flavorjones
+
+
+## 2.0.1 / 2024-04-20
+
+### Fixed
+
+- Raise `ArgumentError` if `Database#execute`, `#execute_batch`, or `#query` are passed multiple bind parameters that are not in an Array. In v2.0.0 these methods would silently swallow additional arguments, and this change makes the failure explicit. See the CHANGELOG notes for v2.0.0 for examples on how to update your code. [#527] @flavorjones
+- Fixed a regression in v2.0.0 that caused `Database#execute_batch` to raise an encoding exception when passed some non-ascii strings. As a result of this fix, `Database#prepare` now ensures the "remainder" string will always be encoded as UTF-8. [#524] @flavorjones
+
+
+## 2.0.0 / 2024-04-17
+
+This is a major release which contains some breaking changes, primarily the removal of
+long-deprecated functionality. Before upgrading, please make sure to address deprecation warnings
+emitted from your application using sqlite3-ruby v1.7.x.
+
+
+### Ruby
+
+- This release drops support for Ruby 2.7. [#453] @flavorjones
+
+
+### Packaging
+
+Native (precompiled) gems are now available for Linux Musl. [#442] @flavorjones
+
+Here are the platforms for which native gems are shipped:
+
+- `aarch64-linux-gnu` (requires: glibc >= 2.29)
+- `aarch64-linux-musl`
+- `arm-linux-gnu` (requires: glibc >= 2.29)
+- `arm-linux-musl`
+- `arm64-darwin`
+- `x64-mingw32` / `x64-mingw-ucrt`
+- `x86-linux-gnu` (requires: glibc >= 2.17)
+- `x86-linux-musl`
+- `x86_64-darwin`
+- `x86_64-linux-gnu` (requires: glibc >= 2.17)
+- `x86_64-linux-musl`
+
+⚠ Ruby 3.0 linux users must use Rubygems >= 3.3.22 in order to use these gems.
+
+⚠ Musl linux users should update to Bundler >= 2.5.6 to avoid https://github.com/rubygems/rubygems/issues/7432
+
+See [the INSTALLATION doc](https://github.com/sparklemotion/sqlite3-ruby/blob/main/INSTALLATION.md) for more information.
+
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.45.3](https://sqlite.org/releaselog/3_45_3.html). @flavorjones
 
 
 ### Added
 
-- `Database#busy_handler_timeout=` introduced as an alternative to `#busy_timeout=` that can be used when it's desired to release the GVL between retries. [#443] @fractaledmind
+- `Database#busy_handler_timeout=` introduced as an alternative to `#busy_timeout=` that can be used when it's desired to release the GVL between retries. [#443, #456] @fractaledmind
+- Support the `SUPER_JOURNAL` flag which is an alias for `MASTER_JOURNAL` as of sqlite 3.33.0. [#467] @flavorjones
+- `Statement#stat` and `Statement#memused` introduced to report statistics. [#461] @fractaledmind
+- `Statement#sql` and `Statement#expanded_sql` introduced to retrieve the SQL statement associated with the `Statement` object. [#293, #498] @tenderlove
+- `SQLite3.status` introduced to return run-time status and reset high-water marks. See `SQLite3::Constants::Status` for details. [#520] @wjlroe
 
 
 ### Improved
 
 - Avoid leaking memory for statements that are not closed properly. [#392] @haileys
 - Moved some C code into Ruby. [#451, #455] @tenderlove
+- Improve performance of `ResultSet` hashes. [#154, #484, #468] @tenderlove
+- Fix a GC compaction issue with `busy_handler`. [#466] @byroot
+- Remove unused `ResultSet` instance variable. [#469] @tenderlove
+- Fix encoding for values passed to custom functions. [#218, #488] @tenderlove
 
 
 ### Changed
 
-- Raise `StandardError` in a few places where `Exception` was previously raised.
-- `Database#columns` returns a list of frozen strings now
+- Consistently use `SQLite3::Exception` or subclasses. Previously some `Pragmas` methods raised `Exception`, and `Database#execute_batch2` and `Database#load_extension` raised `RuntimeError`. [#467, #490] @flavorjones
+- `Database#columns` returns a list of internal frozen strings. [#155, #474, #486] @tenderlove
+- Freeze results that come from the database. [#480] @tenderlove
+- The encoding of a Database is no longer cached. [#485] @tenderlove
+- `Database#transaction` returns the result of the block when used with a block. [#508] @alexcwatt
+- `Database#execute_batch` returns the result of the last statement executed. [#512] @alexcwatt
 
 
 ### Removed
 
-- Remove `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
-- Remove `SQLite3::Translator` and all related type translation methods.
-  If you need to do type translation on values returned from the statement object,
-  please wrap it with a delegate object.  Here is an example of using a delegate
-  class to implement type translation:
+- Removed class `SQLite3::Translator` and all related type translation methods which have been deprecated since v1.3.2. [#470] @tenderlove
 
-```ruby
-require "sqlite3"
-require "delegate"
+  If you need to do type translation on values returned from the statement object, please wrap it
+  with a delegate object.  Here is an example of using a delegate class to implement type
+  translation:
 
-db = SQLite3::Database.new(":memory:")
+  ```ruby
+  require "sqlite3"
+  require "delegate"
 
-return_value = db.execute_batch2 <<-EOSQL
-        CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, name string);
-        INSERT INTO items (name) VALUES ("foo");
-        INSERT INTO items (name) VALUES ("bar");
-EOSQL
+  db = SQLite3::Database.new(":memory:")
 
-class MyTranslator < DelegateClass(SQLite3::Statement)
-  def step
-    row = super
-    return if done?
+  return_value = db.execute_batch2 <<-EOSQL
+          CREATE TABLE items (id integer PRIMARY KEY AUTOINCREMENT, name string);
+          INSERT INTO items (name) VALUES ("foo");
+          INSERT INTO items (name) VALUES ("bar");
+  EOSQL
 
-    row.map.with_index do |item, i|
-      case types[i]
-      when "integer" # turn all integers to floats
-        item.to_f
-      when "string" # add "hello" to all strings
-        item + "hello"
+  class MyTranslator < DelegateClass(SQLite3::Statement)
+    def step
+      row = super
+      return if done?
+
+      row.map.with_index do |item, i|
+        case types[i]
+        when "integer" # turn all integers to floats
+          item.to_f
+        when "string" # add "hello" to all strings
+          item + "hello"
+        end
       end
     end
   end
-end
 
-db.prepare("SELECT * FROM items") do |stmt|
-  stmt = MyTranslator.new(stmt)
-  while row = stmt.step
-    p row
+  db.prepare("SELECT * FROM items") do |stmt|
+    stmt = MyTranslator.new(stmt)
+    while row = stmt.step
+      p row
+    end
   end
-end
-```
+  ```
 
-- Removed `types` and `fields` readers on row objects.
+- Removed `types` and `fields` readers on row objects, which have been deprecated since
+  v1.3.6. [#471] @tenderlove
+
   Deprecated code looks like this:
 
-```ruby
-row = @db.execute("select * from foo")
-assert_equal ["blob"], row.first.types
-```
+  ```ruby
+  row = @db.execute("select * from foo")
+  assert_equal ["blob"], row.first.types
+  ```
 
   If you would like to access the "types" associated with a returned query,
   use a prepared statement like this:
 
-```ruby
-@db.prepare("select * from foo") do |v|
-  assert_equal ["blob"], v.types
-end
-```
+  ```ruby
+  @db.prepare("select * from foo") do |v|
+    assert_equal ["blob"], v.types
+  end
+  ```
+
+- Removed support for non-Array bind parameters to methods `Database#execute`, `#execute_batch`, and `#query`, which has been deprecated since v1.3.0. [#511] @flavorjones
+
+  Deprecated code looks like this:
+
+  ``` ruby
+  @db.query("select * from foo where a = ? and b = ? and c = ?", 1, 2, 3)
+  ```
+
+  For these cases, pass the bind parameters as an array:
+
+  ``` ruby
+  @db.query("select * from foo where a = ? and b = ? and c = ?", [1, 2, 3])
+  ```
+
+- Removed class `SQLite3::VersionProxy` which has been deprecated since v1.3.2. [#453] @flavorjones
+- Removed methods `SQLite3::Database::FunctionProxy#count` and `#set_error` which have been broken since at least v1.3.13. [#164, #509, #510] @alexcwatt @flavorjones
+
+
+## 1.7.3 / 2024-03-15
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.45.2](https://www.sqlite.org/releaselog/3_45_2.html). @flavorjones
+
+
+## 1.7.2 / 2024-01-30
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.45.1](https://www.sqlite.org/releaselog/3_45_1.html). @flavorjones
+
+
+## 1.7.1 / 2024-01-24
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.45.0](https://www.sqlite.org/releaselog/3_45_0.html). @flavorjones
+
 
 ## 1.7.0 / 2023-12-27
 

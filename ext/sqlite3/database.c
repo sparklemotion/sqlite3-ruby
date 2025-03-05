@@ -12,6 +12,64 @@
 
 VALUE cSqlite3Database;
 
+/* See adr/2024-09-fork-safety.md */
+static void
+discard_db(sqlite3RubyPtr ctx)
+{
+    sqlite3_file *sfile;
+    int status;
+
+    // release as much heap memory as possible by deallocating non-essential memory
+    // allocations held by the database library. Memory used to cache database pages to
+    // improve performance is an example of non-essential memory.
+    // on my development machine, this reduces the lost memory from 152k to 69k.
+    sqlite3_db_release_memory(ctx->db);
+
+    // release file descriptors
+#ifdef HAVE_SQLITE3_DB_NAME
+    const char *db_name;
+    int j_db = 0;
+    while ((db_name = sqlite3_db_name(ctx->db, j_db)) != NULL) {
+        status = sqlite3_file_control(ctx->db, db_name, SQLITE_FCNTL_FILE_POINTER, &sfile);
+        if (status == 0 && sfile->pMethods != NULL) {
+            sfile->pMethods->xClose(sfile);
+        }
+        j_db++;
+    }
+#else
+    status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_FILE_POINTER, &sfile);
+    if (status == 0 && sfile->pMethods != NULL) {
+        sfile->pMethods->xClose(sfile);
+    }
+#endif
+
+    status = sqlite3_file_control(ctx->db, NULL, SQLITE_FCNTL_JOURNAL_POINTER, &sfile);
+    if (status == 0 && sfile->pMethods != NULL) {
+        sfile->pMethods->xClose(sfile);
+    }
+
+    ctx->db = NULL;
+    ctx->flags |= SQLITE3_RB_DATABASE_DISCARDED;
+}
+
+static void
+close_or_discard_db(sqlite3RubyPtr ctx)
+{
+    if (ctx->db) {
+        int is_readonly = (ctx->flags & SQLITE3_RB_DATABASE_READONLY);
+
+        if (is_readonly || ctx->owner == getpid()) {
+            // Ordinary close.
+            sqlite3_close_v2(ctx->db);
+            ctx->db = NULL;
+        } else {
+            // This is an open connection carried across a fork(). "Discard" it.
+            discard_db(ctx);
+        }
+    }
+}
+
+
 static void
 database_mark(void *ctx)
 {
@@ -22,11 +80,8 @@ database_mark(void *ctx)
 static void
 deallocate(void *ctx)
 {
-    sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
-    sqlite3 *db     = c->db;
-
-    if (db) { sqlite3_close(db); }
-    xfree(c);
+    close_or_discard_db((sqlite3RubyPtr)ctx);
+    xfree(ctx);
 }
 
 static size_t
@@ -51,7 +106,9 @@ static VALUE
 allocate(VALUE klass)
 {
     sqlite3RubyPtr ctx;
-    return TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
+    VALUE object = TypedData_Make_Struct(klass, sqlite3Ruby, &database_type, ctx);
+    ctx->owner = getpid();
+    return object;
 }
 
 static char *
@@ -61,8 +118,6 @@ utf16_string_value_ptr(VALUE str)
     rb_str_buf_cat(str, "\x00\x00", 2L);
     return RSTRING_PTR(str);
 }
-
-static VALUE sqlite3_rb_close(VALUE self);
 
 sqlite3RubyPtr
 sqlite3_database_unwrap(VALUE database)
@@ -77,6 +132,7 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 {
     sqlite3RubyPtr ctx;
     int status;
+    int flags;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
@@ -89,14 +145,18 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 #  endif
 #endif
 
+    flags = NUM2INT(mode);
     status = sqlite3_open_v2(
                  StringValuePtr(file),
                  &ctx->db,
-                 NUM2INT(mode),
+                 flags,
                  NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
              );
 
-    CHECK(ctx->db, status)
+    CHECK(ctx->db, status);
+    if (flags & SQLITE_OPEN_READONLY) {
+        ctx->flags |= SQLITE3_RB_DATABASE_READONLY;
+    }
 
     return self;
 }
@@ -119,21 +179,38 @@ rb_sqlite3_disable_quirk_mode(VALUE self)
 #endif
 }
 
-/* call-seq: db.close
+/*
+ *  Close the database and release all associated resources.
  *
- * Closes this database.
+ *  ⚠ Writable connections that are carried across a <tt>fork()</tt> are not completely
+ *  closed. {Sqlite does not support forking}[https://www.sqlite.org/howtocorrupt.html],
+ *  and fully closing a writable connection that has been carried across a fork may corrupt the
+ *  database. Since it is an incomplete close, not all memory resources are freed, but this is safer
+ *  than risking data loss.
+ *
+ *  See rdoc-ref:adr/2024-09-fork-safety.md for more information on fork safety.
  */
 static VALUE
 sqlite3_rb_close(VALUE self)
 {
     sqlite3RubyPtr ctx;
-    sqlite3 *db;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
-    db = ctx->db;
-    CHECK(db, sqlite3_close(ctx->db));
+    close_or_discard_db(ctx);
 
-    ctx->db = NULL;
+    rb_iv_set(self, "-aggregators", Qnil);
+
+    return self;
+}
+
+/* private method, primarily for testing */
+static VALUE
+sqlite3_rb_discard(VALUE self)
+{
+    sqlite3RubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+
+    discard_db(ctx);
 
     rb_iv_set(self, "-aggregators", Qnil);
 
@@ -246,7 +323,7 @@ busy_handler(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "01", &block);
 
     if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
-    ctx->busy_handler = block;
+    RB_OBJ_WRITE(self, &ctx->busy_handler, block);
 
     status = sqlite3_busy_handler(
                  ctx->db,
@@ -255,6 +332,44 @@ busy_handler(int argc, VALUE *argv, VALUE self)
              );
 
     CHECK(ctx->db, status);
+
+    return self;
+}
+
+static int
+rb_sqlite3_statement_timeout(void *context)
+{
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+    struct timespec currentTime;
+    clock_gettime(CLOCK_MONOTONIC, &currentTime);
+
+    if (!timespecisset(&ctx->stmt_deadline)) {
+        // Set stmt_deadline if not already set
+        ctx->stmt_deadline = currentTime;
+    } else if (timespecafter(&currentTime, &ctx->stmt_deadline)) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/* call-seq: db.statement_timeout = ms
+ *
+ * Indicates that if a query lasts longer than the indicated number of
+ * milliseconds, SQLite should interrupt that query and return an error.
+ * By default, SQLite does not interrupt queries. To restore the default
+ * behavior, send 0 as the +ms+ parameter.
+ */
+static VALUE
+set_statement_timeout(VALUE self, VALUE milliseconds)
+{
+    sqlite3RubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+
+    ctx->stmt_timeout = NUM2INT(milliseconds);
+    int n = NUM2INT(milliseconds) == 0 ? -1 : 1000;
+
+    sqlite3_progress_handler(ctx->db, n, rb_sqlite3_statement_timeout, (void *)ctx);
 
     return self;
 }
@@ -277,32 +392,34 @@ last_insert_row_id(VALUE self)
 VALUE
 sqlite3val2rb(sqlite3_value *val)
 {
+    VALUE rb_val;
+
     switch (sqlite3_value_type(val)) {
         case SQLITE_INTEGER:
-            return LL2NUM(sqlite3_value_int64(val));
+            rb_val = LL2NUM(sqlite3_value_int64(val));
             break;
         case SQLITE_FLOAT:
-            return rb_float_new(sqlite3_value_double(val));
+            rb_val = rb_float_new(sqlite3_value_double(val));
             break;
-        case SQLITE_TEXT:
-            return rb_str_new2((const char *)sqlite3_value_text(val));
+        case SQLITE_TEXT: {
+            rb_val = rb_utf8_str_new_cstr((const char *)sqlite3_value_text(val));
+            rb_obj_freeze(rb_val);
             break;
+        }
         case SQLITE_BLOB: {
-            /* Sqlite warns calling sqlite3_value_bytes may invalidate pointer from sqlite3_value_blob,
-               so we explicitly get the length before getting blob pointer.
-               Note that rb_str_new apparently create string with ASCII-8BIT (BINARY) encoding,
-               which is what we want, as blobs are binary
-             */
             int len = sqlite3_value_bytes(val);
-            return rb_str_new((const char *)sqlite3_value_blob(val), len);
+            rb_val = rb_str_new((const char *)sqlite3_value_blob(val), len);
+            rb_obj_freeze(rb_val);
             break;
         }
         case SQLITE_NULL:
-            return Qnil;
+            rb_val = Qnil;
             break;
         default:
-            rb_raise(rb_eRuntimeError, "bad type"); /* FIXME */
+            rb_raise(rb_eRuntimeError, "bad type");
     }
+
+    return rb_val;
 }
 
 void
@@ -654,34 +771,25 @@ collation(VALUE self, VALUE name, VALUE comparator)
 }
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
-/* call-seq: db.load_extension(file)
- *
- * Loads an SQLite extension library from the named file. Extension
- * loading must be enabled using db.enable_load_extension(true) prior
- * to calling this API.
- */
 static VALUE
-load_extension(VALUE self, VALUE file)
+load_extension_internal(VALUE self, VALUE file)
 {
     sqlite3RubyPtr ctx;
     int status;
     char *errMsg;
-    VALUE errexp;
+
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
 
     status = sqlite3_load_extension(ctx->db, StringValuePtr(file), 0, &errMsg);
-    if (status != SQLITE_OK) {
-        errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
-        sqlite3_free(errMsg);
-        rb_exc_raise(errexp);
-    }
+
+    CHECK_MSG(ctx->db, status, errMsg);
 
     return self;
 }
 #endif
 
-#ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
+#if defined(HAVE_SQLITE3_ENABLE_LOAD_EXTENSION) && defined(HAVE_SQLITE3_LOAD_EXTENSION)
 /* call-seq: db.enable_load_extension(onoff)
  *
  * Enable or disable extension loading.
@@ -777,7 +885,6 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
     int status;
     VALUE callback_ary = rb_ary_new();
     char *errMsg;
-    VALUE errexp;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
@@ -792,11 +899,7 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
                               &errMsg);
     }
 
-    if (status != SQLITE_OK) {
-        errexp = rb_exc_new2(rb_eRuntimeError, errMsg);
-        sqlite3_free(errMsg);
-        rb_exc_raise(errexp);
-    }
+    CHECK_MSG(ctx->db, status, errMsg);
 
     return callback_ary;
 }
@@ -837,6 +940,9 @@ rb_sqlite3_open16(VALUE self, VALUE file)
 #endif
 #endif
 
+    // sqlite3_open16 implicitly uses flags (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
+    // see https://www.sqlite.org/capi3ref.html#sqlite3_open
+    // so we do not ever set SQLITE3_RB_DATABASE_READONLY in ctx->flags
     status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
 
     CHECK(ctx->db, status)
@@ -857,6 +963,7 @@ init_sqlite3_database(void)
     rb_define_private_method(cSqlite3Database, "open16", rb_sqlite3_open16, 1);
     rb_define_method(cSqlite3Database, "collation", collation, 2);
     rb_define_method(cSqlite3Database, "close", sqlite3_rb_close, 0);
+    rb_define_private_method(cSqlite3Database, "discard", sqlite3_rb_discard, 0);
     rb_define_method(cSqlite3Database, "closed?", closed_p, 0);
     rb_define_method(cSqlite3Database, "total_changes", total_changes, 0);
     rb_define_method(cSqlite3Database, "trace", trace, -1);
@@ -875,18 +982,21 @@ init_sqlite3_database(void)
     rb_define_method(cSqlite3Database, "authorizer=", set_authorizer, 1);
     rb_define_method(cSqlite3Database, "busy_handler", busy_handler, -1);
     rb_define_method(cSqlite3Database, "busy_timeout=", set_busy_timeout, 1);
+#ifndef SQLITE_OMIT_PROGRESS_CALLBACK
+    rb_define_method(cSqlite3Database, "statement_timeout=", set_statement_timeout, 1);
+#endif
     rb_define_method(cSqlite3Database, "extended_result_codes=", set_extended_result_codes, 1);
     rb_define_method(cSqlite3Database, "transaction_active?", transaction_active_p, 0);
     rb_define_private_method(cSqlite3Database, "exec_batch", exec_batch, 2);
     rb_define_private_method(cSqlite3Database, "db_filename", db_filename, 1);
 
 #ifdef HAVE_SQLITE3_LOAD_EXTENSION
-    rb_define_method(cSqlite3Database, "load_extension", load_extension, 1);
-#endif
-
+    rb_define_private_method(cSqlite3Database, "load_extension_internal", load_extension_internal, 1);
 #ifdef HAVE_SQLITE3_ENABLE_LOAD_EXTENSION
     rb_define_method(cSqlite3Database, "enable_load_extension", enable_load_extension, 1);
 #endif
+#endif
+
 
     rb_sqlite3_aggregator_init();
 }
