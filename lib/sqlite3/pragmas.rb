@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sqlite3/errors"
 
 module SQLite3
@@ -77,26 +79,26 @@ module SQLite3
     end
 
     # The enumeration of valid synchronous modes.
-    SYNCHRONOUS_MODES = [["full", 2], ["normal", 1], ["off", 0]]
+    SYNCHRONOUS_MODES = [["full", 2], ["normal", 1], ["off", 0]].map(&:freeze).freeze
 
     # The enumeration of valid temp store modes.
-    TEMP_STORE_MODES = [["default", 0], ["file", 1], ["memory", 2]]
+    TEMP_STORE_MODES = [["default", 0], ["file", 1], ["memory", 2]].map(&:freeze).freeze
 
     # The enumeration of valid auto vacuum modes.
-    AUTO_VACUUM_MODES = [["none", 0], ["full", 1], ["incremental", 2]]
+    AUTO_VACUUM_MODES = [["none", 0], ["full", 1], ["incremental", 2]].map(&:freeze).freeze
 
     # The list of valid journaling modes.
     JOURNAL_MODES = [["delete"], ["truncate"], ["persist"], ["memory"],
-      ["wal"], ["off"]]
+      ["wal"], ["off"]].map(&:freeze).freeze
 
     # The list of valid locking modes.
-    LOCKING_MODES = [["normal"], ["exclusive"]]
+    LOCKING_MODES = [["normal"], ["exclusive"]].map(&:freeze).freeze
 
     # The list of valid encodings.
-    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be"]]
+    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be"]].map(&:freeze).freeze
 
     # The list of valid WAL checkpoints.
-    WAL_CHECKPOINTS = [["passive"], ["full"], ["restart"], ["truncate"]]
+    WAL_CHECKPOINTS = [["passive"], ["full"], ["restart"], ["truncate"]].map(&:freeze).freeze
 
     def application_id
       get_int_pragma "application_id"
