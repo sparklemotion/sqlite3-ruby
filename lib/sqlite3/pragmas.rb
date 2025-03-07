@@ -60,11 +60,20 @@ module SQLite3
     # have duplicate values. See #synchronous, #default_synchronous,
     # #temp_store, and #default_temp_store for usage examples.
     def set_enum_pragma(name, mode, enums)
-      match = enums.find { |p| p.find { |i| i.to_s.downcase == mode.to_s.downcase } }
+      match = if enums.is_a?(Array)
+        # maybe deprecate this?
+        enums.find { |p| p.find { |i| i.to_s.downcase == mode.to_s.downcase } }
+      elsif mode.is_a?(String)
+        enums.fetch(mode.downcase)
+      else
+        mode
+      end
+
       unless match
         raise SQLite3::Exception, "unrecognized #{name} #{mode.inspect}"
       end
-      execute("PRAGMA #{name}='#{match.first.upcase}'")
+
+      execute("PRAGMA #{name}='#{match}'")
     end
 
     # Returns the value of the given pragma as an integer.
@@ -79,26 +88,57 @@ module SQLite3
     end
 
     # The enumeration of valid synchronous modes.
-    SYNCHRONOUS_MODES = [["full", 2], ["normal", 1], ["off", 0]].map(&:freeze).freeze
+    SYNCHRONOUS_MODES = {
+      "full" => 2,
+      "normal" => 1,
+      "off" => 0
+    }.freeze
 
     # The enumeration of valid temp store modes.
-    TEMP_STORE_MODES = [["default", 0], ["file", 1], ["memory", 2]].map(&:freeze).freeze
+    TEMP_STORE_MODES = {
+      "default" => 0,
+      "file" => 1,
+      "memory" => 2
+    }.freeze
 
     # The enumeration of valid auto vacuum modes.
-    AUTO_VACUUM_MODES = [["none", 0], ["full", 1], ["incremental", 2]].map(&:freeze).freeze
+    AUTO_VACUUM_MODES = {
+      "none" => 0,
+      "full" => 1,
+      "incremental" => 2
+    }.freeze
 
     # The list of valid journaling modes.
-    JOURNAL_MODES = [["delete"], ["truncate"], ["persist"], ["memory"],
-      ["wal"], ["off"]].map(&:freeze).freeze
+    JOURNAL_MODES = {
+      "delete" => "delete",
+      "truncate" => "truncate",
+      "persist" => "persist",
+      "memory" => "memory",
+      "wal" => "wal",
+      "off" => "off"
+    }.freeze
 
     # The list of valid locking modes.
-    LOCKING_MODES = [["normal"], ["exclusive"]].map(&:freeze).freeze
+    LOCKING_MODES = {
+      "normal" => "normal",
+      "exclusive" => "exclusive"
+    }.freeze
 
     # The list of valid encodings.
-    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be"]].map(&:freeze).freeze
+    ENCODINGS = {
+      "utf-8" => "utf-8",
+      "utf-16" => "utf-16",
+      "utf-16le" => "utf-16le",
+      "utf-16be" => "utf-16be"
+    }.freeze
 
     # The list of valid WAL checkpoints.
-    WAL_CHECKPOINTS = [["passive"], ["full"], ["restart"], ["truncate"]].map(&:freeze).freeze
+    WAL_CHECKPOINTS = {
+      "passive" => "passive",
+      "full" => "full",
+      "restart" => "restart",
+      "truncate" => "truncate"
+    }.freeze
 
     def application_id
       get_int_pragma "application_id"
