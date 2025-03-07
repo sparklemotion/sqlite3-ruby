@@ -53,6 +53,12 @@ module SQLite3
       end
     end
 
+    def test_invalid_pragma
+      assert_raises(SQLite3::Exception) do
+        @db.journal_mode = 0
+      end
+    end
+
     def test_get_boolean_pragma
       refute(@db.get_boolean_pragma("read_uncommitted"))
     end

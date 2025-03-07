@@ -269,7 +269,7 @@ module SQLite3
     end
 
     def encoding=(mode)
-      set_enum_pragma "encoding", mode, ENCODINGS
+      set_string_pragma "encoding", mode, ENCODINGS
     end
 
     def foreign_key_check(*table, &block) # :yields: row
@@ -337,7 +337,7 @@ module SQLite3
     end
 
     def journal_mode=(mode)
-      set_enum_pragma "journal_mode", mode, JOURNAL_MODES
+      set_string_pragma "journal_mode", mode, JOURNAL_MODES
     end
 
     def journal_size_limit
@@ -361,7 +361,7 @@ module SQLite3
     end
 
     def locking_mode=(mode)
-      set_enum_pragma "locking_mode", mode, LOCKING_MODES
+      set_string_pragma "locking_mode", mode, LOCKING_MODES
     end
 
     def max_page_count
@@ -567,7 +567,7 @@ module SQLite3
     end
 
     def wal_checkpoint=(mode)
-      set_enum_pragma "wal_checkpoint", mode, WAL_CHECKPOINTS
+      set_string_pragma "wal_checkpoint", mode, WAL_CHECKPOINTS
     end
 
     def writable_schema=(mode)
@@ -609,6 +609,13 @@ module SQLite3
     end
 
     private
+
+    def set_string_pragma(pragma_name, value, valid_values)
+      valid_values.fetch(value.to_s.downcase) {
+        raise SQLite3::Exception, "unrecognized #{pragma_name} #{value.inspect}"
+      }
+      set_enum_pragma(pragma_name, value, valid_values)
+    end
 
     # Compares two version strings
     def version_compare(v1, v2)
