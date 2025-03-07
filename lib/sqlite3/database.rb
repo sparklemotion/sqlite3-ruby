@@ -196,7 +196,7 @@ module SQLite3
     #
     # Fetch the encoding set on this database
     def encoding
-      prepare("PRAGMA encoding") { |stmt| Encoding.find(stmt.first.first) }
+      Encoding.find super
     end
 
     # Installs (or removes) a block that will be invoked for every access

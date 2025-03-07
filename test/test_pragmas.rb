@@ -27,6 +27,18 @@ module SQLite3
       @db.close
     end
 
+    def test_temp_store_mode
+      @db.temp_store = "memory"
+      assert_equal 2, @db.temp_store
+      @db.temp_store = 1
+      assert_equal 1, @db.temp_store
+    end
+
+    def test_encoding
+      @db.encoding = "utf-16le"
+      assert_equal Encoding.find("utf-16le"), @db.encoding
+    end
+
     def test_pragma_errors
       assert_raises(SQLite3::Exception) do
         @db.set_enum_pragma("foo", "bar", [])
