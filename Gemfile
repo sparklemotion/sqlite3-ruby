@@ -3,7 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 group :test do
-  gem "minitest", "5.25.4"
+  gem "minitest", "5.25.5"
 
   gem "ruby_memcheck", "3.0.1" if Gem::Platform.local.os == "linux"
 
@@ -12,7 +12,7 @@ group :test do
 end
 
 group :development do
-  gem "rdoc", "6.12.0"
+  gem "rdoc", "6.13.0"
 
   gem "rubocop", "1.59.0", require: false
   gem "rubocop-minitest", "0.34.5", require: false

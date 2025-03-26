@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "sqlite3/errors"
 
 module SQLite3
@@ -58,11 +60,20 @@ module SQLite3
     # have duplicate values. See #synchronous, #default_synchronous,
     # #temp_store, and #default_temp_store for usage examples.
     def set_enum_pragma(name, mode, enums)
-      match = enums.find { |p| p.find { |i| i.to_s.downcase == mode.to_s.downcase } }
+      match = if enums.is_a?(Array)
+        # maybe deprecate this?
+        enums.find { |p| p.find { |i| i.to_s.downcase == mode.to_s.downcase } }
+      elsif mode.is_a?(String)
+        enums.fetch(mode.downcase)
+      else
+        mode
+      end
+
       unless match
         raise SQLite3::Exception, "unrecognized #{name} #{mode.inspect}"
       end
-      execute("PRAGMA #{name}='#{match.first.upcase}'")
+
+      execute("PRAGMA #{name}='#{match}'")
     end
 
     # Returns the value of the given pragma as an integer.
@@ -77,26 +88,57 @@ module SQLite3
     end
 
     # The enumeration of valid synchronous modes.
-    SYNCHRONOUS_MODES = [["full", 2], ["normal", 1], ["off", 0]]
+    SYNCHRONOUS_MODES = {
+      "full" => 2,
+      "normal" => 1,
+      "off" => 0
+    }.freeze
 
     # The enumeration of valid temp store modes.
-    TEMP_STORE_MODES = [["default", 0], ["file", 1], ["memory", 2]]
+    TEMP_STORE_MODES = {
+      "default" => 0,
+      "file" => 1,
+      "memory" => 2
+    }.freeze
 
     # The enumeration of valid auto vacuum modes.
-    AUTO_VACUUM_MODES = [["none", 0], ["full", 1], ["incremental", 2]]
+    AUTO_VACUUM_MODES = {
+      "none" => 0,
+      "full" => 1,
+      "incremental" => 2
+    }.freeze
 
     # The list of valid journaling modes.
-    JOURNAL_MODES = [["delete"], ["truncate"], ["persist"], ["memory"],
-      ["wal"], ["off"]]
+    JOURNAL_MODES = {
+      "delete" => "delete",
+      "truncate" => "truncate",
+      "persist" => "persist",
+      "memory" => "memory",
+      "wal" => "wal",
+      "off" => "off"
+    }.freeze
 
     # The list of valid locking modes.
-    LOCKING_MODES = [["normal"], ["exclusive"]]
+    LOCKING_MODES = {
+      "normal" => "normal",
+      "exclusive" => "exclusive"
+    }.freeze
 
     # The list of valid encodings.
-    ENCODINGS = [["utf-8"], ["utf-16"], ["utf-16le"], ["utf-16be"]]
+    ENCODINGS = {
+      "utf-8" => "utf-8",
+      "utf-16" => "utf-16",
+      "utf-16le" => "utf-16le",
+      "utf-16be" => "utf-16be"
+    }.freeze
 
     # The list of valid WAL checkpoints.
-    WAL_CHECKPOINTS = [["passive"], ["full"], ["restart"], ["truncate"]]
+    WAL_CHECKPOINTS = {
+      "passive" => "passive",
+      "full" => "full",
+      "restart" => "restart",
+      "truncate" => "truncate"
+    }.freeze
 
     def application_id
       get_int_pragma "application_id"
@@ -227,7 +269,7 @@ module SQLite3
     end
 
     def encoding=(mode)
-      set_enum_pragma "encoding", mode, ENCODINGS
+      set_string_pragma "encoding", mode, ENCODINGS
     end
 
     def foreign_key_check(*table, &block) # :yields: row
@@ -295,7 +337,7 @@ module SQLite3
     end
 
     def journal_mode=(mode)
-      set_enum_pragma "journal_mode", mode, JOURNAL_MODES
+      set_string_pragma "journal_mode", mode, JOURNAL_MODES
     end
 
     def journal_size_limit
@@ -319,7 +361,7 @@ module SQLite3
     end
 
     def locking_mode=(mode)
-      set_enum_pragma "locking_mode", mode, LOCKING_MODES
+      set_string_pragma "locking_mode", mode, LOCKING_MODES
     end
 
     def max_page_count
@@ -525,7 +567,7 @@ module SQLite3
     end
 
     def wal_checkpoint=(mode)
-      set_enum_pragma "wal_checkpoint", mode, WAL_CHECKPOINTS
+      set_string_pragma "wal_checkpoint", mode, WAL_CHECKPOINTS
     end
 
     def writable_schema=(mode)
@@ -567,6 +609,13 @@ module SQLite3
     end
 
     private
+
+    def set_string_pragma(pragma_name, value, valid_values)
+      valid_values.fetch(value.to_s.downcase) {
+        raise SQLite3::Exception, "unrecognized #{pragma_name} #{value.inspect}"
+      }
+      set_enum_pragma(pragma_name, value, valid_values)
+    end
 
     # Compares two version strings
     def version_compare(v1, v2)
