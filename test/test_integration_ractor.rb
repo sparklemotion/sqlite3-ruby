@@ -49,8 +49,8 @@ class IntegrationRactorTestCase < SQLite3::TestCase
     # in "full mutex" mode
     db = SQLite3::Database.new ":memory:",
       flags: SQLite3::Constants::Open::FULLMUTEX |
-      SQLite3::Constants::Open::READWRITE |
-      SQLite3::Constants::Open::CREATE
+        SQLite3::Constants::Open::READWRITE |
+        SQLite3::Constants::Open::CREATE
     assert Ractor.shareable?(db)
 
     db = SQLite3::Database.new ":memory:"
