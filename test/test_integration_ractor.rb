@@ -4,16 +4,6 @@ require "helper"
 require "fileutils"
 
 class IntegrationRactorTestCase < SQLite3::TestCase
-  STRESS_DB_NAME = "stress.db"
-
-  def setup
-    teardown
-  end
-
-  def teardown
-    FileUtils.rm_rf(Dir.glob("#{STRESS_DB_NAME}*"))
-  end
-
   def test_ractor_safe
     skip unless RUBY_VERSION >= "3.0" && SQLite3.threadsafe?
     assert_predicate SQLite3, :ractor_safe?
