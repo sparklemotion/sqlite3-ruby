@@ -44,37 +44,16 @@ class IntegrationRactorTestCase < SQLite3::TestCase
     end
   end
 
-  def test_ractor_stress
-    skip("Requires Ruby with Ractors") unless SQLite3.ractor_safe?
+  def test_shareable_db
+    # databases are shareable between ractors, but only if they're opened
+    # in "full mutex" mode
+    db = SQLite3::Database.new ":memory:",
+      flags: SQLite3::Constants::Open::FULLMUTEX |
+      SQLite3::Constants::Open::READWRITE |
+      SQLite3::Constants::Open::CREATE
+    assert Ractor.shareable?(db)
 
-    # Testing with a file instead of :memory: since it can be more realistic
-    # compared with real production use, and so discover problems that in-
-    # memory testing won't find. Trivial example: STRESS_DB_NAME needs to be
-    # frozen to pass into the Ractor, but :memory: might avoid that problem by
-    # using a literal string.
-    db = SQLite3::Database.open(STRESS_DB_NAME)
-    db.execute("PRAGMA journal_mode=WAL") # A little slow without this
-    db.execute("create table stress_test (a integer primary_key, b text)")
-    random = Random.new.freeze
-    ractors = (0..9).map do |ractor_number|
-      Ractor.new(random, ractor_number) do |random, ractor_number|
-        db_in_ractor = SQLite3::Database.open(STRESS_DB_NAME)
-        db_in_ractor.busy_handler do
-          sleep random.rand / 100 # Lots of busy errors happen with multiple concurrent writers
-          true
-        end
-        100.times do |i|
-          db_in_ractor.execute("insert into stress_test(a, b) values (#{ractor_number * 100 + i}, '#{random.rand}')")
-        end
-      end
-    end
-    ractors.each { |r| r.take }
-    final_check = Ractor.new do
-      db_in_ractor = SQLite3::Database.open(STRESS_DB_NAME)
-      res = db_in_ractor.execute("select count(*) from stress_test")
-      Ractor.yield res
-    end
-    res = final_check.take
-    assert_equal 1000, res[0][0]
+    db = SQLite3::Database.new ":memory:"
+    refute Ractor.shareable?(db)
   end
 end

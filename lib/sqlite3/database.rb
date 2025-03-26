@@ -181,7 +181,7 @@ module SQLite3
 
       initialize_extensions(options[:extensions])
 
-      ForkSafety.track(self)
+      ForkSafety.track(self) if Ractor.main?
 
       if block_given?
         begin
