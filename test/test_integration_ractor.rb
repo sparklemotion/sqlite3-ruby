@@ -35,6 +35,8 @@ class IntegrationRactorTestCase < SQLite3::TestCase
   end
 
   def test_shareable_db
+    skip unless defined?(Ractor)
+
     # databases are shareable between ractors, but only if they're opened
     # in "full mutex" mode
     db = SQLite3::Database.new ":memory:",
