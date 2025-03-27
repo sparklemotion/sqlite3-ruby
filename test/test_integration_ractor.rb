@@ -6,6 +6,7 @@ require "fileutils"
 class IntegrationRactorTestCase < SQLite3::TestCase
   def test_ractor_safe
     skip unless RUBY_VERSION >= "3.0" && SQLite3.threadsafe?
+    skip unless defined?(Ractor)
     assert_predicate SQLite3, :ractor_safe?
   end
 
