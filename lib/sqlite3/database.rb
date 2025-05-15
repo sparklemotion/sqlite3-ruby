@@ -82,6 +82,7 @@ module SQLite3
   #     extensions:
   #       - .sqlpkg/nalgeon/crypto/crypto.so # a filesystem path
   #       - <%= SQLean::UUID.to_path %>      # or ruby code returning a path
+  #       - SQLean::Crypto                   # Rails 8.1+ accepts the name of a constant that responds to `to_path`
   #
   class Database
     attr_reader :collations
