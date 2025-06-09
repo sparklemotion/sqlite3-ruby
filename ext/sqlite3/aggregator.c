@@ -60,7 +60,7 @@ rb_sqlite3_aggregate_instance(sqlite3_context *ctx)
     VALUE *inst_ptr = sqlite3_aggregate_context(ctx, (int)sizeof(VALUE));
 
     if (!inst_ptr) {
-        rb_fatal("SQLite is out-of-merory");
+        rb_fatal("SQLite is out-of-memory");
     }
 
     inst = *inst_ptr;
@@ -174,7 +174,7 @@ rb_sqlite3_aggregator_final(sqlite3_context *ctx)
 
 /* call-seq: define_aggregator2(aggregator)
  *
- * Define an aggregrate function according to a factory object (the "handler")
+ * Define an aggregate function according to a factory object (the "handler")
  * that knows how to obtain to all the information. The handler must provide
  * the following class methods:
  *

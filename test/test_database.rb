@@ -537,7 +537,7 @@ module SQLite3
       end
     end
 
-    def test_inerrupt_closed
+    def test_interrupt_closed
       @db.close
       assert_raise(SQLite3::Exception) do
         @db.interrupt
