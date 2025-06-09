@@ -1,13 +1,13 @@
 sqlite3:
   # checksum verified by first checking the published sha3(256) checksum against https://sqlite.org/download.html:
-  # 6cc831c9f588b637e5bd48d9fbf28e58737e08daf825c81085fb8e0a0b8ad14c
+  # c12e84ba9772391d41644a0a9be37bad25791fc2a9b9395962e5f83f805e877f
   #
-  # $ sha3sum -a 256 ports/archives/sqlite-autoconf-3490100.tar.gz
-  # 6cc831c9f588b637e5bd48d9fbf28e58737e08daf825c81085fb8e0a0b8ad14c  ports/archives/sqlite-autoconf-3490100.tar.gz
+  # $ sha3sum -a 256 ports/archives/sqlite-autoconf-3500100.tar.gz
+  # c12e84ba9772391d41644a0a9be37bad25791fc2a9b9395962e5f83f805e877f  ports/archives/sqlite-autoconf-3500100.tar.gz
   #
-  # $ sha256sum ports/archives/sqlite-autoconf-3490100.tar.gz
-  # 106642d8ccb36c5f7323b64e4152e9b719f7c0215acf5bfeac3d5e7f97b59254  ports/archives/sqlite-autoconf-3490100.tar.gz
-  version: "3.49.1"
+  # $ sha256sum ports/archives/sqlite-autoconf-3500100.tar.gz
+  # 00a65114d697cfaa8fe0630281d76fd1b77afcd95cd5e40ec6a02cbbadbfea71  ports/archives/sqlite-autoconf-3500100.tar.gz
+  version: "3.50.1"
   files:
-    - url: "https://sqlite.org/2025/sqlite-autoconf-3490100.tar.gz"
-      sha256: "106642d8ccb36c5f7323b64e4152e9b719f7c0215acf5bfeac3d5e7f97b59254"
+    - url: "https://sqlite.org/2025/sqlite-autoconf-3500100.tar.gz"
+      sha256: "00a65114d697cfaa8fe0630281d76fd1b77afcd95cd5e40ec6a02cbbadbfea71"
