@@ -614,7 +614,7 @@ You can opt-out of the packaged version of sqlite (and use your system-installed
 
 ## 1.4.1
 
-* Don't mandate dl functions for the extention build
+* Don't mandate dl functions for the extension build
 * bumping version
 
 

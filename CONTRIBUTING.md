@@ -19,7 +19,7 @@ The `@connection` instance variable on the `Statement` handle keeps the database
 connection alive.
 
 We use `sqlite3_close_v2` in `Database#close` since v2.1.0 which defers _actually_ closing the
-connection and freeing the underlying memory until all open statments are closed; though the
+connection and freeing the underlying memory until all open statements are closed; though the
 `Database` object will immediately behave as though it's been fully closed. If a Database is not
 explicitly closed, it will be closed when it is GCed.
 
