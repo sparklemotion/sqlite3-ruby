@@ -2,6 +2,7 @@
 #define SQLITE3_RUBY
 
 #include <ruby.h>
+#include <ruby/thread.h>
 
 #ifdef UNUSED
 #elif defined(__GNUC__)
