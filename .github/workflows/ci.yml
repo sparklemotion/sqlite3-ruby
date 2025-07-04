@@ -106,7 +106,7 @@ jobs:
     steps:
       - run: |
           dnf group install -y "C Development Tools and Libraries"
-          dnf install -y ruby ruby-devel
+          dnf install -y ruby ruby-devel patch
       - uses: actions/checkout@v4
       - run: bundle install
       - run: bundle exec rake compile -- --disable-system-libraries

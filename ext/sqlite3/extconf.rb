@@ -194,6 +194,10 @@ module Sqlite3
         RbConfig::CONFIG["target_os"].include?("darwin")
       end
 
+      def windows?
+        RbConfig::CONFIG["target_os"].match?(/mingw|mswin/)
+      end
+
       def print_help
         print(<<~TEXT)
           USAGE: ruby #{$PROGRAM_NAME} [options]
