@@ -43,7 +43,6 @@ Gem::Specification.new do |s|
     "INSTALLATION.md",
     "LICENSE",
     "README.md",
-    "dependencies.yml",
     "ext/sqlite3/aggregator.c",
     "ext/sqlite3/aggregator.h",
     "ext/sqlite3/backup.c",
@@ -53,7 +52,9 @@ Gem::Specification.new do |s|
     "ext/sqlite3/exception.c",
     "ext/sqlite3/exception.h",
     "ext/sqlite3/extconf.rb",
-    "ext/sqlite3/sqlite3.c",
+    "ext/sqlite3/sqlite-amalgamation-3500200/sqlite3.c",
+    "ext/sqlite3/sqlite-amalgamation-3500200/sqlite3.h",
+    "ext/sqlite3/sqlite3_ruby.c",
     "ext/sqlite3/sqlite3_ruby.h",
     "ext/sqlite3/statement.c",
     "ext/sqlite3/statement.h",
@@ -78,7 +79,7 @@ Gem::Specification.new do |s|
     "ext/sqlite3/backup.c",
     "ext/sqlite3/database.c",
     "ext/sqlite3/exception.c",
-    "ext/sqlite3/sqlite3.c",
+    "ext/sqlite3/sqlite3_ruby.c",
     "ext/sqlite3/statement.c"
   ]
   s.rdoc_options = ["--main", "README.md"]

@@ -1,6 +1,7 @@
 require "mkmf"
 require "yaml"
 
+# rubocop:disable Style/GlobalVars
 module Sqlite3
   module ExtConf
     ENV_ALLOWLIST = ["CC", "CFLAGS", "LDFLAGS", "LIBS", "CPPFLAGS", "LT_SYS_LIBRARY_PATH", "CPP"]
@@ -48,58 +49,59 @@ module Sqlite3
       end
 
       def configure_packaged_libraries
-        minimal_recipe.tap do |recipe|
-          recipe.configure_options += [
-            "--disable-shared",
-            "--enable-static",
-            "--enable-fts5"
-          ]
-          ENV.to_h.tap do |env|
-            user_cflags = with_config("sqlite-cflags")
-            more_cflags = [
-              "-fPIC", # needed for linking the static library into a shared library
-              "-O2", # see https://github.com/sparklemotion/sqlite3-ruby/issues/335 for some benchmarks
-              "-fvisibility=hidden", # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
-              "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
-              "-DSQLITE_USE_URI=1",
-              "-DSQLITE_ENABLE_DBPAGE_VTAB=1",
-              "-DSQLITE_ENABLE_DBSTAT_VTAB=1"
-            ]
-            env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
-            recipe.configure_options += env.select { |k, v| ENV_ALLOWLIST.include?(k) }
-              .map { |key, value| "#{key}=#{value.strip}" }
-          end
-
-          unless File.exist?(File.join(recipe.target, recipe.host, recipe.name, recipe.version))
-            recipe.cook
-          end
-          recipe.activate
-
-          # on macos, pkg-config will not return --cflags without this
-          ENV["PKG_CONFIG_ALLOW_SYSTEM_CFLAGS"] = "t"
-
-          # only needed for Ruby 3.1.3, see https://bugs.ruby-lang.org/issues/19233
-          RbConfig::CONFIG["PKG_CONFIG"] = config_string("PKG_CONFIG") || "pkg-config"
-
-          lib_path = File.join(recipe.path, "lib")
-          pcfile = File.join(lib_path, "pkgconfig", "sqlite3.pc")
-          abort_pkg_config("pkg_config") unless pkg_config(pcfile)
-
-          # see https://bugs.ruby-lang.org/issues/18490
-          ldflags = xpopen(["pkg-config", "--libs", "--static", pcfile], err: [:child, :out], &:read)
-          abort_pkg_config("xpopen") unless $?.success?
-          ldflags = ldflags.split
-
-          # see https://github.com/flavorjones/mini_portile/issues/118
-          "-L#{lib_path}".tap do |lib_path_flag|
-            ldflags.prepend(lib_path_flag) unless ldflags.include?(lib_path_flag)
-          end
-
-          ldflags.each { |ldflag| append_ldflags(ldflag) }
-
-          append_cppflags("-DUSING_PACKAGED_LIBRARIES")
-          append_cppflags("-DUSING_PRECOMPILED_LIBRARIES") if cross_build?
+        ext_dir = File.dirname(__FILE__)
+        Dir.chdir(ext_dir) do
+          $srcs = Dir["*.c", "sqlite-amalgamation-3500200/sqlite3.c"]
+          $hdrs = Dir["*.h", "sqlite-amalgamation-3500200/sqlite3.h"]
         end
+        $INCFLAGS << " -I$(srcdir)/sqlite-amalgamation-3500200"
+        $VPATH << "$(srcdir)/sqlite-amalgamation-3500200"
+
+        sqlite_cppflags = [
+          # things set by upstream debian, just as a baseline. taken from
+          # https://deb.debian.org/debian/pool/main/s/sqlite3/sqlite3_3.46.1-1.debian.tar.xz
+          "-DSQLITE_SECURE_DELETE",
+          "-DSQLITE_ENABLE_COLUMN_METADATA",
+          "-DSQLITE_ENABLE_FTS3",
+          "-DSQLITE_ENABLE_FTS3_PARENTHESIS",
+          "-DSQLITE_ENABLE_RTREE=1",
+          "-DSQLITE_SOUNDEX=1",
+          "-DSQLITE_ENABLE_UNLOCK_NOTIFY",
+          "-DSQLITE_ENABLE_DBSTAT_VTAB",
+          "-DSQLITE_ALLOW_ROWID_IN_VIEW",
+          "-DSQLITE_ENABLE_UPDATE_DELETE_LIMIT=1",
+          "-DSQLITE_ENABLE_LOAD_EXTENSION",
+          "-DSQLITE_ENABLE_JSON1",
+          "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS",
+          "-DSQLITE_THREADSAFE=1",
+          "-DSQLITE_ENABLE_FTS3_TOKENIZER=1",
+          "-DSQLITE_USE_URI=1",
+          "-DSQLITE_MAX_SCHEMA_RETRY=25",
+          "-DSQLITE_ENABLE_PREUPDATE_HOOK",
+          "-DSQLITE_ENABLE_SESSION",
+          "-DSQLITE_ENABLE_STMTVTAB",
+          "-DSQLITE_STRICT_SUBTYPE=1",
+          "-DSQLITE_MAX_VARIABLE_NUMBER=250000",
+
+          # were previously being added by the autoconf amalgamation's configure script
+          "-D_REENTRANT=1",
+          "-DSQLITE_THREADSAFE=1",
+          "-DSQLITE_ENABLE_MATH_FUNCTIONS",
+          "-DSQLITE_ENABLE_FTS4",
+          "-DSQLITE_ENABLE_FTS5",
+          "-DSQLITE_ENABLE_RTREE",
+          "-DSQLITE_ENABLE_GEOPOLY",
+          "-DSQLITE_HAVE_ZLIB",
+
+          # things we set in this gem in addition to the above
+          "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1",
+          "-DSQLITE_ENABLE_DBPAGE_VTAB=1",
+          "-DSQLITE_ENABLE_DBSTAT_VTAB=1"
+        ].join(" ")
+
+        append_cppflags(sqlite_cppflags)
+        append_cppflags("-DUSING_PACKAGED_LIBRARIES")
+        append_cppflags("-DUSING_PRECOMPILED_LIBRARIES") if cross_build?
       end
 
       def configure_extension
@@ -144,30 +146,8 @@ module Sqlite3
         have_type("sqlite3_uint64", "sqlite3.h")
       end
 
-      def minimal_recipe
-        require "mini_portile2"
-
-        MiniPortile.new(libname, sqlite3_config[:version]).tap do |recipe|
-          if sqlite_source_dir
-            recipe.source_directory = sqlite_source_dir
-          else
-            recipe.files = sqlite3_config[:files]
-            recipe.target = File.join(package_root_dir, "ports")
-            recipe.patch_files = Dir[File.join(package_root_dir, "patches", "*.patch")].sort
-          end
-        end
-      end
-
       def package_root_dir
         File.expand_path(File.join(File.dirname(__FILE__), "..", ".."))
-      end
-
-      def sqlite3_config
-        mini_portile_config[:sqlite3]
-      end
-
-      def mini_portile_config
-        YAML.load_file(File.join(package_root_dir, "dependencies.yml"), symbolize_names: true)
       end
 
       def abort_could_not_find(missing)
@@ -184,10 +164,6 @@ module Sqlite3
 
       def sqlite_source_dir
         arg_config("--with-sqlite-source-dir")
-      end
-
-      def download
-        minimal_recipe.download
       end
 
       def darwin?
@@ -283,6 +259,7 @@ module Sqlite3
     end
   end
 end
+# rubocop:enable Style/GlobalVars
 
 if arg_config("--help")
   Sqlite3::ExtConf.print_help
@@ -290,7 +267,6 @@ if arg_config("--help")
 end
 
 if arg_config("--download-dependencies")
-  Sqlite3::ExtConf.download
   exit!(0)
 end
 
