@@ -1,5 +1,10 @@
 # sqlite3-ruby Changelog
 
+## 2.7.3 / 2025-07-18
+
+- Vendored sqlite is updated to [v3.50.3](https://sqlite.org/releaselog/3_50_3.html) (from v3.50.2). #638 @flavorjones
+
+
 ## 2.7.2 / 2025-07-05
 
 - Backport a [fix](https://sqlite.org/src/info/64f5f14322) to the vendored SQLite to support compilation on Rocky Linux. See the [SQLite forum post](https://sqlite.org/forum/forumpost/44a58c8073) for more details. #634, #635 @flavorjones
