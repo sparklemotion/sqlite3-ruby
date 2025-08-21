@@ -17,7 +17,7 @@ jobs:
   sqlite-head:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           git clone --depth=1 https://github.com/sqlite/sqlite
           git -C sqlite log -n1
@@ -40,7 +40,7 @@ jobs:
 
     runs-on: ${{matrix.os}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{matrix.ruby}}
