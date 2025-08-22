@@ -256,6 +256,14 @@ module SQLite3
       stmt.close
     end
 
+    def test_named_params
+      assert_equal [], @stmt.named_params
+
+      stmt = SQLite3::Statement.new(@db, "select :foo, $bar, @zed")
+      assert_equal ["foo", "bar", "zed"], stmt.named_params
+      stmt.close
+    end
+
     def test_each
       r = nil
       @stmt.each do |row|
