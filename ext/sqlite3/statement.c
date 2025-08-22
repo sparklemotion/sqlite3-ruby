@@ -460,6 +460,36 @@ bind_parameter_count(VALUE self)
     return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
 }
 
+/** call-seq: stmt.named_params
+ *
+ * Return the list of named parameters in the statement.
+ */
+static VALUE
+named_params(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    int param_count = sqlite3_bind_parameter_count(ctx->st);
+    VALUE params = rb_ary_new2(param_count);
+
+    // The first host parameter has an index of 1, not 0.
+    for (int i = 1; i <= param_count; i++) {
+        const char *name = sqlite3_bind_parameter_name(ctx->st, i);
+        // If parameters of the ?NNN form are used, there may be gaps in the list.
+        if (name) {
+            VALUE rb_name = interned_utf8_cstr(name);
+            // The initial ":" or "$" or "@" or "?" is included as part of the name.
+            rb_name = rb_str_substr(rb_name, 1, RSTRING_LEN(rb_name) - 1);
+            rb_ary_push(params, rb_name);
+        }
+    }
+    return rb_obj_freeze(params);
+}
+
 enum stmt_stat_sym {
     stmt_stat_sym_fullscan_steps,
     stmt_stat_sym_sorts,
@@ -689,6 +719,7 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
     rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
     rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+    rb_define_method(cSqlite3Statement, "named_params", named_params, 0);
     rb_define_method(cSqlite3Statement, "sql", get_sql, 0);
     rb_define_method(cSqlite3Statement, "expanded_sql", get_expanded_sql, 0);
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
