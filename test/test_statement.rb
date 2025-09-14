@@ -257,7 +257,7 @@ module SQLite3
     end
 
     def test_named_params
-      assert_equal [], @stmt.named_params
+      assert_empty @stmt.named_params
 
       stmt = SQLite3::Statement.new(@db, "select :foo, $bar, @zed")
       assert_equal ["foo", "bar", "zed"], stmt.named_params
