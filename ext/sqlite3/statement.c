@@ -460,9 +460,14 @@ bind_parameter_count(VALUE self)
     return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
 }
 
-/** call-seq: stmt.named_params
+/** call-seq: stmt.params
  *
- * Return the list of named parameters in the statement.
+ * Return the list of named alphanumeric parameters in the statement.
+ * This returns a list of strings.
+ * The values of this list can be used to bind parameters
+ * to the statement using bind_param. Numeric and anonymous parameters
+ * are ignored.
+ *
  */
 static VALUE
 named_params(VALUE self)
@@ -479,12 +484,15 @@ named_params(VALUE self)
     // The first host parameter has an index of 1, not 0.
     for (int i = 1; i <= param_count; i++) {
         const char *name = sqlite3_bind_parameter_name(ctx->st, i);
-        // If parameters of the ?NNN form are used, there may be gaps in the list.
+        // If parameters of the ?NNN/$NNN/@NNN/:NNN form are used
+        // there may be gaps in the list.
         if (name) {
-            VALUE rb_name = interned_utf8_cstr(name);
-            // The initial ":" or "$" or "@" or "?" is included as part of the name.
-            rb_name = rb_str_substr(rb_name, 1, RSTRING_LEN(rb_name) - 1);
-            rb_ary_push(params, rb_name);
+            // We ignore numeric parameters
+            int n = atoi(name + 1);
+            if (n == 0) {
+                VALUE param = interned_utf8_cstr(name + 1);
+                rb_ary_push(params, param);
+            }
         }
     }
     return rb_obj_freeze(params);

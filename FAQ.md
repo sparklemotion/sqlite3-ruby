@@ -122,6 +122,11 @@ Placeholders in an SQL statement take any of the following formats:
 * `?`
 * `?_nnn_`
 * `:_word_`
+* `:_nnn_`
+* `$_word_`
+* `$_nnn_`
+* `@_word_`
+* `@_nnn_`
 
 
 Where _n_ is an integer, and _word_ is an alpha-numeric identifier (or
