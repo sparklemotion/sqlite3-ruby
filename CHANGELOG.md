@@ -1,5 +1,10 @@
 # sqlite3-ruby Changelog
 
+## 2.7.4 / 2025-09-19
+
+- Vendored sqlite is updated to [v3.50.4](https://www.sqlite.org/releaselog/3_50_4.html) (from v3.50.3). #644 @flavorjones
+
+
 ## 2.7.3 / 2025-07-18
 
 - Vendored sqlite is updated to [v3.50.3](https://sqlite.org/releaselog/3_50_3.html) (from v3.50.2). #638 @flavorjones
