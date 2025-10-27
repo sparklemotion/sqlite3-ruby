@@ -214,7 +214,7 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
       - run: ./bin/test-gem-build gems ruby
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: source-gem
           path: gems
@@ -276,7 +276,7 @@ jobs:
           docker run --rm -v $PWD:/work -w /work \
             ghcr.io/rake-compiler/rake-compiler-dock-image:${{ needs.native_setup.outputs.rcd_image_version }}-mri-${{ matrix.platform }} \
             ./bin/test-gem-build gems ${{ matrix.platform }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: "cruby-${{ matrix.platform }}-gem"
           path: gems
