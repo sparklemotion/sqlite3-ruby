@@ -484,15 +484,12 @@ named_params(VALUE self)
     // The first host parameter has an index of 1, not 0.
     for (int i = 1; i <= param_count; i++) {
         const char *name = sqlite3_bind_parameter_name(ctx->st, i);
-        // If parameters of the ?NNN/$NNN/@NNN/:NNN form are used
-        // there may be gaps in the list.
-        if (name) {
+        // We ignore numbered parameters (starting with ?)
+        // And null values, since there can be gaps in the list
+        if (name && *name != '?') {
             // We ignore numeric parameters
-            int n = atoi(name + 1);
-            if (n == 0) {
-                VALUE param = interned_utf8_cstr(name + 1);
-                rb_ary_push(params, param);
-            }
+            VALUE param = interned_utf8_cstr(name + 1);
+            rb_ary_push(params, param);
         }
     }
     return rb_obj_freeze(params);
