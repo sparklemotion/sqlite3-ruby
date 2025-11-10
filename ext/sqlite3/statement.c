@@ -460,6 +460,41 @@ bind_parameter_count(VALUE self)
     return INT2NUM(sqlite3_bind_parameter_count(ctx->st));
 }
 
+/** call-seq: stmt.params
+ *
+ * Return the list of named alphanumeric parameters in the statement.
+ * This returns a list of strings.
+ * The values of this list can be used to bind parameters
+ * to the statement using bind_param. Numeric and anonymous parameters
+ * are ignored.
+ *
+ */
+static VALUE
+named_params(VALUE self)
+{
+    sqlite3StmtRubyPtr ctx;
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    int param_count = sqlite3_bind_parameter_count(ctx->st);
+    VALUE params = rb_ary_new2(param_count);
+
+    // The first host parameter has an index of 1, not 0.
+    for (int i = 1; i <= param_count; i++) {
+        const char *name = sqlite3_bind_parameter_name(ctx->st, i);
+        // We ignore numbered parameters (starting with ?)
+        // And null values, since there can be gaps in the list
+        if (name && *name != '?') {
+            // We ignore numeric parameters
+            VALUE param = interned_utf8_cstr(name + 1);
+            rb_ary_push(params, param);
+        }
+    }
+    return rb_obj_freeze(params);
+}
+
 enum stmt_stat_sym {
     stmt_stat_sym_fullscan_steps,
     stmt_stat_sym_sorts,
@@ -689,6 +724,7 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
     rb_define_method(cSqlite3Statement, "column_decltype", column_decltype, 1);
     rb_define_method(cSqlite3Statement, "bind_parameter_count", bind_parameter_count, 0);
+    rb_define_method(cSqlite3Statement, "named_params", named_params, 0);
     rb_define_method(cSqlite3Statement, "sql", get_sql, 0);
     rb_define_method(cSqlite3Statement, "expanded_sql", get_expanded_sql, 0);
 #ifdef HAVE_SQLITE3_COLUMN_DATABASE_NAME
