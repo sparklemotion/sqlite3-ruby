@@ -8,7 +8,7 @@ group :test do
   gem "ruby_memcheck", "3.0.1" if Gem::Platform.local.os == "linux"
 
   gem "rake-compiler", "1.3.0"
-  gem "rake-compiler-dock", "1.9.1"
+  gem "rake-compiler-dock", "1.10.0"
 end
 
 group :development do
