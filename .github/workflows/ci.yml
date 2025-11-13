@@ -256,6 +256,7 @@ jobs:
         platform:
           - aarch64-linux-gnu
           - aarch64-linux-musl
+          - aarch64-mingw-ucrt
           - arm-linux-gnu
           - arm-linux-musl
           - arm64-darwin
@@ -342,6 +343,9 @@ jobs:
             platform: arm64-darwin
           - os: windows-latest
             platform: x64-mingw-ucrt
+          - os: windows-11-arm
+            platform: aarch64-mingw-ucrt
+            ruby: 3.4
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5

@@ -155,6 +155,14 @@ module Sqlite3
             recipe.target = File.join(package_root_dir, "ports")
             recipe.patch_files = Dir[File.join(package_root_dir, "patches", "*.patch")].sort
           end
+
+          # Fix host triplet for Windows ARM64 (native or cross-compilation)
+          if RbConfig::CONFIG["target_os"].match?(/mingw/)
+            case RbConfig::CONFIG["arch"]
+            when /aarch64/
+              recipe.host = "aarch64-w64-mingw32"
+            end
+          end
         end
       end
 
