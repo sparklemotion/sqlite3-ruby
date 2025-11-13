@@ -11,6 +11,7 @@ In v2.0.0 and later, native (precompiled) gems are available for recent Ruby ver
 
 - `aarch64-linux-gnu` (requires: glibc >= 2.29)
 - `aarch64-linux-musl`
+- `aarch64-mingw-ucrt` (requires: ruby >= 3.4)
 - `arm-linux-gnu` (requires: glibc >= 2.29)
 - `arm-linux-musl`
 - `arm64-darwin`
