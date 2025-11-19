@@ -46,6 +46,7 @@ module SQLite3
     # Required by the Enumerable mixin. Provides an internal iterator over the
     # rows of the result set.
     def each
+      return enum_for(__method__) unless block_given?
       while (node = self.next)
         yield node
       end

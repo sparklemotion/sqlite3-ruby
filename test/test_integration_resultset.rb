@@ -117,6 +117,13 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     assert_equal 2, called
   end
 
+  def test_each_enum
+    called = 0
+    @result.reset(1, 2)
+    @result.each.to_a.each { |row| called += 1 }
+    assert_equal 2, called
+  end
+
   def test_enumerable
     @result.reset(1, 2)
     assert_equal 2, @result.to_a.length
@@ -139,7 +146,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     assert_predicate stmt, :closed?
     assert_raise(SQLite3::Exception) { result.reset }
     assert_raise(SQLite3::Exception) { result.next }
-    assert_raise(SQLite3::Exception) { result.each }
+    assert_raise(SQLite3::Exception) { result.each.next }
     assert_raise(SQLite3::Exception) { result.close }
     assert_raise(SQLite3::Exception) { result.types }
     assert_raise(SQLite3::Exception) { result.columns }
