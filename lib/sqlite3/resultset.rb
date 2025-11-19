@@ -54,6 +54,7 @@ module SQLite3
     # Provides an internal iterator over the rows of the result set where
     # each row is yielded as a hash.
     def each_hash
+      return enum_for(__method__) unless block_given?
       while (node = next_hash)
         yield node
       end
