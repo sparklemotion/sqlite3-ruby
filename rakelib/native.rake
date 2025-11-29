@@ -9,6 +9,7 @@ require "yaml"
 cross_platforms = [
   "aarch64-linux-gnu",
   "aarch64-linux-musl",
+  "aarch64-mingw-ucrt",
   "arm-linux-gnu",
   "arm-linux-musl",
   "x86-linux-gnu",
