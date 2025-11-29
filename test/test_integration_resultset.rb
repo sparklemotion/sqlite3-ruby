@@ -113,15 +113,33 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
   def test_each
     called = 0
     @result.reset(1, 2)
-    @result.each { |row| called += 1 }
+    result = @result.each { |row| called += 1 }
+    result.reset # reset just to confirm we can chain the method after each
+    assert_equal @result, result
     assert_equal 2, called
   end
 
   def test_each_enum
+    @result.reset(1, 2)
+    enum = @result.each
+    assert_instance_of Enumerator, enum
+    assert_equal 2, enum.to_a.length
+  end
+
+  def test_each_hash
     called = 0
     @result.reset(1, 2)
-    @result.each.to_a.each { |row| called += 1 }
+    result = @result.each_hash { |row| called += 1 }
+    result.reset
+    assert_equal @result, result
     assert_equal 2, called
+  end
+
+  def test_each_hash_enum
+    @result.reset(1, 2)
+    enum = @result.each_hash
+    assert_instance_of Enumerator, enum
+    assert_equal 2, enum.to_a.length
   end
 
   def test_enumerable
