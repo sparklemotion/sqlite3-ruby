@@ -147,6 +147,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     assert_raise(SQLite3::Exception) { result.reset }
     assert_raise(SQLite3::Exception) { result.next }
     assert_raise(SQLite3::Exception) { result.each.next }
+    assert_raise(SQLite3::Exception) { result.each_hash.next }
     assert_raise(SQLite3::Exception) { result.close }
     assert_raise(SQLite3::Exception) { result.types }
     assert_raise(SQLite3::Exception) { result.columns }
