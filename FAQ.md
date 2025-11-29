@@ -122,15 +122,17 @@ Placeholders in an SQL statement take any of the following formats:
 * `?`
 * `?_nnn_`
 * `:_word_`
+* `$_word_`
+* `@_word_`
 
 
-Where _n_ is an integer, and _word_ is an alpha-numeric identifier (or
-number). When the placeholder is associated with a number, that number
-identifies the index of the bind variable to replace it with. When it
-is an identifier, it identifies the name of the corresponding bind
-variable. (In the instance of the first format--a single question
-mark--the placeholder is assigned a number one greater than the last
-index used, or 1 if it is the first.)
+Where _n_ is an integer, and _word_ is an alpha-numeric identifier(or number).
+When the placeholder is associated with a number (only in case of `?_nnn_`),
+that number identifies the index of the bind variable to replace it with.
+When it is an identifier, it identifies the name of the corresponding bind
+variable. (In the instance of the first format--a single question mark--the
+placeholder is assigned a number one greater than the last index used, or 1
+if it is the first.)
 
 
 For example, here is a query using these placeholder formats:

@@ -256,6 +256,12 @@ module SQLite3
       stmt.close
     end
 
+    def test_params
+      stmt = SQLite3::Statement.new(@db, "select  ?1, :foo, ?, $bar, @zed, ?250, @999, :123, $777")
+      assert_equal ["foo", "bar", "zed", "999", "123", "777"], stmt.named_params
+      stmt.close
+    end
+
     def test_each
       r = nil
       @stmt.each do |row|
