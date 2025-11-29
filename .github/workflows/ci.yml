@@ -37,7 +37,7 @@ jobs:
     env:
       BUNDLE_WITHOUT: "" # we need rubocop, obviously
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
@@ -48,7 +48,7 @@ jobs:
     needs: rubocop
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "3.3"
@@ -79,7 +79,7 @@ jobs:
         run: |
           git config --system core.autocrlf false
           git config --system core.eol lf
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -107,7 +107,7 @@ jobs:
       - run: |
           dnf group install -y "C Development Tools and Libraries"
           dnf install -y ruby ruby-devel patch
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: bundle install
       - run: bundle exec rake compile -- --disable-system-libraries
       - run: bundle exec rake test
@@ -117,7 +117,7 @@ jobs:
     name: "FreeBSD"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
@@ -147,7 +147,7 @@ jobs:
         run: |
           git config --system core.autocrlf false
           git config --system core.eol lf
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -163,7 +163,7 @@ jobs:
     needs: basic
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: "3.3"
@@ -186,7 +186,7 @@ jobs:
     outputs:
       rcd_image_version: ${{ steps.rcd_image_version.outputs.rcd_image_version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/cache@v4
         with:
           path: ports/archives
@@ -204,7 +204,7 @@ jobs:
     name: "build source"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/cache@v4
         with:
           path: ports/archives
@@ -234,7 +234,7 @@ jobs:
           - { os: macos, syslib: enable, compile_flags: "--with-opt-dir=$(brew --prefix sqlite3)" }
     runs-on: ${{ matrix.os }}-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -267,7 +267,7 @@ jobs:
           - x86_64-linux-musl
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/cache@v4
         with:
           path: ports/archives
@@ -313,7 +313,7 @@ jobs:
           - { platform: x86-linux-musl, docker_platform: "--platform=linux/386" }
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v5
         with:
           name: cruby-${{ matrix.platform }}-gem
@@ -344,7 +344,7 @@ jobs:
             platform: x64-mingw-ucrt
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "${{ matrix.ruby }}"
@@ -372,7 +372,7 @@ jobs:
     container:
       image: ruby:${{matrix.ruby}}-${{matrix.flavor}}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v5
         with:
           name: cruby-x86_64-linux-musl-gem
