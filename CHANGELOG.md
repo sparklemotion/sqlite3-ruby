@@ -1,5 +1,11 @@
 # sqlite3-ruby Changelog
 
+## 2.8.1 / 2025-11-29
+
+- Vendored sqlite is updated to [v3.51.1](https://www.sqlite.org/releaselog/3_51_1.html) (from v3.51.0). #659 @flavorjones
+- Precompiled native gems are built with rake-compiler-dock v1.10.0 (previously v1.9.1).
+
+
 ## 2.8.0 / 2025-11-05
 
 - Vendored sqlite is updated to [v3.51.0](https://www.sqlite.org/releaselog/3_51_0.html) (from v3.50.4). #652 @flavorjones
