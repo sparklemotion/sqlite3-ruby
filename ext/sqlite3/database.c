@@ -923,6 +923,110 @@ db_filename(VALUE self, VALUE db_name)
     return Qnil;
 }
 
+#ifdef HAVE_SQLITE3_SERIALIZE
+/* call-seq: db.serialize(database_name = "main")
+ *
+ * Serialize the database into a binary string.
+ *
+ * [database_name]  The name of the database to serialize. The default value
+ *                  is +main+ which is the main database file. For ATTACHed
+ *                  databases, use the name given in the ATTACH statement.
+ *
+ * Returns the contents of the database as a binary string. For an ordinary
+ * on-disk database file, this is just a copy of the disk file. For an
+ * in-memory database or a "TEMP" database, this is the same sequence of bytes
+ * which would be written to disk if that database were backed up to disk.
+ *
+ * Note: This method will only be defined if SQLite was compiled without
+ * +SQLITE_OMIT_DESERIALIZE+.
+ *
+ * See also: https://www.sqlite.org/c3ref/serialize.html
+ */
+static VALUE
+serialize(int argc, VALUE *argv, VALUE self)
+{
+    sqlite3RubyPtr ctx;
+    VALUE db_name;
+    const char *zSchema;
+    sqlite3_int64 size;
+    unsigned char *data;
+    VALUE result;
+
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_OPEN_DB(ctx);
+
+    rb_scan_args(argc, argv, "01", &db_name);
+
+    zSchema = NIL_P(db_name) ? NULL : StringValueCStr(db_name);
+
+    data = sqlite3_serialize(ctx->db, zSchema, &size, 0);
+
+    if (data == NULL && size != 0) {
+        rb_raise(rb_eNoMemError, "failed to allocate %"PRId64" bytes for serialization", size);
+    }
+
+    result = rb_str_new((const char *)data, (long)size);
+    sqlite3_free(data);
+
+    return result;
+}
+#endif
+
+#ifdef HAVE_SQLITE3_DESERIALIZE
+/* call-seq: db.deserialize(data, database_name = "main")
+ *
+ * Deserialize a binary string into the database. The database is replaced with
+ * the contents of the serialized data.
+ *
+ * [data]           A binary string containing the serialized database content.
+ *                  This is typically obtained from a prior call to #serialize.
+ *
+ * [database_name]  The name of the database to replace. The default value is
+ *                  +main+ which is the main database file. For ATTACHed
+ *                  databases, use the name given in the ATTACH statement.
+ *
+ * The database connection must not be in a transaction or involved in a backup
+ * operation when this method is called, or it will raise SQLite3::BusyException.
+ *
+ * Note: This method will only be defined if SQLite was compiled without
+ * +SQLITE_OMIT_DESERIALIZE+.
+ *
+ * See also: https://www.sqlite.org/c3ref/deserialize.html
+ */
+static VALUE
+deserialize(int argc, VALUE *argv, VALUE self)
+{
+    sqlite3RubyPtr ctx;
+    VALUE data, db_name;
+    const char *zSchema;
+    unsigned char *pData;
+    sqlite3_int64 szDb;
+    int status;
+
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_OPEN_DB(ctx);
+
+    rb_scan_args(argc, argv, "11", &data, &db_name);
+
+    StringValue(data);
+    zSchema = NIL_P(db_name) ? NULL : StringValueCStr(db_name);
+    szDb = RSTRING_LEN(data);
+
+    pData = sqlite3_malloc64(szDb);
+    if (pData == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate %"PRId64" bytes for deserialization", szDb);
+    }
+    memcpy(pData, RSTRING_PTR(data), (size_t)szDb);
+
+    status = sqlite3_deserialize(ctx->db, zSchema, pData, szDb, szDb,
+                                 SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE);
+
+    CHECK(ctx->db, status);
+
+    return self;
+}
+#endif
+
 static VALUE
 rb_sqlite3_open16(VALUE self, VALUE file)
 {
@@ -997,6 +1101,13 @@ init_sqlite3_database(void)
 #endif
 #endif
 
+#ifdef HAVE_SQLITE3_SERIALIZE
+    rb_define_method(cSqlite3Database, "serialize", serialize, -1);
+#endif
+
+#ifdef HAVE_SQLITE3_DESERIALIZE
+    rb_define_method(cSqlite3Database, "deserialize", deserialize, -1);
+#endif
 
     rb_sqlite3_aggregator_init();
 }
