@@ -628,7 +628,7 @@ stat_for(VALUE self, VALUE key)
 }
 
 #ifdef SQLITE_STMTSTATUS_MEMUSED
-/* call-seq: stmt.memory_used
+/* call-seq: stmt.memused
  *
  * Return the approximate number of bytes of heap memory used to store the prepared statement
  */
