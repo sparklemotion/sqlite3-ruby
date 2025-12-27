@@ -38,7 +38,7 @@ jobs:
       BUNDLE_WITHOUT: "" # we need rubocop, obviously
     steps:
       - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
         with:
           ruby-version: "3.4"
           bundler-cache: true
@@ -51,6 +51,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
+          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
           ruby-version: "3.4"
           bundler-cache: true
           apt-get: libsqlite3-dev
@@ -82,6 +83,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
+          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           apt-get: libsqlite3-dev
@@ -150,6 +152,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
+          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           apt-get: libsqlcipher-dev
@@ -166,6 +169,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
+          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
           ruby-version: "3.4"
           bundler-cache: true
           apt-get: valgrind
@@ -191,7 +195,7 @@ jobs:
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
         with:
           ruby-version: "3.4"
           bundler-cache: true
@@ -209,7 +213,7 @@ jobs:
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
         with:
           ruby-version: "3.4"
           bundler-cache: true
@@ -237,6 +241,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby-pkgs@v1
         with:
+          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
           ruby-version: ${{ matrix.ruby }}
           apt-get: libsqlite3-dev pkg-config
           mingw: sqlite3
@@ -344,7 +349,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
         with:
           ruby-version: "${{ matrix.ruby }}"
       - uses: actions/download-artifact@v6
