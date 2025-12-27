@@ -332,12 +332,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-13, macos-14]
+        os: [windows-latest, macos-15-intel, macos-15]
         ruby: ${{ fromJSON(needs.ruby_versions.outputs.setup_ruby) }}
         include:
-          - os: macos-13
+          - os: macos-15-intel
             platform: x86_64-darwin
-          - os: macos-14
+          - os: macos-15
             platform: arm64-darwin
           - os: windows-latest
             platform: x64-mingw-ucrt
