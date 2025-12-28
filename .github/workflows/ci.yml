@@ -90,7 +90,7 @@ jobs:
           mingw: sqlite3
           vcpkg: sqlite3
       - if: matrix.syslib == 'disable'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ports
           key: ports-${{ matrix.os }}-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -173,7 +173,7 @@ jobs:
           ruby-version: "3.4"
           bundler-cache: true
           apt-get: valgrind
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ports
           key: ports-ubuntu-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -191,7 +191,7 @@ jobs:
       rcd_image_version: ${{ steps.rcd_image_version.outputs.rcd_image_version }}
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -209,7 +209,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -273,7 +273,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
