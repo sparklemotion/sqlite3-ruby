@@ -3,7 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 group :test do
-  gem "minitest", "5.26.2"
+  gem "minitest", "6.0.1"
 
   gem "ruby_memcheck", "3.0.1" if Gem::Platform.local.os == "linux"
 
