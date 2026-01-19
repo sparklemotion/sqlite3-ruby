@@ -12,7 +12,7 @@ group :test do
 end
 
 group :development do
-  gem "rdoc", "7.0.3"
+  gem "rdoc", "7.1.0"
 
   gem "rubocop", "1.59.0", require: false
   gem "rubocop-minitest", "0.34.5", require: false
