@@ -158,6 +158,11 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
         ctx->flags |= SQLITE3_RB_DATABASE_READONLY;
     }
 
+    if (flags & SQLITE_OPEN_FULLMUTEX) {
+        FL_SET_RAW(self, RUBY_FL_SHAREABLE);
+        OBJ_FREEZE(self);
+    }
+
     return self;
 }
 
