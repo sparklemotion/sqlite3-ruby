@@ -1,5 +1,21 @@
 # sqlite3-ruby Changelog
 
+## 2.9.0 / 2025-12-27
+
+### Ruby
+
+- Introduce native gem packages for Ruby 4.0. @flavorjones
+- Drop support for Ruby 3.1. @flavorjones
+
+### Added
+
+- Introduce `Statement#named_params` to introspect on a parameterized SQL statement. #627 #642 @captn3m0
+
+### Improved
+
+- Small improvements to docstrings and comments. @flavorjones @houyuanjie
+
+
 ## 2.8.1 / 2025-11-29
 
 - Vendored sqlite is updated to [v3.51.1](https://www.sqlite.org/releaselog/3_51_1.html) (from v3.51.0). #659 @flavorjones

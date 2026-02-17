@@ -19,7 +19,7 @@ cross_platforms = [
   "x86_64-darwin",
   "x64-mingw-ucrt"
 ]
-RakeCompilerDock.set_ruby_cc_version("~> 3.1")
+RakeCompilerDock.set_ruby_cc_version(">= 3.2")
 
 Gem::PackageTask.new(SQLITE3_SPEC).define # packaged_tarball version of the gem for platform=ruby
 task "package" => cross_platforms.map { |p| "gem:#{p}" } # "package" task for all the native platforms
