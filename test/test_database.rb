@@ -918,7 +918,7 @@ module SQLite3
       # Verify the data was transferred
       rows = @db.execute("select * from foo order by a")
       assert_equal [[1, "hello"], [2, "world"]], rows
-    ensure
+    ensure # rubocop:disable Minitest/SkipEnsure
       source&.close
     end
 
@@ -946,7 +946,7 @@ module SQLite3
       # Verify we can still modify the restored database
       db2.execute("insert into users values (4, 'Diana', 88.8)")
       assert_equal 4, db2.execute("select count(*) from users").first.first
-    ensure
+    ensure # rubocop:disable Minitest/SkipEnsure
       db2&.close
     end
 
@@ -962,7 +962,7 @@ module SQLite3
       # Deserialize into main
       @db.deserialize(data, "main")
       assert_equal [[42]], @db.execute("select x from items")
-    ensure
+    ensure # rubocop:disable Minitest/SkipEnsure
       source&.close
     end
 
