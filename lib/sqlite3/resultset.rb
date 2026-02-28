@@ -43,20 +43,26 @@ module SQLite3
       @stmt.step
     end
 
-    # Required by the Enumerable mixin. Provides an internal iterator over the
-    # rows of the result set.
+    # With a block given, iterates over the rows of the result set, passing each
+    # to the block. Returns self.
+    # With no block given, returns a new Enumerator.
     def each
+      return enum_for(__method__) unless block_given?
       while (node = self.next)
         yield node
       end
+      self
     end
 
-    # Provides an internal iterator over the rows of the result set where
-    # each row is yielded as a hash.
+    # With a block given, iterates over the rows of the result set, passing each
+    # to the block as a hash. Returns self.
+    # With no block given, returns a new Enumerator.
     def each_hash
+      return enum_for(__method__) unless block_given?
       while (node = next_hash)
         yield node
       end
+      self
     end
 
     # Closes the statement that spawned this result set.
