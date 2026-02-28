@@ -869,5 +869,117 @@ module SQLite3
 
       assert_nothing_raised { @db.execute("select * from dbstat") }
     end
+
+    def test_serialize
+      skip("serialize not supported") unless @db.respond_to?(:serialize)
+
+      @db.execute("create table foo (a integer, b text)")
+      @db.execute("insert into foo (a, b) values (1, 'hello')")
+      @db.execute("insert into foo (a, b) values (2, 'world')")
+
+      data = @db.serialize
+      assert_instance_of(String, data)
+      assert_equal(Encoding::ASCII_8BIT, data.encoding)
+      refute_empty(data)
+      assert_equal("SQLite format 3\0", data[0, 16])
+    end
+
+    def test_serialize_with_database_name
+      skip("serialize not supported") unless @db.respond_to?(:serialize)
+
+      @db.execute("create table foo (a integer)")
+      @db.execute("insert into foo values (42)")
+
+      data = @db.serialize("main")
+      assert_instance_of(String, data)
+      assert_equal("SQLite format 3\0", data[0, 16])
+    end
+
+    def test_serialize_closed_database
+      skip("serialize not supported") unless @db.respond_to?(:serialize)
+
+      @db.close
+      assert_raise(SQLite3::Exception) { @db.serialize }
+    end
+
+    def test_deserialize
+      skip("deserialize not supported") unless @db.respond_to?(:deserialize)
+
+      # Create a source database with data
+      source = SQLite3::Database.new(":memory:")
+      source.execute("create table foo (a integer, b text)")
+      source.execute("insert into foo values (1, 'hello')")
+      source.execute("insert into foo values (2, 'world')")
+
+      # Serialize and deserialize into target
+      data = source.serialize
+      @db.deserialize(data)
+
+      # Verify the data was transferred
+      rows = @db.execute("select * from foo order by a")
+      assert_equal [[1, "hello"], [2, "world"]], rows
+    ensure # rubocop:disable Minitest/SkipEnsure
+      source&.close
+    end
+
+    def test_deserialize_round_trip
+      skip("serialize/deserialize not supported") unless @db.respond_to?(:serialize) && @db.respond_to?(:deserialize)
+
+      # Create and populate a database
+      @db.execute("create table users (id integer primary key, name text, score real)")
+      @db.execute("insert into users values (1, 'Alice', 95.5)")
+      @db.execute("insert into users values (2, 'Bob', 87.3)")
+      @db.execute("insert into users values (3, 'Charlie', 92.1)")
+
+      # Serialize
+      data = @db.serialize
+
+      # Create a new database and deserialize into it
+      db2 = SQLite3::Database.new(":memory:")
+      db2.deserialize(data)
+
+      # Verify the data matches
+      original_rows = @db.execute("select * from users order by id")
+      restored_rows = db2.execute("select * from users order by id")
+      assert_equal original_rows, restored_rows
+
+      # Verify we can still modify the restored database
+      db2.execute("insert into users values (4, 'Diana', 88.8)")
+      assert_equal 4, db2.execute("select count(*) from users").first.first
+    ensure # rubocop:disable Minitest/SkipEnsure
+      db2&.close
+    end
+
+    def test_deserialize_with_database_name
+      skip("deserialize not supported") unless @db.respond_to?(:deserialize)
+
+      # Create a source database
+      source = SQLite3::Database.new(":memory:")
+      source.execute("create table items (x integer)")
+      source.execute("insert into items values (42)")
+      data = source.serialize
+
+      # Deserialize into main
+      @db.deserialize(data, "main")
+      assert_equal [[42]], @db.execute("select x from items")
+    ensure # rubocop:disable Minitest/SkipEnsure
+      source&.close
+    end
+
+    def test_deserialize_closed_database
+      skip("deserialize not supported") unless @db.respond_to?(:deserialize)
+
+      data = "SQLite format 3\0" + ("\0" * 84) # minimal header
+      @db.close
+      assert_raise(SQLite3::Exception) { @db.deserialize(data) }
+    end
+
+    def test_deserialize_invalid_data
+      skip("deserialize not supported") unless @db.respond_to?(:deserialize)
+
+      # Deserializing invalid data should raise an error when accessed
+      @db.deserialize("not a valid database")
+      assert_raise(SQLite3::Exception) { @db.execute("select 1") }
+    end
   end
 end
