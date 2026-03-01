@@ -125,6 +125,9 @@ module Sqlite3
         # Functions defined in 2.1 but not 2.0
         have_func("rb_integer_pack")
 
+        # Functions defined in 3.0 but not 2.7
+        have_func("rb_ext_ractor_safe")
+
         # These functions may not be defined
         have_func("sqlite3_initialize")
         have_func("sqlite3_backup_init")
