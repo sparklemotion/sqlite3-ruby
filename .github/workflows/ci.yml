@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0"
           bundler-cache: true
       - run: bundle exec rake rubocop
 
@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0"
           bundler-cache: true
           apt-get: libsqlite3-dev
       - run: bundle exec rake compile -- --enable-system-libraries
@@ -166,7 +166,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0"
           bundler-cache: true
           apt-get: valgrind
       - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -193,7 +193,7 @@ jobs:
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
       - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0"
           bundler-cache: true
       - run: bundle exec ruby ./ext/sqlite3/extconf.rb --download-dependencies
       - id: rcd_image_version
@@ -211,7 +211,7 @@ jobs:
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
       - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0"
           bundler-cache: true
       - run: ./bin/test-gem-build gems ruby
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
