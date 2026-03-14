@@ -17,6 +17,9 @@ on:
     branches:
       - '*'
 
+permissions:
+  contents: read
+
 env:
   BUNDLE_WITHOUT: "development"
 

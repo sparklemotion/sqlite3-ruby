@@ -13,6 +13,9 @@ on:
     paths:
       - .github/workflows/upstream.yml # this file
 
+permissions:
+  contents: read
+
 jobs:
   sqlite-head:
     runs-on: ubuntu-latest
