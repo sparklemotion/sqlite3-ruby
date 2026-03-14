@@ -41,7 +41,7 @@ jobs:
       - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
           ruby-version: "4.0"
-          bundler-cache: true
+          bundler-cache: true # zizmor: ignore[cache-poisoning]
       - run: bundle exec rake rubocop
 
   basic:
@@ -194,7 +194,7 @@ jobs:
       - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
           ruby-version: "4.0"
-          bundler-cache: true
+          bundler-cache: true # zizmor: ignore[cache-poisoning]
       - run: bundle exec ruby ./ext/sqlite3/extconf.rb --download-dependencies
       - id: rcd_image_version
         run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
@@ -212,7 +212,7 @@ jobs:
       - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
           ruby-version: "4.0"
-          bundler-cache: true
+          bundler-cache: true # zizmor: ignore[cache-poisoning]
       - run: ./bin/test-gem-build gems ruby
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
