@@ -17,6 +17,9 @@ on:
     branches:
       - '*'
 
+permissions:
+  contents: read
+
 env:
   BUNDLE_WITHOUT: "development"
 
@@ -37,22 +40,25 @@ jobs:
     env:
       BUNDLE_WITHOUT: "" # we need rubocop, obviously
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ruby-version: "3.4"
-          bundler-cache: true
+          persist-credentials: false
+      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true # zizmor: ignore[cache-poisoning]
       - run: bundle exec rake rubocop
 
   basic:
     needs: rubocop
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
-          ruby-version: "3.4"
+          persist-credentials: false
+      - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
+        with:
+          ruby-version: "4.0"
           bundler-cache: true
           apt-get: libsqlite3-dev
       - run: bundle exec rake compile -- --enable-system-libraries
@@ -80,17 +86,18 @@ jobs:
         run: |
           git config --system core.autocrlf false
           git config --system core.eol lf
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
+          persist-credentials: false
+      - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
+        with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           apt-get: libsqlite3-dev
           mingw: sqlite3
           vcpkg: sqlite3
       - if: matrix.syslib == 'disable'
-        uses: actions/cache@v5
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
         with:
           path: ports
           key: ports-${{ matrix.os }}-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -109,7 +116,9 @@ jobs:
       - run: |
           dnf group install -y "C Development Tools and Libraries"
           dnf install -y ruby ruby-devel patch
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - run: bundle install
       - run: bundle exec rake compile -- --disable-system-libraries
       - run: bundle exec rake test
@@ -119,8 +128,10 @@ jobs:
     name: "FreeBSD"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: vmactions/freebsd-vm@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: vmactions/freebsd-vm@4807432c7cab1c3f97688665332c0b932062d31f # v1.4.3
         with:
           usesh: true
           copyback: false
@@ -149,10 +160,11 @@ jobs:
         run: |
           git config --system core.autocrlf false
           git config --system core.eol lf
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
+          persist-credentials: false
+      - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
+        with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           apt-get: libsqlcipher-dev
@@ -166,14 +178,15 @@ jobs:
     needs: basic
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
-          ruby-version: "3.4"
+          persist-credentials: false
+      - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
+        with:
+          ruby-version: "4.0"
           bundler-cache: true
           apt-get: valgrind
-      - uses: actions/cache@v5
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
         with:
           path: ports
           key: ports-ubuntu-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -190,15 +203,17 @@ jobs:
     outputs:
       rcd_image_version: ${{ steps.rcd_image_version.outputs.rcd_image_version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/cache@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
+      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
-          ruby-version: "3.4"
-          bundler-cache: true
+          ruby-version: "4.0"
+          bundler-cache: true # zizmor: ignore[cache-poisoning]
       - run: bundle exec ruby ./ext/sqlite3/extconf.rb --download-dependencies
       - id: rcd_image_version
         run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
@@ -208,17 +223,19 @@ jobs:
     name: "build source"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/cache@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
+      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
-          ruby-version: "3.4"
-          bundler-cache: true
+          ruby-version: "4.0"
+          bundler-cache: true # zizmor: ignore[cache-poisoning]
       - run: ./bin/test-gem-build gems ruby
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: source-gem
           path: gems
@@ -238,14 +255,15 @@ jobs:
           - { os: macos, syslib: enable, compile_flags: "--with-opt-dir=$(brew --prefix sqlite3)" }
     runs-on: ${{ matrix.os }}-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby-pkgs@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          setup-ruby-ref: ruby/setup-ruby/d3e3bd032ad2222a8ac878bbccf2aba78864e134
+          persist-credentials: false
+      - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
+        with:
           ruby-version: ${{ matrix.ruby }}
           apt-get: libsqlite3-dev pkg-config
           mingw: sqlite3
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: source-gem
           path: gems
@@ -272,16 +290,20 @@ jobs:
           - x86_64-linux-musl
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/cache@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
       - run: |
           docker run --rm -v $PWD:/work -w /work \
-            ghcr.io/rake-compiler/rake-compiler-dock-image:${{ needs.native_setup.outputs.rcd_image_version }}-mri-${{ matrix.platform }} \
+            ghcr.io/rake-compiler/rake-compiler-dock-image:${NEEDS_NATIVE_SETUP_OUTPUTS_RCD_IMAGE_VERSION}-mri-${{ matrix.platform }} \
             ./bin/test-gem-build gems ${{ matrix.platform }}
-      - uses: actions/upload-artifact@v7
+        env:
+          NEEDS_NATIVE_SETUP_OUTPUTS_RCD_IMAGE_VERSION: ${{ needs.native_setup.outputs.rcd_image_version }}
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: "cruby-${{ matrix.platform }}-gem"
           path: gems
@@ -318,18 +340,22 @@ jobs:
           - { runner: ubuntu-latest, platform: x86-linux-musl, docker_platform: "--platform=linux/386" }
     runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: cruby-${{ matrix.platform }}-gem
           path: gems
       - run: |
           docker run --rm -v $PWD:/work -w /work \
-            ${{ matrix.docker_platform}} ruby:${{ matrix.ruby }}${{ matrix.docker_tag }} \
+            ${{ matrix.docker_platform }} ruby:${MATRIX_RUBY}${{ matrix.docker_tag }} \
             sh -c "
               ${{ matrix.bootstrap }}
               ./bin/test-gem-install ./gems
             "
+        env:
+          MATRIX_RUBY: ${{ matrix.ruby }}
 
   test_the_rest:
     name: "${{ matrix.platform }} ${{ matrix.ruby }}"
@@ -348,11 +374,13 @@ jobs:
             platform: x64-mingw-ucrt
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@d3e3bd032ad2222a8ac878bbccf2aba78864e134
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
           ruby-version: "${{ matrix.ruby }}"
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: cruby-${{ matrix.platform }}-gem
           path: gems
@@ -373,10 +401,12 @@ jobs:
           - { ruby: "4.0", flavor: "alpine" }
     runs-on: ubuntu-latest
     container:
-      image: ruby:${{matrix.ruby}}-${{matrix.flavor}}
+      image: ruby:${{ matrix.ruby }}-${{ matrix.flavor }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: cruby-x86_64-linux-musl-gem
           path: gems
