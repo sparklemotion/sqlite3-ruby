@@ -194,55 +194,17 @@ jobs:
       - run: bundle exec rake test:valgrind
 
   #
+  #  gem build (source and native)
+  #
+  build_gems:
+    needs: basic
+    uses: ./.github/workflows/build-gems.yml
+
+  #
   #  gem tests (source and native)
   #
-  native_setup:
-    needs: basic
-    name: "Setup for native gem tests"
-    runs-on: ubuntu-latest
-    outputs:
-      rcd_image_version: ${{ steps.rcd_image_version.outputs.rcd_image_version }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
-        with:
-          path: ports/archives
-          key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
-        with:
-          ruby-version: "4.0"
-          bundler-cache: true # zizmor: ignore[cache-poisoning]
-      - run: bundle exec ruby ./ext/sqlite3/extconf.rb --download-dependencies
-      - id: rcd_image_version
-        run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
-
-  build_source_gem:
-    needs: native_setup
-    name: "build source"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
-        with:
-          path: ports/archives
-          key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
-        with:
-          ruby-version: "4.0"
-          bundler-cache: true # zizmor: ignore[cache-poisoning]
-      - run: ./bin/test-gem-build gems ruby
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: source-gem
-          path: gems
-          retention-days: 1
-
   install_source_linux:
-    needs: [build_source_gem, ruby_versions]
+    needs: [build_gems, ruby_versions]
     name: "test source"
     strategy:
       fail-fast: false
@@ -270,48 +232,9 @@ jobs:
       - run: ./bin/test-gem-install gems -- --${{ matrix.syslib }}-system-libraries ${{ matrix.compile_flags }}
         shell: sh
 
-  build_native_gem:
-    needs: native_setup
-    name: "build native"
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - aarch64-linux-gnu
-          - aarch64-linux-musl
-          - arm-linux-gnu
-          - arm-linux-musl
-          - arm64-darwin
-          - x64-mingw-ucrt
-          - x86-linux-gnu
-          - x86-linux-musl
-          - x86_64-darwin
-          - x86_64-linux-gnu
-          - x86_64-linux-musl
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3 # zizmor: ignore[cache-poisoning]
-        with:
-          path: ports/archives
-          key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - run: |
-          docker run --rm -v $PWD:/work -w /work \
-            ghcr.io/rake-compiler/rake-compiler-dock-image:${NEEDS_NATIVE_SETUP_OUTPUTS_RCD_IMAGE_VERSION}-mri-${{ matrix.platform }} \
-            ./bin/test-gem-build gems ${{ matrix.platform }}
-        env:
-          NEEDS_NATIVE_SETUP_OUTPUTS_RCD_IMAGE_VERSION: ${{ needs.native_setup.outputs.rcd_image_version }}
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: "cruby-${{ matrix.platform }}-gem"
-          path: gems
-          retention-days: 1
-
   test_architecture_matrix:
     name: "${{ matrix.platform }} ${{ matrix.ruby }}"
-    needs: [build_native_gem, ruby_versions]
+    needs: [build_gems, ruby_versions]
     strategy:
       fail-fast: false
       matrix:
@@ -359,7 +282,7 @@ jobs:
 
   test_the_rest:
     name: "${{ matrix.platform }} ${{ matrix.ruby }}"
-    needs: [build_native_gem, ruby_versions]
+    needs: [build_gems, ruby_versions]
     strategy:
       fail-fast: false
       matrix:
@@ -388,7 +311,7 @@ jobs:
         shell: sh
 
   cruby-x86_64-linux-musl-install:
-    needs: build_native_gem
+    needs: build_gems
     strategy:
       fail-fast: false
       matrix:
