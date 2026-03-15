@@ -1,9 +1,15 @@
 #! /usr/bin/env bash
 #
-#  run as part of CI
+#  run as part of CI, or as part of the release pipeline with --release
 #
+RELEASE=false
+if [[ "${1:-}" == "--release" ]] ; then
+  RELEASE=true
+  shift
+fi
+
 if [[ $# -lt 2 ]] ; then
-  echo "usage: $(basename $0) <output_dir> <platform>"
+  echo "usage: $(basename $0) [--release] <output_dir> <platform>"
   exit 1
 fi
 
@@ -18,7 +24,10 @@ set -x
 
 bundle config set without development
 bundle install --local || bundle install
-bundle exec rake set-version-to-timestamp
+
+if [[ "${RELEASE}" == "false" ]] ; then
+  bundle exec rake set-version-to-timestamp
+fi
 
 if [[ "${BUILD_NATIVE_GEM}" == "ruby" ]] ; then
   bundle exec ruby ext/sqlite3/extconf.rb --download-dependencies
