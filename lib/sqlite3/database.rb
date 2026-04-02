@@ -142,6 +142,15 @@ module SQLite3
     def initialize file, options = {}, zvfs = nil
       mode = Constants::Open::READWRITE | Constants::Open::CREATE
 
+      @tracefunc = nil
+      @authorizer = nil
+      @progress_handler = nil
+      @collations = {}
+      @functions = {}
+      @results_as_hash = options[:results_as_hash]
+      @readonly = false
+      @default_transaction_mode = options[:default_transaction_mode] || :deferred
+
       file = file.to_path if file.respond_to? :to_path
       if file.encoding == ::Encoding::UTF_16LE || file.encoding == ::Encoding::UTF_16BE || options[:utf16]
         open16 file
@@ -164,6 +173,8 @@ module SQLite3
           mode = options[:flags]
         end
 
+        @readonly = mode & Constants::Open::READONLY != 0
+
         open_v2 file.encode("utf-8"), mode, zvfs
 
         if options[:strict]
@@ -171,18 +182,9 @@ module SQLite3
         end
       end
 
-      @tracefunc = nil
-      @authorizer = nil
-      @progress_handler = nil
-      @collations = {}
-      @functions = {}
-      @results_as_hash = options[:results_as_hash]
-      @readonly = mode & Constants::Open::READONLY != 0
-      @default_transaction_mode = options[:default_transaction_mode] || :deferred
-
       initialize_extensions(options[:extensions])
 
-      ForkSafety.track(self)
+      ForkSafety.track(self) if !defined?(Ractor) || (Ractor.main == Ractor.current)
 
       if block_given?
         begin
