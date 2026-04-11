@@ -33,7 +33,7 @@ jobs:
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64 # v1.299.0
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1.300.0
         with:
           ruby-version: "4.0"
           bundler-cache: true
@@ -53,14 +53,14 @@ jobs:
         with:
           path: ports/archives
           key: ports-archives-tarball-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
-      - uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64 # v1.299.0
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1.300.0
         with:
           ruby-version: "4.0"
           bundler-cache: true
       - run: ./bin/test-gem-build ${RELEASE_FLAG} gems ruby
         env:
           RELEASE_FLAG: ${{ inputs.release && '--release' || '' }}
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: "${{ inputs.artifact_prefix }}source-gem"
           path: gems
@@ -101,7 +101,7 @@ jobs:
         env:
           RCD_IMAGE_VERSION: ${{ needs.native_setup.outputs.rcd_image_version }}
           RELEASE_FLAG: ${{ inputs.release && '--release' || '' }}
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: "${{ inputs.artifact_prefix }}cruby-${{ matrix.platform }}-gem"
           path: gems
