@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1.300.0
+      - uses: ruby/setup-ruby@7372622e62b60b3cb750dcd2b9e32c247ffec26a # v1.302.0
         with:
           ruby-version: "4.0"
           bundler-cache: true # zizmor: ignore[cache-poisoning]
@@ -97,7 +97,7 @@ jobs:
           mingw: sqlite3
           vcpkg: sqlite3
       - if: matrix.syslib == 'disable'
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.3 # zizmor: ignore[cache-poisoning]
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.3 # zizmor: ignore[cache-poisoning]
         with:
           path: ports
           key: ports-${{ matrix.os }}-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -131,7 +131,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: vmactions/freebsd-vm@7ca82f79fe3078fecded6d3a2bff094995447bbd # v1.4.4
+      - uses: vmactions/freebsd-vm@d1e65811565151536c0c894fff74f06351ed26e6 # v1.4.5
         with:
           usesh: true
           copyback: false
@@ -186,7 +186,7 @@ jobs:
           ruby-version: "4.0"
           bundler-cache: true
           apt-get: valgrind
-      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.3 # zizmor: ignore[cache-poisoning]
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.3 # zizmor: ignore[cache-poisoning]
         with:
           path: ports
           key: ports-ubuntu-${{ hashFiles('ext/sqlite3/extconf.rb','dependencies.yml') }}
@@ -300,7 +300,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1.300.0
+      - uses: ruby/setup-ruby@7372622e62b60b3cb750dcd2b9e32c247ffec26a # v1.302.0
         with:
           ruby-version: "${{ matrix.ruby }}"
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
