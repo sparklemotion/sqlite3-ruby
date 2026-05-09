@@ -127,6 +127,12 @@ init_sqlite3_constants(void)
     VALUE mSqlite3Constants;
     VALUE mSqlite3Open;
 
+#ifdef HAVE_RB_EXT_RACTOR_SAFE
+    if (sqlite3_threadsafe()) {
+        rb_ext_ractor_safe(true);
+    }
+#endif
+
     mSqlite3Constants = rb_define_module_under(mSqlite3, "Constants");
 
     /* sqlite3_open_v2 flags for Database::new */
