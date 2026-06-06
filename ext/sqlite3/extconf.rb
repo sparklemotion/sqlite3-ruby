@@ -105,10 +105,10 @@ module Sqlite3
       def configure_extension
         append_cflags("-fvisibility=hidden") # see https://github.com/rake-compiler/rake-compiler-dock/issues/87
 
-        if find_header("sqlite3.h")
-          # noop
-        elsif sqlcipher? && find_header("sqlcipher/sqlite3.h")
+        if sqlcipher? && find_header("sqlcipher/sqlite3.h")
           append_cppflags("-DUSING_SQLCIPHER_INC_SUBDIR")
+        elsif find_header("sqlite3.h")
+          # noop
         else
           abort_could_not_find("sqlite3.h")
         end
