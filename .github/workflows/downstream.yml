@@ -24,7 +24,7 @@ jobs:
   activerecord:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
       - uses: ruby/setup-ruby-pkgs@2233d39c1315c667a2970436418b520a6300124e # v1.33.5
