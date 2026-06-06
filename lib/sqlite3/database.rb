@@ -175,7 +175,7 @@ module SQLite3
       @authorizer = nil
       @progress_handler = nil
       @collations = {}
-      @functions = {}
+      @functions = []
       @results_as_hash = options[:results_as_hash]
       @readonly = mode & Constants::Open::READONLY != 0
       @default_transaction_mode = options[:default_transaction_mode] || :deferred
@@ -397,6 +397,8 @@ module SQLite3
     # The block does not return a value directly. Instead, it will invoke
     # the FunctionProxy#result= method on the +func+ parameter and
     # indicate the return value that way.
+    #
+    # A reference to the block will be kept for the lifetime of the database object.
     #
     # Example:
     #

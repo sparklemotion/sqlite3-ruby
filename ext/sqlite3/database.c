@@ -528,7 +528,7 @@ define_function_with_flags(VALUE self, VALUE name, VALUE flags)
 
     CHECK(ctx->db, status);
 
-    rb_hash_aset(rb_iv_get(self, "@functions"), name, block);
+    rb_ary_push(rb_iv_get(self, "@functions"), block);
 
     return self;
 }
