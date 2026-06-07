@@ -363,4 +363,15 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     assert_equal 33, values[0]
     assert_equal 2145, values[1]
   end
+
+  def test_step_on_statement_whose_database_was_closed_does_not_use_freed_aggregator
+    @db.define_aggregator("accumulate", AccumulateAggregator.new)
+    stmt = @db.prepare("select accumulate(c) from foo")
+
+    @db.close
+    GC.start(full_mark: true, immediate_sweep: true)
+
+    values = stmt.step
+    assert_equal 33, values[0]
+  end
 end

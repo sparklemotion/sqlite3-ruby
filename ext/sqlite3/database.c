@@ -198,8 +198,6 @@ sqlite3_rb_close(VALUE self)
 
     close_or_discard_db(ctx);
 
-    rb_iv_set(self, "-aggregators", Qnil);
-
     return self;
 }
 
@@ -211,8 +209,6 @@ sqlite3_rb_discard(VALUE self)
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
     discard_db(ctx);
-
-    rb_iv_set(self, "-aggregators", Qnil);
 
     return self;
 }

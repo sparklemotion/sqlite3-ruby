@@ -437,6 +437,8 @@ module SQLite3
     # function invocation. It should invoke FunctionProxy#result= to
     # store the result of the function.
     #
+    # A reference to the block will be kept for the lifetime of the database object.
+    #
     # Example:
     #
     #   db.create_aggregate( "lengths", 1 ) do
