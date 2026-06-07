@@ -463,6 +463,14 @@ module SQLite3
       assert_equal 10, called_with
     end
 
+    def test_redefine_function_with_different_arity_does_not_use_freed_block
+      @db.define_function("f") { |a| "orig" }
+      @db.define_function("f") { |a, b| "new" }
+      GC.start(full_mark: true, immediate_sweep: true)
+
+      assert_equal ["orig"], @db.execute("select f(1)").first
+    end
+
     def test_call_func_arg_type
       called_with = nil
       @db.define_function("hello") do |b, c, d|
