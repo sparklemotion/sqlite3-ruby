@@ -1,5 +1,17 @@
 # sqlite3-ruby Changelog
 
+## 2.9.5 / 2026-06-07
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.53.2](https://www.sqlite.org/releaselog/3_53_3.html) (from v3.53.1). #709 @flavorjones
+
+### Security / Stability
+
+- Fix use-after-free issue with custom functions, when the same function name is used with multiple arities. See https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-28hh-pr2h-2w89 for more information. #710 @flavorjones
+- Fix use-after-free issue with aggregate functions, if a statement is used after a soft database close. See https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-j7fr-3v8c-3qc3 for more information. #711 @flavorjones
+
+
 ## 2.9.4 / 2026-05-05
 
 - Vendored sqlite is updated to [v3.53.1](https://www.sqlite.org/releaselog/3_53_1.html) (from v3.53.0). #704 @flavorjones
