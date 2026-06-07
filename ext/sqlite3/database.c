@@ -247,12 +247,26 @@ total_changes(VALUE self)
     return INT2NUM(sqlite3_total_changes(ctx->db));
 }
 
-static void
-tracefunc(void *data, const char *sql)
+struct tracefunc_args {
+    VALUE self;
+    const char *sql;
+};
+
+static void *
+tracefunc(void *nogvl_context)
 {
-    VALUE self = (VALUE)data;
-    VALUE thing = rb_iv_get(self, "@tracefunc");
-    rb_funcall(thing, rb_intern("call"), 1, rb_str_new2(sql));
+    struct tracefunc_args *args = nogvl_context;
+    VALUE thing = rb_iv_get(args->self, "@tracefunc");
+    rb_funcall(thing, rb_intern("call"), 1, rb_str_new2(args->sql));
+    return NULL;
+}
+
+static void
+tracefunc_nogvl(void *data, const char *sql)
+{
+    /* This probably also needs rb_protected */
+    struct tracefunc_args args = { (VALUE)data, sql };
+    rb_thread_call_with_gvl(tracefunc, &args);
 }
 
 /* call-seq:
@@ -278,18 +292,32 @@ trace(int argc, VALUE *argv, VALUE self)
 
     rb_iv_set(self, "@tracefunc", block);
 
-    sqlite3_trace(ctx->db, NIL_P(block) ? NULL : tracefunc, (void *)self);
+    sqlite3_trace(ctx->db, NIL_P(block) ? NULL : tracefunc_nogvl, (void *)self);
 
     return self;
+}
+
+struct busy_handler_args {
+    void *context;
+    int count;
+};
+
+static void *
+gvl_call_busy_handler(void *context)
+{
+    struct busy_handler_args *args = context;
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)args->context;
+
+    VALUE handle = ctx->busy_handler;
+    VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM(args->count));
+    return (void *)result;
 }
 
 static int
 rb_sqlite3_busy_handler(void *context, int count)
 {
-    sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
-
-    VALUE handle = ctx->busy_handler;
-    VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM(count));
+    struct busy_handler_args args = {context, count};
+    VALUE result = (VALUE)rb_thread_call_with_gvl(gvl_call_busy_handler, &args);
 
     if (Qfalse == result) { return 0; }
 
@@ -470,9 +498,20 @@ set_sqlite3_func_result(sqlite3_context *ctx, VALUE result)
     }
 }
 
-static void
-rb_sqlite3_func(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+struct rb_sqlite3_func_args {
+    sqlite3_context *ctx;
+    int argc;
+    sqlite3_value **argv;
+};
+
+static void *
+rb_sqlite3_func(void *gvl_context)
 {
+    struct rb_sqlite3_func_args *args = gvl_context;
+    sqlite3_context *ctx = args->ctx;
+    int argc = args->argc;
+    sqlite3_value **argv = args->argv;
+
     VALUE callable = (VALUE)sqlite3_user_data(ctx);
     VALUE params = rb_ary_new2(argc);
     VALUE result;
@@ -488,6 +527,14 @@ rb_sqlite3_func(sqlite3_context *ctx, int argc, sqlite3_value **argv)
     result = rb_apply(callable, rb_intern("call"), params);
 
     set_sqlite3_func_result(ctx, result);
+    return NULL;
+}
+
+static void
+rb_sqlite3_func_nogvl(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+{
+    struct rb_sqlite3_func_args args = { ctx, argc, argv };
+    rb_thread_call_with_gvl(rb_sqlite3_func, &args);
 }
 
 #ifndef HAVE_RB_PROC_ARITY
@@ -521,7 +568,7 @@ define_function_with_flags(VALUE self, VALUE name, VALUE flags)
                  rb_proc_arity(block),
                  NUM2INT(flags),
                  (void *)block,
-                 rb_sqlite3_func,
+                 rb_sqlite3_func_nogvl,
                  NULL,
                  NULL
              );
@@ -715,10 +762,19 @@ set_extended_result_codes(VALUE self, VALUE enable)
     return self;
 }
 
-int
-rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b)
-{
+struct comparator_func_args {
     VALUE comparator;
+    int a_len;
+    const char *a;
+    int b_len;
+    const char *b;
+};
+
+static void *
+rb_comparator_func(void *context)
+{
+    struct comparator_func_args *args = context;
+    VALUE comparator = args->comparator;
     VALUE a_str;
     VALUE b_str;
     VALUE comparison;
@@ -726,9 +782,8 @@ rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b
 
     internal_encoding = rb_default_internal_encoding();
 
-    comparator = (VALUE)ctx;
-    a_str = rb_str_new((const char *)a, a_len);
-    b_str = rb_str_new((const char *)b, b_len);
+    a_str = rb_str_new(args->a, args->a_len);
+    b_str = rb_str_new(args->b, args->b_len);
 
     rb_enc_associate_index(a_str, rb_utf8_encindex());
     rb_enc_associate_index(b_str, rb_utf8_encindex());
@@ -740,7 +795,14 @@ rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b
 
     comparison = rb_funcall(comparator, rb_intern("compare"), 2, a_str, b_str);
 
-    return NUM2INT(comparison);
+    return (void *)(VALUE)NUM2INT(comparison);
+}
+
+static int
+rb_comparator_func_nogvl(void *ctx, int a_len, const void *a, int b_len, const void *b)
+{
+    struct comparator_func_args args = {(VALUE)ctx, a_len, a, b_len, b};
+    return (int)(VALUE)rb_thread_call_with_gvl(rb_comparator_func, &args);
 }
 
 /* call-seq: db.collation(name, comparator)
@@ -762,7 +824,7 @@ collation(VALUE self, VALUE name, VALUE comparator)
               StringValuePtr(name),
               SQLITE_UTF8,
               (void *)comparator,
-              NIL_P(comparator) ? NULL : rb_comparator_func));
+              NIL_P(comparator) ? NULL : rb_comparator_func_nogvl));
 
     /* Make sure our comparator doesn't get garbage collected. */
     rb_hash_aset(rb_iv_get(self, "@collations"), name, comparator);
