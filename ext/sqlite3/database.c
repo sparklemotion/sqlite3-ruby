@@ -153,7 +153,13 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
                  NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
              );
 
-    CHECK(ctx->db, status);
+    if (status != SQLITE_OK) {
+        char *msg = sqlite3_mprintf("%s", sqlite3_errmsg(ctx->db));
+        sqlite3_close_v2(ctx->db);
+        ctx->db = NULL;
+        CHECK_MSG(ctx->db, status, msg);
+    }
+
     if (flags & SQLITE_OPEN_READONLY) {
         ctx->flags |= SQLITE3_RB_DATABASE_READONLY;
     }
@@ -941,7 +947,12 @@ rb_sqlite3_open16(VALUE self, VALUE file)
     // so we do not ever set SQLITE3_RB_DATABASE_READONLY in ctx->flags
     status = sqlite3_open16(utf16_string_value_ptr(file), &ctx->db);
 
-    CHECK(ctx->db, status)
+    if (status != SQLITE_OK) {
+        char *msg = sqlite3_mprintf("%s", sqlite3_errmsg(ctx->db));
+        sqlite3_close_v2(ctx->db);
+        ctx->db = NULL;
+        CHECK_MSG(ctx->db, status, msg);
+    }
 
     return INT2NUM(status);
 }
