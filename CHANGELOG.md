@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Improved
+
+- When `Database.new` fails to open the database file, the underlying sqlite3 connection handle is now closed immediately instead of waiting for the garbage collector to clean it up. #719 @katafrakt
+
+
 ## 2.9.5 / 2026-06-07
 
 ### Dependencies

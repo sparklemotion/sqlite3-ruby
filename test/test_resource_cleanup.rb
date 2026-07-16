@@ -17,6 +17,28 @@ module SQLite3
       end
     end
 
+    # These tests exercise the failure branches of open_v2 and open16, which immediately close the
+    # sqlite3 handle and reclaim resources before raising.
+    #
+    # Under valgrind these would catch any memory problems in the close-on-failure code, but they do
+    # NOT directly test that resources are immediately recovered. If we didn't close immediately,
+    # the GC finalizer would still eventually close any leftover handles if and when the database
+    # object is GCed. Beacuse we run ruby with free-at-exit with valgrind, directly testing the
+    # immediate close is hard. But I'm fine with that tradeoff.
+    def test_cleanup_failed_open_v2
+      exception = assert_raise(SQLite3::CantOpenException) do
+        SQLite3::Database.new("/nonexistent/foo.db")
+      end
+      assert_equal("unable to open database file", exception.message)
+    end
+
+    def test_cleanup_failed_open16
+      exception = assert_raise(SQLite3::CantOpenException) do
+        SQLite3::Database.new("/nonexistent/foo.db".encode(Encoding::UTF_16LE))
+      end
+      assert_equal("unable to open database file", exception.message)
+    end
+
     # # this leaks the result set
     # def test_cleanup_unclosed_resultset_object
     #   db = SQLite3::Database.new(':memory:')
