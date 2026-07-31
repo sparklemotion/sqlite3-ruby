@@ -342,6 +342,18 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     end
   end
 
+  class CompactingAggregator
+    def step(*args)
+      @sum ||= 0
+      args.each { |a| @sum += a.to_i }
+      GC.verify_compaction_references(expand_heap: true, toward: :empty)
+    end
+
+    def finalize
+      @sum
+    end
+  end
+
   class AccumulateAggregator2
     def step(a, b)
       @sum ||= 1
@@ -362,6 +374,24 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     values = @db.get_first_row("select accumulate(c), accumulate(a,c) from foo")
     assert_equal 33, values[0]
     assert_equal 2145, values[1]
+  end
+
+  def test_define_aggregator_does_not_use_moved_aggregator_after_gc_compaction
+    @db.define_aggregator("accumulate", AccumulateAggregator.new)
+
+    skip("GC compaction is unsupported on this runtime") unless force_gc_compaction
+
+    assert_equal 33, @db.get_first_value("select accumulate(c) from foo")
+  end
+
+  def test_define_aggregator_does_not_use_moved_instances_after_gc_compaction
+    @db.define_aggregator("accumulate", CompactingAggregator.new)
+
+    skip("GC compaction is unsupported on this runtime") unless force_gc_compaction
+
+    values = @db.get_first_row("select accumulate(a), accumulate(c) from foo")
+    assert_equal 6, values[0]
+    assert_equal 33, values[1]
   end
 
   def test_step_on_statement_whose_database_was_closed_does_not_use_freed_aggregator

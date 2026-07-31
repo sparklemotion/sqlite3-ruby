@@ -10,6 +10,11 @@
 struct _sqlite3Ruby {
     sqlite3 *db;
     VALUE busy_handler;
+    VALUE functions;
+    VALUE collations;
+    VALUE aggregators;
+    VALUE trace_handler;
+    VALUE authorizer;
     int stmt_timeout;
     struct timespec stmt_deadline;
     rb_pid_t owner;
@@ -18,6 +23,9 @@ struct _sqlite3Ruby {
 
 typedef struct _sqlite3Ruby sqlite3Ruby;
 typedef sqlite3Ruby *sqlite3RubyPtr;
+
+/* Pinning a collection doesn't pin what's in it, hence both. */
+void rb_sqlite3_pin_array_and_contents(VALUE ary);
 
 void init_sqlite3_database();
 void set_sqlite3_func_result(sqlite3_context *ctx, VALUE result);
