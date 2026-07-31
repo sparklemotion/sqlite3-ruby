@@ -254,8 +254,15 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
     CHECK(ctx->db, status);
 
     rb_ary_push(aggregators, aw);
+    RB_OBJ_WRITE(self, &ctx->aggregators, aggregators);
 
     return self;
+}
+
+void
+rb_sqlite3_aggregator_pin_instances(VALUE aw)
+{
+    rb_sqlite3_pin_array_and_contents(rb_iv_get(aw, "-instances"));
 }
 
 void

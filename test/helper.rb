@@ -127,6 +127,18 @@ module SQLite3
     def windows?
       ::RUBY_PLATFORM =~ /mingw|mswin/
     end
+
+    # Relocates every movable object, so any VALUE this extension has handed to
+    # sqlite moves and sqlite's copy of the address goes stale. Returns false
+    # where the runtime can't compact, so callers can skip.
+    def force_gc_compaction
+      return false unless ::GC.respond_to?(:verify_compaction_references)
+
+      ::GC.verify_compaction_references(expand_heap: true, toward: :empty)
+      true
+    rescue ::NotImplementedError
+      false
+    end
   end
 end
 
