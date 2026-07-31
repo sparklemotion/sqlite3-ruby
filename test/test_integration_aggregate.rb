@@ -342,6 +342,18 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     end
   end
 
+  # Used by one test only, so a live count of 1 means just the template.
+  class ReleasableAggregator
+    def step(*args)
+      @sum ||= 0
+      args.each { |a| @sum += a.to_i }
+    end
+
+    def finalize
+      @sum
+    end
+  end
+
   class AccumulateAggregator2
     def step(a, b)
       @sum ||= 1
@@ -362,6 +374,15 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     values = @db.get_first_row("select accumulate(c), accumulate(a,c) from foo")
     assert_equal 33, values[0]
     assert_equal 2145, values[1]
+  end
+
+  def test_aggregate_instances_are_released_after_each_query
+    @db.define_aggregator("accumulate", ReleasableAggregator.new)
+
+    5.times { assert_equal 33, @db.get_first_value("select accumulate(c) from foo") }
+    GC.start(full_mark: true, immediate_sweep: true)
+
+    assert_equal 1, ObjectSpace.each_object(ReleasableAggregator).count
   end
 
   def test_step_on_statement_whose_database_was_closed_does_not_use_freed_aggregator
