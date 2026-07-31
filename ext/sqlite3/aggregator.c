@@ -97,7 +97,7 @@ rb_sqlite3_aggregate_instance_destroy(sqlite3_context *ctx)
     VALUE *inst_ptr = sqlite3_aggregate_context(ctx, 0);
     VALUE inst;
 
-    if (!inst_ptr || (inst = *inst_ptr)) {
+    if (!inst_ptr || !(inst = *inst_ptr)) {
         return;
     }
 
