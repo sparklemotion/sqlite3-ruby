@@ -17,4 +17,9 @@ group :development do
   gem "rubocop", "1.59.0", require: false
   gem "rubocop-minitest", "0.34.5", require: false
   gem "standard", "1.33.0", require: false
+
+  # rubocop's executable requires "benchmark", which stopped being a default gem
+  # in ruby 4.0. rubocop dropped that require in 1.66.0, so this can go away
+  # whenever we bump past it.
+  gem "benchmark", "0.5.0", require: false
 end
