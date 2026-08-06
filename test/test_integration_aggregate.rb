@@ -377,17 +377,19 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
   end
 
   def test_define_aggregator_does_not_use_moved_aggregator_after_gc_compaction
+    skip_unless_compaction_supported
+
     @db.define_aggregator("accumulate", AccumulateAggregator.new)
 
-    skip("GC compaction is unsupported on this runtime") unless force_gc_compaction
+    gc_verify_compaction_references
 
     assert_equal 33, @db.get_first_value("select accumulate(c) from foo")
   end
 
   def test_define_aggregator_does_not_use_moved_instances_after_gc_compaction
-    @db.define_aggregator("accumulate", CompactingAggregator.new)
+    skip_unless_compaction_supported
 
-    skip("GC compaction is unsupported on this runtime") unless force_gc_compaction
+    @db.define_aggregator("accumulate", CompactingAggregator.new)
 
     values = @db.get_first_row("select accumulate(a), accumulate(c) from foo")
     assert_equal 6, values[0]

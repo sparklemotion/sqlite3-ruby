@@ -83,19 +83,23 @@ class IntegrationTestCase < SQLite3::TestCase
   end
 
   def test_trace_does_not_use_moved_block_after_gc_compaction
+    skip_unless_compaction_supported
+
     result = nil
     @db.trace { |sql| result = sql }
 
-    skip("GC compaction is unsupported on this runtime") unless force_gc_compaction
+    gc_verify_compaction_references
 
     @db.execute "select * from foo"
     assert_equal "select * from foo", result
   end
 
   def test_authorizer_does_not_use_moved_block_after_gc_compaction
+    skip_unless_compaction_supported
+
     @db.authorizer { |type, a, b, c, d| 0 }
 
-    skip("GC compaction is unsupported on this runtime") unless force_gc_compaction
+    gc_verify_compaction_references
 
     rows = @db.execute "select * from foo"
     assert_equal 3, rows.length
@@ -584,11 +588,13 @@ class IntegrationTestCase < SQLite3::TestCase
   end
 
   def test_create_function_does_not_use_moved_block_after_gc_compaction
+    skip_unless_compaction_supported
+
     @db.create_function("munge", 1) do |func, x|
       func.result = ">>>#{x}<<<"
     end
 
-    skip("GC compaction is unsupported on this runtime") unless force_gc_compaction
+    gc_verify_compaction_references
 
     value = @db.get_first_value("select munge(b) from foo where a=1")
     assert_match(/>>>.*<<</, value)
