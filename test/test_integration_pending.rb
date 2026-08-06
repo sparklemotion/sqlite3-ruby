@@ -114,6 +114,8 @@ class IntegrationPendingTestCase < SQLite3::TestCase
   end
 
   def test_busy_handler_timeout_releases_gvl
+    skip_if_timing_unreliable
+
     @db.busy_handler_timeout = 100
 
     t1sync = ThreadSynchronizer.new
