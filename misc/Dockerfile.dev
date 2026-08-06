@@ -1,0 +1,15 @@
+FROM ruby:4.0
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y apt-utils
+
+RUN apt-get install -y valgrind
+
+COPY Gemfile system/
+COPY Gemfile.lock system/
+COPY sqlite3.gemspec system/
+
+RUN gem install bundler -v "$(grep -A 1 "BUNDLED WITH" system/Gemfile.lock | tail -n 1)"
+RUN cd system && bundle install

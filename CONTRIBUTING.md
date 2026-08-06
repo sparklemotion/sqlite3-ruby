@@ -38,6 +38,24 @@ look for memory leaks and other memory errors:
 bundle exec rake compile test:valgrind
 ```
 
+If you can't install valgrind on your system, use the `sqlite3-dev` docker image, which contains
+valgrind:
+
+``` sh
+# build the image
+bundle exec rake docker:dev:build
+
+# run the test suite in a container
+bundle exec rake docker:dev:test
+
+# run the test suite under valgrind in a container
+bundle exec rake docker:dev:test:valgrind
+```
+
+Each `docker:dev:test` task builds the image first, then mounts your working copy at `/sqlite3` in
+the container. Note that the container compiles into the mounted working copy, so please re-run
+`rake compile` on your machine afterwards.
+
 Run the test suite in the debugger:
 
 ``` sh
