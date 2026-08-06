@@ -133,6 +133,13 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
     }
     if (argc > 1) {
         params = xcalloc((size_t)argc, sizeof(VALUE));
+        /* xcalloc'd memory is not a GC root. sqlite3val2rb allocates, so a GC
+         * triggered while converting a later argument can collect a Ruby object
+         * already stored in an earlier slot and reuse it. Register each slot as
+         * a root before filling any, so every stored VALUE is scanned. */
+        for (i = 0; i < argc; i++) {
+            rb_gc_register_address(&params[i]);
+        }
         for (i = 0; i < argc; i++) {
             params[i] = sqlite3val2rb(argv[i]);
         }
@@ -140,6 +147,9 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
     rb_sqlite3_protected_funcall(
         handler_instance, rb_intern("step"), argc, params, &exc_status);
     if (argc > 1) {
+        for (i = 0; i < argc; i++) {
+            rb_gc_unregister_address(&params[i]);
+        }
         xfree(params);
     }
 
