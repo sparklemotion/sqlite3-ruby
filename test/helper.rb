@@ -82,8 +82,7 @@ module SQLite3
         end
       when :verify
         if compaction_scheduled?
-          # https://alanwu.space/post/check-compaction/
-          GC.verify_compaction_references(expand_heap: true, toward: :empty)
+          gc_verify_compaction_references
           putc("!")
         end
         GC.start(full_mark: true)
@@ -100,6 +99,15 @@ module SQLite3
 
     def compaction_scheduled?
       TestCase.test_count % COMPACT_EVERY == 0
+    end
+
+    def gc_verify_compaction_references
+      # https://alanwu.space/post/check-compaction/
+      GC.verify_compaction_references(expand_heap: true, toward: :empty)
+    end
+
+    def skip_unless_compaction_supported
+      skip("GC compaction is unsupported on this runtime") unless GC.respond_to?(:verify_compaction_references)
     end
 
     def assert_nothing_raised
