@@ -1,10 +1,12 @@
 # from https://evilmartians.com/chronicles/rubocoping-with-legacy-bring-your-ruby-code-up-to-standard
 require:
   - standard
+  - rubocop-minitest
+
+plugins:
   - standard-custom
   - standard-performance
   - rubocop-performance
-  - rubocop-minitest
 
 inherit_gem:
   standard: config/base.yml

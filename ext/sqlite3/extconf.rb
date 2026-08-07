@@ -66,7 +66,7 @@ module Sqlite3
               "-DSQLITE_ENABLE_DBSTAT_VTAB=1"
             ]
             env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
-            recipe.configure_options += env.select { |k, v| ENV_ALLOWLIST.include?(k) }
+            recipe.configure_options += env.slice(*ENV_ALLOWLIST)
               .map { |key, value| "#{key}=#{value.strip}" }
           end
 
