@@ -113,10 +113,20 @@ rb_sqlite3_aggregate_instance_destroy(sqlite3_context *ctx)
     *inst_ptr = Qnil;
 }
 
-static void
-rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+struct rb_sqlite3_aggregator_step_args {
+    sqlite3_context *ctx;
+    int argc;
+    sqlite3_value **argv;
+};
+
+static void *
+rb_sqlite3_aggregator_step(void *gvl_context)
 {
-    VALUE inst = rb_sqlite3_aggregate_instance(ctx);
+    struct rb_sqlite3_aggregator_step_args *args = gvl_context;
+    int argc = args->argc;
+    sqlite3_value **argv = args->argv;
+
+    VALUE inst = rb_sqlite3_aggregate_instance(args->ctx);
     VALUE handler_instance = rb_iv_get(inst, "-handler_instance");
     VALUE *params = NULL;
     VALUE one_param;
@@ -124,7 +134,7 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
     int i;
 
     if (exc_status) {
-        return;
+        return NULL;
     }
 
     if (argc == 1) {
@@ -144,12 +154,22 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
     }
 
     rb_iv_set(inst, "-exc_status", INT2NUM(exc_status));
+
+    return NULL;
+}
+
+static void
+rb_sqlite3_aggregator_step_nogvl(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+{
+    struct rb_sqlite3_aggregator_step_args args = { ctx, argc, argv };
+    rb_thread_call_with_gvl(rb_sqlite3_aggregator_step, &args);
 }
 
 /* we assume that this function is only called once per execution context */
-static void
-rb_sqlite3_aggregator_final(sqlite3_context *ctx)
+static void *
+rb_sqlite3_aggregator_final(void *gvl_context)
 {
+    sqlite3_context *ctx = gvl_context;
     VALUE inst = rb_sqlite3_aggregate_instance(ctx);
     VALUE handler_instance = rb_iv_get(inst, "-handler_instance");
     int exc_status = NUM2INT(rb_iv_get(inst, "-exc_status"));
@@ -170,6 +190,14 @@ rb_sqlite3_aggregator_final(sqlite3_context *ctx)
     }
 
     rb_sqlite3_aggregate_instance_destroy(ctx);
+
+    return NULL;
+}
+
+static void
+rb_sqlite3_aggregator_final_nogvl(sqlite3_context *ctx)
+{
+    rb_thread_call_with_gvl(rb_sqlite3_aggregator_final, ctx);
 }
 
 /* call-seq: define_aggregator2(aggregator)
@@ -247,8 +275,8 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
                  SQLITE_UTF8,
                  (void *)aw,
                  NULL,
-                 rb_sqlite3_aggregator_step,
-                 rb_sqlite3_aggregator_final
+                 rb_sqlite3_aggregator_step_nogvl,
+                 rb_sqlite3_aggregator_final_nogvl
              );
 
     CHECK(ctx->db, status);
