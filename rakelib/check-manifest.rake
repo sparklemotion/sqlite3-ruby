@@ -15,6 +15,7 @@ task :check_manifest do
     doc
     gems
     issues
+    misc
     patches
     pkg
     ports
@@ -26,11 +27,13 @@ task :check_manifest do
   }
   ignore_files = %w[
     .editorconfig
+    .git
     .gitignore
     .rdoc_options
     .rubocop.yml
     Gemfile*
     Rakefile
+    SECURITY.md
     [a-z]*.{log,out}
     [0-9]*
     appveyor.yml

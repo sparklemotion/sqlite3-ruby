@@ -27,6 +27,71 @@ explicitly closed, it will be closed when it is GCed.
 will be closed/finalized when it is GCed.
 
 
+## Debugging memory issues
+
+Please install `valgrind` and `gdb` before you use the tools in this section.
+
+Run the test suite under valgrind and [`ruby_memcheck`](https://github.com/Shopify/ruby_memcheck) to
+look for memory leaks and other memory errors:
+
+``` sh
+bundle exec rake compile test:valgrind
+```
+
+If you can't install valgrind on your system, use the `sqlite3-dev` docker image, which contains
+valgrind:
+
+``` sh
+# build the image
+bundle exec rake docker:dev:build
+
+# run the test suite in a container
+bundle exec rake docker:dev:test
+
+# run the test suite under valgrind in a container
+bundle exec rake docker:dev:test:valgrind
+```
+
+Each `docker:dev:test` task builds the image first, then mounts your working copy at `/sqlite3` in
+the container. Note that the container compiles into the mounted working copy, so please re-run
+`rake compile` on your machine afterwards.
+
+Run the test suite in the debugger:
+
+``` sh
+bundle exec rake compile test:gdb
+```
+
+You can also run the test suite with a variety of GC behaviors, which is useful to localize some
+classes of memory bugs. Set the `SQLITE3_TEST_GC_LEVEL` environment variable (see `test/helper.rb`
+for more info). A more stressful level finds more bugs, but makes the suite slower:
+
+``` sh
+# ordinary GC behavior (the default)
+SQLITE3_TEST_GC_LEVEL=normal bundle exec rake compile test
+
+# minor GC after each test
+SQLITE3_TEST_GC_LEVEL=minor bundle exec rake compile test
+
+# major GC after each test
+SQLITE3_TEST_GC_LEVEL=major bundle exec rake compile test
+
+# major GC after each test, and GC compaction after every 20 tests
+SQLITE3_TEST_GC_LEVEL=compact bundle exec rake compile test
+
+# verify references after compaction, after every 20 tests
+# (see https://alanwu.space/post/check-compaction/)
+SQLITE3_TEST_GC_LEVEL=verify bundle exec rake compile test
+
+# run each test with GC "stress mode" on
+SQLITE3_TEST_GC_LEVEL=stress bundle exec rake compile test
+```
+
+The `compact` and `verify` levels fall back to `normal` on a platform that does not support GC
+compaction. The `stress` level makes the suite about 150 times slower, and it makes
+timing-sensitive tests unreliable.
+
+
 ## Building gems
 
 As a prerequisite please make sure you have `docker` correctly installed, so that you're able to cross-compile the native gems.
