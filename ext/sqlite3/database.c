@@ -70,11 +70,64 @@ close_or_discard_db(sqlite3RubyPtr ctx)
 }
 
 
+void
+rb_sqlite3_pin_array_and_contents(VALUE ary)
+{
+    long i;
+
+    if (NIL_P(ary) || !ary) { return; }
+
+    rb_gc_mark(ary);
+    for (i = 0; i < RARRAY_LEN(ary); i++) {
+        rb_gc_mark(RARRAY_AREF(ary, i));
+    }
+}
+
+static int
+pin_hash_value(VALUE UNUSED(key), VALUE value, VALUE UNUSED(arg))
+{
+    rb_gc_mark(value);
+    return ST_CONTINUE;
+}
+
+static void
+pin_hash_and_contents(VALUE hash)
+{
+    if (NIL_P(hash) || !hash) { return; }
+
+    rb_gc_mark(hash);
+    rb_hash_foreach(hash, pin_hash_value, 0);
+}
+
+/* Each wrapper also owns live aggregate instances, whose VALUEs sqlite keeps in
+ * its own aggregate contexts. */
+static void
+pin_aggregators(VALUE aggregators)
+{
+    long i;
+
+    rb_sqlite3_pin_array_and_contents(aggregators);
+
+    if (NIL_P(aggregators) || !aggregators) { return; }
+
+    for (i = 0; i < RARRAY_LEN(aggregators); i++) {
+        rb_sqlite3_aggregator_pin_instances(RARRAY_AREF(aggregators, i));
+    }
+}
+
 static void
 database_mark(void *ctx)
 {
     sqlite3RubyPtr c = (sqlite3RubyPtr)ctx;
+
+    /* sqlite holds raw pointers to these, so they must not move. */
     rb_gc_mark(c->busy_handler);
+    rb_gc_mark(c->trace_handler);
+    rb_gc_mark(c->authorizer);
+
+    rb_sqlite3_pin_array_and_contents(c->functions);
+    pin_hash_and_contents(c->collations);
+    pin_aggregators(c->aggregators);
 }
 
 static void
@@ -252,9 +305,8 @@ total_changes(VALUE self)
 static void
 tracefunc(void *data, const char *sql)
 {
-    VALUE self = (VALUE)data;
-    VALUE thing = rb_iv_get(self, "@tracefunc");
-    rb_funcall(thing, rb_intern("call"), 1, rb_str_new2(sql));
+    sqlite3RubyPtr ctx = (sqlite3RubyPtr)data;
+    rb_funcall(ctx->trace_handler, rb_intern("call"), 1, rb_str_new2(sql));
 }
 
 /* call-seq:
@@ -278,9 +330,9 @@ trace(int argc, VALUE *argv, VALUE self)
 
     if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
 
-    rb_iv_set(self, "@tracefunc", block);
+    RB_OBJ_WRITE(self, &ctx->trace_handler, block);
 
-    sqlite3_trace(ctx->db, NIL_P(block) ? NULL : tracefunc, (void *)self);
+    sqlite3_trace(ctx->db, NIL_P(block) ? NULL : tracefunc, (void *)ctx);
 
     return self;
 }
@@ -509,7 +561,7 @@ static VALUE
 define_function_with_flags(VALUE self, VALUE name, VALUE flags)
 {
     sqlite3RubyPtr ctx;
-    VALUE block;
+    VALUE block, functions;
     int status;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
@@ -530,7 +582,9 @@ define_function_with_flags(VALUE self, VALUE name, VALUE flags)
 
     CHECK(ctx->db, status);
 
-    rb_ary_push(rb_iv_get(self, "@functions"), block);
+    functions = rb_iv_get(self, "@functions");
+    rb_ary_push(functions, block);
+    RB_OBJ_WRITE(self, &ctx->functions, functions);
 
     return self;
 }
@@ -632,14 +686,13 @@ rb_sqlite3_auth(
     const char *_c,
     const char *_d)
 {
-    VALUE self   = (VALUE)ctx;
+    sqlite3RubyPtr db_ctx = (sqlite3RubyPtr)ctx;
     VALUE action = INT2NUM(_action);
     VALUE a      = _a ? rb_str_new2(_a) : Qnil;
     VALUE b      = _b ? rb_str_new2(_b) : Qnil;
     VALUE c      = _c ? rb_str_new2(_c) : Qnil;
     VALUE d      = _d ? rb_str_new2(_d) : Qnil;
-    VALUE callback = rb_iv_get(self, "@authorizer");
-    VALUE result = rb_funcall(callback, rb_intern("call"), 5, action, a, b, c, d);
+    VALUE result = rb_funcall(db_ctx->authorizer, rb_intern("call"), 5, action, a, b, c, d);
 
     if (T_FIXNUM == TYPE(result)) { return (int)NUM2INT(result); }
     if (Qtrue == result) { return SQLITE_OK; }
@@ -668,12 +721,12 @@ set_authorizer(VALUE self, VALUE authorizer)
     REQUIRE_OPEN_DB(ctx);
 
     status = sqlite3_set_authorizer(
-                 ctx->db, NIL_P(authorizer) ? NULL : rb_sqlite3_auth, (void *)self
+                 ctx->db, NIL_P(authorizer) ? NULL : rb_sqlite3_auth, (void *)ctx
              );
 
     CHECK(ctx->db, status);
 
-    rb_iv_set(self, "@authorizer", authorizer);
+    RB_OBJ_WRITE(self, &ctx->authorizer, authorizer);
 
     return self;
 }
@@ -756,6 +809,7 @@ static VALUE
 collation(VALUE self, VALUE name, VALUE comparator)
 {
     sqlite3RubyPtr ctx;
+    VALUE collations;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
 
@@ -766,8 +820,10 @@ collation(VALUE self, VALUE name, VALUE comparator)
               (void *)comparator,
               NIL_P(comparator) ? NULL : rb_comparator_func));
 
-    /* Make sure our comparator doesn't get garbage collected. */
-    rb_hash_aset(rb_iv_get(self, "@collations"), name, comparator);
+    /* sqlite holds a raw pointer to the comparator, so keep it alive and unmoved. */
+    collations = rb_iv_get(self, "@collations");
+    rb_hash_aset(collations, name, comparator);
+    RB_OBJ_WRITE(self, &ctx->collations, collations);
 
     return self;
 }

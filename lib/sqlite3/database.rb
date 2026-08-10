@@ -171,8 +171,6 @@ module SQLite3
         end
       end
 
-      @tracefunc = nil
-      @authorizer = nil
       @progress_handler = nil
       @collations = {}
       @functions = []
