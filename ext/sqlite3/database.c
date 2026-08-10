@@ -84,7 +84,7 @@ rb_sqlite3_pin_array_and_contents(VALUE ary)
 }
 
 static int
-pin_hash_value(VALUE key, VALUE value, VALUE arg)
+pin_hash_value(VALUE UNUSED(key), VALUE value, VALUE UNUSED(arg))
 {
     rb_gc_mark(value);
     return ST_CONTINUE;
@@ -330,7 +330,6 @@ trace(int argc, VALUE *argv, VALUE self)
 
     if (NIL_P(block) && rb_block_given_p()) { block = rb_block_proc(); }
 
-    rb_iv_set(self, "@tracefunc", block);
     RB_OBJ_WRITE(self, &ctx->trace_handler, block);
 
     sqlite3_trace(ctx->db, NIL_P(block) ? NULL : tracefunc, (void *)ctx);
@@ -727,7 +726,6 @@ set_authorizer(VALUE self, VALUE authorizer)
 
     CHECK(ctx->db, status);
 
-    rb_iv_set(self, "@authorizer", authorizer);
     RB_OBJ_WRITE(self, &ctx->authorizer, authorizer);
 
     return self;
