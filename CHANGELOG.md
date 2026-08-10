@@ -2,6 +2,12 @@
 
 ## next / unreleased
 
+### Fixed
+
+- Fix a leak where custom aggregate handler instances were never released, so a connection accumulated one instance per `GROUP BY` group per query for its lifetime. #722 @djmb
+- Fix GC compaction issues with custom functions, aggregates, collations, `#trace` and `#authorizer=`. These callbacks were registered with sqlite by passing a raw Ruby object pointer as user data; keeping the object reachable prevented collection but not relocation, after which sqlite held a stale address and the next call could raise `NoMethodError`, return a wrong result, or segfault. Affects applications that call `GC.compact` or run with `GC.auto_compact = true`. The equivalent issue in `#busy_handler` was fixed in #466. #723 @djmb
+
+
 ### Improved
 
 - When `Database.new` fails to open the database file, the underlying sqlite3 connection handle is now closed immediately instead of waiting for the garbage collector to clean it up. #719 @katafrakt
