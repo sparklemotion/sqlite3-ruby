@@ -55,6 +55,9 @@ module SQLite3
       assert_equal 1, @db.collations["foo"].calls.length
     end
 
+    # Passes on main as well. It guards the design rather than the fix: pinning
+    # every comparator makes the lifetime of @collations matter, so this rules
+    # out ever making it an append-only array.
     def test_replacing_a_collation_releases_the_previous_comparator
       3.times { @db.collation "foo", ReleasableComparator.new }
       GC.start(full_mark: true, immediate_sweep: true)
