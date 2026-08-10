@@ -43,7 +43,11 @@ module SQLite3
     def test_collation_does_not_use_moved_comparator_after_gc_compaction
       skip_unless_compaction_supported
 
-      @db.collation "foo", Comparator.new
+      # Registered on another thread so that no reference to the comparator is
+      # left on this thread's machine stack, where conservative scanning would
+      # pin it. A pinned comparator never moves and the test passes without
+      # exercising the fix.
+      Thread.new { @db.collation "foo", Comparator.new }.join
 
       gc_verify_compaction_references
 
