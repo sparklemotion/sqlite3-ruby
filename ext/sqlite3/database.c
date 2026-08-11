@@ -456,7 +456,9 @@ sqlite3val2rb(sqlite3_value *val)
             rb_val = rb_float_new(sqlite3_value_double(val));
             break;
         case SQLITE_TEXT: {
-            rb_val = rb_utf8_str_new_cstr((const char *)sqlite3_value_text(val));
+            const char *text = (const char *)sqlite3_value_text(val);
+            int len = sqlite3_value_bytes(val);
+            rb_val = rb_utf8_str_new(text, len);
             rb_obj_freeze(rb_val);
             break;
         }

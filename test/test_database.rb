@@ -508,6 +508,19 @@ module SQLite3
       assert_equal [blob, blob.length, 21], called_with
     end
 
+    def test_call_func_text_with_embedded_nul
+      called_with = nil
+      @db.define_function("hello") do |a|
+        called_with = a
+        nil
+      end
+      @db.execute("create table texts ( text_value text )")
+      @db.execute("insert into texts ( text_value ) values ( ? )", ["abc\0def"])
+      @db.execute("select hello(text_value) from texts")
+      assert_equal "abc\0def", called_with
+      assert_equal 7, called_with.bytesize
+    end
+
     def test_function_return
       @db.define_function("hello") { |a| 10 }
       assert_equal [10], @db.execute("select hello('world')").first
