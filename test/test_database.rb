@@ -21,6 +21,10 @@ module SQLite3
       @db.close unless @db.closed?
     end
 
+    def native_utf16_encoding
+      ([1].pack("I") == [1].pack("N")) ? Encoding::UTF_16BE : Encoding::UTF_16LE
+    end
+
     def mock_database_load_extension_internal(db)
       class << db
         attr_reader :load_extension_internal_path
@@ -269,13 +273,49 @@ module SQLite3
     end
 
     def test_new_with_options
-      # determine if Ruby is running on Big Endian platform
-      utf16 = ([1].pack("I") == [1].pack("N")) ? "UTF-16BE" : "UTF-16LE"
-
-      db = SQLite3::Database.new(":memory:".encode(utf16), utf16: true)
+      db = SQLite3::Database.new(":memory:".encode(native_utf16_encoding), utf16: true)
       assert_instance_of(SQLite3::Database, db)
     ensure
       db&.close
+    end
+
+    def test_new_with_filename_containing_null_byte_raises_and_creates_no_file
+      Dir.mktmpdir do |dir|
+        assert_raises(ArgumentError) { SQLite3::Database.new("#{dir}/prefix\0suffix.db") }
+        assert_empty Dir.children(dir)
+      end
+    end
+
+    def test_new_with_utf16_filename_containing_null_char_raises_and_creates_no_file
+      Dir.mktmpdir do |dir|
+        assert_raises(ArgumentError) { SQLite3::Database.new("#{dir}/prefix\0suffix.db".encode(native_utf16_encoding)) }
+        assert_empty Dir.children(dir)
+      end
+    end
+
+    def test_new_with_untagged_utf16_filename_and_utf16_option
+      Dir.mktmpdir do |dir|
+        untagged = "#{dir}/test.db".encode(native_utf16_encoding).force_encoding(Encoding::BINARY)
+        db = SQLite3::Database.new(untagged, utf16: true)
+        assert_path_exists("#{dir}/test.db")
+      ensure
+        db&.close
+      end
+    end
+
+    def test_new_with_untagged_utf16_filename_containing_null_char_raises_and_creates_no_file
+      Dir.mktmpdir do |dir|
+        untagged = "#{dir}/prefix\0suffix.db".encode(native_utf16_encoding).force_encoding(Encoding::BINARY)
+        assert_raises(ArgumentError) { SQLite3::Database.new(untagged, utf16: true) }
+        assert_empty Dir.children(dir)
+      end
+    end
+
+    def test_new_with_vfs_name_containing_null_byte_raises
+      Dir.mktmpdir do |dir|
+        assert_raises(ArgumentError) { SQLite3::Database.new("#{dir}/test.db", {}, "prefix\0suffix") }
+        assert_empty Dir.children(dir)
+      end
     end
 
     def test_close

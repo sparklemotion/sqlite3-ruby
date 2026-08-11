@@ -167,7 +167,21 @@ allocate(VALUE klass)
 static char *
 utf16_string_value_ptr(VALUE str)
 {
+    VALUE utf16str, codepoints;
+
     StringValue(str);
+
+    utf16str = rb_str_dup(str);
+    if (!UTF16_LE_P(utf16str) && !UTF16_BE_P(utf16str)) {
+        /* an untagged string (the utf16 option) holds native-byte-order UTF-16 */
+        const union { uint16_t u16; uint8_t u8[2]; } native = { 1 };
+        rb_enc_associate_index(utf16str, rb_enc_find_index(native.u8[0] ? "UTF-16LE" : "UTF-16BE"));
+    }
+    codepoints = rb_funcall(utf16str, rb_intern("codepoints"), 0);
+    if (RTEST(rb_funcall(codepoints, rb_intern("include?"), 1, INT2FIX(0)))) {
+        rb_raise(rb_eArgError, "string contains null char");
+    }
+
     rb_str_buf_cat(str, "\x00\x00", 2L);
     return RSTRING_PTR(str);
 }
@@ -200,10 +214,10 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
 
     flags = NUM2INT(mode);
     status = sqlite3_open_v2(
-                 StringValuePtr(file),
+                 StringValueCStr(file),
                  &ctx->db,
                  flags,
-                 NIL_P(zvfs) ? NULL : StringValuePtr(zvfs)
+                 NIL_P(zvfs) ? NULL : StringValueCStr(zvfs)
              );
 
     if (status != SQLITE_OK) {
