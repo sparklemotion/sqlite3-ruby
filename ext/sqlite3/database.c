@@ -526,24 +526,46 @@ set_sqlite3_func_result(sqlite3_context *ctx, VALUE result)
     }
 }
 
-static void
-rb_sqlite3_func(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+typedef struct {
+    sqlite3_context *ctx;
+    int argc;
+    sqlite3_value **argv;
+} rb_sqlite3_func_args_t;
+
+static VALUE
+rb_sqlite3_func_protected(VALUE func_args_value)
 {
-    VALUE callable = (VALUE)sqlite3_user_data(ctx);
-    VALUE params = rb_ary_new2(argc);
+    rb_sqlite3_func_args_t *args = (rb_sqlite3_func_args_t *)func_args_value;
+    VALUE callable = (VALUE)sqlite3_user_data(args->ctx);
+    VALUE params = rb_ary_new2(args->argc);
     VALUE result;
     int i;
 
-    if (argc > 0) {
-        for (i = 0; i < argc; i++) {
-            VALUE param = sqlite3val2rb(argv[i]);
-            rb_ary_push(params, param);
-        }
+    for (i = 0; i < args->argc; i++) {
+        VALUE param = sqlite3val2rb(args->argv[i]);
+        rb_ary_push(params, param);
     }
 
     result = rb_apply(callable, rb_intern("call"), params);
 
-    set_sqlite3_func_result(ctx, result);
+    set_sqlite3_func_result(args->ctx, result);
+
+    return Qnil;
+}
+
+static void
+rb_sqlite3_func(sqlite3_context *ctx, int argc, sqlite3_value **argv)
+{
+    rb_sqlite3_func_args_t args = { .ctx = ctx, .argc = argc, .argv = argv };
+    int exc_status;
+
+    rb_protect(rb_sqlite3_func_protected, (VALUE)&args, &exc_status);
+
+    if (exc_status) {
+        /* the user should never see this message, because Statement#step will
+         * re-raise the exception still in rb_errinfo */
+        sqlite3_result_error(ctx, "Ruby Exception occurred", -1);
+    }
 }
 
 #ifndef HAVE_RB_PROC_ARITY
