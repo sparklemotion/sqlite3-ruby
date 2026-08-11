@@ -1,11 +1,19 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.9.6 / 2026-08-11
+
+### Security / Stability
+
+- Fix a garbage collection bug where the argument array passed to a custom aggregate function's `step` was not visible to the GC, so arguments could be collected mid-conversion when the aggregate takes two or more arguments, corrupting the values passed to `step` or crashing the process. See [GHSA-mwm8-39rw-8826](https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-mwm8-39rw-8826) for more information. #733 @jeremy
 
 ### Fixed
 
 - Fix a leak where custom aggregate handler instances were never released, so a connection accumulated one instance per `GROUP BY` group per query for its lifetime. #722 @djmb
 - Fix GC compaction issues with custom functions, aggregates, collations, `#trace` and `#authorizer=`. These callbacks were registered with sqlite by passing a raw Ruby object pointer as user data; keeping the object reachable prevented collection but not relocation, after which sqlite held a stale address and the next call could raise `NoMethodError`, return a wrong result, or segfault. Affects applications that call `GC.compact` or run with `GC.auto_compact = true`. The equivalent issue in `#busy_handler` was fixed in #466. #723 @djmb
+- Fix the private methods `Database#open_v2` and `#open16` silently replacing a live connection and leaking the previous connection handle when invoked via `send` on an open database. They now raise `SQLite3::Exception`. #729 @flavorjones
+- Fix TEXT values containing an embedded NUL byte being truncated at the first NUL when passed as arguments to functions created with `Database#define_function`. #730 @flavorjones
+- Fix an exception raised inside a `Database#define_function` block leaving the connection's sqlite mutex held, which deadlocked any other thread that later used the connection. The exception now propagates to the caller and the connection remains usable. #731 @flavorjones
+- `Database.new` now raises `ArgumentError` when the filename or VFS name contains an embedded NUL byte (or an embedded 0x0000 code unit in a UTF-16 filename), instead of silently opening a path truncated at the NUL. #732 @flavorjones
 
 
 ### Improved
