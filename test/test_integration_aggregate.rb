@@ -427,4 +427,41 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     values = stmt.step
     assert_equal 33, values[0]
   end
+
+  # GHSA-mwm8-39rw-8826: rb_sqlite3_aggregator_step converts the arguments into
+  # an xcalloc'd VALUE array that is not a GC root. sqlite3val2rb allocates, so a
+  # GC while converting a later argument could collect a Ruby object already
+  # stored in an earlier slot and hand the step block a wrong or freed object.
+  # Needs arity >= 2 (the arity 1 branch uses a pinned stack local). Large column
+  # values make every conversion allocate, so the window is reachable.
+  def test_multi_argument_step_arguments_survive_gc
+    @db.execute("create table wide ( a text, b text )")
+    filler = "p" * 2000
+    @db.transaction do
+      stmt = @db.prepare("insert into wide values ( ?, ? )")
+      200.times { |i| stmt.execute("a-#{i}-#{filler}", "b-#{i}-#{filler}") }
+      stmt.close
+    end
+
+    seen = 0
+    bad = []
+    @db.create_aggregate("checkcols", 2) do
+      step do |ctx, x, y|
+        seen += 1
+        bad << x unless x.is_a?(String) && x.start_with?("a-")
+        bad << y unless y.is_a?(String) && y.start_with?("b-")
+      end
+      finalize { |ctx| ctx.result = seen }
+    end
+
+    begin
+      GC.stress = true
+      @db.get_first_value("select checkcols(a, b) from wide")
+    ensure
+      GC.stress = false
+    end
+
+    assert_equal 200, seen
+    assert_empty bad, "aggregate step received corrupted arguments after GC"
+  end
 end

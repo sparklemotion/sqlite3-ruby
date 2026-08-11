@@ -119,6 +119,7 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
     VALUE inst = rb_sqlite3_aggregate_instance(ctx);
     VALUE handler_instance = rb_iv_get(inst, "-handler_instance");
     VALUE *params = NULL;
+    VALUE params_handle = 0;
     VALUE one_param;
     int exc_status = NUM2INT(rb_iv_get(inst, "-exc_status"));
     int i;
@@ -132,7 +133,9 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
         params = &one_param;
     }
     if (argc > 1) {
-        params = xcalloc((size_t)argc, sizeof(VALUE));
+        /* ALLOCV memory is conservatively marked, so stored VALUEs survive a
+         * GC raised by a later sqlite3val2rb call. */
+        params = ALLOCV_N(VALUE, params_handle, argc);
         for (i = 0; i < argc; i++) {
             params[i] = sqlite3val2rb(argv[i]);
         }
@@ -140,7 +143,7 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
     rb_sqlite3_protected_funcall(
         handler_instance, rb_intern("step"), argc, params, &exc_status);
     if (argc > 1) {
-        xfree(params);
+        ALLOCV_END(params_handle);
     }
 
     rb_iv_set(inst, "-exc_status", INT2NUM(exc_status));
