@@ -10,6 +10,10 @@
   if(!_ctxt->db) \
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
 
+#define REQUIRE_CLOSED_DB(_ctxt) \
+  if(_ctxt->db) \
+    rb_raise(rb_path2class("SQLite3::Exception"), "cannot open a database that is already open");
+
 VALUE cSqlite3Database;
 
 /* See adr/2024-09-fork-safety.md */
@@ -188,6 +192,7 @@ rb_sqlite3_open_v2(VALUE self, VALUE file, VALUE mode, VALUE zvfs)
     int flags;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_CLOSED_DB(ctx);
 
 #if defined TAINTING_SUPPORT
 #  if defined StringValueCStr
@@ -988,6 +993,7 @@ rb_sqlite3_open16(VALUE self, VALUE file)
     sqlite3RubyPtr ctx;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_CLOSED_DB(ctx);
 
 #if defined TAINTING_SUPPORT
 #if defined StringValueCStr
