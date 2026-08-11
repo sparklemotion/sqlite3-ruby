@@ -520,6 +520,45 @@ module SQLite3
       end
     end
 
+    def test_function_raise_propagates_and_connection_remains_usable
+      @db.define_function("boom") { |a| raise "boom: #{a}" }
+
+      error = assert_raise(RuntimeError) { @db.execute("select boom(1)") }
+      assert_equal("boom: 1", error.message)
+
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_function_raise_does_not_deadlock_other_threads_using_the_connection
+      skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
+      skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
+
+      @db.close
+      read, write = IO.pipe
+      old_stderr, $stderr = $stderr, StringIO.new
+      pid = Process.fork do
+        read.close
+        db = SQLite3::Database.new(":memory:")
+        db.define_function("boom") { |a| raise "boom" }
+        begin
+          db.execute("select boom(1)")
+        rescue RuntimeError
+        end
+        Thread.new { db.execute("select 1") }.join
+        write.write("ok")
+        exit!
+      end
+      $stderr = old_stderr
+      write.close
+
+      result = IO.select([read], nil, nil, 10) && read.gets
+      Process.kill(:KILL, pid) unless result
+      Process.waitpid(pid)
+      read.close
+
+      assert_equal("ok", result, "second thread deadlocked on the connection after a function raised")
+    end
+
     def test_function_gc_segfault
       @db.create_function("bug", -1) { |func, *values| func.result = values.join }
       # With a lot of data and a lot of threads, try to induce a GC segfault.
