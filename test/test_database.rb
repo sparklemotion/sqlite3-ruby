@@ -66,6 +66,18 @@ module SQLite3
       assert_raises { SQLite3::Database.new 1 } # rubocop:disable Minitest/UnspecifiedException
     end
 
+    def test_open_v2_raises_when_database_is_already_open
+      assert_raise(SQLite3::Exception) do
+        db.send(:open_v2, ":memory:", Constants::Open::READWRITE | Constants::Open::CREATE, nil)
+      end
+    end
+
+    def test_open16_raises_when_database_is_already_open
+      assert_raise(SQLite3::Exception) do
+        db.send(:open16, ":memory:".encode(Encoding::UTF_16LE))
+      end
+    end
+
     def test_db_filename
       tf = nil
       assert_equal "", @db.filename("main")
