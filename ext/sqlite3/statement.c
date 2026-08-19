@@ -248,7 +248,8 @@ bind_param(VALUE self, VALUE key, VALUE value)
     switch (TYPE(value)) {
         case T_STRING:
             if (CLASS_OF(value) == cSqlite3Blob
-                    || rb_enc_get_index(value) == rb_ascii8bit_encindex()
+                    || (rb_enc_get_index(value) == rb_ascii8bit_encindex()
+                        && !rb_enc_str_asciionly_p(value))
                ) {
                 status = sqlite3_bind_blob(
                              ctx->st,
