@@ -15,4 +15,3 @@ pkg/
 ports/
 tmp/
 vendor/
-ext/sqlite3/Makefile
