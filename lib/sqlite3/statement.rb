@@ -47,14 +47,14 @@ module SQLite3
     # - Integer                          → INTEGER (or REAL when outside the signed int64 range)
     # - Float                            → REAL
     # - SQLite3::Blob                    → BLOB
-    # - String with Encoding::BINARY
-    #   (a.k.a. ASCII-8BIT)              → BLOB
+    # - String with Encoding::ASCII_8BIT
+    #   (a.k.a. BINARY)                  → BLOB
     # - String with Encoding::UTF_16LE
     #   or Encoding::UTF_16BE            → TEXT (bound as UTF-16)
     # - String (all other encodings)     → TEXT (re-encoded to UTF-8 if needed)
     # - Any other type                   → raises RuntimeError
     #
-    # Note: a String with Encoding::BINARY (ASCII-8BIT) is always bound as a
+    # Note: a String with Encoding::ASCII_8BIT (BINARY) is always bound as a
     # BLOB, even when its bytes are all valid ASCII. If you want such a string
     # compared or stored as TEXT, re-encode it before binding:
     #
