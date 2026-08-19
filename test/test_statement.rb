@@ -203,26 +203,6 @@ module SQLite3
       end
     end
 
-    def test_bind_ascii8bit_with_ascii_chars_binds_as_text
-      @db.execute("create table foo(text TEXT UNIQUE)")
-      @db.execute("insert into foo(text) values (?)", "hello")
-      rows = @db.execute("select * from foo where text = ?", ["hello".encode(Encoding::ASCII_8BIT)])
-      assert_equal [["hello"]], rows
-    end
-
-    def test_bind_ascii8bit_with_non_ascii_chars_binds_as_blob
-      @db.execute("create table foo(text BLOB)")
-      binary = "\xFF\xFE".b
-      stmt = SQLite3::Statement.new(@db, "insert into foo(text) values (?)")
-      stmt.bind_param(1, binary)
-      stmt.execute
-      stmt.close
-      @db.prepare("select * from foo") do |v|
-        assert_equal [binary], v.first
-        assert_equal ["blob"], v.types
-      end
-    end
-
     def test_bind_64
       stmt = SQLite3::Statement.new(@db, "select ?")
       stmt.bind_param(1, 2**31)

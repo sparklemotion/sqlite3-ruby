@@ -216,6 +216,19 @@ step(VALUE self)
  * Fixnum, it is treated as an index for a positional placeholder.
  * Otherwise it is used as the name of the placeholder to bind to.
  *
+ * Type mapping from Ruby to SQLite3:
+ * - +nil+        → NULL
+ * - Integer      → INTEGER
+ * - Float        → REAL
+ * - SQLite3::Blob → BLOB
+ * - String with Encoding::ASCII_8BIT (a.k.a. BINARY) → BLOB
+ * - String (all other encodings) → TEXT (re-encoded as UTF-8 if necessary)
+ *
+ * Note: if you have a string with only ASCII characters but ASCII-8BIT
+ * encoding and want it bound as TEXT rather than BLOB, re-encode it first:
+ *
+ *   stmt.bind_param(1, my_binary_str.encode(Encoding::UTF_8))
+ *
  * See also #bind_params.
  */
 static VALUE
@@ -248,8 +261,7 @@ bind_param(VALUE self, VALUE key, VALUE value)
     switch (TYPE(value)) {
         case T_STRING:
             if (CLASS_OF(value) == cSqlite3Blob
-                    || (rb_enc_get_index(value) == rb_ascii8bit_encindex()
-                        && !rb_enc_str_asciionly_p(value))
+                    || rb_enc_get_index(value) == rb_ascii8bit_encindex()
                ) {
                 status = sqlite3_bind_blob(
                              ctx->st,

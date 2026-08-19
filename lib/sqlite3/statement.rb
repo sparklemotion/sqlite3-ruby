@@ -42,6 +42,21 @@ module SQLite3
     # See Database#execute for a description of the valid placeholder
     # syntaxes.
     #
+    # Type mapping from Ruby to SQLite3:
+    # - +nil+                            → NULL
+    # - Integer                          → INTEGER
+    # - Float                            → REAL
+    # - SQLite3::Blob                    → BLOB
+    # - String with Encoding::BINARY
+    #   (a.k.a. ASCII-8BIT)              → BLOB
+    # - String (all other encodings)     → TEXT (re-encoded as UTF-8 if needed)
+    #
+    # Note: a String with Encoding::BINARY (ASCII-8BIT) is always bound as a
+    # BLOB, even when its bytes are all valid ASCII. If you want such a string
+    # compared or stored as TEXT, re-encode it before binding:
+    #
+    #   stmt.bind_params(my_binary_str.encode(Encoding::UTF_8))
+    #
     # Example:
     #
     #   stmt = db.prepare( "select * from table where a=? and b=?" )
