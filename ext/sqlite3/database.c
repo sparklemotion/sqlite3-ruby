@@ -417,8 +417,10 @@ rb_sqlite3_statement_timeout(void *context)
     clock_gettime(CLOCK_MONOTONIC, &currentTime);
 
     if (!timespecisset(&ctx->stmt_deadline)) {
-        // Set stmt_deadline if not already set
-        ctx->stmt_deadline = currentTime;
+        struct timespec timeout;
+        timeout.tv_sec = ctx->stmt_timeout / 1000;
+        timeout.tv_nsec = (ctx->stmt_timeout % 1000) * 1000000L;
+        timespecadd(&currentTime, &timeout, &ctx->stmt_deadline);
     } else if (timespecafter(&currentTime, &ctx->stmt_deadline)) {
         return 1;
     }
