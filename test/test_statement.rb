@@ -203,6 +203,23 @@ module SQLite3
       end
     end
 
+    def test_decltype_is_utf8
+      @db.execute %(create table foo(a integer, b "VARCHÄR(255)"))
+      @db.prepare("select a, b from foo") do |stmt|
+        assert_equal ["INTEGER", "VARCHÄR(255)"], [stmt.column_decltype(0), stmt.column_decltype(1)]
+        assert_equal [Encoding::UTF_8, Encoding::UTF_8],
+          [stmt.column_decltype(0).encoding, stmt.column_decltype(1).encoding]
+      end
+    end
+
+    def test_types_are_utf8_and_downcased_as_ascii
+      @db.execute %(create table foo(a integer, b "VARCHÄR(255)"))
+      @db.prepare("select a, b from foo") do |stmt|
+        assert_equal ["integer", "varchÄr(255)"], stmt.types
+        assert_equal [Encoding::UTF_8, Encoding::UTF_8], stmt.types.map(&:encoding)
+      end
+    end
+
     def test_bind_64
       stmt = SQLite3::Statement.new(@db, "select ?")
       stmt.bind_param(1, 2**31)

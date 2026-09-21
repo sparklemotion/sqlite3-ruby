@@ -413,6 +413,33 @@ interned_utf8_cstr(const char *str)
 }
 #endif
 
+/* Like interned_utf8_cstr, but ASCII-downcases as it copies. */
+static VALUE
+interned_downcased_utf8_cstr(const char *str)
+{
+#if HAVE_RB_ENC_INTERNED_STR
+    VALUE tmp, ret;
+    char *buf;
+    size_t i, len;
+
+    len = strlen(str);
+    buf = ALLOCV_N(char, tmp, len);
+
+    for (i = 0; i < len; i++) {
+        unsigned char c = (unsigned char)str[i];
+        buf[i] = (char)((c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c);
+    }
+
+    ret = rb_enc_interned_str(buf, (long)len, rb_utf8_encoding());
+    ALLOCV_END(tmp);
+    return ret;
+#else
+    VALUE rb_str = rb_funcall(rb_utf8_str_new_cstr(str), rb_intern("downcase"), 1,
+                              ID2SYM(rb_intern("ascii")));
+    return rb_funcall(rb_str, rb_intern("-@"), 0);
+#endif
+}
+
 /* call-seq: stmt.column_name(index)
  *
  * Get the column name at +index+.  0 based.
@@ -455,7 +482,24 @@ column_decltype(VALUE self, VALUE index)
 
     name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
 
-    if (name) { return rb_str_new2(name); }
+    if (name) { return rb_utf8_str_new_cstr(name); }
+    return Qnil;
+}
+
+static VALUE
+column_decltype_downcased(VALUE self, VALUE index)
+{
+    sqlite3StmtRubyPtr ctx;
+    const char *name;
+
+    TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+
+    REQUIRE_LIVE_DB(ctx);
+    REQUIRE_OPEN_STMT(ctx);
+
+    name = sqlite3_column_decltype(ctx->st, (int)NUM2INT(index));
+
+    if (name) { return interned_downcased_utf8_cstr(name); }
     return Qnil;
 }
 
@@ -748,6 +792,7 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "memused", memused, 0);
 #endif
 
+    rb_define_private_method(cSqlite3Statement, "column_decltype_downcased", column_decltype_downcased, 1);
     rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
     rb_define_private_method(cSqlite3Statement, "stats_as_hash", stats_as_hash, 0);
     rb_define_private_method(cSqlite3Statement, "stat_for", stat_for, 1);
