@@ -200,8 +200,7 @@ module SQLite3
         column_name column
       end.freeze
       @types = Array.new(column_count) do |column|
-        val = column_decltype(column)
-        val&.downcase
+        column_decltype_downcased(column)
       end.freeze
     end
   end
