@@ -24,6 +24,12 @@ module SQLite3
         assert_equal list[hash["a"] - 1], hash["b"]
       end
       rs.close
+
+      rs = @db.prepare("select * from foo").execute
+      rs.each_hash.to_a.each do |hash| # each_hash without block, to_a confirms enum
+        assert_equal list[hash["a"] - 1], hash["b"]
+      end
+      rs.close
     end
 
     def test_next_hash
