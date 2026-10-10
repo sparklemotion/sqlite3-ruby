@@ -21,6 +21,12 @@ class IntegrationRactorTestCase < SQLite3::TestCase
   def setup
     super
     skip("Requires a Ractor-safe build") unless SQLite3.ractor_safe?
+
+    # valgrind follows the child processes, and a Ruby process that has created a Ractor can't
+    # exit cleanly under it: with RUBY_FREE_AT_EXIT, Ruby 4.0.7 reads freed memory in
+    # ractor_free (RUBY_FREE_AT_EXIT=1 valgrind ruby -e 'Ractor.new { 1 }.value'); without it,
+    # everything Ruby allocated is reported as leaked.
+    skip("Ractor processes can't exit cleanly under valgrind") if i_am_running_in_valgrind
   end
 
   def test_ractor_safe
@@ -115,12 +121,7 @@ class IntegrationRactorTestCase < SQLite3::TestCase
     load_path = $LOAD_PATH.select { |dir| File.directory?(dir) }.flat_map { |dir| ["-I", dir] }
     cmd = [RbConfig.ruby, *load_path, "-e", PRELUDE + script]
 
-    # RUBY_FREE_AT_EXIT (set by the valgrind task) makes Ruby itself read freed memory while
-    # tearing down a process that has created a Ractor, so it's unset for these child processes.
-    # Reproduce with: RUBY_FREE_AT_EXIT=1 valgrind ruby -e 'Ractor.new { 1 }.value'
-    env = {"RUBY_FREE_AT_EXIT" => nil}
-
-    Open3.popen3(env, *cmd) do |stdin, out, err, wait_thr|
+    Open3.popen3(*cmd) do |stdin, out, err, wait_thr|
       stdin.close
       out_reader = Thread.new { out.read }
       err_reader = Thread.new { err.read }
