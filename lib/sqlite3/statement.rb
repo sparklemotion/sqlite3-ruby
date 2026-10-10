@@ -198,11 +198,10 @@ module SQLite3
     def get_metadata
       @columns = Array.new(column_count) do |column|
         column_name column
-      end
+      end.freeze
       @types = Array.new(column_count) do |column|
-        val = column_decltype(column)
-        val&.downcase
-      end
+        column_decltype_downcased(column)
+      end.freeze
     end
   end
 end
