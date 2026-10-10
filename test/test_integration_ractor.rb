@@ -94,6 +94,9 @@ class IntegrationRactorTestCase < SQLite3::TestCase
   end
 
   def test_database_cannot_be_sent_to_another_ractor
+    # Before ruby/ruby@ce47ee00, sending a T_DATA object made a shallow copy instead of raising
+    skip("Requires Ruby 3.3 or later") if RUBY_VERSION < "3.3"
+
     assert_ractor_script(<<~RUBY, "Ractor::Error")
       db = SQLite3::Database.new(":memory:")
       r = Ractor.new { Ractor.receive }
@@ -112,17 +115,23 @@ class IntegrationRactorTestCase < SQLite3::TestCase
     load_path = $LOAD_PATH.select { |dir| File.directory?(dir) }.flat_map { |dir| ["-I", dir] }
     cmd = [RbConfig.ruby, *load_path, "-e", PRELUDE + script]
 
-    Open3.popen2e(*cmd) do |stdin, out, wait_thr|
+    # RUBY_FREE_AT_EXIT (set by the valgrind task) makes Ruby itself read freed memory while
+    # tearing down a process that has created a Ractor, so it's unset for these child processes.
+    # Reproduce with: RUBY_FREE_AT_EXIT=1 valgrind ruby -e 'Ractor.new { 1 }.value'
+    env = {"RUBY_FREE_AT_EXIT" => nil}
+
+    Open3.popen3(env, *cmd) do |stdin, out, err, wait_thr|
       stdin.close
-      reader = Thread.new { out.read }
+      out_reader = Thread.new { out.read }
+      err_reader = Thread.new { err.read }
 
       unless wait_thr.join(TIMEOUT)
         Process.kill(:KILL, wait_thr.pid)
         flunk "Ractor script did not finish within #{TIMEOUT}s:\n#{script}"
       end
 
-      output = reader.value
-      assert_predicate wait_thr.value, :success?, "Ractor script failed:\n#{output}"
+      output = out_reader.value
+      assert_predicate wait_thr.value, :success?, "Ractor script failed:\n#{output}#{err_reader.value}"
       assert_equal expected, output
     end
   end
