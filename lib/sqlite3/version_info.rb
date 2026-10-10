@@ -1,6 +1,5 @@
 module SQLite3
-  # a hash of descriptive metadata about the current version of the sqlite3 gem
-  VERSION_INFO = {
+  version_info = {
     ruby: RUBY_DESCRIPTION,
     gem: {
       version: SQLite3::VERSION
@@ -14,4 +13,7 @@ module SQLite3
       threadsafe: SQLite3.threadsafe?
     }
   }
+  # a hash of descriptive metadata about the current version of the sqlite3 gem,
+  # deeply frozen so that it can be read from any Ractor
+  VERSION_INFO = defined?(Ractor.make_shareable) ? Ractor.make_shareable(version_info) : version_info.freeze
 end
