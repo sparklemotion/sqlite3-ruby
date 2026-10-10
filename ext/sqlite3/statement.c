@@ -534,34 +534,30 @@ static VALUE stmt_stat_symbols[stmt_stat_sym_last];
 static void
 setup_stmt_stat_symbols(void)
 {
-    if (stmt_stat_symbols[0] == 0) {
 #define S(s) stmt_stat_symbols[stmt_stat_sym_##s] = ID2SYM(rb_intern_const(#s))
-        S(fullscan_steps);
-        S(sorts);
-        S(autoindexes);
-        S(vm_steps);
+    S(fullscan_steps);
+    S(sorts);
+    S(autoindexes);
+    S(vm_steps);
 #ifdef SQLITE_STMTSTATUS_REPREPARE
-        S(reprepares);
+    S(reprepares);
 #endif
 #ifdef SQLITE_STMTSTATUS_RUN
-        S(runs);
+    S(runs);
 #endif
 #ifdef SQLITE_STMTSTATUS_FILTER_MISS
-        S(filter_misses);
+    S(filter_misses);
 #endif
 #ifdef SQLITE_STMTSTATUS_FILTER_HIT
-        S(filter_hits);
+    S(filter_hits);
 #endif
 #undef S
-    }
 }
 
 static size_t
 stmt_stat_internal(VALUE hash_or_sym, sqlite3_stmt *stmt)
 {
     VALUE hash = Qnil, key = Qnil;
-
-    setup_stmt_stat_symbols();
 
     if (RB_TYPE_P(hash_or_sym, T_HASH)) {
         hash = hash_or_sym;
@@ -725,6 +721,9 @@ void
 init_sqlite3_statement(void)
 {
     cSqlite3Statement = rb_define_class_under(mSqlite3, "Statement", rb_cObject);
+
+    /* populate eagerly: a lazy fill would race when the extension is used from multiple Ractors */
+    setup_stmt_stat_symbols();
 
     rb_define_alloc_func(cSqlite3Statement, allocate);
     rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);

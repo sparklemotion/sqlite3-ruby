@@ -180,7 +180,7 @@ module SQLite3
 
       initialize_extensions(options[:extensions])
 
-      ForkSafety.track(self)
+      ForkSafety.track(self) if !defined?(Ractor) || (Ractor.main == Ractor.current)
 
       if block_given?
         begin
@@ -592,22 +592,15 @@ module SQLite3
     def define_aggregator(name, aggregator)
       # Previously, this has been implemented in C. Now this is just yet
       # another compatibility shim
+      #
+      # The template and name are captured in closures rather than class
+      # instance variables, which can't be set outside the main Ractor.
       proxy = Class.new do
-        @template = aggregator
-        @name = name
+        define_singleton_method(:template) { aggregator }
+        define_singleton_method(:name) { name }
 
-        def self.template
-          @template
-        end
-
-        def self.name
-          @name
-        end
-
-        def self.arity
-          # this is what sqlite3_obj_method_arity did before
-          @template.method(:step).arity
-        end
+        # this is what sqlite3_obj_method_arity did before
+        define_singleton_method(:arity) { aggregator.method(:step).arity }
 
         def initialize
           @klass = self.class.template.clone
