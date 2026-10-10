@@ -1,5 +1,17 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.54.0](https://www.sqlite.org/releaselog/3_54_0.html) (from v3.53.2). #750 @flavorjones
+
+  Notable changes in this version include:
+  - `ALTER TABLE` now raises an error when adding, renaming, or dropping a column named `ROWID`, `_ROWID_`, or `OID`.
+  - The authorizer callback is now invoked for SQL functions in the `DEFAULT` clauses of `CREATE TABLE` statements.
+  - SQLite no longer supports Windows XP or earlier. On Windows, the precompiled gem and any installation that compiles the vendored sqlite now require Windows Vista or later.
+
+
 ## 2.9.6 / 2026-08-11
 
 ### Security / Stability
@@ -25,7 +37,7 @@
 
 ### Dependencies
 
-- Vendored sqlite is updated to [v3.53.2](https://www.sqlite.org/releaselog/3_53_3.html) (from v3.53.1). #709 @flavorjones
+- Vendored sqlite is updated to [v3.53.2](https://www.sqlite.org/releaselog/3_53_2.html) (from v3.53.1). #709 @flavorjones
 
 ### Security / Stability
 

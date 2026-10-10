@@ -65,7 +65,10 @@ module Sqlite3
               "-DSQLITE_ENABLE_DBPAGE_VTAB=1",
               "-DSQLITE_ENABLE_DBSTAT_VTAB=1"
             ]
-            env["CFLAGS"] = [user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
+            # sqlite >= 3.54 requires Vista APIs, same as ruby's default target. Placed first so a
+            # user-defined _WIN32_WINNT takes precedence.
+            windows_cflags = windows? ? ["-D_WIN32_WINNT=0x0600"] : []
+            env["CFLAGS"] = [windows_cflags, user_cflags, env["CFLAGS"], more_cflags].flatten.join(" ")
             recipe.configure_options += env.slice(*ENV_ALLOWLIST)
               .map { |key, value| "#{key}=#{value.strip}" }
           end
