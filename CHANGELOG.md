@@ -14,7 +14,7 @@
 ### Added
 
 - `ResultSet#each` and `#each_hash` return an `Enumerator` when called without a block. Previously they raised `LocalJumpError`. #656 @kch
-- Introduce `Database#serialize`, which returns a database as a binary string, and `Database#deserialize`, which replaces a database with the contents of such a string. These wrap [`sqlite3_serialize()`](https://www.sqlite.org/c3ref/serialize.html) and [`sqlite3_deserialize()`](https://www.sqlite.org/c3ref/deserialize.html). `Database#deserialize` is defined only when the loaded SQLite is v3.54.0 or later. An image of a database in WAL mode cannot be queried after deserializing; see the `Database#deserialize` documentation. #685 @Maaarcocr
+- Introduce `Database#serialize`, which returns a database as a binary string, and `Database#deserialize`, which replaces a database with the contents of such a string. These wrap [`sqlite3_serialize()`](https://www.sqlite.org/c3ref/serialize.html) and [`sqlite3_deserialize()`](https://www.sqlite.org/c3ref/deserialize.html). Both methods are defined only when SQLite was compiled without `SQLITE_OMIT_DESERIALIZE`, and `Database#deserialize` also requires that the loaded SQLite is v3.54.0 or later. An image of a database in WAL mode cannot be queried after deserializing; see the `Database#deserialize` documentation. #685 @Maaarcocr
 
 ### Changed
 
