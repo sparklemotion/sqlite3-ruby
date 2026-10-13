@@ -244,6 +244,10 @@ module SQLite3
       @db.execute %(create table foo(a "", b "#{"X" * 2000}", c "\xFFBAR"))
       @db.prepare("select a, b, c, 1 from foo") do |stmt|
         assert_equal ["", "x" * 2000, "\xFFbar", nil], stmt.types
+        stmt.types.compact.each do |type|
+          assert_equal Encoding::UTF_8, type.encoding
+          assert_predicate type, :frozen?
+        end
       end
     end
 
