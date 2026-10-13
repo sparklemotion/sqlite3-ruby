@@ -11,6 +11,14 @@
   - The authorizer callback is now invoked for SQL functions in the `DEFAULT` clauses of `CREATE TABLE` statements.
   - SQLite no longer supports Windows XP or earlier. On Windows, the precompiled gem and any installation that compiles the vendored sqlite now require Windows Vista or later.
 
+### Added
+
+- `ResultSet#each` and `#each_hash` return an `Enumerator` when called without a block. Previously they raised `LocalJumpError`. #656 @kch
+
+### Changed
+
+- `ResultSet#each` and `#each_hash` return the result set when called with a block. As a consequence, `Database#execute` and `#execute2` called with a block return the closed `ResultSet` instead of `nil`. #656 @kch
+
 
 ## 2.9.6 / 2026-08-11
 
