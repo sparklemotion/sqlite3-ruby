@@ -65,6 +65,15 @@ module SQLite3
       stmt&.close
     end
 
+    def test_columns_and_types_should_be_frozen
+      @db.execute "CREATE TABLE things (a integer, b text)"
+      @db.prepare "SELECT a, b FROM things" do |stmt|
+        assert_predicate stmt.columns, :frozen?
+        assert_predicate stmt.types, :frozen?
+        stmt.types.each { |type| assert_predicate type, :frozen? }
+      end
+    end
+
     def test_sql_method
       sql = "SELECT 1234"
       stmt = @db.prepare sql
