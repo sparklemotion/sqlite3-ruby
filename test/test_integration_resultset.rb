@@ -114,8 +114,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     called = 0
     @result.reset(1, 2)
     result = @result.each { |row| called += 1 }
-    result.reset # reset just to confirm we can chain the method after each
-    assert_equal @result, result
+    assert_same @result, result
     assert_equal 2, called
   end
 
@@ -130,8 +129,7 @@ class IntegrationResultSetTestCase < SQLite3::TestCase
     called = 0
     @result.reset(1, 2)
     result = @result.each_hash { |row| called += 1 }
-    result.reset
-    assert_equal @result, result
+    assert_same @result, result
     assert_equal 2, called
   end
 
