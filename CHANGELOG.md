@@ -1,6 +1,6 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.10.0 / 2026-10-13
 
 ### Dependencies
 
@@ -16,24 +16,19 @@
 - `ResultSet#each` and `#each_hash` return an `Enumerator` when called without a block. Previously they raised `LocalJumpError`. #656 @kch
 - Introduce `Database#serialize`, which returns a database as a binary string, and `Database#deserialize`, which replaces a database with the contents of such a string. These wrap [`sqlite3_serialize()`](https://www.sqlite.org/c3ref/serialize.html) and [`sqlite3_deserialize()`](https://www.sqlite.org/c3ref/deserialize.html). Both methods are defined only when SQLite was compiled without `SQLITE_OMIT_DESERIALIZE`, and `Database#deserialize` also requires that the loaded SQLite is v3.54.0 or later. An image of a database in WAL mode cannot be queried after deserializing; see the `Database#deserialize` documentation. #685 @Maaarcocr
 
-### Changed
-
-- `ResultSet#each` and `#each_hash` return the result set when called with a block. As a consequence, `Database#execute` and `#execute2` called with a block return the closed `ResultSet` instead of `nil`. #656 @kch
-
 ### Fixed
 
 - Fix `Database#statement_timeout=` interrupting statements almost immediately instead of after the timeout elapsed, including re-executed prepared statements and calls to `Database#execute_batch2`. #737 @palkan @flavorjones
 
-
-### Changed
-
-- `Statement#columns` and `Statement#types` return frozen arrays, and the strings in `Statement#types` are frozen. Code that mutates them now raises `FrozenError`. #743 @jhawthorn
-- `Statement#column_decltype` and `Statement#types` return UTF-8 strings. Previously they returned ASCII-8BIT strings. #743 @jhawthorn
-
-
 ### Improved
 
 - On CRuby, `Statement#types` allocates fewer strings. Each declared type is downcased and interned in C, instead of allocating two strings per column. #743 @jhawthorn
+
+### Changed
+
+- `ResultSet#each` and `#each_hash` return the result set when called with a block. As a consequence, `Database#execute` and `#execute2` called with a block return the closed `ResultSet` instead of `nil`. #656 @kch
+- `Statement#columns` and `Statement#types` return frozen arrays, and the strings in `Statement#types` are frozen. Code that mutates them now raises `FrozenError`. #743 @jhawthorn
+- `Statement#column_decltype` and `Statement#types` return UTF-8 strings. Previously they returned ASCII-8BIT strings. #743 @jhawthorn
 
 
 ## 2.9.6 / 2026-08-11
