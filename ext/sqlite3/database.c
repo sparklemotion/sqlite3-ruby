@@ -992,6 +992,8 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
 
+    timespecclear(&ctx->stmt_deadline);
+
     if (results_as_hash == Qtrue) {
         status = sqlite3_exec(ctx->db, StringValuePtr(sql), (sqlite3_callback)hash_callback_function,
                               (void *)callback_ary,

@@ -226,6 +226,58 @@ class IntegrationStatementTestCase < SQLite3::TestCase
     @db.statement_timeout = 0
   end
 
+  def test_statement_timeout_applies_to_each_execution_of_a_prepared_statement
+    @db.statement_timeout = 200
+    @db.prepare(<<~SQL) do |stmt|
+      WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT ?)
+      SELECT count(i) FROM r;
+    SQL
+      assert_equal [[1_000]], stmt.execute(1_000).to_a
+      sleep 0.3
+      assert_equal [[1_000]], stmt.execute(1_000).to_a
+      assert_raises(SQLite3::InterruptException) { stmt.execute(10_000_000).to_a }
+    end
+  ensure
+    @db.statement_timeout = 0
+  end
+
+  def test_statement_timeout_applies_to_each_call_to_execute_batch2
+    @db.statement_timeout = 200
+    sql = <<~SQL
+      WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT 1000)
+      SELECT count(i) FROM r;
+    SQL
+    assert_equal [["1000"]], @db.execute_batch2(sql)
+    sleep 0.3
+    assert_equal [["1000"]], @db.execute_batch2(sql)
+    assert_raises(SQLite3::InterruptException) { @db.execute_batch2(sql.sub("1000", "10000000")) }
+  ensure
+    @db.statement_timeout = 0
+  end
+
+  def test_statement_timeout_applies_to_each_preparation_of_a_statement
+    Dir.mktmpdir do |dir|
+      writer = SQLite3::Database.new("#{dir}/test.db")
+      writer.transaction do
+        1_500.times { |i| writer.execute("create table t#{i} (x)") }
+      end
+
+      reader = SQLite3::Database.new("#{dir}/test.db")
+      reader.statement_timeout = 200
+      reader.execute <<~SQL
+        WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT 1000)
+        SELECT count(i) FROM r;
+      SQL
+
+      writer.execute("create table new_table (x)")
+      sleep 0.3
+      reader.prepare("select * from new_table").close
+    ensure
+      writer&.close
+      reader&.close
+    end
+  end
+
   def test_statement_timeout_of_zero_disables_the_timeout
     @db.statement_timeout = 100
     @db.statement_timeout = 0
