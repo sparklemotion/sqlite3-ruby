@@ -1028,6 +1028,137 @@ db_filename(VALUE self, VALUE db_name)
     return Qnil;
 }
 
+#ifdef HAVE_SQLITE3_SERIALIZE
+/* call-seq: db.serialize(database_name = "main")
+ *
+ * Serialize the database into a binary string.
+ *
+ * [database_name]  The name of the database to serialize. The default value
+ *                  is +main+ which is the main database file. For ATTACHed
+ *                  databases, use the name given in the ATTACH statement.
+ *
+ * Returns the contents of the database as a binary string. For an ordinary
+ * on-disk database file, this is just a copy of the disk file. For an
+ * in-memory database or a "TEMP" database, this is the same sequence of bytes
+ * which would be written to disk if that database were backed up to disk.
+ *
+ * Note: This method will only be defined if SQLite was compiled without
+ * +SQLITE_OMIT_DESERIALIZE+.
+ *
+ * See also: https://www.sqlite.org/c3ref/serialize.html
+ */
+static VALUE
+serialize(int argc, VALUE *argv, VALUE self)
+{
+    sqlite3RubyPtr ctx;
+    VALUE db_name;
+    const char *zSchema;
+    sqlite3_int64 size;
+    unsigned char *data;
+    VALUE result;
+
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_OPEN_DB(ctx);
+
+    rb_scan_args(argc, argv, "01", &db_name);
+
+    zSchema = NIL_P(db_name) ? NULL : StringValueCStr(db_name);
+
+    data = sqlite3_serialize(ctx->db, zSchema, &size, 0);
+
+    if (data == NULL && size < 0) {
+        rb_raise(rb_path2class("SQLite3::Exception"), "unable to serialize database \"%s\"",
+                 zSchema ? zSchema : "main");
+    }
+    if (data == NULL && size > 0) {
+        rb_raise(rb_eNoMemError, "failed to allocate %lld bytes for serialization", (long long)size);
+    }
+
+    result = rb_str_new((const char *)data, (long)size);
+    sqlite3_free(data);
+
+    return result;
+}
+#endif
+
+#ifdef HAVE_SQLITE3_DESERIALIZE
+/* call-seq: db.deserialize(data, database_name = "main")
+ *
+ * Deserialize a binary string into the database. The database is replaced with
+ * the contents of the serialized data.
+ *
+ * [data]           A binary string containing the serialized database content.
+ *                  This is typically obtained from a prior call to #serialize.
+ *
+ * [database_name]  The name of the database to replace. The default value is
+ *                  +main+ which is the main database file. For ATTACHed
+ *                  databases, use the name given in the ATTACH statement.
+ *
+ * Raises SQLite3::BusyException if the database has an open read or write
+ * transaction, including one held by an unfinished statement, or is involved in
+ * a backup.
+ *
+ * Deserializing into a database backed by a file detaches the connection from
+ * that file. The file is left unchanged, and #filename(database_name) returns an
+ * empty string afterwards.
+ *
+ * ⚠ An image of a database in WAL mode deserializes without error, but later
+ * statements, even <tt>SELECT 1</tt>, raise SQLite3::CantOpenException. Rails
+ * enables WAL mode by default.
+ *
+ * ⚠ Deserializing untrusted data carries the same risks as opening an untrusted
+ * database file. See https://www.sqlite.org/security.html
+ *
+ * Note: This method will only be defined if the loaded SQLite is version 3.54.0
+ * or later and was compiled without +SQLITE_OMIT_DESERIALIZE+. Older versions do
+ * not raise SQLite3::BusyException; they free memory that an unfinished statement
+ * still uses.
+ *
+ * See also: https://www.sqlite.org/c3ref/deserialize.html
+ */
+static VALUE
+deserialize(int argc, VALUE *argv, VALUE self)
+{
+    sqlite3RubyPtr ctx;
+    VALUE data, db_name;
+    const char *zSchema;
+    unsigned char *pData;
+    sqlite3_int64 szDb, szBuf;
+    int status;
+
+    TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_OPEN_DB(ctx);
+
+    rb_scan_args(argc, argv, "11", &data, &db_name);
+
+    StringValue(data);
+    zSchema = NIL_P(db_name) ? NULL : StringValueCStr(db_name);
+    szDb = RSTRING_LEN(data);
+
+    /* SQLite's docs advise padding the buffer with about 20 extra bytes, because a maliciously
+     * malformed image may make SQLite read past its end. See https://www.sqlite.org/c3ref/deserialize.html
+     *
+     * With SQLITE_DESERIALIZE_RESIZEABLE set, SQLite copies pages out of the buffer with bounds
+     * checks instead of reading it in place, so the padding is defensive. It also keeps the
+     * allocation nonzero for an empty string, for which sqlite3_malloc64(0) returns NULL.
+     */
+    szBuf = szDb + 20;
+    pData = sqlite3_malloc64(szBuf);
+    if (pData == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate %lld bytes for deserialization", (long long)szBuf);
+    }
+    memcpy(pData, RSTRING_PTR(data), (size_t)szDb);
+    memset(pData + szDb, 0, (size_t)(szBuf - szDb));
+
+    status = sqlite3_deserialize(ctx->db, zSchema, pData, szDb, szDb,
+                                 SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE);
+
+    CHECK(ctx->db, status);
+
+    return self;
+}
+#endif
+
 static VALUE
 rb_sqlite3_open16(VALUE self, VALUE file)
 {
@@ -1108,6 +1239,16 @@ init_sqlite3_database(void)
 #endif
 #endif
 
+#ifdef HAVE_SQLITE3_SERIALIZE
+    rb_define_method(cSqlite3Database, "serialize", serialize, -1);
+#endif
+
+#ifdef HAVE_SQLITE3_DESERIALIZE
+    /* Before 3.54.0, sqlite3_deserialize frees memory that an unfinished statement still uses. */
+    if (sqlite3_libversion_number() >= 3054000) {
+        rb_define_method(cSqlite3Database, "deserialize", deserialize, -1);
+    }
+#endif
 
     rb_sqlite3_aggregator_init();
 }
