@@ -20,7 +20,7 @@
 
 ### Improved
 
-- `Statement#types` allocates fewer strings. Each declared type is downcased and interned in C, instead of allocating two strings per column. #743 @jhawthorn
+- On CRuby, `Statement#types` allocates fewer strings. Each declared type is downcased and interned in C, instead of allocating two strings per column. #743 @jhawthorn
 
 
 ## 2.9.6 / 2026-08-11
