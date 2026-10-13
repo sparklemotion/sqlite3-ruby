@@ -1071,7 +1071,7 @@ serialize(int argc, VALUE *argv, VALUE self)
                  zSchema ? zSchema : "main");
     }
     if (data == NULL && size > 0) {
-        rb_raise(rb_eNoMemError, "failed to allocate %"PRId64" bytes for serialization", size);
+        rb_raise(rb_eNoMemError, "failed to allocate %lld bytes for serialization", (long long)size);
     }
 
     result = rb_str_new((const char *)data, (long)size);
@@ -1145,7 +1145,7 @@ deserialize(int argc, VALUE *argv, VALUE self)
     szBuf = szDb + 20;
     pData = sqlite3_malloc64(szBuf);
     if (pData == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate %"PRId64" bytes for deserialization", szBuf);
+        rb_raise(rb_eNoMemError, "failed to allocate %lld bytes for deserialization", (long long)szBuf);
     }
     memcpy(pData, RSTRING_PTR(data), (size_t)szDb);
     memset(pData + szDb, 0, (size_t)(szBuf - szDb));
