@@ -19,6 +19,10 @@
 
 - `ResultSet#each` and `#each_hash` return the result set when called with a block. As a consequence, `Database#execute` and `#execute2` called with a block return the closed `ResultSet` instead of `nil`. #656 @kch
 
+### Fixed
+
+- Fix `Database#statement_timeout=` interrupting statements almost immediately instead of after the timeout elapsed, including re-executed prepared statements and calls to `Database#execute_batch2`. #737 @palkan @flavorjones
+
 
 ### Changed
 

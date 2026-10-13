@@ -66,6 +66,8 @@ prepare(VALUE self, VALUE db, VALUE sql)
      * variable will keep it from being GCed. */
     ctx->db = db_ctx;
 
+    timespecclear(&db_ctx->stmt_deadline);
+
 #ifdef HAVE_SQLITE3_PREPARE_V2
     status = sqlite3_prepare_v2(
 #else
@@ -79,7 +81,6 @@ prepare(VALUE self, VALUE db, VALUE sql)
              );
 
     CHECK_PREPARE(db_ctx->db, status, StringValuePtr(sql));
-    timespecclear(&db_ctx->stmt_deadline);
 
     return rb_utf8_str_new_cstr(tail);
 }
@@ -138,6 +139,10 @@ step(VALUE self)
     internal_encoding = rb_default_internal_encoding();
 
     stmt = ctx->st;
+
+    if (!sqlite3_stmt_busy(stmt)) {
+        timespecclear(&ctx->db->stmt_deadline);
+    }
 
     value = sqlite3_step(stmt);
     if (rb_errinfo() != Qnil) {

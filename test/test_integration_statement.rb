@@ -193,18 +193,103 @@ class IntegrationStatementTestCase < SQLite3::TestCase
   end
 
   def test_long_running_statements_get_interrupted_when_statement_timeout_set
-    @db.statement_timeout = 10
+    @db.statement_timeout = 100
+    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     assert_raises(SQLite3::InterruptException) do
       @db.execute <<~SQL
         WITH RECURSIVE r(i) AS (
           VALUES(0)
           UNION ALL
           SELECT i FROM r
-          LIMIT 100000
+          LIMIT 10000000
         )
         SELECT i FROM r ORDER BY i LIMIT 1;
       SQL
     end
+    elapsed_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
+    assert_operator elapsed_ms, :>=, 100, "interrupted before the timeout elapsed"
+    assert_operator elapsed_ms, :<, 200, "interrupted too long after the timeout"
+
+    assert_equal 3, @db.execute("select count(*) from foo").first.first
+  ensure
     @db.statement_timeout = 0
+  end
+
+  def test_statements_that_finish_within_statement_timeout_are_not_interrupted
+    @db.statement_timeout = 1_000
+    result = @db.execute <<~SQL
+      WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT 100000)
+      SELECT count(i) FROM r;
+    SQL
+    assert_equal 100_000, result.first.first
+  ensure
+    @db.statement_timeout = 0
+  end
+
+  def test_statement_timeout_applies_to_each_execution_of_a_prepared_statement
+    @db.statement_timeout = 200
+    @db.prepare(<<~SQL) do |stmt|
+      WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT ?)
+      SELECT count(i) FROM r;
+    SQL
+      assert_equal [[1_000]], stmt.execute(1_000).to_a
+      sleep 0.3
+      assert_equal [[1_000]], stmt.execute(1_000).to_a
+      assert_raises(SQLite3::InterruptException) { stmt.execute(10_000_000).to_a }
+    end
+  ensure
+    @db.statement_timeout = 0
+  end
+
+  def test_statement_timeout_applies_to_each_call_to_execute_batch2
+    @db.statement_timeout = 200
+    sql = <<~SQL
+      WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT 1000)
+      SELECT count(i) FROM r;
+    SQL
+    assert_equal [["1000"]], @db.execute_batch2(sql)
+    sleep 0.3
+    assert_equal [["1000"]], @db.execute_batch2(sql)
+    assert_raises(SQLite3::InterruptException) { @db.execute_batch2(sql.sub("1000", "10000000")) }
+  ensure
+    @db.statement_timeout = 0
+  end
+
+  def test_statement_timeout_applies_to_each_preparation_of_a_statement
+    Dir.mktmpdir do |dir|
+      writer = SQLite3::Database.new("#{dir}/test.db")
+      writer.transaction do
+        1_500.times { |i| writer.execute("create table t#{i} (x)") }
+      end
+
+      reader = SQLite3::Database.new("#{dir}/test.db")
+      reader.statement_timeout = 200
+      reader.execute <<~SQL
+        WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT 1000)
+        SELECT count(i) FROM r;
+      SQL
+
+      writer.execute("create table new_table (x)")
+      sleep 0.3
+      reader.prepare("select * from new_table").close
+    ensure
+      writer&.close
+      reader&.close
+    end
+  end
+
+  def test_statement_timeout_of_zero_disables_the_timeout
+    @db.statement_timeout = 100
+    @db.statement_timeout = 0
+    result = @db.execute <<~SQL
+      WITH RECURSIVE r(i) AS (
+        VALUES(0)
+        UNION ALL
+        SELECT i FROM r
+        LIMIT 10000000
+      )
+      SELECT i FROM r ORDER BY i LIMIT 1;
+    SQL
+    assert_equal [[0]], result
   end
 end
