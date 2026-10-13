@@ -210,19 +210,24 @@ class IntegrationStatementTestCase < SQLite3::TestCase
     assert_operator elapsed_ms, :>=, 100, "interrupted before the timeout elapsed"
     assert_operator elapsed_ms, :<, 200, "interrupted too long after the timeout"
 
-    # a fast query is not affected
     assert_equal 3, @db.execute("select count(*) from foo").first.first
+  ensure
+    @db.statement_timeout = 0
+  end
 
-    # (regression) Ensure queries that finish within the timeout complete,
-    # even ones running many instructions (time is instructions-based, not wall call)
+  def test_statements_that_finish_within_statement_timeout_are_not_interrupted
     @db.statement_timeout = 1_000
     result = @db.execute <<~SQL
       WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r LIMIT 100000)
       SELECT count(i) FROM r;
     SQL
     assert_equal 100_000, result.first.first
+  ensure
+    @db.statement_timeout = 0
+  end
 
-    # no timeout — the original interrupted query completes
+  def test_statement_timeout_of_zero_disables_the_timeout
+    @db.statement_timeout = 100
     @db.statement_timeout = 0
     result = @db.execute <<~SQL
       WITH RECURSIVE r(i) AS (
@@ -234,7 +239,5 @@ class IntegrationStatementTestCase < SQLite3::TestCase
       SELECT i FROM r ORDER BY i LIMIT 1;
     SQL
     assert_equal [[0]], result
-  ensure
-    @db.statement_timeout = 0
   end
 end
