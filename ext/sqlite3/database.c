@@ -1094,12 +1094,9 @@ serialize(int argc, VALUE *argv, VALUE self)
  *                  +main+ which is the main database file. For ATTACHed
  *                  databases, use the name given in the ATTACH statement.
  *
- * With SQLite 3.54.0 or later, raises SQLite3::BusyException if the database
- * has an open read or write transaction, including one held by an unfinished
- * statement, or is involved in a backup. Older versions of SQLite do not check,
- * and stepping a statement left unfinished across this call reads freed memory.
- * Finish every statement and transaction on the database before calling this
- * method.
+ * Raises SQLite3::BusyException if the database has an open read or write
+ * transaction, including one held by an unfinished statement, or is involved in
+ * a backup.
  *
  * Deserializing into a database backed by a file detaches the connection from
  * that file. The file is left unchanged, and #filename(database_name) returns an
@@ -1112,8 +1109,10 @@ serialize(int argc, VALUE *argv, VALUE self)
  * ⚠ Deserializing untrusted data carries the same risks as opening an untrusted
  * database file. See https://www.sqlite.org/security.html
  *
- * Note: This method will only be defined if SQLite was compiled without
- * +SQLITE_OMIT_DESERIALIZE+.
+ * Note: This method will only be defined if the loaded SQLite is version 3.54.0
+ * or later and was compiled without +SQLITE_OMIT_DESERIALIZE+. Older versions do
+ * not raise SQLite3::BusyException; they free memory that an unfinished statement
+ * still uses.
  *
  * See also: https://www.sqlite.org/c3ref/deserialize.html
  */
@@ -1245,7 +1244,10 @@ init_sqlite3_database(void)
 #endif
 
 #ifdef HAVE_SQLITE3_DESERIALIZE
-    rb_define_method(cSqlite3Database, "deserialize", deserialize, -1);
+    /* Before 3.54.0, sqlite3_deserialize frees memory that an unfinished statement still uses. */
+    if (sqlite3_libversion_number() >= 3054000) {
+        rb_define_method(cSqlite3Database, "deserialize", deserialize, -1);
+    }
 #endif
 
     rb_sqlite3_aggregator_init();

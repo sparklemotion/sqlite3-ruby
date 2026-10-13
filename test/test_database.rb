@@ -1078,6 +1078,12 @@ module SQLite3
       source&.close
     end
 
+    def test_deserialize_is_defined_only_for_sqlite_3_54_0_or_later
+      skip("serialize not supported") unless @db.respond_to?(:serialize)
+
+      assert_equal(SQLite3.libversion >= 3_054_000, @db.respond_to?(:deserialize))
+    end
+
     def test_deserialize_closed_database
       skip("deserialize not supported") unless @db.respond_to?(:deserialize)
 
