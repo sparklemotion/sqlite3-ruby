@@ -1066,7 +1066,11 @@ serialize(int argc, VALUE *argv, VALUE self)
 
     data = sqlite3_serialize(ctx->db, zSchema, &size, 0);
 
-    if (data == NULL && size != 0) {
+    if (data == NULL && size < 0) {
+        rb_raise(rb_path2class("SQLite3::Exception"), "unable to serialize database \"%s\"",
+                 zSchema ? zSchema : "main");
+    }
+    if (data == NULL && size > 0) {
         rb_raise(rb_eNoMemError, "failed to allocate %"PRId64" bytes for serialization", size);
     }
 

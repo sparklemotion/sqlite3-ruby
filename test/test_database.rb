@@ -1093,5 +1093,21 @@ module SQLite3
       @db.deserialize("not a valid database")
       assert_raise(SQLite3::Exception) { @db.execute("select 1") }
     end
+
+    def test_serialize_unknown_database_name
+      skip("serialize not supported") unless @db.respond_to?(:serialize)
+
+      e = assert_raise(SQLite3::Exception) { @db.serialize("nope") }
+      assert_match(/nope/, e.message)
+    end
+
+    def test_deserialize_empty_string
+      skip("deserialize not supported") unless @db.respond_to?(:deserialize)
+
+      @db.execute("create table foo (a integer)")
+      @db.deserialize("")
+
+      assert_empty(@db.execute("select * from sqlite_master"))
+    end
   end
 end
