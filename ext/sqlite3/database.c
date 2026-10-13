@@ -1105,7 +1105,7 @@ deserialize(int argc, VALUE *argv, VALUE self)
     VALUE data, db_name;
     const char *zSchema;
     unsigned char *pData;
-    sqlite3_int64 szDb;
+    sqlite3_int64 szDb, szBuf;
     int status;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
@@ -1117,11 +1117,20 @@ deserialize(int argc, VALUE *argv, VALUE self)
     zSchema = NIL_P(db_name) ? NULL : StringValueCStr(db_name);
     szDb = RSTRING_LEN(data);
 
-    pData = sqlite3_malloc64(szDb);
+    /* SQLite's docs advise padding the buffer with about 20 extra bytes, because a maliciously
+     * malformed image may make SQLite read past its end. See https://www.sqlite.org/c3ref/deserialize.html
+     *
+     * With SQLITE_DESERIALIZE_RESIZEABLE set, SQLite copies pages out of the buffer with bounds
+     * checks instead of reading it in place, so the padding is defensive. It also keeps the
+     * allocation nonzero for an empty string, for which sqlite3_malloc64(0) returns NULL.
+     */
+    szBuf = szDb + 20;
+    pData = sqlite3_malloc64(szBuf);
     if (pData == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate %"PRId64" bytes for deserialization", szDb);
+        rb_raise(rb_eNoMemError, "failed to allocate %"PRId64" bytes for deserialization", szBuf);
     }
     memcpy(pData, RSTRING_PTR(data), (size_t)szDb);
+    memset(pData + szDb, 0, (size_t)(szBuf - szDb));
 
     status = sqlite3_deserialize(ctx->db, zSchema, pData, szDb, szDb,
                                  SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE);
