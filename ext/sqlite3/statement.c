@@ -467,7 +467,8 @@ column_name(VALUE self, VALUE index)
 
 /* call-seq: stmt.column_decltype(index)
  *
- * Get the column type at +index+.  0 based.
+ * Get the declared type of the column at +index+, as a UTF-8 string.  0 based.
+ * Returns +nil+ if the column has no declared type, such as an expression.
  */
 static VALUE
 column_decltype(VALUE self, VALUE index)

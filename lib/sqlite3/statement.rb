@@ -130,9 +130,9 @@ module SQLite3
       !done?
     end
 
-    # Return an array of the column names for this statement. Note that this
-    # may execute the statement in order to obtain the metadata; this makes it
-    # a (potentially) expensive operation.
+    # Return a frozen array of the column names for this statement, as frozen
+    # UTF-8 strings. Note that this may execute the statement in order to
+    # obtain the metadata; this makes it a (potentially) expensive operation.
     def columns
       get_metadata unless @columns
       @columns
@@ -146,9 +146,11 @@ module SQLite3
       end
     end
 
-    # Return an array of the data types for each column in this statement. Note
-    # that this may execute the statement in order to obtain the metadata; this
-    # makes it a (potentially) expensive operation.
+    # Return a frozen array of the declared types of the columns in this
+    # statement, as frozen UTF-8 strings with ASCII letters downcased. A column
+    # with no declared type, such as an expression, has a +nil+ type. Note that
+    # this may execute the statement in order to obtain the metadata; this makes
+    # it a (potentially) expensive operation.
     def types
       must_be_open!
       get_metadata unless @types
