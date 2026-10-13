@@ -1090,8 +1090,23 @@ serialize(int argc, VALUE *argv, VALUE self)
  *                  +main+ which is the main database file. For ATTACHed
  *                  databases, use the name given in the ATTACH statement.
  *
- * The database connection must not be in a transaction or involved in a backup
- * operation when this method is called, or it will raise SQLite3::BusyException.
+ * With SQLite 3.54.0 or later, raises SQLite3::BusyException if the database
+ * has an open read or write transaction, including one held by an unfinished
+ * statement, or is involved in a backup. Older versions of SQLite do not check,
+ * and stepping a statement left unfinished across this call reads freed memory.
+ * Finish every statement and transaction on the database before calling this
+ * method.
+ *
+ * Deserializing into a database backed by a file detaches the connection from
+ * that file. The file is left unchanged, and #filename(database_name) returns an
+ * empty string afterwards.
+ *
+ * ⚠ An image of a database in WAL mode deserializes without error, but later
+ * statements, even <tt>SELECT 1</tt>, raise SQLite3::CantOpenException. Rails
+ * enables WAL mode by default.
+ *
+ * ⚠ Deserializing untrusted data carries the same risks as opening an untrusted
+ * database file. See https://www.sqlite.org/security.html
  *
  * Note: This method will only be defined if SQLite was compiled without
  * +SQLITE_OMIT_DESERIALIZE+.
