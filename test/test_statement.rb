@@ -74,6 +74,17 @@ module SQLite3
       end
     end
 
+    def test_types_are_deduped
+      @db.execute "CREATE TABLE things (a integer, b INTEGER)"
+      stmt1 = @db.prepare "SELECT a, b FROM things"
+      stmt2 = @db.prepare "SELECT a, b FROM things"
+      assert_same stmt1.types[0], stmt1.types[1]
+      assert_same stmt1.types[0], stmt2.types[0]
+    ensure
+      stmt1&.close
+      stmt2&.close
+    end
+
     def test_sql_method
       sql = "SELECT 1234"
       stmt = @db.prepare sql
@@ -226,6 +237,13 @@ module SQLite3
       @db.prepare("select a, b from foo") do |stmt|
         assert_equal ["integer", "varchÄr(255)"], stmt.types
         assert_equal [Encoding::UTF_8, Encoding::UTF_8], stmt.types.map(&:encoding)
+      end
+    end
+
+    def test_types_of_empty_long_and_invalid_utf8_declared_types
+      @db.execute %(create table foo(a "", b "#{"X" * 2000}", c "\xFFBAR"))
+      @db.prepare("select a, b, c, 1 from foo") do |stmt|
+        assert_equal ["", "x" * 2000, "\xFFbar", nil], stmt.types
       end
     end
 
