@@ -20,6 +20,17 @@
 - `ResultSet#each` and `#each_hash` return the result set when called with a block. As a consequence, `Database#execute` and `#execute2` called with a block return the closed `ResultSet` instead of `nil`. #656 @kch
 
 
+### Changed
+
+- `Statement#columns` and `Statement#types` return frozen arrays, and the strings in `Statement#types` are frozen. Code that mutates them now raises `FrozenError`. #743 @jhawthorn
+- `Statement#column_decltype` and `Statement#types` return UTF-8 strings. Previously they returned ASCII-8BIT strings. #743 @jhawthorn
+
+
+### Improved
+
+- On CRuby, `Statement#types` allocates fewer strings. Each declared type is downcased and interned in C, instead of allocating two strings per column. #743 @jhawthorn
+
+
 ## 2.9.6 / 2026-08-11
 
 ### Security / Stability

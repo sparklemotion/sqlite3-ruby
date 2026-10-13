@@ -65,6 +65,26 @@ module SQLite3
       stmt&.close
     end
 
+    def test_columns_and_types_should_be_frozen
+      @db.execute "CREATE TABLE things (a integer, b text)"
+      @db.prepare "SELECT a, b FROM things" do |stmt|
+        assert_predicate stmt.columns, :frozen?
+        assert_predicate stmt.types, :frozen?
+        stmt.types.each { |type| assert_predicate type, :frozen? }
+      end
+    end
+
+    def test_types_are_deduped
+      @db.execute "CREATE TABLE things (a integer, b INTEGER)"
+      stmt1 = @db.prepare "SELECT a, b FROM things"
+      stmt2 = @db.prepare "SELECT a, b FROM things"
+      assert_same stmt1.types[0], stmt1.types[1]
+      assert_same stmt1.types[0], stmt2.types[0]
+    ensure
+      stmt1&.close
+      stmt2&.close
+    end
+
     def test_sql_method
       sql = "SELECT 1234"
       stmt = @db.prepare sql
@@ -200,6 +220,34 @@ module SQLite3
       @db.prepare("select * from foo") do |v|
         assert_equal ["hello"], v.first
         assert_equal ["blob"], v.types
+      end
+    end
+
+    def test_decltype_is_utf8
+      @db.execute %(create table foo(a integer, b "VARCHÄR(255)"))
+      @db.prepare("select a, b from foo") do |stmt|
+        assert_equal ["INTEGER", "VARCHÄR(255)"], [stmt.column_decltype(0), stmt.column_decltype(1)]
+        assert_equal [Encoding::UTF_8, Encoding::UTF_8],
+          [stmt.column_decltype(0).encoding, stmt.column_decltype(1).encoding]
+      end
+    end
+
+    def test_types_are_utf8_and_downcased_as_ascii
+      @db.execute %(create table foo(a integer, b "VARCHÄR(255)"))
+      @db.prepare("select a, b from foo") do |stmt|
+        assert_equal ["integer", "varchÄr(255)"], stmt.types
+        assert_equal [Encoding::UTF_8, Encoding::UTF_8], stmt.types.map(&:encoding)
+      end
+    end
+
+    def test_types_of_empty_long_and_invalid_utf8_declared_types
+      @db.execute %(create table foo(a "", b "#{"X" * 2000}", c "\xFFBAR"))
+      @db.prepare("select a, b, c, 1 from foo") do |stmt|
+        assert_equal ["", "x" * 2000, "\xFFbar", nil], stmt.types
+        stmt.types.compact.each do |type|
+          assert_equal Encoding::UTF_8, type.encoding
+          assert_predicate type, :frozen?
+        end
       end
     end
 
