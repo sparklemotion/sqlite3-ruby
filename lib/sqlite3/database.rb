@@ -579,6 +579,25 @@ module SQLite3
       self
     end
 
+    # The "handler" that #define_aggregator hands to define_aggregator2, which
+    # only needs something that responds to +new+ (a fresh aggregator for each
+    # aggregate invocation) and +arity+.
+    class AggregatorFactory # :nodoc:
+      def initialize(template)
+        @template = template
+      end
+
+      def new
+        @template.clone
+      end
+
+      # this is what sqlite3_obj_method_arity did before
+      def arity
+        @template.method(:step).arity
+      end
+    end
+    private_constant :AggregatorFactory
+
     # Define an aggregate function named +name+ using a object template
     # object +aggregator+. +aggregator+ must respond to +step+ and +finalize+.
     # +step+ will be called with row information and +finalize+ must return the
@@ -592,36 +611,7 @@ module SQLite3
     def define_aggregator(name, aggregator)
       # Previously, this has been implemented in C. Now this is just yet
       # another compatibility shim
-      proxy = Class.new do
-        @template = aggregator
-        @name = name
-
-        def self.template
-          @template
-        end
-
-        def self.name
-          @name
-        end
-
-        def self.arity
-          # this is what sqlite3_obj_method_arity did before
-          @template.method(:step).arity
-        end
-
-        def initialize
-          @klass = self.class.template.clone
-        end
-
-        def step(*args)
-          @klass.step(*args)
-        end
-
-        def finalize
-          @klass.finalize
-        end
-      end
-      define_aggregator2(proxy, name)
+      define_aggregator2(AggregatorFactory.new(aggregator), name)
       self
     end
 
