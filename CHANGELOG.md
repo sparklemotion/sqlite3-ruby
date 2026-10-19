@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Dependencies
+
+- Vendored sqlite is updated to [v3.54.1](https://www.sqlite.org/releaselog/3_54_1.html) (from v3.54.0). This release contains a fix for a possible heap buffer overflow on 32-bit builds, including the precompiled `x86-linux-gnu` and `x86-linux-musl` gems. #756 @flavorjones
+
+
 ## 2.10.0 / 2026-10-13
 
 ### Dependencies
