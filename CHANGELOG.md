@@ -6,6 +6,10 @@
 
 - Vendored sqlite is updated to [v3.54.1](https://www.sqlite.org/releaselog/3_54_1.html) (from v3.54.0). This release contains a fix for a possible heap buffer overflow on 32-bit builds, including the precompiled `x86-linux-gnu` and `x86-linux-musl` gems. #756 @flavorjones
 
+### Fixed
+
+- `Statement#execute` binds its parameters for that execution only. Previously they stayed bound, so a later `#execute` that omitted a parameter reused the earlier value. Values bound with `Statement#bind_param` or `#bind_params` still persist across executions. Code that relied on the old behavior should bind those values with `#bind_params`. #751 @flavorjones
+
 
 ## 2.10.0 / 2026-10-13
 
