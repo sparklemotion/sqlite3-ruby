@@ -79,11 +79,45 @@ module SQLite3
       end
     end
 
+    # Binds +value+ to the placeholder named by +key+, or at the position +key+
+    # when +key+ is an Integer. The value stays bound across calls to #execute
+    # until it is bound again or #clear_bindings! is called.
+    #
+    # See #bind_params for the type mapping from Ruby to SQLite3.
+    def bind_param(key, value)
+      if @binding_for_execute
+        bind(key, value)
+        @execute_params_bound = true
+      else
+        # SQLite copies the bytes, so copy the String to restore the same value
+        # later. String.new runs no subclass hooks.
+        if String === value && !value.frozen?
+          value = (value.instance_of?(SQLite3::Blob) ? SQLite3::Blob : String).new(value).freeze
+        end
+        index = bind(key, value)
+        (@bound_params ||= {})[index] = value
+        restore_bound_params if @execute_params_bound
+      end
+      self
+    end
+
+    # Sets every placeholder to NULL, including values bound by #bind_param
+    # and #bind_params.
+    def clear_bindings!
+      clear_bindings
+      @bound_params = nil
+      @execute_params_bound = false
+      self
+    end
+
     # Execute the statement. This creates a new ResultSet object for the
     # statement's virtual machine. If a block was given, the new ResultSet will
     # be yielded to it; otherwise, the ResultSet will be returned.
     #
-    # Any parameters will be bound to the statement using #bind_params.
+    # Any parameters are bound with #bind_params for this execution only. The
+    # next #execute, or the next value bound by #bind_param or #bind_params,
+    # restores the values bound by #bind_param and #bind_params and sets every
+    # other placeholder to NULL.
     #
     # Example:
     #
@@ -95,8 +129,16 @@ module SQLite3
     # See also #bind_params, #execute!.
     def execute(*bind_vars)
       reset! if active? || done?
+      restore_bound_params if @execute_params_bound
 
-      bind_params(*bind_vars) unless bind_vars.empty?
+      unless bind_vars.empty?
+        begin
+          @binding_for_execute = true
+          bind_params(*bind_vars)
+        ensure
+          @binding_for_execute = false
+        end
+      end
       results = @connection.build_result_set self
 
       step if column_count == 0
@@ -109,7 +151,7 @@ module SQLite3
     # rows returned by executing the statement. Otherwise, each row will be
     # yielded to the block.
     #
-    # Any parameters will be bound to the statement using #bind_params.
+    # Any parameters are bound for this execution only, as with #execute.
     #
     # Example:
     #
@@ -193,6 +235,13 @@ module SQLite3
     end
 
     private
+
+    # Undoes the bindings made by the last #execute.
+    def restore_bound_params
+      clear_bindings
+      @bound_params&.each { |key, value| bind(key, value) }
+      @execute_params_bound = false
+    end
 
     # A convenience method for obtaining the metadata about the query. Note
     # that this will actually execute the SQL, which means it can be a

@@ -373,6 +373,138 @@ module SQLite3
       stmt.close
     end
 
+    def test_execute_params_do_not_persist_to_the_next_execute
+      stmt = @db.prepare("select :a, :b")
+      assert_equal [[1, 2]], stmt.execute(a: 1, b: 2).to_a
+      assert_equal [[3, nil]], stmt.execute(a: 3).to_a
+      assert_equal [[nil, 4]], stmt.execute(b: 4).to_a
+      assert_equal [[nil, nil]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_execute_positional_params_do_not_persist_to_the_next_execute
+      stmt = @db.prepare("select ?, ?")
+      assert_equal [[1, 2]], stmt.execute(1, 2).to_a
+      assert_equal [[3, nil]], stmt.execute(3).to_a
+      stmt.close
+    end
+
+    def test_bind_params_persist_across_executes
+      stmt = @db.prepare("select :a, :b")
+      stmt.bind_params(a: 1)
+      assert_equal [[1, 2]], stmt.execute(b: 2).to_a
+      assert_equal [[1, 3]], stmt.execute(b: 3).to_a
+      assert_equal [[1, nil]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_execute_params_override_bind_params_for_one_execute
+      stmt = @db.prepare("select :a")
+      stmt.bind_param(:a, 1)
+      assert_equal [[2]], stmt.execute(a: 2).to_a
+      assert_equal [[1]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_bind_params_after_execute_params
+      stmt = @db.prepare("select :a, :b")
+      stmt.execute(a: 1, b: 2).to_a
+      stmt.reset!
+      stmt.bind_param(:b, 3)
+      assert_equal [[nil, 3]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_bind_params_and_step_after_execute_params
+      stmt = @db.prepare("select :a, :b")
+      stmt.execute(a: 1, b: 2).to_a
+      stmt.reset!
+      stmt.bind_param(:a, 3)
+      assert_equal [3, nil], stmt.step
+      stmt.close
+    end
+
+    def test_bind_param_on_a_running_statement_keeps_its_bindings
+      stmt = @db.prepare("select value, :a, :b from (select 1 as value union all select 2)")
+      stmt.bind_param(:a, 1)
+      stmt.execute(b: 2)
+      assert_equal [1, 1, 2], stmt.step
+      assert_raises(SQLite3::MisuseException) { stmt.bind_param(:a, 3) }
+      assert_equal [2, 1, 2], stmt.step
+      stmt.close
+    end
+
+    def test_bind_params_restore_the_value_as_bound
+      stmt = @db.prepare("select :a")
+      value = +"original"
+      stmt.bind_param(:a, value)
+      value.replace("changed")
+      stmt.execute(a: 2).to_a
+      assert_equal [["original"]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_bind_params_restore_the_value_as_bound_despite_a_copy_hook
+      klass = Class.new(String) do
+        def initialize_copy(other)
+          super
+          replace("copied")
+        end
+      end
+      stmt = @db.prepare("select :a")
+      stmt.bind_param(:a, klass.new("original"))
+      stmt.execute(a: 2).to_a
+      assert_equal [["original"]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_bind_params_restore_a_blob_as_a_blob
+      stmt = @db.prepare("select typeof(:a)")
+      stmt.bind_param(:a, SQLite3::Blob.new(+"bytes"))
+      stmt.execute(a: 2).to_a
+      assert_equal [["blob"]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_bind_params_restore_to_the_placeholder_as_bound
+      stmt = @db.prepare("select :a, :b")
+      key = Class.new(String).new("a")
+      stmt.bind_param(key, 1)
+      key.replace("b")
+      stmt.execute(a: 2).to_a
+      assert_equal [[1, nil]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_bind_params_by_another_name_replace_the_restored_value
+      stmt = @db.prepare("select :a")
+      stmt.bind_param(:a, 1)
+      stmt.bind_param("a", 2)
+      stmt.execute(a: 3).to_a
+      assert_equal [[2]], stmt.execute.to_a
+      stmt.close
+    end
+
+    def test_execute_binds_through_bind_param
+      klass = Class.new(SQLite3::Statement) do
+        def bind_param(key, value)
+          super(key, (value == true) ? 1 : value)
+        end
+      end
+      stmt = klass.new(@db, "select ?")
+      assert_equal [[1]], stmt.execute(true).to_a
+      stmt.close
+    end
+
+    def test_clear_bindings_forgets_bind_params
+      stmt = @db.prepare("select :a")
+      stmt.bind_param(:a, 1)
+      stmt.clear_bindings!
+      assert_equal [[2]], stmt.execute(a: 2).to_a
+      assert_equal [[nil]], stmt.execute.to_a
+      stmt.close
+    end
+
     def test_with_error
       @db.execute('CREATE TABLE "employees" ("name" varchar(20) NOT NULL CONSTRAINT "index_employees_on_name" UNIQUE)')
       stmt = @db.prepare("INSERT INTO Employees(name) VALUES(?)")
