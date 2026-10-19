@@ -1,10 +1,14 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.10.1 / 2026-10-19
 
 ### Dependencies
 
 - Vendored sqlite is updated to [v3.54.1](https://www.sqlite.org/releaselog/3_54_1.html) (from v3.54.0). This release contains a fix for a possible heap buffer overflow on 32-bit builds, including the precompiled `x86-linux-gnu` and `x86-linux-musl` gems. #756 @flavorjones
+
+### Improved
+
+- `Database#define_aggregator` no longer creates an anonymous class for each aggregate function it defines. Each invocation of the function still runs on a clone of the template object. #752 @jhawthorn
 
 
 ## 2.10.0 / 2026-10-13
