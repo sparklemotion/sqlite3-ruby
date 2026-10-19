@@ -215,29 +215,6 @@ step(VALUE self)
     return list;
 }
 
-/* call-seq: stmt.bind_param(key, value)
- *
- * Binds value to the named (or positional) placeholder. If +param+ is a
- * Fixnum, it is treated as an index for a positional placeholder.
- * Otherwise it is used as the name of the placeholder to bind to.
- *
- * Type mapping from Ruby to SQLite3:
- * - +nil+        → NULL
- * - Integer      → INTEGER (or REAL when outside the signed int64 range)
- * - Float        → REAL
- * - SQLite3::Blob → BLOB
- * - String with Encoding::ASCII_8BIT (a.k.a. BINARY) → BLOB
- * - String with Encoding::UTF_16LE or Encoding::UTF_16BE → TEXT (bound as UTF-16)
- * - String (all other encodings) → TEXT (re-encoded to UTF-8 if necessary)
- * - Any other type → raises RuntimeError
- *
- * Note: if you have a string with only ASCII characters but ASCII-8BIT
- * encoding and want it bound as TEXT rather than BLOB, re-encode it first:
- *
- *   stmt.bind_param(1, my_binary_str.encode(Encoding::UTF_8))
- *
- * See also #bind_params.
- */
 static VALUE
 bind_param(VALUE self, VALUE key, VALUE value)
 {
@@ -326,7 +303,7 @@ bind_param(VALUE self, VALUE key, VALUE value)
 
     CHECK(sqlite3_db_handle(ctx->st), status);
 
-    return self;
+    return INT2NUM(index);
 }
 
 /* call-seq: stmt.reset!
@@ -351,11 +328,6 @@ reset_bang(VALUE self)
     return self;
 }
 
-/* call-seq: stmt.clear_bindings!
- *
- * Resets the statement. This is typically done internally, though it might
- * occasionally be necessary to manually reset the statement.
- */
 static VALUE
 clear_bindings_bang(VALUE self)
 {
@@ -779,9 +751,7 @@ init_sqlite3_statement(void)
     rb_define_alloc_func(cSqlite3Statement, allocate);
     rb_define_method(cSqlite3Statement, "close", sqlite3_rb_close, 0);
     rb_define_method(cSqlite3Statement, "closed?", closed_p, 0);
-    rb_define_method(cSqlite3Statement, "bind_param", bind_param, 2);
     rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
-    rb_define_method(cSqlite3Statement, "clear_bindings!", clear_bindings_bang, 0);
     rb_define_method(cSqlite3Statement, "step", step, 0);
     rb_define_method(cSqlite3Statement, "done?", done_p, 0);
     rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
@@ -802,4 +772,6 @@ init_sqlite3_statement(void)
     rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
     rb_define_private_method(cSqlite3Statement, "stats_as_hash", stats_as_hash, 0);
     rb_define_private_method(cSqlite3Statement, "stat_for", stat_for, 1);
+    rb_define_private_method(cSqlite3Statement, "bind", bind_param, 2);
+    rb_define_private_method(cSqlite3Statement, "clear_bindings", clear_bindings_bang, 0);
 }

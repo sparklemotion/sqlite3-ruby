@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Fixed
+
+- `Statement#execute` binds its parameters for that execution only. Previously they stayed bound, so a later `#execute` that omitted a parameter reused the earlier value. Values bound with `Statement#bind_param` or `#bind_params` still persist across executions. Code that relied on the old behavior should bind those values with `#bind_params`. #751 @flavorjones
+
+
 ## 2.10.1 / 2026-10-19
 
 ### Dependencies
