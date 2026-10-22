@@ -217,6 +217,24 @@ step(VALUE self)
     return list;
 }
 
+/* call-seq: stmt.to_a
+ *
+ * Step through all remaining rows, returning them as an Array of frozen
+ * Arrays.
+ */
+static VALUE
+to_a(VALUE self)
+{
+    VALUE rows = rb_ary_new();
+    VALUE row;
+
+    while (!NIL_P(row = step(self))) {
+        rb_ary_push(rows, row);
+    }
+
+    return rows;
+}
+
 /* call-seq: stmt.bind_param(key, value)
  *
  * Binds value to the named (or positional) placeholder. If +param+ is a
@@ -794,6 +812,7 @@ init_sqlite3_statement(void)
     rb_define_method(cSqlite3Statement, "reset!", reset_bang, 0);
     rb_define_method(cSqlite3Statement, "clear_bindings!", clear_bindings_bang, 0);
     rb_define_method(cSqlite3Statement, "step", step, 0);
+    rb_define_method(cSqlite3Statement, "to_a", to_a, 0);
     rb_define_method(cSqlite3Statement, "done?", done_p, 0);
     rb_define_method(cSqlite3Statement, "column_count", column_count, 0);
     rb_define_method(cSqlite3Statement, "column_name", column_name, 1);
