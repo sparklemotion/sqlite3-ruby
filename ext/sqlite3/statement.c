@@ -235,6 +235,27 @@ to_a(VALUE self)
     return rows;
 }
 
+/* Like to_a, but returns each row as a Hash keyed by +columns+. */
+static VALUE
+to_a_hash(VALUE self, VALUE columns)
+{
+    VALUE rows = rb_ary_new();
+    VALUE row;
+
+    Check_Type(columns, T_ARRAY);
+
+    while (!NIL_P(row = step(self))) {
+        VALUE hash = rb_hash_new();
+        long i;
+        for (i = 0; i < RARRAY_LEN(columns); i++) {
+            rb_hash_aset(hash, RARRAY_AREF(columns, i), rb_ary_entry(row, i));
+        }
+        rb_ary_push(rows, hash);
+    }
+
+    return rows;
+}
+
 /* call-seq: stmt.bind_param(key, value)
  *
  * Binds value to the named (or positional) placeholder. If +param+ is a
@@ -830,6 +851,7 @@ init_sqlite3_statement(void)
 
     rb_define_private_method(cSqlite3Statement, "column_decltype_downcased", column_decltype_downcased, 1);
     rb_define_private_method(cSqlite3Statement, "prepare", prepare, 2);
+    rb_define_private_method(cSqlite3Statement, "to_a_hash", to_a_hash, 1);
     rb_define_private_method(cSqlite3Statement, "stats_as_hash", stats_as_hash, 0);
     rb_define_private_method(cSqlite3Statement, "stat_for", stat_for, 1);
 }
