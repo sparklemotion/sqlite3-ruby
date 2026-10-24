@@ -259,7 +259,8 @@ jobs:
           - { runner: ubuntu-24.04-arm, platform: aarch64-linux-musl, docker_platform: "--platform=linux/arm64" }
           - { runner: ubuntu-24.04-arm, platform: arm-linux-gnu, docker_platform: "--platform=linux/arm/v7" }
           - { runner: ubuntu-24.04-arm, platform: arm-linux-musl, docker_platform: "--platform=linux/arm/v7" }
-          - { runner: ubuntu-latest, platform: x86-linux-gnu, docker_platform: "--platform=linux/386" }
+          # Docker 29.4.2 on ubuntu-26.04 denies socketcall(2), so i386 glibc has no network: https://github.com/actions/runner-images/issues/14790
+          - { runner: ubuntu-24.04, platform: x86-linux-gnu, docker_platform: "--platform=linux/386" }
           - { runner: ubuntu-latest, platform: x86-linux-musl, docker_platform: "--platform=linux/386" }
     runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     steps:
