@@ -65,6 +65,10 @@ module SQLite3
     #   stmt = db.prepare( "select * from table where a=? and b=?" )
     #   stmt.bind_params( 15, "hello" )
     #
+    # The values that this method binds stay bound when you execute or reset
+    # the statement. To change a value, bind a new value to the same
+    # parameter. To clear all values, call #clear_bindings!.
+    #
     # See also #execute, #bind_param, Statement#bind_param, and
     # Statement#bind_params.
     def bind_params(*bind_vars)
@@ -83,7 +87,17 @@ module SQLite3
     # statement's virtual machine. If a block was given, the new ResultSet will
     # be yielded to it; otherwise, the ResultSet will be returned.
     #
-    # Any parameters will be bound to the statement using #bind_params.
+    # This method binds each argument to the statement with #bind_params. The
+    # values stay bound after this method returns. If a later call to #execute
+    # does not give a value for a parameter, the statement uses the value from
+    # the earlier call. To set all parameters to NULL before you execute the
+    # statement again, call #clear_bindings!:
+    #
+    #   stmt = db.prepare( "select :a, :b" )
+    #   stmt.execute( a: 1, b: 2 ).to_a  # => [[1, 2]]
+    #   stmt.execute( a: 3 ).to_a        # => [[3, 2]]
+    #   stmt.clear_bindings!
+    #   stmt.execute( a: 3 ).to_a        # => [[3, nil]]
     #
     # Example:
     #
@@ -92,7 +106,7 @@ module SQLite3
     #     ...
     #   end
     #
-    # See also #bind_params, #execute!.
+    # See also #bind_params, #execute!, #clear_bindings!.
     def execute(*bind_vars)
       reset! if active? || done?
 
@@ -109,7 +123,9 @@ module SQLite3
     # rows returned by executing the statement. Otherwise, each row will be
     # yielded to the block.
     #
-    # Any parameters will be bound to the statement using #bind_params.
+    # This method binds each argument to the statement with #bind_params. The
+    # values stay bound after this method returns. For more information, see
+    # #execute.
     #
     # Example:
     #

@@ -236,6 +236,10 @@ step(VALUE self)
  *
  *   stmt.bind_param(1, my_binary_str.encode(Encoding::UTF_8))
  *
+ * The value that this method binds stays bound when you execute or reset the
+ * statement. To change the value, bind a new value to the same parameter. To
+ * clear all values, call #clear_bindings!.
+ *
  * See also #bind_params.
  */
 static VALUE
@@ -331,8 +335,11 @@ bind_param(VALUE self, VALUE key, VALUE value)
 
 /* call-seq: stmt.reset!
  *
- * Resets the statement. This is typically done internally, though it might
- * occasionally be necessary to manually reset the statement.
+ * Resets the statement. The library usually calls this method for you, but
+ * you can also call it yourself.
+ *
+ * This method does not clear the values that you bound to the parameters. To
+ * clear them, call #clear_bindings!.
  */
 static VALUE
 reset_bang(VALUE self)
@@ -353,8 +360,11 @@ reset_bang(VALUE self)
 
 /* call-seq: stmt.clear_bindings!
  *
- * Resets the statement. This is typically done internally, though it might
- * occasionally be necessary to manually reset the statement.
+ * Sets the value of each parameter in the statement to NULL.
+ *
+ * The values that you bind with #bind_param, #bind_params, or #execute stay
+ * bound when you execute or reset the statement. Call this method to clear
+ * them.
  */
 static VALUE
 clear_bindings_bang(VALUE self)
