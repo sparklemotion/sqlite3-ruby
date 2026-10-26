@@ -65,6 +65,56 @@ module SQLite3
       assert_equal 1, ObjectSpace.each_object(ReleasableComparator).count
     end
 
+    def test_clearing_collations_does_not_release_a_registered_comparator
+      Thread.new { @db.collation "foo", Comparator.new }.join
+
+      @db.collations.clear
+      GC.start(full_mark: true, immediate_sweep: true)
+
+      assert_equal [["hello"], ["world"]], @db.execute("select data from ex order by 1 collate foo")
+    end
+
+    def test_collation_on_frozen_collations_does_not_release_the_comparator
+      @db.collations.freeze
+      Thread.new do
+        assert_raises(FrozenError) { @db.collation "foo", Comparator.new }
+      end.join
+
+      GC.start(full_mark: true, immediate_sweep: true)
+
+      assert_equal [["hello"], ["world"]], @db.execute("select data from ex order by 1 collate foo")
+    end
+
+    def test_replacing_a_collation_by_another_case_releases_the_previous_comparator
+      comparator_class = Class.new(ReleasableComparator)
+      ["foo", "FOO", "Foo"].each { |name| @db.collation name, comparator_class.new }
+      @db.collations.clear
+      GC.start(full_mark: true, immediate_sweep: true)
+
+      assert_equal 1, ObjectSpace.each_object(comparator_class).count
+    end
+
+    def test_collation_on_a_frozen_database_does_not_register_the_comparator
+      skip("FrozenError from the extension's rb_iv_set is CRuby-specific") unless RUBY_ENGINE == "ruby"
+
+      @db.freeze
+      assert_raises(FrozenError) { @db.collation "foo", Comparator.new }
+
+      assert_raises(SQLite3::SQLException) { @db.execute("select data from ex order by 1 collate foo") }
+    end
+
+    def test_collation_registry_ignores_an_overridden_downcase
+      Thread.new { @db.collation "foo", Comparator.new }.join
+      name = +"bar"
+      def name.downcase(*) = "foo"
+      @db.collation name, Comparator.new
+
+      @db.collations.clear
+      GC.start(full_mark: true, immediate_sweep: true)
+
+      assert_equal [["hello"], ["world"]], @db.execute("select data from ex order by 1 collate foo")
+    end
+
     def test_remove_collation
       comparator = Comparator.new
 

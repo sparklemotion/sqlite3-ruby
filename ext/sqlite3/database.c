@@ -87,22 +87,6 @@ rb_sqlite3_pin_array_and_contents(VALUE ary)
     }
 }
 
-static int
-pin_hash_value(VALUE UNUSED(key), VALUE value, VALUE UNUSED(arg))
-{
-    rb_gc_mark(value);
-    return ST_CONTINUE;
-}
-
-static void
-pin_hash_and_contents(VALUE hash)
-{
-    if (NIL_P(hash) || !hash) { return; }
-
-    rb_gc_mark(hash);
-    rb_hash_foreach(hash, pin_hash_value, 0);
-}
-
 /* Each wrapper also owns live aggregate instances, whose VALUEs sqlite keeps in
  * its own aggregate contexts. */
 static void
@@ -130,7 +114,7 @@ database_mark(void *ctx)
     rb_gc_mark(c->authorizer);
 
     rb_sqlite3_pin_array_and_contents(c->functions);
-    pin_hash_and_contents(c->collations);
+    rb_sqlite3_pin_array_and_contents(c->collations);
     pin_aggregators(c->aggregators);
 }
 
@@ -843,6 +827,13 @@ rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b
     return NUM2INT(comparison);
 }
 
+static int
+push_hash_value(VALUE UNUSED(key), VALUE value, VALUE ary)
+{
+    rb_ary_push(ary, value);
+    return ST_CONTINUE;
+}
+
 /* call-seq: db.collation(name, comparator)
  *
  * Add a collation with name +name+, and a +comparator+ object.  The
@@ -854,21 +845,42 @@ static VALUE
 collation(VALUE self, VALUE name, VALUE comparator)
 {
     sqlite3RubyPtr ctx;
-    VALUE collations;
+    VALUE registry, key, comparators;
+    char *key_ptr;
+    long i;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
 
+    /* sqlite holds a raw pointer to the comparator, so keep it alive and
+     * unmoved. The registry is private because callers can mutate the public
+     * @collations hash, and the snapshot is an array so database_mark can pin
+     * it without iterating a hash. sqlite matches collation names without
+     * regard to ASCII case, so the registry does too. The key and registry
+     * are prepared before sqlite takes the pointer, and the snapshot is
+     * published before the public hash, whose write can raise. */
+    key = rb_str_new_cstr(StringValuePtr(name));
+    key_ptr = RSTRING_PTR(key);
+    for (i = 0; i < RSTRING_LEN(key); i++) {
+        if (key_ptr[i] >= 'A' && key_ptr[i] <= 'Z') { key_ptr[i] += 'a' - 'A'; }
+    }
+    if (!rb_ivar_defined(self, rb_intern("-collations"))) {
+        rb_iv_set(self, "-collations", rb_hash_new());
+    }
+    registry = rb_iv_get(self, "-collations");
+
     CHECK(ctx->db, sqlite3_create_collation(
               ctx->db,
-              StringValuePtr(name),
+              RSTRING_PTR(name),
               SQLITE_UTF8,
               (void *)comparator,
               NIL_P(comparator) ? NULL : rb_comparator_func));
 
-    /* sqlite holds a raw pointer to the comparator, so keep it alive and unmoved. */
-    collations = rb_iv_get(self, "@collations");
-    rb_hash_aset(collations, name, comparator);
-    RB_OBJ_WRITE(self, &ctx->collations, collations);
+    rb_hash_aset(registry, key, comparator);
+    comparators = rb_ary_new();
+    rb_hash_foreach(registry, push_hash_value, comparators);
+    RB_OBJ_WRITE(self, &ctx->collations, comparators);
+
+    rb_hash_aset(rb_iv_get(self, "@collations"), name, comparator);
 
     return self;
 }
