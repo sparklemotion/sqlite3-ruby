@@ -45,4 +45,7 @@ extern VALUE cSqlite3Blob;
 
 int bignum_to_int64(VALUE big, sqlite3_int64 *result);
 
+/* Pinning a collection doesn't pin what's in it, hence both. */
+void rb_sqlite3_pin_array_and_contents(VALUE ary);
+
 #endif

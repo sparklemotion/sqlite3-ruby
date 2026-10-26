@@ -74,35 +74,6 @@ close_or_discard_db(sqlite3RubyPtr ctx)
 }
 
 
-void
-rb_sqlite3_pin_array_and_contents(VALUE ary)
-{
-    long i;
-
-    if (NIL_P(ary) || !ary) { return; }
-
-    rb_gc_mark(ary);
-    for (i = 0; i < RARRAY_LEN(ary); i++) {
-        rb_gc_mark(RARRAY_AREF(ary, i));
-    }
-}
-
-/* Each wrapper also owns live aggregate instances, whose VALUEs sqlite keeps in
- * its own aggregate contexts. */
-static void
-pin_aggregators(VALUE aggregators)
-{
-    long i;
-
-    rb_sqlite3_pin_array_and_contents(aggregators);
-
-    if (NIL_P(aggregators) || !aggregators) { return; }
-
-    for (i = 0; i < RARRAY_LEN(aggregators); i++) {
-        rb_sqlite3_aggregator_pin_instances(RARRAY_AREF(aggregators, i));
-    }
-}
-
 static void
 database_mark(void *ctx)
 {
@@ -115,7 +86,7 @@ database_mark(void *ctx)
 
     rb_sqlite3_pin_array_and_contents(c->functions);
     rb_sqlite3_pin_array_and_contents(c->collations);
-    pin_aggregators(c->aggregators);
+    rb_sqlite3_aggregator_pin(c->aggregators);
 }
 
 static void

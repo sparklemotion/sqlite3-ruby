@@ -20,6 +20,10 @@ static VALUE cAggregatorWrapper;
  *                    `step` and `finalize` won't be called any more. */
 static VALUE cAggregatorInstance;
 
+/* interned at init, because interning can allocate and rb_sqlite3_aggregator_pin
+ * runs during GC */
+static ID id_instances;
+
 typedef struct rb_sqlite3_protected_funcall_args {
     VALUE self;
     ID method;
@@ -267,9 +271,16 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
 }
 
 void
-rb_sqlite3_aggregator_pin_instances(VALUE aw)
+rb_sqlite3_aggregator_pin(VALUE aggregators)
 {
-    rb_sqlite3_pin_array_and_contents(rb_iv_get(aw, "-instances"));
+    long i;
+
+    if (NIL_P(aggregators) || !aggregators) { return; }
+
+    rb_sqlite3_pin_array_and_contents(aggregators);
+    for (i = 0; i < RARRAY_LEN(aggregators); i++) {
+        rb_sqlite3_pin_array_and_contents(rb_ivar_get(RARRAY_AREF(aggregators, i), id_instances));
+    }
 }
 
 void
@@ -281,4 +292,6 @@ rb_sqlite3_aggregator_init(void)
 
     cAggregatorInstance = rb_funcall(rb_cClass, rb_intern("new"), 0);
     rb_gc_register_mark_object(cAggregatorInstance);
+
+    id_instances = rb_intern("-instances");
 }
