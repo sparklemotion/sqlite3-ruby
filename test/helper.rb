@@ -27,6 +27,12 @@ module SQLite3
         @gc_level ||= detect_gc_level
       end
 
+      def gc_compaction_verifiable?
+        return @gc_compaction_verifiable if defined?(@gc_compaction_verifiable)
+
+        @gc_compaction_verifiable = GC.respond_to?(:verify_compaction_references) && gc_compaction_supported?
+      end
+
       private
 
       def detect_gc_level
@@ -47,10 +53,6 @@ module SQLite3
       rescue NotImplementedError
         warn("#{__FILE__}:#{__LINE__}: GC compaction is not supported by this platform")
         false
-      end
-
-      def gc_compaction_verifiable?
-        gc_compaction_supported? && GC.respond_to?(:verify_compaction_references)
       end
     end
 
@@ -107,7 +109,7 @@ module SQLite3
     end
 
     def skip_unless_compaction_supported
-      skip("GC compaction is unsupported on this runtime") unless GC.respond_to?(:verify_compaction_references)
+      skip("GC compaction is unsupported on this runtime") unless TestCase.gc_compaction_verifiable?
     end
 
     def assert_nothing_raised
