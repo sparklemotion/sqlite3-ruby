@@ -648,6 +648,133 @@ module SQLite3
       assert_equal("ok", result, "second thread deadlocked on the connection after a function raised")
     end
 
+    def test_function_raise_propagates_from_execute_batch2
+      @db.define_function("boom") { |a| raise "boom: #{a}" }
+
+      error = assert_raise(RuntimeError) { @db.execute_batch2("select boom(1)") }
+      assert_equal("boom: 1", error.message)
+
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_trace_raise_propagates_and_connection_remains_usable
+      @db.trace { |sql| raise "trace: #{sql}" }
+
+      error = assert_raise(RuntimeError) { @db.execute("select 1") }
+      assert_equal("trace: select 1", error.message)
+
+      @db.trace(nil)
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_trace_raise_propagates_from_execute_batch2
+      @db.trace { |sql| raise "trace: #{sql}" }
+
+      error = assert_raise(RuntimeError) { @db.execute_batch2("select 1") }
+      assert_equal("trace: select 1", error.message)
+
+      @db.trace(nil)
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_trace_throw_unwinds_to_its_catch
+      @db.trace { |sql| throw :traced, sql }
+
+      assert_equal("select 1", catch(:traced) { @db.execute("select 1") })
+
+      @db.trace(nil)
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_function_throw_unwinds_to_its_catch
+      @db.define_function("boom") { |a| throw :boom, a }
+
+      assert_equal(1, catch(:boom) { @db.execute("select boom(1)") })
+
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_trace_raise_is_not_taken_by_a_query_in_a_finalizer
+      skip("GC.stress is too slow under valgrind") if i_am_running_in_valgrind
+      skip("finalizers run on another thread on non-CRuby") unless RUBY_ENGINE == "ruby"
+
+      probe = SQLite3::Database.new(":memory:").prepare("select 2")
+      probe_results = []
+      aggregator = Class.new do
+        def step(*) = nil
+        def finalize = 1
+      end
+      @db.define_aggregator("agg", aggregator.new)
+      finalizer = proc { probe_results << probe.reset!.step }
+      holder = Thread.new do
+        Array.new(10) { Object.new.tap { |object| ObjectSpace.define_finalizer(object, finalizer) } }
+      end.value
+      @db.trace do
+        finalized = holder.dup
+        holder.clear
+        raise "trace"
+      ensure
+        finalized.size
+      end
+
+      error = begin
+        GC.stress = true
+        assert_raise(RuntimeError) { @db.execute("select agg(1), agg(2)") }
+      ensure
+        GC.stress = false
+      end
+
+      assert_equal("trace", error.message)
+      GC.start
+      assert_equal(Array.new(10) { [2] }, probe_results)
+    end
+
+    def test_trace_that_deletes_fiber_locals_does_not_break_the_query
+      @db.trace { Thread.current.keys.each { |key| Thread.current[key] = nil } }
+
+      assert_equal([[1]], @db.execute("select 1"))
+    end
+
+    def test_trace_raise_does_not_deadlock_other_threads_using_the_connection
+      assert_connection_usable_from_another_thread do
+        db = SQLite3::Database.new(":memory:")
+        db.trace { |sql| raise "trace" }
+        assert_raise(RuntimeError) { db.execute("select 1") }
+        db.trace(nil)
+        db
+      end
+    end
+
+    def test_authorizer_raise_propagates_and_connection_remains_usable
+      @db.authorizer = proc { |*| raise "authorizer" }
+
+      error = assert_raise(RuntimeError) { @db.execute("select 1") }
+      assert_equal("authorizer", error.message)
+
+      @db.authorizer = nil
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_authorizer_raise_propagates_from_execute_batch2
+      @db.authorizer = proc { |*| raise "authorizer" }
+
+      error = assert_raise(RuntimeError) { @db.execute_batch2("select 1") }
+      assert_equal("authorizer", error.message)
+
+      @db.authorizer = nil
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_authorizer_raise_does_not_deadlock_other_threads_using_the_connection
+      assert_connection_usable_from_another_thread do
+        db = SQLite3::Database.new(":memory:")
+        db.authorizer = proc { |*| raise "authorizer" }
+        assert_raise(RuntimeError) { db.execute("select 1") }
+        db.authorizer = nil
+        db
+      end
+    end
+
     def test_function_gc_segfault
       @db.create_function("bug", -1) { |func, *values| func.result = values.join }
       # With a lot of data and a lot of threads, try to induce a GC segfault.

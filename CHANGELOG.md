@@ -7,7 +7,7 @@
 - Raise `RangeError` when a SQL string, a bound String or Blob value, or a String or Blob returned from a custom function or aggregate is longer than `INT_MAX` bytes. Previously the length was truncated to 32 bits, so SQLite could read only part of the string and drop trailing clauses from a query. See [GHSA-4fqr-96q8-xrfx](https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-4fqr-96q8-xrfx) for more information. #762 @flavorjones
 - Fix a crash when a custom aggregate's `finalize` returns a value that can't be converted to a SQLite result. The exception is now raised from the query and the connection remains usable. #762 @flavorjones
 - Fix a use-after-free when the hash returned by `Database#collations` is cleared, modified or frozen. GC could free a comparator that SQLite still called. #764 @flavorjones
-- Fix a deadlock when a collation comparator, `trace` block, `busy_handler` block or authorizer raises. Another thread that used the connection blocked forever. The exception is now raised from the query and the connection remains usable. #764 @flavorjones
+- Fix a deadlock when a collation comparator, `trace` block, `busy_handler` block or authorizer raises, or when an interrupt such as `Thread#raise` arrives while an aggregate's handler is being created. Another thread that used the connection blocked forever. The exception is now raised from the query and the connection remains usable. #764 @flavorjones
 - Fix a crash when a custom function or aggregate uses `throw`. #764 @flavorjones
 - `Database#execute_batch2` now raises the exception from a custom function, instead of `SQLite3::SQLException` "Ruby Exception occurred". #764 @flavorjones
 

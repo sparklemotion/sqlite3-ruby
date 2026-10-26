@@ -54,8 +54,9 @@ prepare(VALUE self, VALUE db, VALUE sql)
 {
     sqlite3RubyPtr db_ctx = sqlite3_database_unwrap(db);
     sqlite3StmtRubyPtr ctx;
-    const char *tail = NULL;
-    int status;
+    const char *sql_cstr, *tail = NULL;
+    rb_sqlite3_callback_frame_t frame;
+    int sql_len, status, callback_state;
 
     StringValue(sql);
 
@@ -68,17 +69,22 @@ prepare(VALUE self, VALUE db, VALUE sql)
 
     timespecclear(&db_ctx->stmt_deadline);
 
+    sql_cstr = StringValuePtr(sql);
+    sql_len = RSTRING_LENINT(sql);
+
+    rb_sqlite3_push_callback_frame(&frame);
 #ifdef HAVE_SQLITE3_PREPARE_V2
     status = sqlite3_prepare_v2(
 #else
     status = sqlite3_prepare(
 #endif
                  db_ctx->db,
-                 (const char *)StringValuePtr(sql),
-                 RSTRING_LENINT(sql),
+                 sql_cstr,
+                 sql_len,
                  &ctx->st,
                  &tail
              );
+    if ((callback_state = rb_sqlite3_pop_callback_frame(&frame))) { rb_jump_tag(callback_state); }
 
     CHECK_PREPARE(db_ctx->db, status, StringValuePtr(sql));
 
@@ -125,7 +131,8 @@ step(VALUE self)
 {
     sqlite3StmtRubyPtr ctx;
     sqlite3_stmt *stmt;
-    int value, length;
+    rb_sqlite3_callback_frame_t frame;
+    int value, length, callback_state;
     VALUE list;
     rb_encoding *internal_encoding;
 
@@ -144,15 +151,9 @@ step(VALUE self)
         timespecclear(&ctx->db->stmt_deadline);
     }
 
+    rb_sqlite3_push_callback_frame(&frame);
     value = sqlite3_step(stmt);
-    if (rb_errinfo() != Qnil) {
-        /* some user defined function was invoked as a callback during step and
-         * it raised an exception that has been suppressed until step returns.
-         * Now re-raise it. */
-        VALUE exception = rb_errinfo();
-        rb_set_errinfo(Qnil);
-        rb_exc_raise(exception);
-    }
+    if ((callback_state = rb_sqlite3_pop_callback_frame(&frame))) { rb_jump_tag(callback_state); }
 
     if (value == SQLITE_DONE) {
         ctx->done_p = 1;

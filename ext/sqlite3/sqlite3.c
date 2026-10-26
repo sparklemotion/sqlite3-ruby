@@ -204,6 +204,7 @@ Init_sqlite3_native(void)
     sqlite3_initialize();
 #endif
 
+    init_sqlite3_exception();
     init_sqlite3_constants();
     init_sqlite3_database();
     init_sqlite3_statement();

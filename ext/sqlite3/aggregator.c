@@ -14,173 +14,149 @@ static VALUE cAggregatorWrapper;
  * the xFinal callback.
  *
  * An AggregatorInstance holds the following instance variables:
- * -handler_instance: the instance to call `step` and `finalize` on.
- * -exc_status:       status returned by rb_protect.
- *                    != 0 if an exception occurred. If an exception occurred
- *                    `step` and `finalize` won't be called any more. */
+ * -handler_instance: the instance to call `step` and `finalize` on. */
 static VALUE cAggregatorInstance;
 
 /* interned at init, because interning can allocate and rb_sqlite3_aggregator_pin
  * runs during GC */
 static ID id_instances;
+static ID id_handler_instance;
 
-typedef struct rb_sqlite3_protected_funcall_args {
-    VALUE self;
-    ID method;
-    int argc;
-    VALUE *params;
-    sqlite3_context *result_ctx;
-} protected_funcall_args_t;
-
-/* why isn't there something like this in the ruby API? */
-static VALUE
-rb_sqlite3_protected_funcall_body(VALUE protected_funcall_args_ptr)
-{
-    protected_funcall_args_t *args =
-        (protected_funcall_args_t *)protected_funcall_args_ptr;
-
-    VALUE result = rb_funcall2(args->self, args->method, args->argc, args->params);
-
-    if (args->result_ctx) {
-        set_sqlite3_func_result(args->result_ctx, result);
-    }
-
-    return result;
-}
-
-static VALUE
-rb_sqlite3_protected_funcall(VALUE self, ID method, int argc, VALUE *params,
-                             sqlite3_context *result_ctx, int *exc_status)
-{
-    protected_funcall_args_t args = {
-        .self = self, .method = method, .argc = argc, .params = params, .result_ctx = result_ctx
-    };
-    return rb_protect(rb_sqlite3_protected_funcall_body, (VALUE)(&args), exc_status);
-}
-
-/* called in rb_sqlite3_aggregator_step and rb_sqlite3_aggregator_final. It
- * checks if the execution context already has an associated instance. If it
- * has one, it returns it. If there is no instance yet, it creates one and
- * associates it with the context. */
-static VALUE
-rb_sqlite3_aggregate_instance(sqlite3_context *ctx)
-{
-    VALUE aw = (VALUE) sqlite3_user_data(ctx);
-    VALUE handler_klass = rb_iv_get(aw, "-handler_klass");
+/* sqlite's aggregate context for one invocation of an aggregate function. */
+typedef struct {
+    /* the AggregatorInstance: Qfalse until the first callback creates it, Qnil
+     * once xFinal destroys it */
     VALUE inst;
-    VALUE *inst_ptr = sqlite3_aggregate_context(ctx, (int)sizeof(VALUE));
+    /* != 0 once a callback for this invocation raised, threw or was skipped.
+     * After that, `step` and `finalize` won't be called any more. */
+    int exc_status;
+} aggregate_context_t;
 
-    if (!inst_ptr) {
-        rb_fatal("SQLite is out-of-memory");
-    }
+typedef struct {
+    sqlite3_context *ctx;
+    aggregate_context_t *agg;
+    int argc;
+    sqlite3_value **argv;
+} aggregator_call_t;
 
-    inst = *inst_ptr;
+/* called in the step and final callbacks. Returns the invocation's handler
+ * instance, creating it on the first call. */
+static VALUE
+rb_sqlite3_aggregate_handler_instance(aggregator_call_t *call)
+{
+    VALUE aw, handler_instance, inst;
 
-    if (inst == Qfalse) { /* Qfalse == 0 */
-        VALUE instances = rb_iv_get(aw, "-instances");
-        int exc_status;
-
-        inst = rb_class_new_instance(0, NULL, cAggregatorInstance);
-        rb_iv_set(inst, "-handler_instance", rb_sqlite3_protected_funcall(
-                      handler_klass, rb_intern("new"), 0, NULL, NULL, &exc_status));
-        rb_iv_set(inst, "-exc_status", INT2NUM(exc_status));
-
-        rb_ary_push(instances, inst);
-
-        *inst_ptr = inst;
-    }
-
-    if (inst == Qnil) {
+    if (call->agg->inst == Qnil) {
         rb_fatal("SQLite called us back on an already destroyed aggregate instance");
     }
 
-    return inst;
+    if (call->agg->inst == Qfalse) { /* Qfalse == 0 */
+        aw = (VALUE) sqlite3_user_data(call->ctx);
+        handler_instance = rb_funcall(rb_ivar_get(aw, rb_intern("-handler_klass")), rb_intern("new"), 0);
+
+        inst = rb_class_new_instance(0, NULL, cAggregatorInstance);
+        rb_ivar_set(inst, id_handler_instance, handler_instance);
+        rb_ary_push(rb_ivar_get(aw, id_instances), inst);
+
+        call->agg->inst = inst;
+    }
+
+    return rb_ivar_get(call->agg->inst, id_handler_instance);
 }
 
-/* called by rb_sqlite3_aggregator_final. Unlinks and frees the
- * aggregator_instance_t, so the handler_instance won't be marked any more
- * and Ruby's GC may free it. */
+/* called by rb_sqlite3_aggregator_final, after any skipped or failed callback
+ * too, so it runs no Ruby code. Unlinks the instance, so the handler_instance
+ * won't be marked any more and Ruby's GC may free it. */
 static void
-rb_sqlite3_aggregate_instance_destroy(sqlite3_context *ctx)
+rb_sqlite3_aggregate_instance_destroy(sqlite3_context *ctx, aggregate_context_t *agg)
 {
-    VALUE aw = (VALUE) sqlite3_user_data(ctx);
-    VALUE instances = rb_iv_get(aw, "-instances");
-    VALUE *inst_ptr = sqlite3_aggregate_context(ctx, 0);
-    VALUE inst;
+    VALUE instances = rb_ivar_get((VALUE) sqlite3_user_data(ctx), id_instances);
+    long i;
 
-    if (!inst_ptr || !(inst = *inst_ptr)) {
+    if (!agg->inst) {
         return;
     }
 
-    if (inst == Qnil) {
+    if (agg->inst == Qnil) {
         rb_fatal("attempt to destroy aggregate instance twice");
     }
 
-    rb_iv_set(inst, "-handler_instance", Qnil); // may catch use-after-free
-    if (rb_ary_delete(instances, inst) == Qnil) {
+    rb_ivar_set(agg->inst, id_handler_instance, Qnil); // may catch use-after-free
+    for (i = 0; i < RARRAY_LEN(instances) && RARRAY_AREF(instances, i) != agg->inst; i++);
+    if (i == RARRAY_LEN(instances)) {
         rb_fatal("must be in instances at that point");
     }
+    rb_ary_delete_at(instances, i);
 
-    *inst_ptr = Qnil;
+    agg->inst = Qnil;
+}
+
+static VALUE
+rb_sqlite3_aggregator_step_protected(VALUE call_value)
+{
+    aggregator_call_t *call = (aggregator_call_t *)call_value;
+    VALUE handler_instance = rb_sqlite3_aggregate_handler_instance(call);
+    VALUE params = rb_ary_new2(call->argc);
+    int i;
+
+    for (i = 0; i < call->argc; i++) {
+        rb_ary_push(params, sqlite3val2rb(call->argv[i]));
+    }
+
+    return rb_apply(handler_instance, rb_intern("step"), params);
+}
+
+static VALUE
+rb_sqlite3_aggregator_final_protected(VALUE call_value)
+{
+    aggregator_call_t *call = (aggregator_call_t *)call_value;
+    VALUE handler_instance = rb_sqlite3_aggregate_handler_instance(call);
+
+    set_sqlite3_func_result(call->ctx, rb_funcall(handler_instance, rb_intern("finalize"), 0));
+
+    return Qnil;
 }
 
 static void
 rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 {
-    VALUE inst = rb_sqlite3_aggregate_instance(ctx);
-    VALUE handler_instance = rb_iv_get(inst, "-handler_instance");
-    VALUE *params = NULL;
-    VALUE params_handle = 0;
-    VALUE one_param;
-    int exc_status = NUM2INT(rb_iv_get(inst, "-exc_status"));
-    int i;
+    aggregator_call_t call = {
+        .ctx = ctx, .agg = sqlite3_aggregate_context(ctx, (int)sizeof(aggregate_context_t)), .argc = argc, .argv = argv
+    };
 
-    if (exc_status) {
+    if (!call.agg) {
+        sqlite3_result_error_nomem(ctx);
         return;
     }
 
-    if (argc == 1) {
-        one_param = sqlite3val2rb(argv[0]);
-        params = &one_param;
+    if (!call.agg->exc_status) {
+        rb_sqlite3_protect_callback(rb_sqlite3_aggregator_step_protected, (VALUE)&call, &call.agg->exc_status);
     }
-    if (argc > 1) {
-        /* ALLOCV memory is conservatively marked, so stored VALUEs survive a
-         * GC raised by a later sqlite3val2rb call. */
-        params = ALLOCV_N(VALUE, params_handle, argc);
-        for (i = 0; i < argc; i++) {
-            params[i] = sqlite3val2rb(argv[i]);
-        }
-    }
-    rb_sqlite3_protected_funcall(
-        handler_instance, rb_intern("step"), argc, params, NULL, &exc_status);
-    if (argc > 1) {
-        ALLOCV_END(params_handle);
-    }
-
-    rb_iv_set(inst, "-exc_status", INT2NUM(exc_status));
 }
 
 /* we assume that this function is only called once per execution context */
 static void
 rb_sqlite3_aggregator_final(sqlite3_context *ctx)
 {
-    VALUE inst = rb_sqlite3_aggregate_instance(ctx);
-    VALUE handler_instance = rb_iv_get(inst, "-handler_instance");
-    int exc_status = NUM2INT(rb_iv_get(inst, "-exc_status"));
+    aggregator_call_t call = { .ctx = ctx, .agg = sqlite3_aggregate_context(ctx, (int)sizeof(aggregate_context_t)) };
 
-    if (!exc_status) {
-        rb_sqlite3_protected_funcall(
-            handler_instance, rb_intern("finalize"), 0, NULL, ctx, &exc_status);
+    if (!call.agg) {
+        sqlite3_result_error_nomem(ctx);
+        return;
     }
 
-    if (exc_status) {
+    if (!call.agg->exc_status) {
+        rb_sqlite3_protect_callback(rb_sqlite3_aggregator_final_protected, (VALUE)&call, &call.agg->exc_status);
+    }
+
+    if (call.agg->exc_status) {
         /* the user should never see this, as Statement.step() will pick up the
          * outstanding exception and raise it instead of generating a new one
          * for SQLITE_ERROR with message "Ruby Exception occurred" */
         sqlite3_result_error(ctx, "Ruby Exception occurred", -1);
     }
 
-    rb_sqlite3_aggregate_instance_destroy(ctx);
+    rb_sqlite3_aggregate_instance_destroy(ctx, call.agg);
 }
 
 /* call-seq: define_aggregator2(aggregator)
@@ -294,4 +270,5 @@ rb_sqlite3_aggregator_init(void)
     rb_gc_register_mark_object(cAggregatorInstance);
 
     id_instances = rb_intern("-instances");
+    id_handler_instance = rb_intern("-handler_instance");
 }

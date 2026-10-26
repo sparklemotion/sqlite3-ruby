@@ -40,6 +40,30 @@ module SQLite3
       assert_equal 1, comparator.calls.length
     end
 
+    def test_collation_raise_propagates_and_connection_remains_usable
+      @db.collation "boom", Class.new { def compare(left, right) = raise("boom") }.new
+
+      error = assert_raise(RuntimeError) { @db.execute("select data from ex order by 1 collate boom") }
+      assert_equal("boom", error.message)
+
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_collation_result_keeps_its_sign_outside_the_fixnum_range
+      @db.collation "wide", Class.new { def compare(left, right) = (left <=> right) * 2**30 }.new
+
+      assert_equal([[1, 0]], @db.execute("select 'world' > 'hello' collate wide, 'world' < 'hello' collate wide"))
+    end
+
+    def test_collation_raise_does_not_deadlock_other_threads_using_the_connection
+      assert_connection_usable_from_another_thread do
+        db = SQLite3::Database.new(":memory:")
+        db.collation "boom", Class.new { def compare(left, right) = raise("boom") }.new
+        assert_raise(RuntimeError) { db.execute("select column1 from (values ('a'), ('b')) order by 1 collate boom") }
+        db
+      end
+    end
+
     def test_collation_does_not_use_moved_comparator_after_gc_compaction
       skip_unless_compaction_supported
 

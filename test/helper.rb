@@ -126,6 +126,38 @@ module SQLite3
       skip("GC stress is too slow to measure throughput") if gc_level == :stress
     end
 
+    # A callback that raises through sqlite leaves the connection's mutex locked
+    # by the raising thread, and a second thread that then uses the connection
+    # blocks forever while holding the GVL. The block makes a callback raise
+    # and returns its connection.
+    def assert_connection_usable_from_another_thread
+      skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
+      skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
+
+      read, write = IO.pipe
+      old_stderr, $stderr = $stderr, StringIO.new
+      pid = Process.fork do
+        read.close
+        begin
+          db = yield
+          Thread.new { db.execute("select 1") }.join
+          write.write("ok")
+        rescue Exception => e # rubocop:disable Lint/RescueException
+          write.write("#{e.class}: #{e.message}")
+        end
+        exit!
+      end
+      $stderr = old_stderr
+      write.close
+
+      result = IO.select([read], nil, nil, 10) && read.read
+      Process.kill(:KILL, pid) unless result
+      Process.waitpid(pid)
+      read.close
+
+      assert_equal("ok", result || "second thread deadlocked on the connection")
+    end
+
     def windows?
       ::RUBY_PLATFORM =~ /mingw|mswin/
     end

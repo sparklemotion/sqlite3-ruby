@@ -276,11 +276,21 @@ total_changes(VALUE self)
     return INT2NUM(sqlite3_total_changes(ctx->db));
 }
 
+static VALUE
+tracefunc_protected(VALUE args_value)
+{
+    VALUE *args = (VALUE *)args_value;
+    return rb_funcall(args[0], rb_intern("call"), 1, rb_str_new2((const char *)args[1]));
+}
+
 static void
 tracefunc(void *data, const char *sql)
 {
     sqlite3RubyPtr ctx = (sqlite3RubyPtr)data;
-    rb_funcall(ctx->trace_handler, rb_intern("call"), 1, rb_str_new2(sql));
+    VALUE args[] = { ctx->trace_handler, (VALUE)sql };
+    int failed;
+
+    rb_sqlite3_protect_callback(tracefunc_protected, (VALUE)args, &failed);
 }
 
 /* call-seq:
@@ -311,15 +321,24 @@ trace(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
+static VALUE
+rb_sqlite3_busy_handler_protected(VALUE args_value)
+{
+    VALUE *args = (VALUE *)args_value;
+    return rb_funcall(args[0], rb_intern("call"), 1, INT2NUM((int)args[1]));
+}
+
 static int
 rb_sqlite3_busy_handler(void *context, int count)
 {
     sqlite3RubyPtr ctx = (sqlite3RubyPtr)context;
+    VALUE args[] = { ctx->busy_handler, (VALUE)count };
+    VALUE result;
+    int failed;
 
-    VALUE handle = ctx->busy_handler;
-    VALUE result = rb_funcall(handle, rb_intern("call"), 1, INT2NUM(count));
+    result = rb_sqlite3_protect_callback(rb_sqlite3_busy_handler_protected, (VALUE)args, &failed);
 
-    if (Qfalse == result) { return 0; }
+    if (failed || Qfalse == result) { return 0; }
 
     return 1;
 }
@@ -533,13 +552,13 @@ static void
 rb_sqlite3_func(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 {
     rb_sqlite3_func_args_t args = { .ctx = ctx, .argc = argc, .argv = argv };
-    int exc_status;
+    int failed;
 
-    rb_protect(rb_sqlite3_func_protected, (VALUE)&args, &exc_status);
+    rb_sqlite3_protect_callback(rb_sqlite3_func_protected, (VALUE)&args, &failed);
 
-    if (exc_status) {
+    if (failed) {
         /* the user should never see this message, because Statement#step will
-         * re-raise the exception still in rb_errinfo */
+         * resume the Ruby exception instead */
         sqlite3_result_error(ctx, "Ruby Exception occurred", -1);
     }
 }
@@ -677,6 +696,33 @@ changes(VALUE self)
     return INT2NUM(sqlite3_changes(ctx->db));
 }
 
+typedef struct {
+    VALUE authorizer;
+    int action;
+    const char *a;
+    const char *b;
+    const char *c;
+    const char *d;
+} rb_sqlite3_auth_args_t;
+
+static VALUE
+rb_sqlite3_auth_protected(VALUE auth_args_value)
+{
+    rb_sqlite3_auth_args_t *args = (rb_sqlite3_auth_args_t *)auth_args_value;
+    VALUE action = INT2NUM(args->action);
+    VALUE a      = args->a ? rb_str_new2(args->a) : Qnil;
+    VALUE b      = args->b ? rb_str_new2(args->b) : Qnil;
+    VALUE c      = args->c ? rb_str_new2(args->c) : Qnil;
+    VALUE d      = args->d ? rb_str_new2(args->d) : Qnil;
+    VALUE result = rb_funcall(args->authorizer, rb_intern("call"), 5, action, a, b, c, d);
+
+    if (T_FIXNUM == TYPE(result)) { return INT2FIX(NUM2INT(result)); }
+    if (Qtrue == result) { return INT2FIX(SQLITE_OK); }
+    if (Qfalse == result) { return INT2FIX(SQLITE_DENY); }
+
+    return INT2FIX(SQLITE_IGNORE);
+}
+
 static int
 rb_sqlite3_auth(
     void *ctx,
@@ -687,18 +733,17 @@ rb_sqlite3_auth(
     const char *_d)
 {
     sqlite3RubyPtr db_ctx = (sqlite3RubyPtr)ctx;
-    VALUE action = INT2NUM(_action);
-    VALUE a      = _a ? rb_str_new2(_a) : Qnil;
-    VALUE b      = _b ? rb_str_new2(_b) : Qnil;
-    VALUE c      = _c ? rb_str_new2(_c) : Qnil;
-    VALUE d      = _d ? rb_str_new2(_d) : Qnil;
-    VALUE result = rb_funcall(db_ctx->authorizer, rb_intern("call"), 5, action, a, b, c, d);
+    rb_sqlite3_auth_args_t args = {
+        .authorizer = db_ctx->authorizer, .action = _action, .a = _a, .b = _b, .c = _c, .d = _d
+    };
+    VALUE result;
+    int failed;
 
-    if (T_FIXNUM == TYPE(result)) { return (int)NUM2INT(result); }
-    if (Qtrue == result) { return SQLITE_OK; }
-    if (Qfalse == result) { return SQLITE_DENY; }
+    result = rb_sqlite3_protect_callback(rb_sqlite3_auth_protected, (VALUE)&args, &failed);
 
-    return SQLITE_IGNORE;
+    if (failed) { return SQLITE_DENY; }
+
+    return FIX2INT(result);
 }
 
 /* call-seq: set_authorizer = auth
@@ -770,10 +815,19 @@ set_extended_result_codes(VALUE self, VALUE enable)
     return self;
 }
 
-int
-rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b)
-{
+typedef struct {
     VALUE comparator;
+    int a_len;
+    const void *a;
+    int b_len;
+    const void *b;
+    int comparison;
+} rb_comparator_args_t;
+
+static VALUE
+rb_comparator_protected(VALUE comparator_args_value)
+{
+    rb_comparator_args_t *args = (rb_comparator_args_t *)comparator_args_value;
     VALUE a_str;
     VALUE b_str;
     VALUE comparison;
@@ -781,9 +835,8 @@ rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b
 
     internal_encoding = rb_default_internal_encoding();
 
-    comparator = (VALUE)ctx;
-    a_str = rb_str_new((const char *)a, a_len);
-    b_str = rb_str_new((const char *)b, b_len);
+    a_str = rb_str_new((const char *)args->a, args->a_len);
+    b_str = rb_str_new((const char *)args->b, args->b_len);
 
     rb_enc_associate_index(a_str, rb_utf8_encindex());
     rb_enc_associate_index(b_str, rb_utf8_encindex());
@@ -793,9 +846,23 @@ rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b
         b_str = rb_str_export_to_enc(b_str, internal_encoding);
     }
 
-    comparison = rb_funcall(comparator, rb_intern("compare"), 2, a_str, b_str);
+    comparison = rb_funcall(args->comparator, rb_intern("compare"), 2, a_str, b_str);
 
-    return NUM2INT(comparison);
+    args->comparison = NUM2INT(comparison);
+
+    return Qnil;
+}
+
+int
+rb_comparator_func(void *ctx, int a_len, const void *a, int b_len, const void *b)
+{
+    rb_comparator_args_t args = { .comparator = (VALUE)ctx, .a_len = a_len, .a = a, .b_len = b_len, .b = b };
+    int failed;
+
+    rb_sqlite3_protect_callback(rb_comparator_protected, (VALUE)&args, &failed);
+
+    /* sqlite has no way to report a comparator error */
+    return failed ? 0 : args.comparison;
 }
 
 static int
@@ -917,44 +984,68 @@ transaction_active_p(VALUE self)
     return sqlite3_get_autocommit(ctx->db) ? Qfalse : Qtrue;
 }
 
-static int
-hash_callback_function(void *data_ptr, int count, char **data, char **columns)
+typedef struct {
+    VALUE callback_ary;
+    VALUE (*build_row)(VALUE);
+} rb_sqlite3_exec_batch_t;
+
+typedef struct {
+    VALUE callback_ary;
+    int count;
+    char **data;
+    char **columns;
+} rb_sqlite3_exec_row_t;
+
+static VALUE
+hash_callback_protected(VALUE row_value)
 {
-    VALUE callback_ary = (VALUE)data_ptr;
+    rb_sqlite3_exec_row_t *row = (rb_sqlite3_exec_row_t *)row_value;
     VALUE new_hash = rb_hash_new();
     int i;
 
-    for (i = 0; i < count; i++) {
-        if (data[i] == NULL) {
-            rb_hash_aset(new_hash, rb_str_new_cstr(columns[i]), Qnil);
+    for (i = 0; i < row->count; i++) {
+        if (row->data[i] == NULL) {
+            rb_hash_aset(new_hash, rb_str_new_cstr(row->columns[i]), Qnil);
         } else {
-            rb_hash_aset(new_hash, rb_str_new_cstr(columns[i]), rb_str_new_cstr(data[i]));
+            rb_hash_aset(new_hash, rb_str_new_cstr(row->columns[i]), rb_str_new_cstr(row->data[i]));
         }
     }
 
-    rb_ary_push(callback_ary, new_hash);
+    rb_ary_push(row->callback_ary, new_hash);
 
-    return 0;
+    return Qnil;
 }
 
-static int
-regular_callback_function(void *data_ptr, int count, char **data, char **columns)
+static VALUE
+regular_callback_protected(VALUE row_value)
 {
-    VALUE callback_ary = (VALUE)data_ptr;
+    rb_sqlite3_exec_row_t *row = (rb_sqlite3_exec_row_t *)row_value;
     VALUE new_ary = rb_ary_new();
     int i;
 
-    for (i = 0; i < count; i++) {
-        if (data[i] == NULL) {
+    for (i = 0; i < row->count; i++) {
+        if (row->data[i] == NULL) {
             rb_ary_push(new_ary, Qnil);
         } else {
-            rb_ary_push(new_ary, rb_str_new_cstr(data[i]));
+            rb_ary_push(new_ary, rb_str_new_cstr(row->data[i]));
         }
     }
 
-    rb_ary_push(callback_ary, new_ary);
+    rb_ary_push(row->callback_ary, new_ary);
 
-    return 0;
+    return Qnil;
+}
+
+static int
+exec_batch_callback_function(void *batch_ptr, int count, char **data, char **columns)
+{
+    rb_sqlite3_exec_batch_t *batch = (rb_sqlite3_exec_batch_t *)batch_ptr;
+    rb_sqlite3_exec_row_t row = { .callback_ary = batch->callback_ary, .count = count, .data = data, .columns = columns };
+    int failed;
+
+    rb_sqlite3_protect_callback(batch->build_row, (VALUE)&row, &failed);
+
+    return failed;
 }
 
 
@@ -972,21 +1063,27 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
     sqlite3RubyPtr ctx;
     int status;
     VALUE callback_ary = rb_ary_new();
+    rb_sqlite3_exec_batch_t batch = {
+        .callback_ary = callback_ary,
+        .build_row = results_as_hash == Qtrue ? hash_callback_protected : regular_callback_protected
+    };
+    rb_sqlite3_callback_frame_t frame;
+    int callback_state;
+    const char *sql_cstr;
     char *errMsg;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
 
+    sql_cstr = StringValuePtr(sql);
     timespecclear(&ctx->stmt_deadline);
 
-    if (results_as_hash == Qtrue) {
-        status = sqlite3_exec(ctx->db, StringValuePtr(sql), hash_callback_function,
-                              (void *)callback_ary,
-                              &errMsg);
-    } else {
-        status = sqlite3_exec(ctx->db, StringValuePtr(sql), regular_callback_function,
-                              (void *)callback_ary,
-                              &errMsg);
+    rb_sqlite3_push_callback_frame(&frame);
+    status = sqlite3_exec(ctx->db, sql_cstr, exec_batch_callback_function, (void *)&batch, &errMsg);
+
+    if ((callback_state = rb_sqlite3_pop_callback_frame(&frame))) {
+        sqlite3_free(errMsg);
+        rb_jump_tag(callback_state);
     }
 
     CHECK_MSG(ctx->db, status, errMsg);

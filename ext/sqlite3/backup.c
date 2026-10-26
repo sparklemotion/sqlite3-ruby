@@ -113,11 +113,16 @@ static VALUE
 step(VALUE self, VALUE nPage)
 {
     sqlite3BackupRubyPtr ctx;
-    int status;
+    rb_sqlite3_callback_frame_t frame;
+    int pages, status, callback_state;
 
     TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
     REQUIRE_OPEN_BACKUP(ctx);
-    status = sqlite3_backup_step(ctx->p, NUM2INT(nPage));
+    pages = NUM2INT(nPage);
+
+    rb_sqlite3_push_callback_frame(&frame);
+    status = sqlite3_backup_step(ctx->p, pages);
+    if ((callback_state = rb_sqlite3_pop_callback_frame(&frame))) { rb_jump_tag(callback_state); }
     return INT2NUM(status);
 }
 
