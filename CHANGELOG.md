@@ -2,6 +2,10 @@
 
 ## next / unreleased
 
+### Improved
+
+- `Statement#step` no longer allocates and discards an array when the statement has no more rows. This saves one object per statement execution. #758 @thomasklemm
+
 ### Documentation
 
 - Document that parameters bound by `Statement#execute`, `#execute!`, `#bind_param` and `#bind_params` stay bound across executions, and that `Statement#clear_bindings!` clears them. #751 @flavorjones
