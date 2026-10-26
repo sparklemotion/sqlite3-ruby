@@ -105,7 +105,7 @@ database_memsize(const void *ctx)
 }
 
 static const rb_data_type_t database_type = {
-    .wrap_struct_name = "SQLite3::Backup",
+    .wrap_struct_name = "SQLite3::Database",
     .function = {
         .dmark = database_mark,
         .dfree = deallocate,

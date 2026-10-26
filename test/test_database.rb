@@ -36,6 +36,14 @@ module SQLite3
       end
     end
 
+    def test_typed_data_struct_name
+      skip("ObjectSpace.dump is CRuby-specific") unless RUBY_ENGINE == "ruby"
+      require "objspace"
+      require "json"
+
+      assert_equal "SQLite3::Database", JSON.parse(ObjectSpace.dump(@db))["struct"]
+    end
+
     def test_custom_function_encoding
       @db.execute("CREATE TABLE
                        sourceTable(

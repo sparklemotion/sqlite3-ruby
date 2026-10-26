@@ -31,7 +31,7 @@ statement_memsize(const void *data)
 }
 
 static const rb_data_type_t statement_type = {
-    "SQLite3::Backup",
+    "SQLite3::Statement",
     {
         NULL,
         statement_deallocate,
