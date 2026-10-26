@@ -82,8 +82,6 @@ be shared between Ractors.
 
 ## Fork Safety
 
-Only connections opened in the main Ractor are tracked for fork safety.  A
-forked child does not automatically close a writable connection opened in
-another Ractor.  Such a connection remains usable in the child when a non-main
-Ractor forks (Ruby 3.2 through 3.4 allow this) or when a Ractor has returned
-the connection to the main Ractor.  Close writable connections before forking.
+Forking a process that has opened writable connections in non-main Ractors is
+not supported and may corrupt those databases.  Only connections opened in the
+main Ractor are closed in the forked child.
