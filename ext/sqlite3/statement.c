@@ -75,7 +75,7 @@ prepare(VALUE self, VALUE db, VALUE sql)
 #endif
                  db_ctx->db,
                  (const char *)StringValuePtr(sql),
-                 (int)RSTRING_LEN(sql),
+                 RSTRING_LENINT(sql),
                  &ctx->st,
                  &tail
              );
@@ -279,7 +279,7 @@ bind_param(VALUE self, VALUE key, VALUE value)
                              ctx->st,
                              index,
                              (const char *)StringValuePtr(value),
-                             (int)RSTRING_LEN(value),
+                             RSTRING_LENINT(value),
                              SQLITE_TRANSIENT
                          );
             } else {
@@ -290,7 +290,7 @@ bind_param(VALUE self, VALUE key, VALUE value)
                                  ctx->st,
                                  index,
                                  (const char *)StringValuePtr(value),
-                                 (int)RSTRING_LEN(value),
+                                 RSTRING_LENINT(value),
                                  SQLITE_TRANSIENT
                              );
                 } else {
@@ -301,7 +301,7 @@ bind_param(VALUE self, VALUE key, VALUE value)
                                  ctx->st,
                                  index,
                                  (const char *)StringValuePtr(value),
-                                 (int)RSTRING_LEN(value),
+                                 RSTRING_LENINT(value),
                                  SQLITE_TRANSIENT
                              );
                 }

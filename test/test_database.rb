@@ -585,6 +585,22 @@ module SQLite3
       end
     end
 
+    def test_function_raises_on_returned_text_longer_than_int_max
+      text = string_longer_than_int_max
+      @db.define_function("huge") { |a| text }
+
+      assert_raise(RangeError) { @db.execute("select huge(1)") }
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
+    def test_function_raises_on_returned_blob_longer_than_int_max
+      blob = string_longer_than_int_max(Encoding::BINARY)
+      @db.define_function("huge") { |a| blob }
+
+      assert_raise(RangeError) { @db.execute("select huge(1)") }
+      assert_equal([[2]], @db.execute("select 1 + 1"))
+    end
+
     def test_function_raise_propagates_and_connection_remains_usable
       @db.define_function("boom") { |a| raise "boom: #{a}" }
 

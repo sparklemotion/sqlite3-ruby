@@ -127,6 +127,16 @@ module SQLite3
     def windows?
       ::RUBY_PLATFORM =~ /mingw|mswin/
     end
+
+    # SQLite takes string lengths as int, so it can't be passed a string longer than INT_MAX bytes.
+    # CRuby allocates a string of NUL bytes with calloc, which stays cheap until it's read.
+    def string_longer_than_int_max(encoding = Encoding::UTF_8)
+      skip("a string can't be longer than INT_MAX bytes on this platform") if [0].pack("l!").bytesize < 8
+      skip("only CRuby allocates this string cheaply") if RUBY_ENGINE != "ruby"
+      skip("valgrind's calloc writes every byte") if i_am_running_in_valgrind
+      skip("suspected of crashing FreeBSD CI, see #762") if RUBY_PLATFORM.include?("freebsd")
+      ("\0" * (2**31)).force_encoding(encoding)
+    end
   end
 end
 

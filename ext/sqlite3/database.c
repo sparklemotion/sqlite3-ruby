@@ -529,14 +529,14 @@ set_sqlite3_func_result(sqlite3_context *ctx, VALUE result)
                 sqlite3_result_blob(
                     ctx,
                     (const void *)StringValuePtr(result),
-                    (int)RSTRING_LEN(result),
+                    RSTRING_LENINT(result),
                     SQLITE_TRANSIENT
                 );
             } else {
                 sqlite3_result_text(
                     ctx,
                     (const char *)StringValuePtr(result),
-                    (int)RSTRING_LEN(result),
+                    RSTRING_LENINT(result),
                     SQLITE_TRANSIENT
                 );
             }

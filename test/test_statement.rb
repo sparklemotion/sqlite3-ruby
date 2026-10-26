@@ -223,6 +223,32 @@ module SQLite3
       end
     end
 
+    def test_prepare_raises_on_sql_longer_than_int_max
+      sql = string_longer_than_int_max
+      assert_raises(RangeError) { SQLite3::Statement.new(@db, sql) }
+    end
+
+    def test_bind_param_raises_on_text_longer_than_int_max
+      text = string_longer_than_int_max
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      assert_raises(RangeError) { stmt.bind_param(1, text) }
+      stmt.close
+    end
+
+    def test_bind_param_raises_on_utf16_text_longer_than_int_max
+      text = string_longer_than_int_max(Encoding::UTF_16LE)
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      assert_raises(RangeError) { stmt.bind_param(1, text) }
+      stmt.close
+    end
+
+    def test_bind_param_raises_on_blob_longer_than_int_max
+      blob = string_longer_than_int_max(Encoding::BINARY)
+      stmt = SQLite3::Statement.new(@db, "select ?")
+      assert_raises(RangeError) { stmt.bind_param(1, blob) }
+      stmt.close
+    end
+
     def test_decltype_is_utf8
       @db.execute %(create table foo(a integer, b "VARCHÄR(255)"))
       @db.prepare("select a, b from foo") do |stmt|
