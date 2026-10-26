@@ -1,6 +1,6 @@
 # sqlite3-ruby Changelog
 
-## next / unreleased
+## 2.10.2 / 2026-10-26
 
 ### Security / Stability
 
