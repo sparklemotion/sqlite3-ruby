@@ -10,6 +10,12 @@
 struct _sqlite3Ruby {
     sqlite3 *db;
     VALUE busy_handler;
+    /* sqlite holds raw pointers to everything in these arrays. functions and
+     * aggregators are append-only, so redefining a name keeps the old object
+     * for the life of the connection: sqlite keys them by name and arity, and
+     * releasing on name alone was GHSA-28hh-pr2h-2w89. collations is rebuilt
+     * from a private hash keyed by name without regard to ASCII case, as
+     * sqlite keys them, so it releases a replaced comparator. */
     VALUE functions;
     VALUE collations;
     VALUE aggregators;
