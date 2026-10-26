@@ -209,6 +209,25 @@ Or do a `Database#prepare` to get the `Statement`, and then use either
   stmt.bind_params( "value", "name" => "bob" )
 ```
 
+Bound values stay bound across executions of the statement, including values
+passed to `Statement#execute`. A later `#execute` that omits a parameter uses
+the value bound earlier. Call `Statement#clear_bindings!` to set every
+parameter back to NULL:
+
+
+```ruby
+  stmt = db.prepare( "select :a, :b" )
+
+  stmt.execute( a: 1, b: 2 ).to_a  # => [[1, 2]]
+  stmt.execute( a: 3 ).to_a        # => [[3, 2]]
+
+  stmt.clear_bindings!
+  stmt.execute( a: 3 ).to_a        # => [[3, nil]]
+```
+
+`Database#execute` and the related `Database` methods prepare a new statement
+for each call, so values bound in one call never carry over to the next.
+
 ## How do I discover metadata about a query result?
   
 IMPORTANT: `Database#execute` returns an Array of Array of Strings

@@ -1,5 +1,12 @@
 # sqlite3-ruby Changelog
 
+## next / unreleased
+
+### Documentation
+
+- Document that parameters bound by `Statement#execute`, `#execute!`, `#bind_param` and `#bind_params` stay bound across executions, and that `Statement#clear_bindings!` clears them. #751 @flavorjones
+
+
 ## 2.10.1 / 2026-10-19
 
 ### Dependencies

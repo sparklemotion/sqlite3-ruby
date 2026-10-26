@@ -16,8 +16,12 @@ module SQLite3
       @stmt = stmt
     end
 
-    # Reset the cursor, so that a result set which has reached end-of-file
-    # can be rewound and reiterated.
+    # Resets the cursor to the first row, so that you can iterate over the
+    # result set again after it reaches the end.
+    #
+    # This method binds each argument to the statement with
+    # Statement#bind_params. The values that you bound before stay bound
+    # unless you bind new values to the same parameters.
     def reset(*bind_params)
       @stmt.reset!
       @stmt.bind_params(*bind_params)
