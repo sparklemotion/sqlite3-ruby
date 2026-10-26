@@ -154,6 +154,11 @@ step(VALUE self)
         rb_exc_raise(exception);
     }
 
+    if (value == SQLITE_DONE) {
+        ctx->done_p = 1;
+        return Qnil;
+    }
+
     length = sqlite3_column_count(stmt);
     list = rb_ary_new2((long)length);
 
@@ -200,10 +205,6 @@ step(VALUE self)
             }
         }
         break;
-        case SQLITE_DONE:
-            ctx->done_p = 1;
-            return Qnil;
-            break;
         default:
             sqlite3_reset(stmt);
             ctx->done_p = 0;

@@ -346,6 +346,21 @@ module SQLite3
       @stmt.done?
     end
 
+    def test_step_does_not_allocate_when_done
+      skip("allocation counts are CRuby-specific") unless RUBY_ENGINE == "ruby"
+
+      # The first pass fills method caches, which allocate.
+      allocations = 2.times.map do
+        @stmt.reset!
+        @stmt.step
+        before = GC.stat(:total_allocated_objects)
+        @stmt.step
+        GC.stat(:total_allocated_objects) - before
+      end
+
+      assert_equal 0, allocations.last
+    end
+
     def test_column_count
       assert_equal 1, @stmt.column_count
     end
