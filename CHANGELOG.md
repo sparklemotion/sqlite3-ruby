@@ -6,14 +6,24 @@
 
 - Raise `RangeError` when a SQL string, a bound String or Blob value, or a String or Blob returned from a custom function or aggregate is longer than `INT_MAX` bytes. Previously the length was truncated to 32 bits, so SQLite could read only part of the string and drop trailing clauses from a query. See [GHSA-4fqr-96q8-xrfx](https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-4fqr-96q8-xrfx) for more information. #762 @flavorjones
 - Fix a crash when a custom aggregate's `finalize` returns a value that can't be converted to a SQLite result. The exception is now raised from the query and the connection remains usable. #762 @flavorjones
-- Fix a use-after-free when the hash returned by `Database#collations` is cleared, modified or frozen. GC could free a comparator that SQLite still called. #764 @flavorjones
-- Fix a deadlock when a collation comparator, `trace` block, `busy_handler` block or authorizer raises, or when an interrupt such as `Thread#raise` arrives while an aggregate's handler is being created. Another thread that used the connection blocked forever. The exception is now raised from the query and the connection remains usable. #764 @flavorjones
-- Fix a crash when a custom function or aggregate uses `throw`. #764 @flavorjones
-- `Database#execute_batch2` now raises the exception from a custom function, instead of `SQLite3::SQLException` "Ruby Exception occurred". #764 @flavorjones
+- Fix a use-after-free when the hash returned by `Database#collations` is cleared, modified or frozen. GC could free a comparator that SQLite still called. When that hash is frozen, `Database#collation` still raises `FrozenError`, but the new comparator stays registered and in use. #764 @flavorjones
+- Fix a deadlock when a collation comparator, `trace` block, `busy_handler` block or authorizer raises, or when an interrupt such as `Thread#raise` arrives while an aggregate's handler is being created. Another thread that used the connection blocked forever. The exception is now raised from the query and the connection remains usable. See "Changed" below for what SQLite does before the exception is raised. #764 @flavorjones
+- Fix a crash when a custom function or aggregate uses `throw`. The throw now unwinds to its `catch`. #764 @flavorjones
+
+### Changed
+
+- When a callback raises or throws, SQLite now finishes its current call before the exception is raised, instead of being unwound in the middle of it. #764 @flavorjones
+  - When a `trace` block raises, SQLite runs the statement up to its first row, or to completion, before the exception is raised. Previously the statement stopped where the block raised. For example, an `INSERT` whose `trace` block raises now inserts its row.
+  - The other callbacks in that SQLite call skip their Ruby code: collation comparators return 0, functions and aggregates report an error to SQLite, the busy handler stops retrying and the authorizer denies.
+  - `Database#execute_batch2` now raises the exception from a custom function, instead of `SQLite3::SQLException` "Ruby Exception occurred".
+  - An exception from a callback that SQLite runs during `Statement#reset!` or `Database#close` is discarded.
+- The extension keeps per-fiber state in `Thread.current[:__sqlite3_callback_frames__]`. A query raises `FrozenError` on a `Thread` that was frozen before its first query. #764 @flavorjones
+- When SQLite can't allocate an aggregate's context, the query raises `SQLite3::MemoryException` instead of aborting the process. #764 @flavorjones
 
 ### Improved
 
 - `Statement#step` no longer allocates and discards an array when the statement has no more rows. This saves one object per statement execution. #758 @thomasklemm
+- `ObjectSpace.dump` and heap profilers now report `SQLite3::Database` and `SQLite3::Statement` objects under their own type names, instead of `SQLite3::Backup`. #764 @flavorjones
 
 ### Documentation
 
