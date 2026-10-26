@@ -440,6 +440,47 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     assert_equal 1, ObjectSpace.each_object(ReleasableAggregator).count
   end
 
+  def test_aggregate_instance_is_released_after_a_query_over_no_rows
+    aggregator = Class.new(AccumulateAggregator)
+    @db.define_aggregator("accumulate", aggregator.new)
+
+    5.times { assert_nil @db.get_first_value("select accumulate(c) from foo where a = 100") }
+    GC.start(full_mark: true, immediate_sweep: true)
+
+    assert_equal 1, ObjectSpace.each_object(aggregator).count
+  end
+
+  def test_aggregate_instance_is_released_after_an_exception_in_step
+    aggregator = Class.new(AccumulateAggregator) do
+      def step(*args)
+        raise CustomException
+      end
+    end
+    @db.define_aggregator("accumulate", aggregator.new)
+
+    5.times do
+      assert_raises(CustomException) { @db.get_first_value("select accumulate(c) from foo") }
+    end
+    GC.start(full_mark: true, immediate_sweep: true)
+
+    assert_equal 1, ObjectSpace.each_object(aggregator).count
+  end
+
+  def test_aggregate_instance_is_released_after_an_interrupt
+    db = @db
+    aggregator = Class.new(AccumulateAggregator) do
+      define_method(:step) { |*args| db.interrupt }
+    end
+    @db.define_aggregator("accumulate", aggregator.new)
+
+    5.times do
+      assert_raises(SQLite3::InterruptException) { @db.get_first_value("select accumulate(c) from foo") }
+    end
+    GC.start(full_mark: true, immediate_sweep: true)
+
+    assert_equal 1, ObjectSpace.each_object(aggregator).count
+  end
+
   def test_step_on_statement_whose_database_was_closed_does_not_use_freed_aggregator
     @db.define_aggregator("accumulate", AccumulateAggregator.new)
     stmt = @db.prepare("select accumulate(c) from foo")
