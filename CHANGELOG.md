@@ -2,6 +2,11 @@
 
 ## next / unreleased
 
+### Security / Stability
+
+- Raise `RangeError` when a SQL string, a bound String or Blob value, or a String or Blob returned from a custom function or aggregate is longer than `INT_MAX` bytes. Previously the length was truncated to 32 bits, so SQLite could read only part of the string and drop trailing clauses from a query. See [GHSA-4fqr-96q8-xrfx](https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-4fqr-96q8-xrfx) for more information. #762 @flavorjones
+- Fix a crash when a custom aggregate's `finalize` returns a value that can't be converted to a SQLite result. The exception is now raised from the query and the connection remains usable. #762 @flavorjones
+
 ### Improved
 
 - `Statement#step` no longer allocates and discards an array when the statement has no more rows. This saves one object per statement execution. #758 @thomasklemm

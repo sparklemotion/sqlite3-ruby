@@ -207,6 +207,29 @@ class IntegrationAggregateTestCase < SQLite3::TestCase
     end
   end
 
+  def test_create_aggregate_raises_on_returned_unsupported_type
+    @db.create_aggregate("unsupported", 1) do
+      step { |ctx, a| }
+      finalize { |ctx| ctx.result = {} }
+    end
+
+    assert_raise(RuntimeError) { @db.get_first_value("select unsupported(a) from foo") }
+    assert_equal(2, @db.get_first_value("select 1 + 1"))
+    GC.start
+  end
+
+  def test_create_aggregate_raises_on_returned_text_longer_than_int_max
+    text = string_longer_than_int_max
+    @db.create_aggregate("huge", 1) do
+      step { |ctx, a| }
+      finalize { |ctx| ctx.result = text }
+    end
+
+    assert_raise(RangeError) { @db.get_first_value("select huge(a) from foo") }
+    assert_equal(2, @db.get_first_value("select 1 + 1"))
+    GC.start
+  end
+
   def test_create_aggregate_with_no_data
     @db.create_aggregate("accumulate", 1) do
       step do |ctx, a|
