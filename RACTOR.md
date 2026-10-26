@@ -32,8 +32,11 @@ extension is Ractor safe, but only if `sqlite3_threadsafe` returns true.
 `SQLite3.ractor_safe?` reports whether the extension made that declaration.
 
 The supported pattern is that each Ractor opens and uses its own connections.
-Everything works inside a Ractor, including user-defined functions,
-aggregators, collations, the authorizer, `trace`, and `busy_handler`.  Several
+Everything works inside a Ractor except `Database#create_aggregate`, which
+raises `Ractor::IsolationError` outside the main Ractor; use
+`Database#define_aggregator` or `Database#create_aggregate_handler` instead.
+User-defined functions, collations, the authorizer, `trace`, and
+`busy_handler` all work.  Several
 Ractors may open connections to the same database file; SQLite's own locking
 coordinates them, just as it does for separate processes.
 
@@ -48,7 +51,7 @@ ractors = 4.times.map do |i|
     db.close
   end
 end
-ractors.each(&:value)
+ractors.each(&:value) # use Ractor#take on Ruby 3.2 through 3.4
 ```
 
 ## Database objects can't be shared between Ractors
