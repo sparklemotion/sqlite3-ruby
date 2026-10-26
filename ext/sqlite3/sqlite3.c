@@ -60,6 +60,19 @@ bignum_to_int64(VALUE value, sqlite3_int64 *result)
 #endif
 }
 
+void
+rb_sqlite3_pin_array_and_contents(VALUE ary)
+{
+    long i;
+
+    if (NIL_P(ary) || !ary) { return; }
+
+    rb_gc_mark(ary);
+    for (i = 0; i < RARRAY_LEN(ary); i++) {
+        rb_gc_mark(RARRAY_AREF(ary, i));
+    }
+}
+
 static VALUE
 libversion(VALUE UNUSED(klass))
 {
@@ -191,6 +204,7 @@ Init_sqlite3_native(void)
     sqlite3_initialize();
 #endif
 
+    init_sqlite3_exception();
     init_sqlite3_constants();
     init_sqlite3_database();
     init_sqlite3_statement();

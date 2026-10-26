@@ -54,6 +54,32 @@ class IntegrationPendingTestCase < SQLite3::TestCase
     File.delete("test.db")
   end
 
+  def test_busy_handler_raise_propagates_and_connection_remains_usable
+    @db.execute("begin immediate")
+    db = SQLite3::Database.new("test.db")
+    db.busy_handler { |count| raise "busy: #{count}" }
+
+    error = assert_raise(RuntimeError) { db.execute("begin immediate") }
+    assert_equal("busy: 0", error.message)
+
+    @db.execute("rollback")
+    db.busy_handler(nil)
+    assert_equal([[2]], db.execute("select 1 + 1"))
+  ensure
+    db&.close
+  end
+
+  def test_busy_handler_raise_does_not_deadlock_other_threads_using_the_connection
+    assert_connection_usable_from_another_thread do
+      @locker = SQLite3::Database.new("test.db")
+      @locker.execute("begin immediate")
+      db = SQLite3::Database.new("test.db")
+      db.busy_handler { |count| raise "busy" }
+      assert_raise(RuntimeError) { db.execute("begin immediate") }
+      db
+    end
+  end
+
   def test_busy_handler_impatient
     synchronizer = ThreadSynchronizer.new
     handler_call_count = 0

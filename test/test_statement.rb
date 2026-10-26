@@ -12,6 +12,14 @@ module SQLite3
       @db.close
     end
 
+    def test_typed_data_struct_name
+      skip("ObjectSpace.dump is CRuby-specific") unless RUBY_ENGINE == "ruby"
+      require "objspace"
+      require "json"
+
+      assert_equal "SQLite3::Statement", JSON.parse(ObjectSpace.dump(@stmt))["struct"]
+    end
+
     def test_rows_should_be_frozen
       @db.execute 'CREATE TABLE "things" ("float" float, "int" int, "text" blob, "string" string, "nil" string)'
       stmt = @db.prepare "INSERT INTO things (float, int, text, string, nil) VALUES (?, ?, ?, ?, ?)"

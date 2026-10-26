@@ -7,8 +7,9 @@ VALUE rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_nam
 
 void rb_sqlite3_aggregator_init(void);
 
-/* sqlite stores each live instance's VALUE in its aggregate context, so those
- * must not move either. */
-void rb_sqlite3_aggregator_pin_instances(VALUE aw);
+/* Pins every aggregator wrapper and its live instances. sqlite holds raw
+ * pointers to the wrappers, and stores each instance's VALUE in its aggregate
+ * context. */
+void rb_sqlite3_aggregator_pin(VALUE aggregators);
 
 #endif

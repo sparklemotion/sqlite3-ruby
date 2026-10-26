@@ -120,3 +120,98 @@ rb_sqlite3_raise_with_sql(sqlite3 *db, int status, const char *sql)
 
     rb_exc_raise(exception);
 }
+
+/* Each call into sqlite that can run callbacks pushes a frame on the current
+ * fiber's chain. A callback that fails records its rb_protect state in the top
+ * frame, and the call resumes Ruby's pending jump once sqlite returns. Ruby
+ * code that runs in between, such as a finalizer during an allocation, pushes
+ * its own frame for any nested call, so it never takes the outer call's jump.
+ * The chain is fiber-local because Ruby code inside a callback can switch
+ * threads or fibers, and a Ruby thread can move between native threads inside
+ * rb_protect. */
+typedef struct {
+    rb_sqlite3_callback_frame_t *top;
+} callback_frames_t;
+
+static const rb_data_type_t callback_frames_type = {
+    .wrap_struct_name = "SQLite3::CallbackFrames",
+    .function = {
+        .dfree = RUBY_TYPED_DEFAULT_FREE,
+    },
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
+};
+
+static ID id_callback_frames;
+
+/* Ruby code can overwrite or delete the fiber-local, so check its type. */
+static VALUE
+current_callback_frames_holder(void)
+{
+    VALUE holder = rb_thread_local_aref(rb_thread_current(), id_callback_frames);
+    return rb_typeddata_is_kind_of(holder, &callback_frames_type) ? holder : Qnil;
+}
+
+static callback_frames_t *
+current_callback_frames(void)
+{
+    VALUE holder = current_callback_frames_holder();
+    return NIL_P(holder) ? NULL : (callback_frames_t *)RTYPEDDATA_DATA(holder);
+}
+
+void
+rb_sqlite3_push_callback_frame(rb_sqlite3_callback_frame_t *frame)
+{
+    VALUE holder = current_callback_frames_holder();
+    callback_frames_t *frames;
+
+    if (NIL_P(holder)) {
+        holder = TypedData_Make_Struct(rb_cObject, callback_frames_t, &callback_frames_type, frames);
+        rb_thread_local_aset(rb_thread_current(), id_callback_frames, holder);
+    }
+    frames = (callback_frames_t *)RTYPEDDATA_DATA(holder);
+
+    frame->state = 0;
+    frame->prev = frames->top;
+    frame->holder = holder;
+    frames->top = frame;
+}
+
+int
+rb_sqlite3_pop_callback_frame(rb_sqlite3_callback_frame_t *frame)
+{
+    ((callback_frames_t *)RTYPEDDATA_DATA(frame->holder))->top = frame->prev;
+    return frame->state;
+}
+
+VALUE
+rb_sqlite3_protect_callback(VALUE (*body)(VALUE), VALUE data, int *failed)
+{
+    callback_frames_t *frames = current_callback_frames();
+    rb_sqlite3_callback_frame_t *frame = frames ? frames->top : NULL;
+    VALUE result;
+    int state;
+
+    if (frame && frame->state) {
+        *failed = 1;
+        return Qnil;
+    }
+
+    result = rb_protect(body, data, &state);
+    *failed = state != 0;
+
+    if (frame) {
+        frame->state = state;
+    } else if (state) {
+        /* sqlite ran the callback from a call that cannot resume the jump, such
+         * as Statement#reset!, so the error is dropped */
+        rb_set_errinfo(Qnil);
+    }
+
+    return result;
+}
+
+void
+init_sqlite3_exception(void)
+{
+    id_callback_frames = rb_intern("__sqlite3_callback_frames__");
+}
