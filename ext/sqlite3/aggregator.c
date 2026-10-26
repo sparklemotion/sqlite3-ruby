@@ -25,6 +25,7 @@ typedef struct rb_sqlite3_protected_funcall_args {
     ID method;
     int argc;
     VALUE *params;
+    sqlite3_context *result_ctx;
 } protected_funcall_args_t;
 
 /* why isn't there something like this in the ruby API? */
@@ -34,15 +35,21 @@ rb_sqlite3_protected_funcall_body(VALUE protected_funcall_args_ptr)
     protected_funcall_args_t *args =
         (protected_funcall_args_t *)protected_funcall_args_ptr;
 
-    return rb_funcall2(args->self, args->method, args->argc, args->params);
+    VALUE result = rb_funcall2(args->self, args->method, args->argc, args->params);
+
+    if (args->result_ctx) {
+        set_sqlite3_func_result(args->result_ctx, result);
+    }
+
+    return result;
 }
 
 static VALUE
 rb_sqlite3_protected_funcall(VALUE self, ID method, int argc, VALUE *params,
-                             int *exc_status)
+                             sqlite3_context *result_ctx, int *exc_status)
 {
     protected_funcall_args_t args = {
-        .self = self, .method = method, .argc = argc, .params = params
+        .self = self, .method = method, .argc = argc, .params = params, .result_ctx = result_ctx
     };
     return rb_protect(rb_sqlite3_protected_funcall_body, (VALUE)(&args), exc_status);
 }
@@ -71,7 +78,7 @@ rb_sqlite3_aggregate_instance(sqlite3_context *ctx)
 
         inst = rb_class_new_instance(0, NULL, cAggregatorInstance);
         rb_iv_set(inst, "-handler_instance", rb_sqlite3_protected_funcall(
-                      handler_klass, rb_intern("new"), 0, NULL, &exc_status));
+                      handler_klass, rb_intern("new"), 0, NULL, NULL, &exc_status));
         rb_iv_set(inst, "-exc_status", INT2NUM(exc_status));
 
         rb_ary_push(instances, inst);
@@ -141,7 +148,7 @@ rb_sqlite3_aggregator_step(sqlite3_context *ctx, int argc, sqlite3_value **argv)
         }
     }
     rb_sqlite3_protected_funcall(
-        handler_instance, rb_intern("step"), argc, params, &exc_status);
+        handler_instance, rb_intern("step"), argc, params, NULL, &exc_status);
     if (argc > 1) {
         ALLOCV_END(params_handle);
     }
@@ -158,11 +165,8 @@ rb_sqlite3_aggregator_final(sqlite3_context *ctx)
     int exc_status = NUM2INT(rb_iv_get(inst, "-exc_status"));
 
     if (!exc_status) {
-        VALUE result = rb_sqlite3_protected_funcall(
-                           handler_instance, rb_intern("finalize"), 0, NULL, &exc_status);
-        if (!exc_status) {
-            set_sqlite3_func_result(ctx, result);
-        }
+        rb_sqlite3_protected_funcall(
+            handler_instance, rb_intern("finalize"), 0, NULL, ctx, &exc_status);
     }
 
     if (exc_status) {

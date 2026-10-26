@@ -2,6 +2,10 @@
 
 ## next / unreleased
 
+### Security / Stability
+
+- Fix a crash when a custom aggregate's `finalize` returns a value that can't be converted to a SQLite result. The exception is now raised from the query and the connection remains usable. @flavorjones
+
 ### Improved
 
 - `Statement#step` no longer allocates and discards an array when the statement has no more rows. This saves one object per statement execution. #758 @thomasklemm
