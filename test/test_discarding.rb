@@ -36,11 +36,19 @@ module SQLite3
       @read.close
     end
 
+    # A writable connection leaked by an earlier test triggers the fork-safety warning. GC.start
+    # cannot free a leaked connection that is still reachable, so close it instead.
+    def close_leaked_writable_connections
+      ObjectSpace.each_object(SQLite3::Database) do |db|
+        db.close unless db.closed? || db.readonly?
+      end
+    end
+
     def test_fork_discards_an_open_readwrite_connection
       skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
       skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
 
-      GC.start
+      close_leaked_writable_connections
       begin
         db = SQLite3::Database.new(DBPATH)
 
@@ -66,7 +74,7 @@ module SQLite3
       skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
       skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
 
-      GC.start
+      close_leaked_writable_connections
       begin
         db = SQLite3::Database.new(DBPATH)
         db.close
@@ -91,7 +99,7 @@ module SQLite3
       skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
       skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
 
-      GC.start
+      close_leaked_writable_connections
       begin
         SQLite3::Database.open(DBPATH) do |db|
           db.execute("create table foo (bar int)")
@@ -122,7 +130,7 @@ module SQLite3
       skip("interpreter doesn't support fork") unless Process.respond_to?(:fork)
       skip("valgrind doesn't handle forking") if i_am_running_in_valgrind
 
-      GC.start
+      close_leaked_writable_connections
       begin
         SQLite3::Database.open(DBPATH) do |db|
           db.execute("create table foo (bar int)")
