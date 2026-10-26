@@ -1,5 +1,8 @@
 # Ractor support in SQLite3-Ruby
 
+Ractor support is experimental at this time.  We welcome bug reports, but we
+recommend caution before exercising this support in production applications.
+
 SQLite3 has [3 different modes of threading support](https://www.sqlite.org/threadsafe.html).
 
 1. Single-thread
