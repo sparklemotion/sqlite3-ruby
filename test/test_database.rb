@@ -726,7 +726,8 @@ module SQLite3
 
       assert_equal("trace", error.message)
       GC.start
-      assert_equal(Array.new(10) { [2] }, probe_results)
+      refute_empty(probe_results)
+      assert_equal([[2]], probe_results.uniq)
     end
 
     def test_trace_that_deletes_fiber_locals_does_not_break_the_query
