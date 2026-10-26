@@ -918,8 +918,9 @@ transaction_active_p(VALUE self)
 }
 
 static int
-hash_callback_function(VALUE callback_ary, int count, char **data, char **columns)
+hash_callback_function(void *data_ptr, int count, char **data, char **columns)
 {
+    VALUE callback_ary = (VALUE)data_ptr;
     VALUE new_hash = rb_hash_new();
     int i;
 
@@ -937,8 +938,9 @@ hash_callback_function(VALUE callback_ary, int count, char **data, char **column
 }
 
 static int
-regular_callback_function(VALUE callback_ary, int count, char **data, char **columns)
+regular_callback_function(void *data_ptr, int count, char **data, char **columns)
 {
+    VALUE callback_ary = (VALUE)data_ptr;
     VALUE new_ary = rb_ary_new();
     int i;
 
@@ -978,11 +980,11 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
     timespecclear(&ctx->stmt_deadline);
 
     if (results_as_hash == Qtrue) {
-        status = sqlite3_exec(ctx->db, StringValuePtr(sql), (sqlite3_callback)hash_callback_function,
+        status = sqlite3_exec(ctx->db, StringValuePtr(sql), hash_callback_function,
                               (void *)callback_ary,
                               &errMsg);
     } else {
-        status = sqlite3_exec(ctx->db, StringValuePtr(sql), (sqlite3_callback)regular_callback_function,
+        status = sqlite3_exec(ctx->db, StringValuePtr(sql), regular_callback_function,
                               (void *)callback_ary,
                               &errMsg);
     }
