@@ -18,6 +18,11 @@ module SQLite3
       end
     end
 
+    def test_not_ractor_safe_on_ruby_3_3
+      skip("Requires Ruby 3.3") unless RUBY_VERSION.start_with?("3.3.")
+      refute_predicate SQLite3, :ractor_safe?
+    end
+
     def test_compiled_version_and_loaded_version
       assert_equal(SQLite3::SQLITE_VERSION, SQLite3::SQLITE_LOADED_VERSION)
     end

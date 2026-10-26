@@ -1,4 +1,5 @@
 #include <sqlite3_ruby.h>
+#include <ruby/thread.h>
 
 static VALUE
 status2klass(int status)
@@ -158,6 +159,42 @@ current_callback_frames(void)
     return NIL_P(holder) ? NULL : (callback_frames_t *)RTYPEDDATA_DATA(holder);
 }
 
+#ifdef HAVE_RB_THREAD_LOCK_NATIVE_THREAD
+static ID id_native_thread_locked;
+
+static VALUE
+mark_native_thread_locked(VALUE thread)
+{
+    return rb_thread_local_aset(thread, id_native_thread_locked, thread);
+}
+
+/* SQLite holds the connection mutex while it runs a callback, and only the native thread that
+ * locked it can unlock it. If the callback blocks, the M:N scheduler can resume a non-main
+ * Ractor's thread on another native thread, so keep the thread on this one before any Ruby code
+ * runs. Each call to rb_thread_lock_native_thread increments a counter with no matching
+ * decrement, so record the call in a fiber-local, which can be read without running Ruby code.
+ * The fiber-local holds the Thread, so a copy in another thread's fiber-locals doesn't count.
+ * A frozen Thread's fiber-locals can't be set, so on a frozen Thread every callback calls
+ * rb_thread_lock_native_thread again. */
+static void
+lock_native_thread(void)
+{
+    VALUE thread = rb_thread_current();
+    int state;
+
+    if (rb_thread_local_aref(thread, id_native_thread_locked) == thread) { return; }
+
+    rb_thread_lock_native_thread();
+    rb_protect(mark_native_thread_locked, thread, &state);
+    if (state) { rb_set_errinfo(Qnil); }
+}
+#else
+static void
+lock_native_thread(void)
+{
+}
+#endif
+
 void
 rb_sqlite3_push_callback_frame(rb_sqlite3_callback_frame_t *frame)
 {
@@ -191,6 +228,8 @@ rb_sqlite3_protect_callback(VALUE (*body)(VALUE), VALUE data, int *failed)
     VALUE result;
     int state;
 
+    lock_native_thread();
+
     if (frame && frame->state) {
         *failed = 1;
         return Qnil;
@@ -214,4 +253,7 @@ void
 init_sqlite3_exception(void)
 {
     id_callback_frames = rb_intern("__sqlite3_callback_frames__");
+#ifdef HAVE_RB_THREAD_LOCK_NATIVE_THREAD
+    id_native_thread_locked = rb_intern("__sqlite3_native_thread_locked__");
+#endif
 }

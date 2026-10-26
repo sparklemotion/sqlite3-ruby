@@ -1,4 +1,5 @@
 #include <sqlite3_ruby.h>
+#include <ruby/version.h>
 
 VALUE mSqlite3;
 VALUE cSqlite3Blob;
@@ -140,7 +141,9 @@ init_sqlite3_constants(void)
     VALUE mSqlite3Constants;
     VALUE mSqlite3Open;
 
-#ifdef HAVE_RB_EXT_RACTOR_SAFE
+    /* Ruby 3.3 has the M:N scheduler but not rb_thread_lock_native_thread, see
+     * lock_native_thread in exception.c */
+#if defined(HAVE_RB_EXT_RACTOR_SAFE) && !(RUBY_API_VERSION_MAJOR == 3 && RUBY_API_VERSION_MINOR == 3)
     if (sqlite3_threadsafe()) {
         rb_ext_ractor_safe(true);
     }

@@ -129,6 +129,9 @@ module Sqlite3
         # Functions defined in 2.1 but not 2.0
         have_func("rb_integer_pack")
 
+        # Functions defined in 3.4 but not 3.3
+        have_func("rb_thread_lock_native_thread", "ruby/thread.h")
+
         # These functions may not be defined
         have_func("sqlite3_initialize")
         have_func("sqlite3_backup_init")

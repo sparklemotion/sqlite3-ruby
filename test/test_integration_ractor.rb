@@ -93,6 +93,100 @@ class IntegrationRactorTestCase < SQLite3::TestCase
     RUBY
   end
 
+  def test_callback_that_blocks_in_ractors
+    assert_ractor_script(<<~RUBY, "20,20")
+      ractors = 2.times.map do
+        Ractor.new do
+          db = SQLite3::Database.new(":memory:")
+          begin
+            db.create_function("nap", 0) { |fn| sleep 0.01; fn.result = 1 }
+            20.times.sum { db.get_first_value("SELECT nap()") }
+          ensure
+            db.close
+          end
+        end
+      end
+      print ractors.map { ractor_value(_1) }.join(",")
+    RUBY
+  end
+
+  def test_callback_that_blocks_outside_a_statement_in_ractors
+    skip("Requires sqlite3_serialize") unless SQLite3::Database.method_defined?(:serialize)
+
+    assert_ractor_script(<<~RUBY, "20,20")
+      ractors = 2.times.map do
+        Ractor.new do
+          db = SQLite3::Database.new(":memory:")
+          begin
+            db.authorizer = ->(*) { sleep 0.01; true }
+            20.times.count { db.serialize }
+          ensure
+            db.close
+          end
+        end
+      end
+      print ractors.map { ractor_value(_1) }.join(",")
+    RUBY
+  end
+
+  def test_trace_point_that_blocks_in_ractor_callbacks
+    assert_ractor_script(<<~RUBY, "8")
+      ractors = 8.times.map do
+        Ractor.new do
+          db = SQLite3::Database.new(":memory:")
+          begin
+            db.create_function("one", 0) { |fn| fn.result = 1 }
+            TracePoint.new(:c_return) { sleep 0.001 }.enable do
+              db.get_first_value("SELECT one()")
+            end
+          ensure
+            db.close
+          end
+        end
+      end
+      print ractors.sum { ractor_value(_1) }
+    RUBY
+  end
+
+  def test_callback_that_blocks_in_a_thread_with_copied_fiber_locals_in_ractors
+    assert_ractor_script(<<~RUBY, "20,20")
+      ractors = 2.times.map do
+        Ractor.new do
+          db = SQLite3::Database.new(":memory:")
+          begin
+            db.create_function("nap", 0) { |fn| sleep 0.01; fn.result = 1 }
+            db.get_first_value("SELECT nap()")
+            locals = Thread.current.keys.to_h { [_1, Thread.current[_1]] }
+            Thread.new do
+              locals.each { |key, value| Thread.current[key] = value }
+              20.times.sum { db.get_first_value("SELECT nap()") }
+            end.value
+          ensure
+            db.close
+          end
+        end
+      end
+      print ractors.map { ractor_value(_1) }.join(",")
+    RUBY
+  end
+
+  def test_exit_while_a_ractor_callback_blocks
+    assert_ractor_script(<<~RUBY, "exiting")
+      2.times do
+        Ractor.new do
+          db = SQLite3::Database.new(":memory:")
+          db.trace do
+            Ractor.main.send(:started)
+            sleep
+          end
+          db.execute("SELECT 1")
+        end
+      end
+      2.times { Ractor.receive }
+      print "exiting"
+    RUBY
+  end
+
   def test_version_info_is_shareable
     assert_ractor_script(<<~RUBY, SQLite3::VERSION)
       print ractor_value(Ractor.new { SQLite3::VERSION_INFO[:gem][:version] })
