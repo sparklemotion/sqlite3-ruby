@@ -51,10 +51,11 @@ end
 ractors.each(&:value)
 ```
 
-## Database objects can't be passed between Ractors
+## Database objects can't be shared between Ractors
 
-A `SQLite3::Database` belongs to the Ractor that opened it.  Passing one to
-another Ractor raises a `Ractor::Error`:
+A `SQLite3::Database` can't be shared between Ractors.  On Ruby 3.3 and later,
+sending one to another Ractor with `Ractor#send` raises a `Ractor::Error`.  On
+Ruby 3.2, the receiving Ractor gets a closed copy that can't be used.
 
 ```ruby
 require "sqlite3"
@@ -78,8 +79,8 @@ be shared between Ractors.
 
 ## Fork Safety
 
-Fork safety is restricted to database objects that were created on the main
-Ractor.  When a process forks, the child process shuts down all Ractors, so
-any database connections that are inside a Ractor should be released.
-Because a connection can't be passed between Ractors, every connection the main
-Ractor can reach is tracked.
+Only connections opened in the main Ractor are tracked for fork safety.  A
+forked child does not automatically close a writable connection opened in
+another Ractor.  Such a connection remains usable in the child when a non-main
+Ractor forks (Ruby 3.2 through 3.4 allow this) or when a Ractor has returned
+the connection to the main Ractor.  Close writable connections before forking.
