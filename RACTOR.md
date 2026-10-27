@@ -93,6 +93,6 @@ be shared between Ractors.
 
 ## Fork Safety
 
-Forking a process that has opened writable connections in non-main Ractors is
+⚠️ Forking a process that has opened writable connections in non-main Ractors is
 not supported and may corrupt those databases.  Only connections opened in the
 main Ractor are closed in the forked child.

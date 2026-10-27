@@ -168,14 +168,15 @@ mark_native_thread_locked(VALUE thread)
     return rb_thread_local_aset(thread, id_native_thread_locked, thread);
 }
 
-/* SQLite holds the connection mutex while it runs a callback, and only the native thread that
- * locked it can unlock it. If the callback blocks, the M:N scheduler can resume a non-main
- * Ractor's thread on another native thread, so keep the thread on this one before any Ruby code
- * runs. Each call to rb_thread_lock_native_thread increments a counter with no matching
- * decrement, so record the call in a fiber-local, which can be read without running Ruby code.
- * The fiber-local holds the Thread, so a copy in another thread's fiber-locals doesn't count.
- * A frozen Thread's fiber-locals can't be set, so on a frozen Thread every callback calls
- * rb_thread_lock_native_thread again. */
+/* Pin the current Ruby thread to its native thread before a callback runs any Ruby code. SQLite
+ * holds the connection mutex while it runs a callback, and only the native thread that locked the
+ * mutex can unlock it. In a non-main Ractor, the M:N scheduler can move a thread that blocks in a
+ * callback to another native thread, and the connection deadlocks.
+ *
+ * Each call to rb_thread_lock_native_thread increments a counter with no matching decrement, so
+ * call it once per fiber, and record the call in a fiber-local. Reading a fiber-local runs no Ruby
+ * code, and Ruby code here could block before the pin. The fiber-local holds the Thread itself,
+ * so a copy of it in another thread doesn't count. */
 static void
 lock_native_thread(void)
 {
