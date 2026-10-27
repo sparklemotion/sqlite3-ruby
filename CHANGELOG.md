@@ -4,7 +4,7 @@
 
 ### Added
 
-- Experimental Ractor support. When SQLite is compiled thread-safe, the extension declares itself Ractor-safe (except on Ruby 3.3), and each Ractor can open and use its own connections. `SQLite3.ractor_safe?` reports whether the extension made the declaration. See [RACTOR.md](RACTOR.md) for the limits on sharing connections between Ractors and on fork safety. We welcome bug reports, but we recommend caution before using Ractor support in production applications. #749 @rubys @sandlerr @tenderlove
+- Experimental Ractor support. On Ruby 3.4 and later, when SQLite is compiled thread-safe, the extension declares itself Ractor-safe, and each Ractor can open and use its own connections. `SQLite3.ractor_safe?` reports whether the extension made the declaration. See [RACTOR.md](RACTOR.md) for the limits on sharing connections between Ractors and on fork safety. We welcome bug reports, but we recommend caution before using Ractor support in production applications. #749 @rubys @sandlerr @tenderlove
 
 ### Changed
 

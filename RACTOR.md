@@ -54,22 +54,22 @@ ractors = 4.times.map do |i|
     db.close
   end
 end
-ractors.each(&:value) # use Ractor#take on Ruby 3.2 through 3.4
+ractors.each(&:value) # use Ractor#take on Ruby 3.4
 ```
 
-## Ruby 3.3
+## Supported Ruby versions
 
-SQLite3-Ruby does not support non-main Ractors on Ruby 3.3. On Ruby 3.3,
-opening a database in a non-main Ractor raises `Ractor::UnsafeError` ("ractor
-unsafe method called from not main ractor"), because Ruby 3.3 is missing
-`rb_thread_lock_native_thread()`, which SQLite3-Ruby needs to run callbacks
-safely in non-main Ractors.
+Ractor support requires Ruby 3.4 or later. SQLite3-Ruby needs
+`rb_thread_lock_native_thread()` to run callbacks safely in non-main Ractors,
+and only Ruby 3.4 and later have it. On earlier versions,
+`SQLite3.ractor_safe?` returns false, and opening a database in a non-main
+Ractor raises `Ractor::UnsafeError` ("ractor unsafe method called from not
+main ractor").
 
 ## Database objects can't be shared between Ractors
 
-A `SQLite3::Database` can't be shared between Ractors.  On Ruby 3.3 and later,
-sending one to another Ractor with `Ractor#send` raises a `Ractor::Error`.  On
-Ruby 3.2, the receiving Ractor gets a closed copy that can't be used.
+A `SQLite3::Database` can't be shared between Ractors.  Sending one to another
+Ractor with `Ractor#send` raises a `Ractor::Error`.
 
 ```ruby
 require "sqlite3"

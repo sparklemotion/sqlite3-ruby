@@ -194,9 +194,6 @@ class IntegrationRactorTestCase < SQLite3::TestCase
   end
 
   def test_database_cannot_be_sent_to_another_ractor
-    # Before ruby/ruby@ce47ee00, sending a T_DATA object made a shallow copy instead of raising
-    skip("Requires Ruby 3.3 or later") if RUBY_VERSION < "3.3"
-
     assert_ractor_script(<<~RUBY, "Ractor::Error")
       db = SQLite3::Database.new(":memory:")
       r = Ractor.new { Ractor.receive }
