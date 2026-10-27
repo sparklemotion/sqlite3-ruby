@@ -21,6 +21,7 @@ module SQLite3
     end
 
     def test_non_main_ractor_cannot_open_a_database_unless_ractor_safe
+      skip("Requires Ractor") unless defined?(Ractor)
       skip("Requires a build that is not Ractor-safe") if SQLite3.ractor_safe?
       skip("Ractor processes can't exit cleanly under valgrind") if i_am_running_in_valgrind
 
