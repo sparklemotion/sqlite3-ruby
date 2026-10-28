@@ -98,6 +98,20 @@ threadsafe_p(VALUE UNUSED(klass))
     return INT2NUM(sqlite3_threadsafe());
 }
 
+/* Returns true if the extension declared itself Ractor-safe. That needs SQLite compiled
+ * thread-safe and Ruby 3.4 or later, which has rb_thread_lock_native_thread (see
+ * lock_native_thread in exception.c).
+ */
+static VALUE
+ractor_safe_p(VALUE UNUSED(klass))
+{
+#if defined(HAVE_RB_EXT_RACTOR_SAFE) && defined(HAVE_RB_THREAD_LOCK_NATIVE_THREAD)
+    return sqlite3_threadsafe() ? Qtrue : Qfalse;
+#else
+    return Qfalse;
+#endif
+}
+
 /*
  * call-seq:
  *   status(parameter) → Hash
@@ -139,6 +153,12 @@ init_sqlite3_constants(void)
 {
     VALUE mSqlite3Constants;
     VALUE mSqlite3Open;
+
+#ifdef HAVE_RB_EXT_RACTOR_SAFE
+    if (RTEST(ractor_safe_p(mSqlite3))) {
+        rb_ext_ractor_safe(true);
+    }
+#endif
 
     mSqlite3Constants = rb_define_module_under(mSqlite3, "Constants");
 
@@ -214,16 +234,17 @@ Init_sqlite3_native(void)
     rb_define_singleton_method(mSqlite3, "sqlcipher?", using_sqlcipher, 0);
     rb_define_singleton_method(mSqlite3, "libversion", libversion, 0);
     rb_define_singleton_method(mSqlite3, "threadsafe", threadsafe_p, 0);
+    rb_define_singleton_method(mSqlite3, "ractor_safe?", ractor_safe_p, 0);
     rb_define_singleton_method(mSqlite3, "status", rb_sqlite3_status, -1);
 
     /* (String) The version of the sqlite3 library compiled with (e.g., "3.46.1") */
-    rb_define_const(mSqlite3, "SQLITE_VERSION", rb_str_new2(SQLITE_VERSION));
+    rb_define_const(mSqlite3, "SQLITE_VERSION", rb_obj_freeze(rb_str_new2(SQLITE_VERSION)));
 
     /* (Integer) The version of the sqlite3 library compiled with (e.g., 346001) */
     rb_define_const(mSqlite3, "SQLITE_VERSION_NUMBER", INT2FIX(SQLITE_VERSION_NUMBER));
 
     /* (String) The version of the sqlite3 library loaded at runtime (e.g., "3.46.1") */
-    rb_define_const(mSqlite3, "SQLITE_LOADED_VERSION", rb_str_new2(sqlite3_libversion()));
+    rb_define_const(mSqlite3, "SQLITE_LOADED_VERSION", rb_obj_freeze(rb_str_new2(sqlite3_libversion())));
 
 #ifdef USING_PACKAGED_LIBRARIES
     rb_define_const(mSqlite3, "SQLITE_PACKAGED_LIBRARIES", Qtrue);
