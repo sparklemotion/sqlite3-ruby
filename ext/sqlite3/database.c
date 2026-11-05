@@ -414,6 +414,7 @@ set_statement_timeout(VALUE self, VALUE milliseconds)
 {
     sqlite3RubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_OPEN_DB(ctx);
 
     ctx->stmt_timeout = NUM2INT(milliseconds);
     int n = NUM2INT(milliseconds) == 0 ? -1 : 1000;

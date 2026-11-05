@@ -808,6 +808,13 @@ module SQLite3
       end
     end
 
+    def test_statement_timeout_closed
+      @db.close
+      assert_raise(SQLite3::Exception) do
+        @db.statement_timeout = 100
+      end
+    end
+
     def test_define_aggregate
       @db.execute "create table foo ( a integer primary key, b text )"
       @db.execute "insert into foo ( b ) values ( 'foo' )"
