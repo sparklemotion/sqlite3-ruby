@@ -202,6 +202,51 @@ init_sqlite3_constants(void)
 #endif
 }
 
+#if defined(_WIN32) && SQLITE_VERSION_NUMBER >= 3007006
+/*
+ * Point SQLite's "Sleep" system call at kernel32's Sleep.
+ *
+ * SQLite's Windows VFS sleeps through the "Sleep" entry of its system-call table: in winLock's
+ * lock retries, in winRetryIoerr, and in the default busy handler that Database#busy_timeout
+ * installs. It sleeps while holding the connection's mutex. When SQLite is linked into this
+ * extension, the linker can resolve that "Sleep" against the Ruby DLL, which exports a "Sleep"
+ * that forwards to rb_w32_Sleep (win32/mkexports.rb turns the "#define Sleep" in
+ * include/ruby/win32.h into an export). rb_w32_Sleep releases the GVL and checks for interrupts,
+ * so during SQLite's sleep another Ruby thread could enter the connection and block on its mutex
+ * with the GVL held, and a Thread#raise or Thread#kill could unwind through SQLite and leave the
+ * mutex locked. Either way the process deadlocks.
+ *
+ * kernel32's Sleep is looked up at runtime rather than named in the source: inside this
+ * extension, "Sleep" is the macro from ruby/win32.h, and the import it links to is the problem.
+ * The system-call table is shared by all of os_win.c's VFSes, so setting it on any of them sets it
+ * for all; each is tried in case some are compiled out. It is harmless when SQLite is a separate
+ * DLL, whose Sleep already comes from kernel32.
+ *
+ * See https://github.com/sparklemotion/sqlite3-ruby/issues/766
+ */
+static void
+use_kernel32_sleep(void)
+{
+    static const char *const vfs_names[] = {
+        "win32", "win32-longpath", "win32-none", "win32-longpath-none"
+    };
+    HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
+    sqlite3_syscall_ptr kernel32_sleep;
+    size_t i;
+
+    if (!kernel32) { return; }
+    kernel32_sleep = (sqlite3_syscall_ptr)(void (*)(void))GetProcAddress(kernel32, "Sleep");
+    if (!kernel32_sleep) { return; }
+
+    for (i = 0; i < sizeof(vfs_names) / sizeof(vfs_names[0]); i++) {
+        sqlite3_vfs *vfs = sqlite3_vfs_find(vfs_names[i]);
+        if (vfs && vfs->iVersion >= 3 && vfs->xSetSystemCall) {
+            vfs->xSetSystemCall(vfs, "Sleep", kernel32_sleep);
+        }
+    }
+}
+#endif
+
 RUBY_FUNC_EXPORTED
 void
 Init_sqlite3_native(void)
@@ -222,6 +267,9 @@ Init_sqlite3_native(void)
     /* Initialize the sqlite3 library */
 #ifdef HAVE_SQLITE3_INITIALIZE
     sqlite3_initialize();
+#endif
+#if defined(_WIN32) && SQLITE_VERSION_NUMBER >= 3007006
+    use_kernel32_sleep();
 #endif
 
     init_sqlite3_exception();

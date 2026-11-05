@@ -2,12 +2,17 @@
 
 ## next / unreleased
 
+### Security / Stability
+
+- Fix a deadlock on Windows when SQLite waits for a lock. SQLite's sleeps (the default busy handler installed by `Database#busy_timeout`, and the Windows VFS's lock and I/O retries) resolved to the Ruby DLL's `Sleep`, which forwards to `rb_w32_Sleep`. That released the GVL and checked for interrupts while SQLite held the connection's mutex, so another thread using the same connection could block forever with the GVL held, and a `Thread#raise` or `Thread#kill` during the wait could leave the connection unusable. The extension now points SQLite's `Sleep` at kernel32's at load time. #766 @mrhoribu
+
 ### Added
 
 - Experimental Ractor support. On Ruby 3.4 and later, when SQLite is compiled thread-safe, the extension declares itself Ractor-safe, and each Ractor can open and use its own connections. `SQLite3.ractor_safe?` reports whether the extension made the declaration. See [RACTOR.md](RACTOR.md) for the limits on sharing connections between Ractors and on fork safety. We welcome bug reports, but we recommend caution before using Ractor support in production applications. #749 @rubys @sandlerr @tenderlove @flavorjones
 
 ### Changed
 
+- On Windows, `Database#busy_timeout` waits now hold the GVL, as documented and as on other platforms; other Ruby threads don't run while a connection waits for a lock. Use `Database#busy_handler_timeout=` for lock waits that let other threads run. #766 @mrhoribu
 - `SQLite3::VERSION`, `SQLite3::VERSION_INFO`, `SQLite3::SQLITE_VERSION` and `SQLite3::SQLITE_LOADED_VERSION` are frozen, so that any Ractor can read them. Code that mutates them now raises `FrozenError`. #749 @rubys @tenderlove
 
 ## 2.10.2 / 2026-10-26
