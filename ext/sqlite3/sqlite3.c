@@ -206,21 +206,26 @@ init_sqlite3_constants(void)
 /*
  * Point SQLite's "Sleep" system call at kernel32's Sleep.
  *
- * SQLite's Windows VFS sleeps through the "Sleep" entry of its system-call table: in winLock's
- * lock retries, in winRetryIoerr, and in the default busy handler that Database#busy_timeout
- * installs. It sleeps while holding the connection's mutex. When SQLite is linked into this
- * extension, the linker can resolve that "Sleep" against the Ruby DLL, which exports a "Sleep"
- * that forwards to rb_w32_Sleep (win32/mkexports.rb turns the "#define Sleep" in
- * include/ruby/win32.h into an export). rb_w32_Sleep releases the GVL and checks for interrupts,
- * so during SQLite's sleep another Ruby thread could enter the connection and block on its mutex
- * with the GVL held, and a Thread#raise or Thread#kill could unwind through SQLite and leave the
- * mutex locked. Either way the process deadlocks.
+ * SQLite's Windows VFS sleeps through the "Sleep" entry of its system-call table (osSleep) while
+ * holding the connection's mutex: in winLock's lock retries, winRetryIoerr, winClose's retry, and
+ * winSleep, which the default busy handler behind Database#busy_timeout and the WAL read retry
+ * call. When SQLite is linked into this extension (the precompiled gems and the default build),
+ * the linker resolves that "Sleep" against the Ruby DLL, which exports a "Sleep" that forwards to
+ * rb_w32_Sleep (win32/mkexports.rb turns the "#define Sleep" in include/ruby/win32.h into an
+ * export, and mkmf links the Ruby DLL's import library ahead of kernel32). rb_w32_Sleep releases
+ * the GVL and checks for interrupts, so during SQLite's sleep another Ruby thread could enter the
+ * connection and block on its mutex with the GVL held, and a Thread#raise or Thread#kill could
+ * unwind through SQLite and leave the mutex locked. Either way the process deadlocks.
  *
- * kernel32's Sleep is looked up at runtime rather than named in the source: inside this
- * extension, "Sleep" is the macro from ruby/win32.h, and the import it links to is the problem.
- * The system-call table is shared by all of os_win.c's VFSes, so setting it on any of them sets it
- * for all; each is tried in case some are compiled out. It is harmless when SQLite is a separate
- * DLL, whose Sleep already comes from kernel32.
+ * kernel32's Sleep is looked up at runtime because a direct reference to Sleep in this extension
+ * would bind to the same Ruby-DLL import. The system-call table is shared by all of os_win.c's
+ * VFSes, so setting it on any of them sets it for all; each is tried in case some are compiled
+ * out. It is harmless when SQLite is a separate DLL (--enable-system-libraries, mswin, SQLCipher),
+ * whose Sleep already comes from kernel32.
+ *
+ * xSetSystemCall is documented as a testing aid, and the set of calls it can override may change
+ * between SQLite releases. If no VFS accepts the override, this warns instead of failing silently.
+ * test/test_sqlite_sleep.rb guards the behavior on the Windows CI jobs.
  *
  * See https://github.com/sparklemotion/sqlite3-ruby/issues/766
  */
@@ -231,18 +236,28 @@ use_kernel32_sleep(void)
         "win32", "win32-longpath", "win32-none", "win32-longpath-none"
     };
     HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
-    sqlite3_syscall_ptr kernel32_sleep;
+    sqlite3_syscall_ptr kernel32_sleep = NULL;
+    int installed = 0;
     size_t i;
 
-    if (!kernel32) { return; }
-    kernel32_sleep = (sqlite3_syscall_ptr)(void (*)(void))GetProcAddress(kernel32, "Sleep");
-    if (!kernel32_sleep) { return; }
+    if (kernel32) {
+        kernel32_sleep = (sqlite3_syscall_ptr)(void (*)(void))GetProcAddress(kernel32, "Sleep");
+    }
 
-    for (i = 0; i < sizeof(vfs_names) / sizeof(vfs_names[0]); i++) {
-        sqlite3_vfs *vfs = sqlite3_vfs_find(vfs_names[i]);
-        if (vfs && vfs->iVersion >= 3 && vfs->xSetSystemCall) {
-            vfs->xSetSystemCall(vfs, "Sleep", kernel32_sleep);
+    if (kernel32_sleep) {
+        for (i = 0; i < sizeof(vfs_names) / sizeof(vfs_names[0]); i++) {
+            sqlite3_vfs *vfs = sqlite3_vfs_find(vfs_names[i]);
+            if (vfs && vfs->iVersion >= 3 && vfs->xSetSystemCall &&
+                    vfs->xSetSystemCall(vfs, "Sleep", kernel32_sleep) == SQLITE_OK) {
+                installed = 1;
+            }
         }
+    }
+
+    if (!installed) {
+        rb_warn("sqlite3: could not point SQLite's Sleep at kernel32's Sleep; SQLite's lock waits "
+                "may release the GVL while holding the connection's mutex "
+                "(https://github.com/sparklemotion/sqlite3-ruby/issues/766)");
     }
 }
 #endif

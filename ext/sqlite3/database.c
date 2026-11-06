@@ -784,6 +784,14 @@ set_authorizer(VALUE self, VALUE authorizer)
  * busy resources. To restore the default behavior, send 0 as the
  * +ms+ parameter.
  *
+ * The calling thread holds the GVL while SQLite sleeps and retries: other
+ * Ruby threads don't run during the wait, and interrupts such as
+ * Thread#raise, Thread#kill, Timeout.timeout or Ctrl-C take effect only once
+ * the wait ends. In particular, another thread of the same process that holds
+ * the lock can't run to release it, so the wait ends in SQLite3::BusyException
+ * after the full timeout. See #busy_handler_timeout= for a wait that lets
+ * other threads run.
+ *
  * See also the mutually exclusive #busy_handler.
  */
 static VALUE
