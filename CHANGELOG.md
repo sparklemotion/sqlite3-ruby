@@ -4,7 +4,7 @@
 
 ### Security / Stability
 
-- Fix a deadlock on Windows when SQLite, linked into the extension (the precompiled gems and the default build), waits for a lock. SQLite's sleeps (the default busy handler installed by `Database#busy_timeout`, and the Windows VFS's lock, I/O and close retries) resolved to the Ruby DLL's `Sleep`, which forwards to `rb_w32_Sleep`. That released the GVL and checked for interrupts while SQLite held the connection's mutex, so another thread using the same connection could block forever with the GVL held, and a `Thread#raise` or `Thread#kill` during the wait could leave the connection unusable. The extension now points SQLite's `Sleep` at kernel32's at load time. Builds that use SQLite as a separate DLL (`--enable-system-libraries`, mswin, SQLCipher) already used kernel32's `Sleep` and are unaffected. #766 @mrhoribu
+- Fix a deadlock on Windows when SQLite, linked into the extension (the precompiled gems and the default build), waits for a lock. SQLite's sleeps (the default busy handler installed by `Database#busy_timeout`, and the Windows VFS's lock, I/O and close retries) resolved to the Ruby DLL's `Sleep`, which forwards to `rb_w32_Sleep`. That released the GVL and checked for interrupts while SQLite held the connection's mutex, so another thread using the same connection could block forever with the GVL held, and a `Thread#raise` or `Thread#kill` during the wait could leave the connection unusable. The extension now points SQLite's `Sleep` at kernel32's at load time. Builds that use SQLite as a separate DLL (`--enable-system-libraries`, which SQLCipher builds imply) already used kernel32's `Sleep` and are unaffected. #766 @mrhoribu
 
 ### Added
 

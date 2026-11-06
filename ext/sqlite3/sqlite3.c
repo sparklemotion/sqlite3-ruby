@@ -220,8 +220,8 @@ init_sqlite3_constants(void)
  * kernel32's Sleep is looked up at runtime because a direct reference to Sleep in this extension
  * would bind to the same Ruby-DLL import. The system-call table is shared by all of os_win.c's
  * VFSes, so setting it on any of them sets it for all; each is tried in case some are compiled
- * out. It is harmless when SQLite is a separate DLL (--enable-system-libraries, mswin, SQLCipher),
- * whose Sleep already comes from kernel32.
+ * out. It is harmless when SQLite is a separate DLL (--enable-system-libraries, which SQLCipher
+ * builds imply), whose Sleep already comes from kernel32.
  *
  * xSetSystemCall is documented as a testing aid, and the set of calls it can override may change
  * between SQLite releases. If no VFS accepts the override, this warns instead of failing silently.
