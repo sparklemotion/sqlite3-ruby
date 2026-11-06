@@ -166,6 +166,12 @@ step(VALUE self)
     switch (value) {
         case SQLITE_ROW: {
             int i;
+#ifndef TRUFFLERUBY
+            /* Not rb_ary_resize, which grows full rows before Ruby 3.4. */
+            if (length > 1) {
+                rb_ary_store(list, (long)length - 1, Qnil);
+            }
+#endif
             for (i = 0; i < length; i++) {
                 VALUE val;
 
@@ -202,7 +208,11 @@ step(VALUE self)
                         rb_raise(rb_eRuntimeError, "bad type");
                 }
 
-                rb_ary_store(list, (long)i, val);
+                if (length > 1) {
+                    RARRAY_ASET(list, (long)i, val);
+                } else {
+                    rb_ary_store(list, (long)i, val);
+                }
             }
         }
         break;
