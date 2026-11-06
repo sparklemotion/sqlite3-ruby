@@ -4,7 +4,7 @@
 
 ### Security / Stability
 
-- Fix a deadlock on Windows when SQLite, linked into the extension (the precompiled gems and the default build), waits for a lock. SQLite's sleeps (the default busy handler installed by `Database#busy_timeout`, and the Windows VFS's lock, I/O and close retries) resolved to the Ruby DLL's `Sleep`, which forwards to `rb_w32_Sleep`. That released the GVL and checked for interrupts while SQLite held the connection's mutex, so another thread using the same connection could block forever with the GVL held, and a `Thread#raise` or `Thread#kill` during the wait could leave the connection unusable. The extension now points SQLite's `Sleep` at kernel32's at load time. Builds that use SQLite as a separate DLL (`--enable-system-libraries`, which SQLCipher builds imply) already used kernel32's `Sleep` and are unaffected. #766 @mrhoribu
+- Fix a deadlock on Windows when SQLite, linked into the extension (the precompiled gems and the default build), waits for a lock. SQLite's sleeps (the default busy handler installed by `Database#busy_timeout`, and the Windows VFS's lock, I/O and close retries) resolved to the Ruby DLL's `Sleep`, which forwards to `rb_w32_Sleep`. That released the GVL and checked for interrupts while SQLite held the connection's mutex, so another thread using the same connection could block forever with the GVL held, and a `Thread#raise` or `Thread#kill` during the wait could leave the connection unusable. The extension now points SQLite's `Sleep` at kernel32's at load time. Builds that use SQLite as a separate DLL (`--enable-system-libraries`, which SQLCipher builds imply) already used kernel32's `Sleep` and are unaffected. #766, #771 @mrhoribu
 
 ### Added
 
@@ -12,7 +12,7 @@
 
 ### Changed
 
-- On Windows, when SQLite is linked into the extension (the precompiled gems and the default build), SQLite's waits now hold the GVL, as documented and as on other platforms. #766 @mrhoribu
+- On Windows, when SQLite is linked into the extension (the precompiled gems and the default build), SQLite's waits now hold the GVL, as documented and as on other platforms. #766, #771 @mrhoribu
   - Other Ruby threads don't run while a connection waits in `Database#busy_timeout`. If the lock is held by another connection in the same process (for example a connection pool), that thread can't run to release it, so the wait ends in `SQLite3::BusyException` after the full timeout.
   - `Timeout.timeout`, `Thread#raise`, `Thread#kill` and Ctrl-C take effect only once the wait ends. A `Timeout` shorter than the busy timeout now ends in `SQLite3::BusyException` rather than `Timeout::Error`.
   - The Windows VFS's own retries on sharing or lock violations (for example from antivirus or indexing software) now hold the GVL too, whatever busy handler is set: up to about 1.4 s per failing I/O call, and up to 200 ms when closing.
