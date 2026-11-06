@@ -295,7 +295,7 @@ bind_param(VALUE self, VALUE key, VALUE value)
                                  SQLITE_TRANSIENT
                              );
                 } else {
-                    if (!UTF8_P(value) || !USASCII_P(value)) {
+                    if (!UTF8_P(value)) {
                         value = rb_str_encode(value, rb_enc_from_encoding(rb_utf8_encoding()), 0, Qnil);
                     }
                     status = sqlite3_bind_text(
