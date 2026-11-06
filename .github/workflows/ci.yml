@@ -151,7 +151,7 @@ jobs:
         os: [ubuntu, macos, windows]
         ruby: ${{ fromJSON(needs.ruby_versions.outputs.setup_ruby) }}
         include:
-          - { os: windows, ruby: mingw }
+          - { os: windows, ruby: ucrt }
           - { os: windows, ruby: mswin }
     runs-on: ${{ matrix.os }}-latest
     steps:
