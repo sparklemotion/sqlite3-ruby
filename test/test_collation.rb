@@ -83,7 +83,7 @@ module SQLite3
     # every comparator makes the lifetime of @collations matter, so this rules
     # out ever making it an append-only array.
     def test_replacing_a_collation_releases_the_previous_comparator
-      3.times { @db.collation "foo", ReleasableComparator.new }
+      Thread.new { 3.times { @db.collation "foo", ReleasableComparator.new } }.join
       GC.start(full_mark: true, immediate_sweep: true)
 
       assert_equal 1, ObjectSpace.each_object(ReleasableComparator).count
@@ -111,7 +111,7 @@ module SQLite3
 
     def test_replacing_a_collation_by_another_case_releases_the_previous_comparator
       comparator_class = Class.new(ReleasableComparator)
-      ["foo", "FOO", "Foo"].each { |name| @db.collation name, comparator_class.new }
+      Thread.new { ["foo", "FOO", "Foo"].each { |name| @db.collation name, comparator_class.new } }.join
       @db.collations.clear
       GC.start(full_mark: true, immediate_sweep: true)
 

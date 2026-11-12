@@ -18,7 +18,7 @@ module SQLite3
       @read, @write = IO.pipe
       old_stderr, $stderr = $stderr, StringIO.new
 
-      Process.fork do
+      pid = Process.fork do
         @read.close
         begin
           yield @write
@@ -34,6 +34,7 @@ module SQLite3
       @write.close
       *@results = *@read.readlines
       @read.close
+      Process.waitpid(pid)
     end
 
     # A writable connection leaked by an earlier test triggers the fork-safety warning. GC.start
