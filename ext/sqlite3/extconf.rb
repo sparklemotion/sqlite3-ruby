@@ -157,6 +157,16 @@ module Sqlite3
         require "mini_portile2"
 
         MiniPortile.new(libname, sqlite3_config[:version]).tap do |recipe|
+          # mini_portile takes the host triple from `$CC -v`. llvm-mingw (used for aarch64-mingw-ucrt)
+          # reports e.g. "aarch64-w64-windows-gnu", which sqlite's configure rejects, so use the
+          # equivalent "aarch64-w64-mingw32". GCC-based mingw toolchains already report "*-mingw32".
+          #
+          # TODO: remove once a mini_portile2 release normalizes this in `detect_host`
+          # (https://github.com/flavorjones/mini_portile/pull/167), and require that version.
+          # Until then no released mini_portile2 has the fix (2.8.9 is the latest), so it can't be
+          # pinned. When it is fixed upstream, this line becomes a no-op.
+          recipe.host = recipe.host.sub(/-w64-windows-gnu\z/, "-w64-mingw32") if recipe.host
+
           if sqlite_source_dir
             recipe.source_directory = sqlite_source_dir
           else

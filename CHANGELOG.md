@@ -4,11 +4,16 @@
 
 ### Added
 
+- Native (precompiled) gem for Windows on ARM64, platform `aarch64-mingw-ucrt`, for Ruby 3.4 and later. #778 #650 @mrhoribu @YOU54F
 - Experimental Ractor support. On Ruby 3.4 and later, when SQLite is compiled thread-safe, the extension declares itself Ractor-safe, and each Ractor can open and use its own connections. `SQLite3.ractor_safe?` reports whether the extension made the declaration. See [RACTOR.md](RACTOR.md) for the limits on sharing connections between Ractors and on fork safety. We welcome bug reports, but we recommend caution before using Ractor support in production applications. #749 @rubys @sandlerr @tenderlove @flavorjones
 
 ### Changed
 
 - `SQLite3::VERSION`, `SQLite3::VERSION_INFO`, `SQLite3::SQLITE_VERSION` and `SQLite3::SQLITE_LOADED_VERSION` are frozen, so that any Ractor can read them. Code that mutates them now raises `FrozenError`. #749 @rubys @tenderlove
+
+### Fixed
+
+- Compiling the packaged sqlite from source with clang-based mingw toolchains, such as RubyInstaller's on Windows on ARM64, no longer fails in sqlite's `config.sub` because of the `*-w64-windows-gnu` host triple. This is a stopgap until mini_portile2 normalizes the triple itself, see [flavorjones/mini_portile#167](https://github.com/flavorjones/mini_portile/pull/167). #778 #650 @mrhoribu @YOU54F
 
 ## 2.10.2 / 2026-10-26
 
