@@ -16,6 +16,7 @@ gemfile do
   gem "minitest-reporters"
 end
 
+require "digest"
 require "yaml"
 
 def usage_and_exit(message = nil)
@@ -63,7 +64,10 @@ require "minitest/autorun"
 require "minitest/reporters"
 Minitest::Reporters.use!([Minitest::Reporters::SpecReporter.new])
 
-puts "Testing '#{gemfile}' (#{gemspec.platform})"
+ruby_abi = gemspec.ruby_abi if gemspec.platform.is_a?(Gem::Platform)
+
+puts "Testing '#{gemfile}' (#{gemspec.platform}#{", ruby abi #{ruby_abi}" if ruby_abi})"
+
 describe File.basename(gemfile) do
   let(:supported_ruby_versions) { ["3.2", "3.3", "3.4", "4.0"] }
 
@@ -144,6 +148,27 @@ describe File.basename(gemfile) do
 
   if gemspec.platform.is_a?(Gem::Platform) && gemspec.platform.cpu
     describe "native platform" do
+      let(:expected_ruby_versions) { ruby_abi ? [ruby_abi] : supported_ruby_versions }
+
+      if ruby_abi
+        it "is named after a prefix of its sha256 checksum" do
+          checksum = Digest::SHA256.file(gemfile).hexdigest
+          suffix = File.basename(gemfile, ".gem").delete_prefix("#{gemspec.name}-#{gemspec.version}-")
+
+          assert_match(/\A[0-9a-f]{8,64}\z/, suffix)
+          assert(checksum.start_with?(suffix), "expected #{suffix} to be a prefix of #{checksum}")
+        end
+
+        it "is for a supported ruby version" do
+          assert_includes(supported_ruby_versions, ruby_abi)
+        end
+
+        it "requires rubygems >= 4.1" do
+          refute(gemspec.required_rubygems_version.satisfied_by?(Gem::Version.new("4.0.99")))
+          assert(gemspec.required_rubygems_version.satisfied_by?(Gem::Version.new("4.1.0")))
+        end
+      end
+
       it "does not depend on mini_portile2" do
         refute(gemspec.dependencies.find { |d| d.name == "mini_portile2" })
       end
@@ -166,7 +191,7 @@ describe File.basename(gemfile) do
       end
 
       it "contains expected shared library files " do
-        supported_ruby_versions.each do |version|
+        expected_ruby_versions.each do |version|
           actual = gemfile_contents.find do |p|
             File.fnmatch?("lib/sqlite3/#{version}/sqlite3_native.{so,bundle}", p, File::FNM_EXTGLOB)
           end
@@ -182,14 +207,14 @@ describe File.basename(gemfile) do
           File.fnmatch?("lib/sqlite3/**/*.{so,bundle}", p, File::FNM_EXTGLOB)
         end
         assert_equal(
-          supported_ruby_versions.length,
+          expected_ruby_versions.length,
           actual.length,
           "did not expect extra shared library files"
         )
       end
 
       it "sets required_ruby_version appropriately" do
-        supported_ruby_versions.each do |v|
+        expected_ruby_versions.each do |v|
           assert(
             gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
             "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}"

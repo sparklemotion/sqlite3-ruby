@@ -36,7 +36,9 @@ else
   bundle exec rake gem:${BUILD_NATIVE_GEM}:buildit
 fi
 
-./bin/test-gem-file-contents pkg/*.gem
+for gem in pkg/*.gem ; do
+  ./bin/test-gem-file-contents "${gem}"
+done
 
 mkdir -p ${OUTPUT_DIR}
 cp -v pkg/*.gem ${OUTPUT_DIR}
