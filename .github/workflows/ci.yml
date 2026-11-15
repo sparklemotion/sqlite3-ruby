@@ -79,9 +79,12 @@ jobs:
           - { os: ubuntu, ruby: truffleruby, syslib: disable }
           - { os: windows, ruby: ucrt, syslib: enable }
           - { os: windows, ruby: mswin, syslib: enable }
-    runs-on: ${{ matrix.os }}-latest
+          # Windows on ARM64 (RubyInstaller only provides Ruby >= 3.4)
+          - { os: windows-arm, runner: windows-11-arm, ruby: "3.4", syslib: disable }
+          - { os: windows-arm, runner: windows-11-arm, ruby: "4.0", syslib: disable }
+    runs-on: ${{ matrix.runner || format('{0}-latest', matrix.os) }}
     steps:
-      - if: matrix.os == 'windows'
+      - if: startsWith(matrix.os, 'windows')
         name: configure git crlf
         run: |
           git config --system core.autocrlf false
@@ -215,7 +218,10 @@ jobs:
         include:
           # additional compilation flags for homebrew
           - { os: macos, syslib: enable, compile_flags: "--with-opt-dir=$(brew --prefix sqlite3)" }
-    runs-on: ${{ matrix.os }}-latest
+          # Windows on ARM64 (RubyInstaller only provides Ruby >= 3.4)
+          - { os: windows-arm, runner: windows-11-arm, ruby: "3.4", syslib: disable }
+          - { os: windows-arm, runner: windows-11-arm, ruby: "4.0", syslib: disable }
+    runs-on: ${{ matrix.runner || format('{0}-latest', matrix.os) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
