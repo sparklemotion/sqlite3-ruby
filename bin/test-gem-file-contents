@@ -65,7 +65,14 @@ Minitest::Reporters.use!([Minitest::Reporters::SpecReporter.new])
 
 puts "Testing '#{gemfile}' (#{gemspec.platform})"
 describe File.basename(gemfile) do
-  let(:supported_ruby_versions) { ["3.2", "3.3", "3.4", "4.0"] }
+  let(:all_ruby_versions) { ["3.2", "3.3", "3.4", "4.0"] }
+
+  # rake-compiler-dock only provides Ruby >= 3.4 for Windows on ARM64
+  let(:excluded_ruby_versions) do
+    {"aarch64-mingw-ucrt" => ["3.2", "3.3"]}.fetch(gemspec.platform.to_s, [])
+  end
+
+  let(:supported_ruby_versions) { all_ruby_versions - excluded_ruby_versions }
 
   describe "setup" do
     it "gemfile contains some files" do
@@ -193,6 +200,12 @@ describe File.basename(gemfile) do
           assert(
             gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
             "required_ruby_version='#{gemspec.required_ruby_version}' should support ruby #{v}"
+          )
+        end
+        excluded_ruby_versions.each do |v|
+          refute(
+            gemspec.required_ruby_version.satisfied_by?(Gem::Version.new(v)),
+            "required_ruby_version='#{gemspec.required_ruby_version}' should not support ruby #{v}"
           )
         end
       end

@@ -9,6 +9,7 @@ require "yaml"
 cross_platforms = [
   "aarch64-linux-gnu",
   "aarch64-linux-musl",
+  "aarch64-mingw-ucrt",
   "arm-linux-gnu",
   "arm-linux-musl",
   "x86-linux-gnu",
@@ -19,6 +20,9 @@ cross_platforms = [
   "x86_64-darwin",
   "x64-mingw-ucrt"
 ]
+# The aarch64-mingw-ucrt image only provides Ruby >= 3.4 (there is no RubyInstaller for Windows on
+# ARM64 before 3.4). rake-compiler skips the missing versions for that platform and sets the native
+# gem's required_ruby_version from the versions it did build.
 RakeCompilerDock.set_ruby_cc_version(">= 3.2")
 
 Gem::PackageTask.new(SQLITE3_SPEC).define # packaged_tarball version of the gem for platform=ruby
