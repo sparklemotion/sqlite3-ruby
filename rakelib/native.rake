@@ -19,10 +19,7 @@ cross_platforms = [
   "x86_64-darwin",
   "x64-mingw-ucrt"
 ]
-RakeCompilerDock.set_ruby_cc_version(Gem::Requirement.new(">= 3.2", "< 4.1")) # skip ruby 4.1 until it's released
-
-# TODO: remove once rake-compiler-dock releases an image with RubyGems >= 4.1, see build-gems.yml
-ENV["RCD_IMAGE_VERSION"] ||= "snapshot"
+RakeCompilerDock.set_ruby_cc_version(">= 3.2")
 
 Gem::PackageTask.new(SQLITE3_SPEC).define # packaged_tarball version of the gem for platform=ruby
 task "package" => cross_platforms.map { |p| "gem:#{p}" } # "package" task for all the native platforms
@@ -75,7 +72,9 @@ namespace "gem" do
   cross_platforms.each do |platform|
     desc "build native gem for #{platform}"
     task platform do
+      # TODO: remove the RubyGems update once rake-compiler-dock ships RubyGems >= 4.1
       RakeCompilerDock.sh(<<~EOF, platform: platform, verbose: true)
+        gem update --system 4.1.0 --no-document &&
         gem install bundler --no-document &&
         bundle &&
         bundle exec rake gem:#{platform}:buildit

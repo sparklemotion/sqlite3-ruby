@@ -8,9 +8,7 @@ group :test do
   gem "ruby_memcheck", "3.0.1" if Gem::Platform.local.os == "linux"
 
   gem "rake-compiler", "1.3.2"
-  # TODO: revert to a released version once rake-compiler-dock releases an image with RubyGems >= 4.1.
-  # until then, match the snapshot image we build with, which is built from main.
-  gem "rake-compiler-dock", github: "rake-compiler/rake-compiler-dock", branch: "main"
+  gem "rake-compiler-dock", "1.12.0"
 end
 
 group :development do

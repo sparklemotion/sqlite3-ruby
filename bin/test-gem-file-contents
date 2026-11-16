@@ -64,7 +64,10 @@ require "minitest/autorun"
 require "minitest/reporters"
 Minitest::Reporters.use!([Minitest::Reporters::SpecReporter.new])
 
-ruby_abi = gemspec.ruby_abi if gemspec.platform.is_a?(Gem::Platform)
+if gemspec.platform.is_a?(Gem::Platform)
+  abort("checking native gems needs RubyGems >= 4.1 (#{Gem::VERSION} installed)") unless gemspec.respond_to?(:ruby_abi)
+  ruby_abi = gemspec.ruby_abi
+end
 
 puts "Testing '#{gemfile}' (#{gemspec.platform}#{", ruby abi #{ruby_abi}" if ruby_abi})"
 

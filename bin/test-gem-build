@@ -22,6 +22,12 @@ test -e /etc/os-release && cat /etc/os-release
 
 set -x
 
+if [[ "${BUILD_NATIVE_GEM}" != "ruby" ]] ; then
+  # content-addressable gems need RubyGems >= 4.1 to build
+  # TODO: remove once rake-compiler-dock ships RubyGems >= 4.1
+  gem update --system 4.1.0 --no-document
+fi
+
 bundle config set without development
 bundle install --local || bundle install
 

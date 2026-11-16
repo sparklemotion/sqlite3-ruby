@@ -39,10 +39,7 @@ jobs:
           bundler-cache: true
       - run: bundle exec ruby ./ext/sqlite3/extconf.rb --download-dependencies
       - id: rcd_image_version
-        # TODO: revert once rake-compiler-dock releases an image with RubyGems >= 4.1
-        # (the snapshot image's default ruby is 4.1.0-preview1, with RubyGems 4.1.0.beta2)
-        # run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
-        run: echo "rcd_image_version=snapshot" >> $GITHUB_OUTPUT
+        run: bundle exec ruby -e 'require "rake_compiler_dock"; puts "rcd_image_version=#{RakeCompilerDock::IMAGE_VERSION}"' >> $GITHUB_OUTPUT
 
   build_source_gem:
     name: "build source"

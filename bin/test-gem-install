@@ -18,7 +18,7 @@ set -e -x -u
 cd $GEMS_DIR
 
   if [ -n "${CONTENT_ADDRESSABLE:-}" ] ; then
-    gem update --system 4.1.0.beta3 --prerelease --no-document # TODO: remove once ruby ships RubyGems >= 4.1
+    gem update --system 4.1.0 --no-document # TODO: remove once ruby ships RubyGems >= 4.1
     gemfile=$(ruby -rrubygems/package -e 'print Dir["*.gem"].find { |f| Gem::Package.new(f).spec.ruby_abi == RUBY_VERSION[/\A\d+\.\d+/] }')
   else
     gemfile=$(ls *.gem | grep -Ev -e '-[0-9a-f]{8,64}\.gem$' | head -n1)
