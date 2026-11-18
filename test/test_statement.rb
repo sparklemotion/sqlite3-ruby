@@ -137,6 +137,24 @@ module SQLite3
       stmt.close
     end
 
+    def test_database_name_of_expression_column
+      stmt = @db.prepare("select 1")
+      skip("database_name is not defined") unless stmt.respond_to?(:database_name)
+
+      assert_nil stmt.database_name(0)
+      stmt.close
+    end
+
+    def test_database_name_of_out_of_range_column
+      @db.execute("create table foo(text BLOB)")
+      stmt = @db.prepare("select text from foo")
+      skip("database_name is not defined") unless stmt.respond_to?(:database_name)
+
+      assert_nil stmt.database_name(-1)
+      assert_nil stmt.database_name(1)
+      stmt.close
+    end
+
     def test_prepare_blob
       @db.execute("create table foo(text BLOB)")
       stmt = @db.prepare("insert into foo(text) values (?)")
