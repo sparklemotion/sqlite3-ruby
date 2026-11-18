@@ -6,6 +6,10 @@
   if(!_ctxt->p) \
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed backup");
 
+#define REQUIRE_IDLE_BACKUP(_ctxt) \
+  if(_ctxt->in_step) \
+    rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a backup while it is running a step");
+
 VALUE cSqlite3Backup;
 
 static size_t
@@ -16,17 +20,90 @@ backup_memsize(const void *data)
     return sizeof(*ctx);
 }
 
+static void
+backup_mark(void *data)
+{
+    sqlite3BackupRubyPtr ctx = (sqlite3BackupRubyPtr)data;
+    rb_gc_mark(ctx->dst);
+    rb_gc_mark(ctx->src);
+}
+
+static void
+backup_unlink(sqlite3BackupRubyPtr ctx)
+{
+    sqlite3BackupRubyPtr *pp;
+
+    for (pp = &ctx->dst_ctx->backups; *pp; pp = &(*pp)->next) {
+        if (*pp == ctx) {
+            *pp = ctx->next;
+            break;
+        }
+    }
+    ctx->dst_ctx = NULL;
+    ctx->next = NULL;
+}
+
+static void
+backup_finish(sqlite3BackupRubyPtr ctx)
+{
+    backup_unlink(ctx);
+    (void)sqlite3_backup_finish(ctx->p);
+    ctx->p = NULL;
+}
+
+/* The GC frees a Backup and its destination Database in either order. If the
+ * destination went first, it already finished this backup and cleared p. */
+static void
+backup_free(void *data)
+{
+    sqlite3BackupRubyPtr ctx = (sqlite3BackupRubyPtr)data;
+
+    if (ctx->p) { backup_finish(ctx); }
+    xfree(ctx);
+}
+
 static const rb_data_type_t backup_type = {
-    "SQLite3::Backup",
-    {
-        NULL,
-        RUBY_TYPED_DEFAULT_FREE,
-        backup_memsize,
+    .wrap_struct_name = "SQLite3::Backup",
+    .function = {
+        .dmark = backup_mark,
+        .dfree = backup_free,
+        .dsize = backup_memsize,
     },
-    0,
-    0,
-    RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
+    .flags = RUBY_TYPED_WB_PROTECTED, // Not freed immediately because the dfree function can do IO.
 };
+
+/* Database#close calls this first: a callback inside sqlite3_backup_step must
+ * not close the destination. */
+void
+rb_sqlite3_backup_require_idle(sqlite3RubyPtr db_ctx)
+{
+    sqlite3BackupRubyPtr b;
+
+    for (b = db_ctx->backups; b; b = b->next) {
+        if (b->in_step) {
+            rb_raise(rb_path2class("SQLite3::Exception"),
+                     "cannot close a database while a backup to it is running a step");
+        }
+    }
+}
+
+/* Called before the destination connection is closed, or discarded after a
+ * fork. A discarded connection's backups are abandoned like the connection.
+ * Also called from the GC, so it must not raise. */
+void
+rb_sqlite3_backup_finish_all(sqlite3RubyPtr db_ctx, int discard)
+{
+    sqlite3BackupRubyPtr b, next;
+
+    for (b = db_ctx->backups; b; b = next) {
+        next = b->next;
+        if (!discard) { (void)sqlite3_backup_finish(b->p); }
+        b->p = NULL;
+        b->dst_ctx = NULL;
+        b->next = NULL;
+    }
+    db_ctx->backups = NULL;
+}
 
 static VALUE
 allocate(VALUE klass)
@@ -78,7 +155,15 @@ initialize(VALUE self, VALUE dstdb, VALUE dstname, VALUE srcdb, VALUE srcname)
     sqlite3RubyPtr ddb_ctx, sdb_ctx;
     sqlite3_backup *pBackup;
 
+    /* Converting a name can run Ruby code, so convert both before reading
+     * either pointer or checking the databases. */
+    StringValue(dstname);
+    StringValue(srcname);
+
     TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
+    if (ctx->p) {
+        rb_raise(rb_path2class("SQLite3::Exception"), "backup is already initialized");
+    }
     ddb_ctx = sqlite3_database_unwrap(dstdb);
     sdb_ctx = sqlite3_database_unwrap(srcdb);
 
@@ -93,6 +178,11 @@ initialize(VALUE self, VALUE dstdb, VALUE dstname, VALUE srcdb, VALUE srcname)
                                   sdb_ctx->db, StringValuePtr(srcname));
     if (pBackup) {
         ctx->p = pBackup;
+        RB_OBJ_WRITE(self, &ctx->dst, dstdb);
+        RB_OBJ_WRITE(self, &ctx->src, srcdb);
+        ctx->dst_ctx = ddb_ctx;
+        ctx->next = ddb_ctx->backups;
+        ddb_ctx->backups = ctx;
     } else {
         CHECK(ddb_ctx->db, sqlite3_errcode(ddb_ctx->db));
     }
@@ -114,14 +204,18 @@ step(VALUE self, VALUE nPage)
 {
     sqlite3BackupRubyPtr ctx;
     rb_sqlite3_callback_frame_t frame;
-    int pages, status, callback_state;
+    int status, callback_state;
+    /* Converting nPage can run Ruby code, so do it before the checks. */
+    int pages = NUM2INT(nPage);
 
     TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
     REQUIRE_OPEN_BACKUP(ctx);
-    pages = NUM2INT(nPage);
+    REQUIRE_IDLE_BACKUP(ctx);
 
     rb_sqlite3_push_callback_frame(&frame);
+    ctx->in_step = 1;
     status = sqlite3_backup_step(ctx->p, pages);
+    ctx->in_step = 0;
     if ((callback_state = rb_sqlite3_pop_callback_frame(&frame))) { rb_jump_tag(callback_state); }
     return INT2NUM(status);
 }
@@ -137,8 +231,10 @@ finish(VALUE self)
 
     TypedData_Get_Struct(self, sqlite3BackupRuby, &backup_type, ctx);
     REQUIRE_OPEN_BACKUP(ctx);
-    (void)sqlite3_backup_finish(ctx->p);
-    ctx->p = NULL;
+    REQUIRE_IDLE_BACKUP(ctx);
+    backup_finish(ctx);
+    ctx->dst = Qnil;
+    ctx->src = Qnil;
     return Qnil;
 }
 
