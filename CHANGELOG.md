@@ -6,6 +6,10 @@
 
 - Experimental Ractor support. On Ruby 3.4 and later, when SQLite is compiled thread-safe, the extension declares itself Ractor-safe, and each Ractor can open and use its own connections. `SQLite3.ractor_safe?` reports whether the extension made the declaration. See [RACTOR.md](RACTOR.md) for the limits on sharing connections between Ractors and on fork safety. We welcome bug reports, but we recommend caution before using Ractor support in production applications. #749 @rubys @sandlerr @tenderlove @flavorjones
 
+### Fixed
+
+- `Statement#database_name` returns `nil` when SQLite provides no database name for the column, for example for `a+1` in `SELECT a, a+1 FROM t` or for column index `-1`. Previously it crashed the process. The method is defined only when the linked SQLite is built with `SQLITE_ENABLE_COLUMN_METADATA`; the precompiled native gems do not define it. #780 @flavorjones
+
 ### Changed
 
 - `SQLite3::VERSION`, `SQLite3::VERSION_INFO`, `SQLite3::SQLITE_VERSION` and `SQLite3::SQLITE_LOADED_VERSION` are frozen, so that any Ractor can read them. Code that mutates them now raises `FrozenError`. #749 @rubys @tenderlove

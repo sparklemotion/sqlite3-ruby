@@ -722,19 +722,23 @@ memused(VALUE self)
 
 /* call-seq: stmt.database_name(column_index)
  *
- * Return the database name for the column at +column_index+
+ * Return the database name for the column at +column_index+, or +nil+ when
+ * SQLite does not provide one.
  */
 static VALUE
 database_name(VALUE self, VALUE index)
 {
     sqlite3StmtRubyPtr ctx;
+    const char *name;
+
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
     REQUIRE_LIVE_DB(ctx);
     REQUIRE_OPEN_STMT(ctx);
 
-    return SQLITE3_UTF8_STR_NEW2(
-               sqlite3_column_database_name(ctx->st, NUM2INT(index)));
+    name = sqlite3_column_database_name(ctx->st, NUM2INT(index));
+
+    return name ? SQLITE3_UTF8_STR_NEW2(name) : Qnil;
 }
 
 #endif
