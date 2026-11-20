@@ -10,6 +10,10 @@
 
 - `SQLite3::VERSION`, `SQLite3::VERSION_INFO`, `SQLite3::SQLITE_VERSION` and `SQLite3::SQLITE_LOADED_VERSION` are frozen, so that any Ractor can read them. Code that mutates them now raises `FrozenError`. #749 @rubys @tenderlove
 
+### Fixed
+
+- Fix a crash when `Database#statement_timeout=` is called on a closed database. It now raises `SQLite3::Exception`, as the other `Database` methods do. #767 @jhawthorn
+
 ## 2.10.2 / 2026-10-26
 
 ### Security / Stability
