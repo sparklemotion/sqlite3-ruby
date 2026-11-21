@@ -201,6 +201,26 @@ module SQLite3
       stmt.close
     end
 
+    def test_bind_invalid_utf8_as_text
+      ["\xff", "\xe2\x82"].each do |value|
+        @db.prepare("select typeof(?), ?") do |stmt|
+          stmt.bind_params(value, value)
+          type, text = stmt.step
+          assert_equal "text", type
+          assert_equal value.bytes, text.bytes
+          assert_equal Encoding::UTF_8, text.encoding
+        end
+      end
+    end
+
+    def test_bind_invalid_us_ascii_text_raises
+      @db.prepare("select ?") do |stmt|
+        assert_raises(Encoding::InvalidByteSequenceError) do
+          stmt.bind_param(1, "\xff".b.force_encoding(Encoding::US_ASCII))
+        end
+      end
+    end
+
     def test_bind_param_int
       stmt = SQLite3::Statement.new(@db, "select ?")
       stmt.bind_param(1, 10)
