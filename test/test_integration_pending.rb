@@ -274,6 +274,7 @@ class IntegrationPendingTestCase < SQLite3::TestCase
 
     assert_kind_of(SQLite3::MisuseException, error)
     assert_equal([1], stmt.step)
+    stmt.close
   end
 
   def test_busy_handler_cannot_clear_the_bindings_of_a_statement_on_its_own_database
@@ -285,6 +286,7 @@ class IntegrationPendingTestCase < SQLite3::TestCase
 
     assert_kind_of(SQLite3::MisuseException, error)
     assert_equal([42], stmt.step)
+    stmt.close
   end
 
   def test_busy_handler_cannot_close_a_statement_on_its_own_database
@@ -295,6 +297,7 @@ class IntegrationPendingTestCase < SQLite3::TestCase
 
     assert_kind_of(SQLite3::MisuseException, error)
     refute_predicate(stmt, :closed?)
+    stmt.close
   end
 
   def test_busy_handler_cannot_execute_batch2_on_its_own_database
