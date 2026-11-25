@@ -777,7 +777,7 @@ set_authorizer(VALUE self, VALUE authorizer)
     return self;
 }
 
-/* call-seq: db.busy_timeout = ms
+/* call-seq: db.busy_timeout=(ms)
  *
  * Indicates that if a request for a resource terminates because that
  * resource is busy, SQLite should sleep and retry for up to the indicated
