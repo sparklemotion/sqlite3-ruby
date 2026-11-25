@@ -50,6 +50,7 @@ class IntegrationPendingTestCase < SQLite3::TestCase
   end
 
   def teardown
+    @waiting_db&.close
     @db.close
     File.delete("test.db")
   end
@@ -237,5 +238,202 @@ class IntegrationPendingTestCase < SQLite3::TestCase
 
     synchronizer.close_main
     t.join
+  end
+
+  def test_busy_handler_cannot_execute_sql_on_its_own_database
+    db = open_waiting_database
+
+    error = error_raised_inside_busy_handler(db) { db.execute("select 1") }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    assert_equal([[3]], db.execute("select count(*) from foo"))
+  end
+
+  def test_busy_handler_cannot_execute_sql_on_its_own_database_while_it_reads_the_schema
+    db = open_waiting_database(read_schema: false)
+
+    error = error_raised_inside_busy_handler(db) { db.execute("select 1") }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    assert_equal([[3]], db.execute("select count(*) from foo"))
+  end
+
+  def test_busy_handler_cannot_prepare_a_statement_on_its_own_database
+    db = open_waiting_database
+
+    error = error_raised_inside_busy_handler(db) { db.prepare("select 1") }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+  end
+
+  def test_busy_handler_cannot_step_a_statement_on_its_own_database
+    db = open_waiting_database
+    stmt = db.prepare("select 1")
+
+    error = error_raised_inside_busy_handler(db) { stmt.step }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    assert_equal([1], stmt.step)
+    stmt.close
+  end
+
+  def test_busy_handler_cannot_clear_the_bindings_of_a_statement_on_its_own_database
+    db = open_waiting_database
+    stmt = db.prepare("select ?")
+    stmt.bind_param(1, 42)
+
+    error = error_raised_inside_busy_handler(db) { stmt.clear_bindings! }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    assert_equal([42], stmt.step)
+    stmt.close
+  end
+
+  def test_busy_handler_cannot_close_a_statement_on_its_own_database
+    db = open_waiting_database
+    stmt = db.prepare("select 1")
+
+    error = error_raised_inside_busy_handler(db) { stmt.close }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    refute_predicate(stmt, :closed?)
+    stmt.close
+  end
+
+  def test_busy_handler_cannot_execute_batch2_on_its_own_database
+    db = open_waiting_database
+
+    error = error_raised_inside_busy_handler(db) { db.execute_batch2("select 1") }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+  end
+
+  def test_busy_handler_cannot_serialize_its_own_database
+    skip("serialize not supported") unless SQLite3::Database.method_defined?(:serialize)
+
+    db = open_waiting_database
+
+    error = error_raised_inside_busy_handler(db) { db.serialize }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+  end
+
+  def test_busy_handler_cannot_deserialize_into_its_own_database
+    skip("deserialize not supported") unless SQLite3::Database.method_defined?(:deserialize)
+
+    db = open_waiting_database
+    image = SQLite3::Database.new(":memory:").serialize
+
+    error = error_raised_inside_busy_handler(db) { db.deserialize(image) }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    assert_equal([[3]], db.execute("select count(*) from foo"))
+  end
+
+  def test_busy_handler_cannot_back_up_its_own_database
+    db = open_waiting_database
+    destination = SQLite3::Database.new(":memory:")
+
+    error = error_raised_inside_busy_handler(db) { SQLite3::Backup.new(destination, "main", db, "main") }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+  end
+
+  def test_busy_handler_cannot_close_its_own_database
+    db = open_waiting_database(read_schema: false)
+
+    error = error_raised_inside_busy_handler(db) { db.close }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    refute_predicate(db, :closed?)
+  end
+
+  def test_busy_handler_cannot_discard_its_own_database
+    db = open_waiting_database(read_schema: false)
+
+    error = error_raised_inside_busy_handler(db) { db.send(:discard) }
+
+    assert_kind_of(SQLite3::MisuseException, error)
+    refute_predicate(db, :closed?)
+  end
+
+  def test_busy_handler_can_interrupt_its_own_database
+    db = open_waiting_database
+
+    error = error_raised_inside_busy_handler(db) { db.interrupt }
+
+    assert_nil(error)
+  end
+
+  def test_busy_handler_stays_guarded_after_a_backup_calls_it_again
+    db = open_waiting_database
+    backup = SQLite3::Backup.new(SQLite3::Database.new(":memory:"), "main", db, "main")
+    nested = false
+
+    error = error_raised_inside_busy_handler(db) do
+      next if nested
+
+      nested = true
+      backup.step(-1)
+      db.execute("select 1")
+    end
+
+    assert(nested)
+    assert_kind_of(SQLite3::MisuseException, error)
+  ensure
+    backup&.finish
+  end
+
+  def test_busy_handler_refuses_another_thread_using_its_database
+    db = open_waiting_database
+    other_thread = nil
+
+    error_raised_inside_busy_handler(db) do
+      other_thread = Thread.new do
+        Thread.current.report_on_exception = false
+        db.execute("select 1")
+      end
+      # Without the guard, the other thread deadlocks the process here.
+      other_thread.join
+    end
+
+    assert_raise(SQLite3::MisuseException) { other_thread.value }
+  end
+
+  def test_busy_handler_can_use_another_database
+    db = open_waiting_database
+    other = SQLite3::Database.new(":memory:")
+    result = nil
+
+    error = error_raised_inside_busy_handler(db) { result = other.execute("select 1") }
+
+    assert_nil(error)
+    assert_equal([[1]], result)
+  ensure
+    other&.close
+  end
+
+  private def open_waiting_database(read_schema: true)
+    @waiting_db = SQLite3::Database.new("test.db")
+    @waiting_db.execute("select * from foo") if read_schema
+    @waiting_db
+  end
+
+  private def error_raised_inside_busy_handler(db)
+    error = nil
+    db.busy_handler do
+      begin
+        yield
+      rescue => e
+        error = e
+      end
+      false
+    end
+
+    @db.execute("begin exclusive")
+    assert_raise(SQLite3::BusyException, SQLite3::InterruptException) { db.execute("select * from foo") }
+    @db.execute("rollback")
+
+    error
   end
 end

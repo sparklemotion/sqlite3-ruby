@@ -201,6 +201,7 @@ rb_sqlite3_define_aggregator2(VALUE self, VALUE aggregator, VALUE ruby_name)
     if (!ctx->db) {
         rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
     }
+    REQUIRE_NOT_IN_BUSY_HANDLER(ctx);
 
     if (rb_respond_to(aggregator, rb_intern("arity"))) {
         VALUE ruby_arity = rb_funcall(aggregator, rb_intern("arity"), 0);

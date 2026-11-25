@@ -6,7 +6,8 @@
 
 #define REQUIRE_LIVE_DB(_ctxt) \
   if (_ctxt->db->flags & SQLITE3_RB_DATABASE_DISCARDED) \
-    rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a statement associated with a discarded database");
+    rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a statement associated with a discarded database"); \
+  REQUIRE_NOT_IN_BUSY_HANDLER(_ctxt->db)
 
 VALUE cSqlite3Statement;
 
@@ -62,6 +63,7 @@ prepare(VALUE self, VALUE db, VALUE sql)
     sql = rb_str_new_frozen(StringValue(sql));
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
+    REQUIRE_NOT_IN_BUSY_HANDLER(db_ctx);
 
     /* Dereferencing a pointer to the database struct will be faster than accessing it through the
      * instance variable @connection. The struct pointer is guaranteed to be live because instance
@@ -107,6 +109,7 @@ sqlite3_rb_close(VALUE self)
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
     REQUIRE_OPEN_STMT(ctx);
+    REQUIRE_NOT_IN_BUSY_HANDLER(ctx->db);
 
     sqlite3_finalize(ctx->st);
     ctx->st = NULL;
