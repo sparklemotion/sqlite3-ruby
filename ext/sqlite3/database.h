@@ -6,6 +6,7 @@
 /* bits in the `flags` field */
 #define SQLITE3_RB_DATABASE_READONLY  0x01
 #define SQLITE3_RB_DATABASE_DISCARDED 0x02
+#define SQLITE3_RB_DATABASE_DESERIALIZING 0x04
 
 struct _sqlite3Ruby {
     sqlite3 *db;

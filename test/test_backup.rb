@@ -125,6 +125,52 @@ module SQLite3
         end
       end
 
+      def test_deserialize_raises_busy_on_the_destination_of_an_unfinished_backup
+        skip("serialize/deserialize not supported") unless @ddb.respond_to?(:deserialize)
+
+        image = @sdb.serialize("main")
+        backup = SQLite3::Backup.new(@ddb, "main", @sdb, "main")
+        assert_equal(SQLite3::Constants::ErrorCode::DONE, backup.step(-1))
+
+        assert_raise(SQLite3::BusyException) { @ddb.deserialize(image) }
+
+        backup.finish
+        @ddb.deserialize(image)
+        assert_equal(@data.length, @ddb.execute("select count(*) from foo").first.first)
+      end
+
+      def test_deserialize_converts_its_arguments_before_checking_for_backups
+        skip("serialize/deserialize not supported") unless @ddb.respond_to?(:deserialize)
+
+        source, destination, backup = @sdb, @ddb, nil
+        image = Object.new
+        image.define_singleton_method(:to_str) do
+          backup = SQLite3::Backup.new(destination, "main", source, "main")
+          backup.step(-1)
+          source.serialize("main")
+        end
+
+        assert_raise(SQLite3::BusyException) { @ddb.deserialize(image) }
+        backup.finish
+      end
+
+      def test_a_backup_cannot_start_during_deserialize_of_its_destination
+        skip("serialize/deserialize not supported") unless @ddb.respond_to?(:deserialize)
+
+        image = @sdb.serialize("main")
+        error = nil
+        @ddb.trace do
+          SQLite3::Backup.new(@ddb, "main", @sdb, "main").step(-1)
+        rescue SQLite3::BusyException => error
+        end
+
+        @ddb.deserialize(image)
+        @ddb.trace(nil)
+
+        assert_kind_of(SQLite3::BusyException, error)
+        assert_equal(@data.length, @ddb.execute("select count(*) from foo").first.first)
+      end
+
       def test_busy_handler_cannot_finish_the_backup_or_close_the_destination_during_step
         Dir.mktmpdir do |dir|
           path = File.join(dir, "source.db")
