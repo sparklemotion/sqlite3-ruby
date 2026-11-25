@@ -403,6 +403,51 @@ module SQLite3
       assert_equal :foo, r
     end
 
+    def test_execute_batch2_when_a_callback_mutates_the_sql_string
+      @db.execute("CREATE TABLE t(x)")
+      sql = +(1..40).map { |i| "INSERT INTO t VALUES(f(#{i}));" }.join(" ")
+      @db.define_function("f") do |x|
+        overwrite_in_place(sql)
+        x
+      end
+
+      @db.execute_batch2(sql)
+
+      assert_equal 40, @db.get_first_value("SELECT count(*) FROM t")
+    end
+
+    def test_prepare_when_the_authorizer_mutates_the_sql_string
+      sql = +"SELECT 1; SELECT 2;"
+      @db.authorizer = proc do
+        overwrite_in_place(sql)
+        0
+      end
+
+      stmt = @db.prepare(sql)
+
+      assert_equal "SELECT 1;", stmt.sql
+      assert_equal " SELECT 2;", stmt.remainder
+    ensure
+      stmt&.close
+    end
+
+    def test_prepare_error_when_the_authorizer_mutates_the_sql_string
+      @db.execute("CREATE TABLE t(x)")
+      sql = +"INSERT INTO t VALUES(1, 2);"
+      @db.authorizer = proc do
+        overwrite_in_place(sql)
+        0
+      end
+
+      error = assert_raise(SQLite3::SQLException) { @db.prepare(sql) }
+
+      assert_equal "INSERT INTO t VALUES(1, 2);", error.sql
+    end
+
+    private def overwrite_in_place(string)
+      string.bytesize.times { |i| string.setbyte(i, "-".ord) }
+    end
+
     def test_prepare_batch_split
       db = SQLite3::Database.new(":memory:")
       s1 = db.prepare("select 'asdf'; select 'qwer'; select 'côté'")

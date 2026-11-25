@@ -55,10 +55,11 @@ prepare(VALUE self, VALUE db, VALUE sql)
     sqlite3RubyPtr db_ctx = sqlite3_database_unwrap(db);
     sqlite3StmtRubyPtr ctx;
     const char *sql_cstr, *tail = NULL;
+    VALUE remainder;
     rb_sqlite3_callback_frame_t frame;
     int sql_len, status, callback_state;
 
-    StringValue(sql);
+    sql = rb_str_new_frozen(StringValue(sql));
 
     TypedData_Get_Struct(self, sqlite3StmtRuby, &statement_type, ctx);
 
@@ -69,7 +70,7 @@ prepare(VALUE self, VALUE db, VALUE sql)
 
     timespecclear(&db_ctx->stmt_deadline);
 
-    sql_cstr = StringValuePtr(sql);
+    sql_cstr = RSTRING_PTR(sql);
     sql_len = RSTRING_LENINT(sql);
 
     rb_sqlite3_push_callback_frame(&frame);
@@ -86,9 +87,11 @@ prepare(VALUE self, VALUE db, VALUE sql)
              );
     if ((callback_state = rb_sqlite3_pop_callback_frame(&frame))) { rb_jump_tag(callback_state); }
 
-    CHECK_PREPARE(db_ctx->db, status, StringValuePtr(sql));
+    CHECK_PREPARE(db_ctx->db, status, sql_cstr);
 
-    return rb_utf8_str_new_cstr(tail);
+    remainder = rb_utf8_str_new_cstr(tail);
+    RB_GC_GUARD(sql);
+    return remainder;
 }
 
 /* call-seq: stmt.close
