@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Fix a use-after-free when a Ruby callback (a custom function or aggregate, a collation, or a `trace`, authorizer or `busy_handler` block) modifies the SQL string that SQLite is reading in `Database#execute_batch2` or in `Statement.new`, which `Database#prepare`, `#execute`, `#execute2`, `#query`, `#get_first_row` and `#get_first_value` call. `execute_batch2` could skip the rest of a batch or run SQL read from freed memory, and `Statement#sql`, `Statement#remainder` and the `sql` of a prepare error could contain freed bytes. SQLite now reads a frozen copy of the string. #784 @flavorjones
 - Fix a crash when `Database#statement_timeout=` is called on a closed database. It now raises `SQLite3::Exception`, as the other `Database` methods do. #767 @jhawthorn
 
 ## 2.10.2 / 2026-10-26

@@ -1076,11 +1076,13 @@ exec_batch(VALUE self, VALUE sql, VALUE results_as_hash)
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
 
-    sql_cstr = StringValuePtr(sql);
+    sql = rb_str_new_frozen(StringValue(sql));
+    sql_cstr = RSTRING_PTR(sql);
     timespecclear(&ctx->stmt_deadline);
 
     rb_sqlite3_push_callback_frame(&frame);
     status = sqlite3_exec(ctx->db, sql_cstr, exec_batch_callback_function, (void *)&batch, &errMsg);
+    RB_GC_GUARD(sql);
 
     if ((callback_state = rb_sqlite3_pop_callback_frame(&frame))) {
         sqlite3_free(errMsg);
