@@ -1216,7 +1216,7 @@ deserialize(int argc, VALUE *argv, VALUE self)
     const char *zSchema;
     unsigned char *pData;
     sqlite3_int64 szDb, szBuf;
-    int status;
+    int status, was_deserializing;
 
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
     REQUIRE_OPEN_DB(ctx);
@@ -1226,6 +1226,14 @@ deserialize(int argc, VALUE *argv, VALUE self)
     StringValue(data);
     zSchema = NIL_P(db_name) ? NULL : StringValueCStr(db_name);
     szDb = RSTRING_LEN(data);
+
+#ifdef HAVE_SQLITE3_BACKUP_INIT
+    /* SQLite refuses to deserialize into a backup's source, but not into its destination. */
+    if (ctx->backups) {
+        rb_raise(rb_path2class("SQLite3::BusyException"),
+                 "cannot deserialize while a backup to this connection is unfinished");
+    }
+#endif
 
     /* SQLite's docs advise padding the buffer with about 20 extra bytes, because a maliciously
      * malformed image may make SQLite read past its end. See https://www.sqlite.org/c3ref/deserialize.html
@@ -1242,8 +1250,13 @@ deserialize(int argc, VALUE *argv, VALUE self)
     memcpy(pData, RSTRING_PTR(data), (size_t)szDb);
     memset(pData + szDb, 0, (size_t)(szBuf - szDb));
 
+    /* sqlite3_deserialize runs the trace and authorizer callbacks, which must not
+     * start a backup to this connection. The callbacks cannot raise through it. */
+    was_deserializing = ctx->flags & SQLITE3_RB_DATABASE_DESERIALIZING;
+    ctx->flags |= SQLITE3_RB_DATABASE_DESERIALIZING;
     status = sqlite3_deserialize(ctx->db, zSchema, pData, szDb, szDb,
                                  SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE);
+    ctx->flags = (ctx->flags & ~SQLITE3_RB_DATABASE_DESERIALIZING) | was_deserializing;
 
     CHECK(ctx->db, status);
 

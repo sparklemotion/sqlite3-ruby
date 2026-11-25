@@ -173,6 +173,10 @@ initialize(VALUE self, VALUE dstdb, VALUE dstname, VALUE srcdb, VALUE srcname)
     if (!ddb_ctx->db) {
         rb_raise(rb_eArgError, "cannot backup to a closed database");
     }
+    if (ddb_ctx->flags & SQLITE3_RB_DATABASE_DESERIALIZING) {
+        rb_raise(rb_path2class("SQLite3::BusyException"),
+                 "cannot backup to a connection during deserialize");
+    }
 
     pBackup = sqlite3_backup_init(ddb_ctx->db, StringValuePtr(dstname),
                                   sdb_ctx->db, StringValuePtr(srcname));

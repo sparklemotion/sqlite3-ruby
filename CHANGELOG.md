@@ -9,6 +9,7 @@
 ### Fixed
 
 - Fix a crash when the destination `Database` of an unfinished `SQLite3::Backup` is closed, or either of its `Database` objects is garbage-collected. A `Backup` now keeps both of its `Database` objects alive. Closing the destination `Database` finishes its unfinished backups, after which a `Backup` raises `SQLite3::Exception` "cannot use a closed backup". `Backup#step`, `Backup#finish`, and `Database#close` on the destination raise `SQLite3::Exception` when a callback calls them during `Backup#step`. Calling `Backup#initialize` on an unfinished `Backup` raises `SQLite3::Exception`. #781 @presidentialparakeet @flavorjones
+- Fix a crash when `Database#deserialize` is called on the destination of an unfinished `SQLite3::Backup`. It now raises `SQLite3::BusyException`, as it already did for the source. `SQLite3::Backup.new` raises `SQLite3::BusyException` when a callback inside `Database#deserialize` starts a backup to that `Database`. #785 @AmirWilayah @flavorjones
 
 ### Changed
 
