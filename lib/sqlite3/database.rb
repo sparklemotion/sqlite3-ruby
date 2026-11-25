@@ -682,6 +682,12 @@ module SQLite3
     # but only retries up to the indicated number of +milliseconds+.
     # This is an alternative to #busy_timeout, which holds the GVL
     # while SQLite sleeps and retries.
+    #
+    # SQLite runs the handler while holding this connection's mutex. Other
+    # threads can run during the wait only if they don't use this connection:
+    # a thread that calls into it meanwhile blocks on that mutex while holding
+    # the GVL, and the process hangs. If threads share a connection, use
+    # #busy_timeout, or give each thread its own connection.
     def busy_handler_timeout=(milliseconds)
       timeout_seconds = milliseconds.fdiv(1000)
 
