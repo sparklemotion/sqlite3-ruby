@@ -13,6 +13,7 @@
 ### Fixed
 
 - Fix a crash when `Database#statement_timeout=` is called on a closed database. It now raises `SQLite3::Exception`, as the other `Database` methods do. #767 @jhawthorn
+- Fix a crash when a `busy_handler` block uses its own database, for example by running SQL such as `DETACH`, calling `deserialize`, or closing it. SQLite does not allow a busy handler to use the connection that invoked it, and the block could free memory that SQLite was still using. While a database's busy handler runs, every method of that database and of its statements that uses the connection, except `Database#interrupt`, now raises `SQLite3::MisuseException`, as does `SQLite3::Backup.new` with that database. This also fixes a deadlock when another thread called one of those methods while the busy handler ran. @flavorjones
 
 ## 2.10.2 / 2026-10-26
 

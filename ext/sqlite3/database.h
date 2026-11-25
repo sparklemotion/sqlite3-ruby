@@ -6,6 +6,13 @@
 /* bits in the `flags` field */
 #define SQLITE3_RB_DATABASE_READONLY  0x01
 #define SQLITE3_RB_DATABASE_DISCARDED 0x02
+#define SQLITE3_RB_DATABASE_IN_BUSY_HANDLER 0x04
+
+/* sqlite's busy handler is not reentrant: using the waiting connection from
+ * inside it is undefined behavior, and can free the pager sqlite is waiting on. */
+#define REQUIRE_NOT_IN_BUSY_HANDLER(_ctxt) \
+  if ((_ctxt)->flags & SQLITE3_RB_DATABASE_IN_BUSY_HANDLER) \
+    rb_raise(rb_path2class("SQLite3::MisuseException"), "cannot use a database while its busy handler is running");
 
 struct _sqlite3Ruby {
     sqlite3 *db;

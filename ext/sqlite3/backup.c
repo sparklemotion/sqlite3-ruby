@@ -88,6 +88,8 @@ initialize(VALUE self, VALUE dstdb, VALUE dstname, VALUE srcdb, VALUE srcname)
     if (!ddb_ctx->db) {
         rb_raise(rb_eArgError, "cannot backup to a closed database");
     }
+    REQUIRE_NOT_IN_BUSY_HANDLER(sdb_ctx);
+    REQUIRE_NOT_IN_BUSY_HANDLER(ddb_ctx);
 
     pBackup = sqlite3_backup_init(ddb_ctx->db, StringValuePtr(dstname),
                                   sdb_ctx->db, StringValuePtr(srcname));

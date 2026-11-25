@@ -6,9 +6,13 @@
 #pragma warning( disable : 4028 )
 #endif
 
-#define REQUIRE_OPEN_DB(_ctxt) \
+#define REQUIRE_OPEN_CONNECTION(_ctxt) \
   if(!_ctxt->db) \
     rb_raise(rb_path2class("SQLite3::Exception"), "cannot use a closed database");
+
+#define REQUIRE_OPEN_DB(_ctxt) \
+  REQUIRE_OPEN_CONNECTION(_ctxt); \
+  REQUIRE_NOT_IN_BUSY_HANDLER(_ctxt)
 
 #define REQUIRE_CLOSED_DB(_ctxt) \
   if(_ctxt->db) \
@@ -202,6 +206,7 @@ rb_sqlite3_disable_quirk_mode(VALUE self)
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
     if (!ctx->db) { return Qfalse; }
+    REQUIRE_NOT_IN_BUSY_HANDLER(ctx);
 
     sqlite3_db_config(ctx->db, SQLITE_DBCONFIG_DQS_DDL, 0, (void *)0);
     sqlite3_db_config(ctx->db, SQLITE_DBCONFIG_DQS_DML, 0, (void *)0);
@@ -228,6 +233,7 @@ sqlite3_rb_close(VALUE self)
 {
     sqlite3RubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_NOT_IN_BUSY_HANDLER(ctx);
 
     close_or_discard_db(ctx);
 
@@ -240,6 +246,7 @@ sqlite3_rb_discard(VALUE self)
 {
     sqlite3RubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
+    REQUIRE_NOT_IN_BUSY_HANDLER(ctx);
 
     discard_db(ctx);
 
@@ -335,8 +342,13 @@ rb_sqlite3_busy_handler(void *context, int count)
     VALUE args[] = { ctx->busy_handler, (VALUE)count };
     VALUE result;
     int failed;
+    int outer_flags = ctx->flags;
 
+    ctx->flags |= SQLITE3_RB_DATABASE_IN_BUSY_HANDLER;
     result = rb_sqlite3_protect_callback(rb_sqlite3_busy_handler_protected, (VALUE)args, &failed);
+    /* a Backup#step inside the handler can call it again; leave the outer call's bit set */
+    ctx->flags = (ctx->flags & ~SQLITE3_RB_DATABASE_IN_BUSY_HANDLER) |
+                 (outer_flags & SQLITE3_RB_DATABASE_IN_BUSY_HANDLER);
 
     if (failed || Qfalse == result) { return 0; }
 
@@ -354,6 +366,12 @@ rb_sqlite3_busy_handler(void *context, int count)
  *
  * The handler will be invoked with the name of the resource that was
  * busy, and the number of times it has been retried.
+ *
+ * The handler must not use this database. While the handler runs, every method
+ * of this database and of its statements that uses the connection raises
+ * SQLite3::MisuseException, except #interrupt, whether called from the handler
+ * or from another thread. So does SQLite3::Backup.new with this database. The handler
+ * may use other databases.
  *
  * See also the mutually exclusive #busy_timeout.
  */
@@ -629,7 +647,7 @@ interrupt(VALUE self)
 {
     sqlite3RubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
-    REQUIRE_OPEN_DB(ctx);
+    REQUIRE_OPEN_CONNECTION(ctx);
 
     sqlite3_interrupt(ctx->db);
 
