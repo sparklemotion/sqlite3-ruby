@@ -6,6 +6,10 @@
 
 - Experimental Ractor support. On Ruby 3.4 and later, when SQLite is compiled thread-safe, the extension declares itself Ractor-safe, and each Ractor can open and use its own connections. `SQLite3.ractor_safe?` reports whether the extension made the declaration. See [RACTOR.md](RACTOR.md) for the limits on sharing connections between Ractors and on fork safety. We welcome bug reports, but we recommend caution before using Ractor support in production applications. #749 @rubys @sandlerr @tenderlove @flavorjones
 
+### Fixed
+
+- Fix a crash when the destination `Database` of an unfinished `SQLite3::Backup` is closed, or either of its `Database` objects is garbage-collected. A `Backup` now keeps both of its `Database` objects alive. Closing the destination `Database` finishes its unfinished backups, after which a `Backup` raises `SQLite3::Exception` "cannot use a closed backup". `Backup#step`, `Backup#finish`, and `Database#close` on the destination raise `SQLite3::Exception` when a callback calls them during `Backup#step`. Calling `Backup#initialize` on an unfinished `Backup` raises `SQLite3::Exception`. #781 @presidentialparakeet @flavorjones
+
 ### Changed
 
 - `SQLite3::VERSION`, `SQLite3::VERSION_INFO`, `SQLite3::SQLITE_VERSION` and `SQLite3::SQLITE_LOADED_VERSION` are frozen, so that any Ractor can read them. Code that mutates them now raises `FrozenError`. #749 @rubys @tenderlove

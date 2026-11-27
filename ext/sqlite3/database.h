@@ -25,6 +25,9 @@ struct _sqlite3Ruby {
     struct timespec stmt_deadline;
     rb_pid_t owner;
     int flags;
+    /* Unfinished backups that write to this connection. sqlite frees a
+     * destination connection on close regardless, so they are finished first. */
+    struct _sqlite3BackupRuby *backups;
 };
 
 typedef struct _sqlite3Ruby sqlite3Ruby;

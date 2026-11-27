@@ -23,6 +23,10 @@ discard_db(sqlite3RubyPtr ctx)
     sqlite3_file *sfile;
     int status;
 
+#ifdef HAVE_SQLITE3_BACKUP_INIT
+    rb_sqlite3_backup_finish_all(ctx, 1);
+#endif
+
     // release as much heap memory as possible by deallocating non-essential memory
     // allocations held by the database library. Memory used to cache database pages to
     // improve performance is an example of non-essential memory.
@@ -64,6 +68,9 @@ close_or_discard_db(sqlite3RubyPtr ctx)
 
         if (is_readonly || ctx->owner == getpid()) {
             // Ordinary close.
+#ifdef HAVE_SQLITE3_BACKUP_INIT
+            rb_sqlite3_backup_finish_all(ctx, 0);
+#endif
             sqlite3_close_v2(ctx->db);
             ctx->db = NULL;
         } else {
@@ -229,6 +236,9 @@ sqlite3_rb_close(VALUE self)
     sqlite3RubyPtr ctx;
     TypedData_Get_Struct(self, sqlite3Ruby, &database_type, ctx);
 
+#ifdef HAVE_SQLITE3_BACKUP_INIT
+    rb_sqlite3_backup_require_idle(ctx);
+#endif
     close_or_discard_db(ctx);
 
     return self;
