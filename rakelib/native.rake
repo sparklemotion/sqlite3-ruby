@@ -59,6 +59,8 @@ Rake::ExtensionTask.new("sqlite3_native", SQLITE3_SPEC) do |ext|
   ext.cross_compile = true
   ext.cross_platform = cross_platforms
   ext.cross_config_options << "--enable-cross-build" # so extconf.rb knows we're cross-compiling
+  ext.content_addressable = true
+
   ext.cross_compiling do |spec|
     # remove things not needed for precompiled gems
     spec.dependencies.reject! { |dep| dep.name == "mini_portile2" }
@@ -70,7 +72,9 @@ namespace "gem" do
   cross_platforms.each do |platform|
     desc "build native gem for #{platform}"
     task platform do
+      # TODO: remove the RubyGems update once rake-compiler-dock ships RubyGems >= 4.1
       RakeCompilerDock.sh(<<~EOF, platform: platform, verbose: true)
+        gem update --system 4.1.0 --no-document &&
         gem install bundler --no-document &&
         bundle &&
         bundle exec rake gem:#{platform}:buildit
@@ -80,9 +84,18 @@ namespace "gem" do
     namespace platform do
       # this runs in the rake-compiler-dock docker container
       task "buildit" do
-        # use Task#invoke because the pkg/*gem task is defined at runtime
+        unless Gem::PackageTask.method_defined?(:content_addressable=)
+          raise "RubyGems #{Gem::VERSION} cannot build content-addressable gems, need >= 4.1"
+        end
+
+        # use Task#invoke because the pkg/*gem tasks are defined at runtime by the native task
         Rake::Task["native:#{platform}"].invoke
-        Rake::Task["pkg/#{SQLITE3_SPEC.full_name}-#{Gem::Platform.new(platform)}.gem"].invoke
+
+        # build this platform's gems: the multi-ABI gem and one content-addressable gem per ruby
+        source_gem = "pkg/#{SQLITE3_SPEC.full_name}.gem"
+        Rake::Task["gem"].prerequisites.each do |gem_task|
+          Rake::Task[gem_task].invoke unless gem_task == source_gem
+        end
       end
     end
   end

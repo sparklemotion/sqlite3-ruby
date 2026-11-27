@@ -40,7 +40,9 @@ jobs:
       - uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
       - name: Push gems
         run: |
-          for gem in gems/*.gem; do
+          # push single-ABI gems (named after their checksum, e.g. sqlite3-2.9.1-78be552b.gem) last
+          single_abi='-[0-9a-f]{8,64}\.gem$'
+          for gem in $(ls gems/*.gem | grep -Ev -e "${single_abi}") $(ls gems/*.gem | grep -E -e "${single_abi}"); do
             echo "Pushing ${gem} ..."
             gem push "${gem}" || echo "WARNING: Failed to push ${gem} (may already exist)"
           done

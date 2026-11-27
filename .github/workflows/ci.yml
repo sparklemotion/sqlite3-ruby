@@ -233,7 +233,7 @@ jobs:
         shell: sh
 
   test_architecture_matrix:
-    name: "${{ matrix.platform }} ${{ matrix.ruby }}"
+    name: "${{ matrix.platform }} ${{ matrix.ruby }} ${{ matrix.gem }}"
     needs: [build_gems, ruby_versions]
     strategy:
       fail-fast: false
@@ -248,6 +248,7 @@ jobs:
           - x86_64-linux-gnu
           - x86_64-linux-musl
         ruby: ${{ fromJSON(needs.ruby_versions.outputs.image_tag) }}
+        gem: [multi-abi, content-addressable]
         include:
           # declare docker image for each platform
           - { runner: ubuntu-latest, platform: aarch64-linux-musl, docker_tag: "-alpine", bootstrap: "apk add build-base &&" }
@@ -272,7 +273,7 @@ jobs:
           name: cruby-${{ matrix.platform }}-gem
           path: gems
       - run: |
-          docker run --rm -v $PWD:/work -w /work \
+          docker run --rm -v $PWD:/work -w /work -e CONTENT_ADDRESSABLE \
             ${{ matrix.docker_platform }} ruby:${MATRIX_RUBY}${{ matrix.docker_tag }} \
             sh -c "
               ${{ matrix.bootstrap }}
@@ -280,15 +281,17 @@ jobs:
             "
         env:
           MATRIX_RUBY: ${{ matrix.ruby }}
+          CONTENT_ADDRESSABLE: ${{ matrix.gem == 'content-addressable' && '1' || '' }}
 
   test_the_rest:
-    name: "${{ matrix.platform }} ${{ matrix.ruby }}"
+    name: "${{ matrix.platform }} ${{ matrix.ruby }} ${{ matrix.gem }}"
     needs: [build_gems, ruby_versions]
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, macos-15-intel, macos-15]
         ruby: ${{ fromJSON(needs.ruby_versions.outputs.setup_ruby) }}
+        gem: [multi-abi, content-addressable]
         include:
           - os: macos-15-intel
             platform: x86_64-darwin
@@ -310,22 +313,19 @@ jobs:
           path: gems
       - run: ./bin/test-gem-install gems
         shell: sh
+        env:
+          CONTENT_ADDRESSABLE: ${{ matrix.gem == 'content-addressable' && '1' || '' }}
 
   cruby-x86_64-linux-musl-install:
     needs: build_gems
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { ruby: "3.2", flavor: "alpine3.18" }
-          - { ruby: "3.2", flavor: "alpine3.19" }
-          - { ruby: "3.3", flavor: "alpine3.18" }
-          - { ruby: "3.3", flavor: "alpine3.19" }
-          - { ruby: "3.4", flavor: "alpine" }
-          - { ruby: "4.0", flavor: "alpine" }
+        image: ["3.2-alpine3.18", "3.2-alpine3.19", "3.3-alpine3.18", "3.3-alpine3.19", "3.4-alpine", "4.0-alpine"]
+        gem: [multi-abi, content-addressable]
     runs-on: ubuntu-latest
     container:
-      image: ruby:${{ matrix.ruby }}-${{ matrix.flavor }}
+      image: ruby:${{ matrix.image }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -336,3 +336,5 @@ jobs:
           path: gems
       - run: apk add build-base
       - run: ./bin/test-gem-install ./gems
+        env:
+          CONTENT_ADDRESSABLE: ${{ matrix.gem == 'content-addressable' && '1' || '' }}
