@@ -395,6 +395,30 @@ module SQLite3
       assert_equal 0, allocations.last
     end
 
+    def test_to_a
+      stmt = @db.prepare("select 1 union all select 2 union all select 3")
+      assert_equal [[1], [2], [3]], stmt.to_a
+      assert_predicate stmt, :done?
+      assert_equal [], stmt.to_a
+    ensure
+      stmt&.close
+    end
+
+    def test_to_a_returns_remaining_rows
+      stmt = @db.prepare("select 1 union all select 2 union all select 3")
+      assert_equal [1], stmt.step
+      rows = stmt.to_a
+      assert_equal [[2], [3]], rows
+      assert rows.all?(&:frozen?)
+    ensure
+      stmt&.close
+    end
+
+    def test_to_a_on_closed_statement
+      @stmt.close
+      assert_raises(SQLite3::Exception) { @stmt.to_a }
+    end
+
     def test_column_count
       assert_equal 1, @stmt.column_count
     end

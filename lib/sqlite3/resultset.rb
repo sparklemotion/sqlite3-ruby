@@ -98,9 +98,18 @@ module SQLite3
 
       @stmt.columns.zip(row).to_h
     end
+
+    # Return all remaining rows.
+    def to_a
+      @stmt.to_a
+    end
   end
 
   class HashResultSet < ResultSet # :nodoc:
     alias_method :next, :next_hash
+
+    def to_a
+      @stmt.__send__(:to_a_hash, @stmt.columns)
+    end
   end
 end
